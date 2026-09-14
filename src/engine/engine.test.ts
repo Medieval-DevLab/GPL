@@ -32,6 +32,31 @@ describe("content validity", () => {
   it("has ten missions", () => {
     expect(content.missionOrder).toHaveLength(10);
   });
+
+  /**
+   * The story is full of curly quotes, en dashes and em dashes. Any tool that
+   * reads the file as Latin-1 and writes it back as UTF-8 turns “ into â€œ, and
+   * nothing else in the pipeline notices — it typechecks, it builds, it ships,
+   * and it is only visible if someone happens to look at that paragraph.
+   * A PowerShell `Get-Content | Set-Content -Encoding utf8` did exactly that.
+   */
+  it("has no mis-decoded characters anywhere in the content", () => {
+    const suspect = /â€|Ã‚|Ã©|�/;
+    const bad: string[] = [];
+
+    const walk = (value: unknown, path: string) => {
+      if (typeof value === "string") {
+        if (suspect.test(value)) bad.push(`${path}: ${value.slice(0, 80)}`);
+      } else if (Array.isArray(value)) {
+        value.forEach((v, i) => walk(v, `${path}[${i}]`));
+      } else if (value && typeof value === "object") {
+        for (const [k, v] of Object.entries(value)) walk(v, `${path}.${k}`);
+      }
+    };
+
+    walk(content, "story");
+    expect(bad).toEqual([]);
+  });
 });
 
 describe("determinism", () => {

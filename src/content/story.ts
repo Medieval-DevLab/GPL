@@ -402,7 +402,7 @@ const nodes: GameNode[] = [
       {
         id: "o-direct",
         title: "Go straight to the sponsor",
-        icon: "handshake",
+        icon: "talk",
         description:
           "Use a warm introduction to get thirty minutes with Elena Brandt, the CMO, and make the case in person.",
         commits: "Spends a relationship you cannot spend twice.",
@@ -1534,7 +1534,7 @@ const nodes: GameNode[] = [
       {
         id: "o-reset",
         title: "Reset expectations",
-        icon: "handshake",
+        icon: "talk",
         description: "Go to the sponsor early, explain honestly, and re-plan together.",
         commits: "You have to say out loud that something is not going to happen as promised.",
         pros: ["Keeps the client inside the problem", "Cheapest fix if trust exists"],

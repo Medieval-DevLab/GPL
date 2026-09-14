@@ -111,7 +111,7 @@ export type IconId =
   | "target"
   | "search"
   | "people"
-  | "handshake"
+  | "talk"
   | "megaphone"
   | "shield"
   | "spark"

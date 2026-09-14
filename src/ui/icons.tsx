@@ -7,7 +7,9 @@ const PATHS: Record<IconId, string> = {
   search: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm6-2 4 4",
   people:
     "M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19M10 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm10 8v-1.5a3.5 3.5 0 0 0-2.6-3.4M15.5 4.3a3.5 3.5 0 0 1 0 6.8",
-  handshake: "M8 13.5 10.5 16a1.8 1.8 0 0 0 2.6 0l.4-.4.9.9a1.6 1.6 0 0 0 2.3-2.3M3 8.5 6.5 5H11l2 2-2.6 2.3a1.5 1.5 0 0 0 0 2.2M21 8.5 17.5 5H14M3 8.5V15l3 3M21 8.5V15l-3 3",
+  // A handshake has too many crossing strokes to survive at 19px. A speech
+  // bubble says the same thing here — both places it is used are conversations.
+  talk: "M20.5 11.7a8 8 0 0 1-8.6 8 8.7 8.7 0 0 1-3.2-.6L3.5 20.5l1.6-4.8a7.8 7.8 0 0 1-.7-3.3 8 8 0 0 1 8.6-8 8 8 0 0 1 7.5 7.3Z",
   megaphone: "M4 10v4a1 1 0 0 0 1 1h2l6 4V5L7 9H5a1 1 0 0 0-1 1Zm13-1a4 4 0 0 1 0 6",
   shield: "M12 21s7-3.2 7-9V6l-7-3-7 3v6c0 5.8 7 9 7 9Z",
   spark: "M12 3v3m0 12v3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M3 12h3m12 0h3M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
