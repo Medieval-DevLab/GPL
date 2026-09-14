@@ -3,7 +3,7 @@
 **A short, single-player game about how work actually moves through a consulting firm.**
 
 A client you have never met becomes a promise you have to keep. Ten decisions stand between
-those two things. Roughly 25 minutes, start to finish.
+those two things. Roughly 35 minutes, start to finish.
 
 ```
 Client → Lead → Opportunity → Solution → Deal → Delivery
@@ -64,8 +64,13 @@ src/
     analysis.ts    exhaustive playthrough sweep + dominance detection
     engine.test.ts 24 tests
   content/
-    story.ts       all ten missions — data, not code
+    story.ts       all ten missions, five chapters — data, not code
   ui/              React. Renders state and dispatches actions. No game rules.
+    shell.tsx      the persistent frame: stepper, rails, action bar
+    mission.tsx    the briefing and the option cards
+    consequence.tsx  resolving → what happened → what it teaches
+    screens.tsx    title, chapter interludes, closing debrief
+    icons.tsx      inline SVG. No icon library, no image assets, no requests.
 tools/
   verify.mjs       plays a full run in a real browser and screenshots every beat
 ```
@@ -99,9 +104,14 @@ value) and then asserts:
 That last group is the real test suite. It checks the pedagogy, not the plumbing.
 
 **`npm run verify`** needs the app running (`npm run dev` in another terminal), then plays a
-complete ten-mission run in headless Chromium, screenshots all 31 beats into
-`docs/screenshots/`, and fails on any console error, any unreachable control, or any button
-without an accessible name.
+complete ten-mission run in headless Chromium, screenshots all 30 beats into
+`docs/screenshots/`, and fails on any console error, any unreachable control, any briefing
+missing part of the game shell, or any button without an accessible name.
+
+```bash
+GPL_VIEWPORT=390x844 npm run verify      # phone-width pass → docs/screenshots-390/
+npm run verify http://localhost:4173     # against the production build
+```
 
 ---
 
@@ -117,6 +127,23 @@ Three kinds of mission:
 | `choice` | picks one of 3–4 strategies | *Who do you go after?* |
 | `investigate` | spends limited slots on what to find out | *You can look into two things. Not five.* |
 | `build` | assembles from components | *Pick three things for the proposal* |
+
+Every mission also carries its briefing. These are **required** — the shell renders each one
+unconditionally, so a missing field is a hole in the screen, not a graceful degradation:
+
+| Field | Renders as |
+|---|---|
+| `eyebrow`, `minutes` | the label above the headline, and the time estimate in the rail |
+| `objective` | "Your objective" in the left rail |
+| `advisor` | a named colleague with one line of dialogue |
+| `consider` | "Things to consider" — open questions, never answers (min. 2) |
+| `tip` | the nudge in the action bar |
+| `client`, `assessment` | the client profile strip and the factor bars *(optional)* |
+| `saidQuote`, `concerns` | "What they said" and "Key concerns" *(optional)* |
+
+Options carry `icon`, `pros`, `cons` and a `cost` of `{ time, investment }` on a 1–3 scale.
+All of those describe the **approach and what it costs** — never the result. Pros without
+cons fails the build, because a one-sided card presents itself as the right answer.
 
 An outcome is chosen by matching `when` conditions against accumulated flags — **first match
 wins, and the last outcome must be unconditional**. That is how the same option produces a

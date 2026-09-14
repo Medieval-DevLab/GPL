@@ -6,6 +6,48 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-017 · A sticky action bar cannot be a grid item
+The confirm bar is `position: sticky; bottom: 0`. Placed inside the layout grid it never
+pinned, because a sticky grid item is constrained to its own grid area and that area is
+exactly the item's height — no room to move. It now sits outside the grid, as a sibling,
+where its containing block is the page.
+**Related:** on a phone the rails stack *after* the mission (`order-2`/`order-3`), because
+rails-first pushed the headline half a screen down.
+
+## D-016 · Screenshots un-stick sticky elements before capture
+A full-page Playwright capture resolves `position: sticky` against the viewport, so the top
+bar and the confirm bar landed in the middle of the image, on top of real content. That is
+indistinguishable from a layout bug and cost real time. `shot()` now walks the DOM, drops
+anything computing to `sticky` into `position: relative`, captures, and restores.
+**Cost:** the screenshots no longer show what the bars look like while pinned. Worth it —
+the alternative was a false positive on every single frame.
+
+## D-015 · Pros/cons must come in pairs, and everything pre-decision is leak-checked
+Option cards now carry `pros`, `cons` and a `cost` of time/investment. That is a lot of new
+surface on which to accidentally tell the player the answer, so the validator was widened:
+`description`, `pros`, `cons`, `tip`, `objective` and every `consider` line are scanned for
+outcome-leak terms, and an option listing pros without cons (or the reverse) is an error —
+a one-sided card presents itself as the right answer.
+**Cost:** writing options is slower. That is the point.
+
+## D-014 · The game frame is the product, not the page
+"This feels like a form, not a game" was correct. A centred column of text with radio
+buttons is a questionnaire no matter how good the writing is. The shell now carries a
+chapter stepper, a live score, a left rail (chapter, mission checklist with ticks,
+objective, estimated time, a named advisor with a line of dialogue) and a right rail
+(the three factors, open questions, recognitions earned). The centre column is the only
+thing that changes between beats.
+**Deliberately not copied from the mockups:** their density. No photographs, no per-option
+impact previews (those would leak the outcome), no team panel — this is single-player.
+
+## D-013 · Missions carry a briefing, and the validator requires one
+`eyebrow`, `minutes`, `tip`, `advisor` and at least two `consider` lines are now *required*
+on every mission, plus optional `client`, `assessment`, `saidQuote` and `concerns`. The shell
+renders each of these unconditionally, so a missing one is a visible hole rather than a
+graceful degradation — better to fail the build.
+**Why two consider lines minimum:** one reads as an instruction. Two read as a genuine
+tension the player has to resolve.
+
 ## D-012 · Causal threads are derived, never authored per-run
 The closing debrief shows the specific chains the player created ("you met them on price →
 you could not fund the mitigation → month five went underwater"). Each thread declares the

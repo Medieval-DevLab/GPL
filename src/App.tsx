@@ -7,17 +7,22 @@ import {
   commit,
   createInitialState,
   getNode,
+  requiredSelectionCount,
   selectableIds,
   toggleSelection,
 } from "./engine/engine";
-import { isMission, type GameState, type Interlude, type StageId } from "./engine/types";
-import { TopBar } from "./ui/chrome";
+import { isMission, type Chapter, type GameState, type Interlude } from "./engine/types";
 import { ConsequenceScreen, LessonScreen, ResolvingScreen } from "./ui/consequence";
-import { MissionScreen } from "./ui/mission";
+import { MissionBody } from "./ui/mission";
 import { EndingScreen, InterludeScreen, TitleScreen } from "./ui/screens";
+import { ActionBar, GameLayout, InsightRail, MissionRail, TopBar, scoreOf } from "./ui/shell";
 
 const STORAGE_KEY = "gpl.save.v2";
 const content = story;
+
+function chapterFor(number: number): Chapter {
+  return content.chapters.find((c) => c.number === number) ?? content.chapters[0];
+}
 
 function loadSave(): GameState | null {
   try {
@@ -135,46 +140,56 @@ export default function App() {
     return Math.min(state.completed.length + 1, content.missionOrder.length);
   }, [node, state.phase, state.completed.length]);
 
-  const stage: StageId | null = useMemo(() => {
-    if (isMission(node)) return node.stage;
-    const last = state.history[state.history.length - 1];
-    return last ? last.stage : null;
-  }, [node, state.history]);
+  /** Which chapter the stepper highlights. Interludes carry their own. */
+  const currentChapter = useMemo(() => {
+    if (node.kind === "ending") return content.chapters.length;
+    if (node.kind === "interlude") return node.chapter;
+    if (isMission(node)) return node.chapter;
+    return 1;
+  }, [node]);
 
   const isLastMission =
     isMission(node) && content.missionOrder.indexOf(node.id) === content.missionOrder.length - 1;
+
+  const onDecideScreen = state.phase === "decide" && isMission(node);
 
   return (
     <div className="min-h-full">
       {state.phase !== "title" && (
         <TopBar
-          dims={state.dims}
-          stage={stage}
-          missionNumber={missionNumber}
-          totalMissions={content.missionOrder.length}
+          chapters={content.chapters}
+          currentChapter={currentChapter}
+          score={scoreOf(state.dims)}
+          showScore={state.history.length > 0}
           onRestart={doRestart}
-          showMeters={state.history.length > 0}
         />
       )}
 
       <main>
         {state.phase === "title" && (
-          <TitleScreen onBegin={doAdvance} hasSave={hasSave} onResume={doResume} />
+          <TitleScreen
+            onBegin={doAdvance}
+            hasSave={hasSave}
+            onResume={doResume}
+            chapters={content.chapters}
+          />
         )}
 
         {state.phase === "interlude" && node.kind === "interlude" && (
-          <InterludeScreen node={node as Interlude} onContinue={doAdvance} />
+          <InterludeScreen
+            node={node as Interlude}
+            chapter={chapterFor(node.chapter)}
+            onContinue={doAdvance}
+          />
         )}
 
-        {state.phase === "decide" && isMission(node) && (
-          <MissionScreen
-            mission={node}
+        {onDecideScreen && isMission(node) && (
+          <DecideScreen
             state={state}
-            content={content}
             missionNumber={missionNumber ?? 1}
-            totalMissions={content.missionOrder.length}
             onToggle={doToggle}
             onCommit={doCommit}
+            node={node}
           />
         )}
 
@@ -185,15 +200,73 @@ export default function App() {
         )}
 
         {state.phase === "lesson" && state.resolution && (
-          <LessonScreen
-            resolution={state.resolution}
-            onContinue={doAdvance}
-            isLast={isLastMission}
-          />
+          <LessonScreen resolution={state.resolution} onContinue={doAdvance} isLast={isLastMission} />
         )}
 
         {state.phase === "ending" && <EndingScreen state={state} onRestart={doRestart} />}
       </main>
     </div>
+  );
+}
+
+/** The briefing: rails on both sides, the mission in the middle, confirm at the bottom. */
+function DecideScreen({
+  node,
+  state,
+  missionNumber,
+  onToggle,
+  onCommit,
+}: {
+  node: ReturnType<typeof getNode>;
+  state: GameState;
+  missionNumber: number;
+  onToggle: (id: string) => void;
+  onCommit: () => void;
+}) {
+  if (!isMission(node)) return null;
+
+  const need = requiredSelectionCount(node);
+  const have = state.selection.length;
+  const ready = have === need;
+  const hint = ready
+    ? undefined
+    : node.kind === "choice"
+      ? "Pick one to continue"
+      : `${have} of ${need} chosen`;
+
+  return (
+    <GameLayout
+      left={
+        <MissionRail
+          chapter={chapterFor(node.chapter)}
+          missionId={node.id}
+          missionNumber={missionNumber}
+          totalMissions={content.missionOrder.length}
+          completed={state.completed}
+          objective={node.objective}
+          minutes={node.minutes}
+          advisor={node.advisor}
+        />
+      }
+      right={
+        <InsightRail
+          dims={state.dims}
+          consider={node.consider}
+          badges={state.badges}
+          knownCount={state.discovered.length}
+        />
+      }
+      bottom={
+        <ActionBar
+          tip={node.tip}
+          hint={hint}
+          label="Confirm decision"
+          onAction={onCommit}
+          disabled={!ready}
+        />
+      }
+    >
+      <MissionBody mission={node} state={state} content={content} onToggle={onToggle} />
+    </GameLayout>
   );
 }

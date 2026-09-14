@@ -54,12 +54,19 @@ describe("determinism", () => {
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
   });
 
-  it("uses no randomness — repeated sweeps match exactly", () => {
-    const one = sweep(content);
-    const two = sweep(content);
-    expect([...one.firedOutcomes].sort()).toEqual([...two.firedOutcomes].sort());
-    expect(one.finalRange).toEqual(two.finalRange);
-  });
+  // Two exhaustive sweeps of the whole state space. Legitimately slow, and the
+  // single most important guarantee in the game — if this ever fails, a result
+  // stopped being attributable to the player's decisions.
+  it(
+    "uses no randomness — repeated sweeps match exactly",
+    () => {
+      const one = sweep(content);
+      const two = sweep(content);
+      expect([...one.firedOutcomes].sort()).toEqual([...two.firedOutcomes].sort());
+      expect(one.finalRange).toEqual(two.finalRange);
+    },
+    30_000,
+  );
 });
 
 describe("every path is playable", () => {

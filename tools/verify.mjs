@@ -48,8 +48,29 @@ async function shot(page, name) {
       return Promise.all(finite.map((a) => a.finished.catch(() => undefined)));
     })
     .catch(() => undefined);
+
+  // A full-page capture resolves sticky elements against the viewport, so the
+  // top bar and the confirm bar land in the middle of the image and sit on top
+  // of real content. That looks exactly like a layout bug. Drop them into
+  // normal flow for the capture, then put them back.
+  await page.evaluate(() => {
+    window.__unstuck = [];
+    for (const el of document.querySelectorAll("*")) {
+      if (getComputedStyle(el).position === "sticky") {
+        window.__unstuck.push([el, el.style.position]);
+        el.style.position = "relative";
+      }
+    }
+  });
+
   const file = path.join(SHOTS, `${String(shotIndex).padStart(2, "0")}-${name}.png`);
   await page.screenshot({ path: file, fullPage: true });
+
+  await page.evaluate(() => {
+    for (const [el, prev] of window.__unstuck ?? []) el.style.position = prev;
+    window.__unstuck = [];
+  });
+
   console.log(`   📸 ${path.basename(file)}`);
 }
 
@@ -108,12 +129,19 @@ async function main() {
     }
 
     // Decide
-    const commit = await button(page, "Commit");
+    const commit = await button(page, "Confirm decision");
     if (commit) {
       missionsSeen += 1;
       const heading = (await page.locator("h1").first().innerText()).trim();
       console.log(`\n── mission ${missionsSeen}: ${heading}`);
       await shot(page, `mission-${missionsSeen}-decide`);
+
+      // The game shell must be present on every briefing, not just the first.
+      for (const required of ["Your objective", "Key factors", "Tip."]) {
+        if ((await page.getByText(required, { exact: false }).count()) === 0) {
+          problems.push(`${heading}: shell is missing "${required}"`);
+        }
+      }
 
       const choices = page.locator("button.choice");
       const count = await choices.count();

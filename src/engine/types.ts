@@ -106,15 +106,43 @@ export interface Outcome {
   lesson?: Lesson;
 }
 
+/** Icon keys. Rendered as inline SVG — no image assets anywhere in this game. */
+export type IconId =
+  | "target"
+  | "search"
+  | "people"
+  | "handshake"
+  | "megaphone"
+  | "shield"
+  | "spark"
+  | "chart"
+  | "clock"
+  | "coins"
+  | "warning"
+  | "check"
+  | "cross"
+  | "block"
+  | "rocket"
+  | "layers"
+  | "scale"
+  | "flag";
+
 export interface Option {
   id: string;
   title: string;
   description: string;
+  icon?: IconId;
   /**
    * What this costs or locks in. ALLOWED before the decision.
    * Predicted outcomes are NOT — never write "improves winability" here.
    */
   commits?: string;
+  /** Upsides of the APPROACH — what it is for. Not a prediction of the result. */
+  pros?: string[];
+  /** What you give up by choosing it. Again: cost, not outcome. */
+  cons?: string[];
+  /** Relative cost, 1–3 dots. Honest about effort, silent about payoff. */
+  cost?: { time: 1 | 2 | 3; investment: 1 | 2 | 3 };
   /** option is hidden unless this passes */
   requires?: Condition;
   outcomes: Outcome[];
@@ -156,22 +184,76 @@ export interface SituationVariant {
   situation: string[];
 }
 
+/** A colleague who gives you a steer. Adds a human voice without a tutorial. */
+export interface Advisor {
+  name: string;
+  role: string;
+  quote: string;
+}
+
+/** The client, shown as a profile strip. Monogram + gradient, never a photo. */
+export interface ClientProfile {
+  name: string;
+  monogram: string;
+  tags: string[];
+  blurb: string;
+  facts: { icon: IconId; label: string; value: string }[];
+}
+
+export type FactorLevel = "low" | "medium" | "high" | "strong";
+
+/** A read on the situation, shown as a labelled bar. Describes NOW, not the future. */
+export interface AssessmentFactor {
+  icon: IconId;
+  label: string;
+  level: FactorLevel;
+  note: string;
+}
+
 interface MissionBase {
   id: string;
   chapter: number;
   stage: StageId;
   title: string;
+  /** small label above the headline, e.g. "THE SITUATION" */
+  eyebrow: string;
   /** what the player is trying to do, in plain words */
   objective: string;
+  /** roughly how long this mission takes, in minutes */
+  minutes: number;
   /** the scenario, as paragraphs — used when no variant matches */
   situation: string[];
   /** state-dependent rewrites of the scenario, checked before `situation` */
   variants?: SituationVariant[];
   /** known facts, shown as chips */
   context?: ContextChip[];
+  /** the client, where relevant */
+  client?: ClientProfile;
+  /** a read on the current situation, shown as bars */
+  assessment?: AssessmentFactor[];
+  /** something the client actually said */
+  saidQuote?: { text: string; attribution: string };
+  /** what is worrying them */
+  concerns?: string[];
+  /** a colleague's steer */
+  advisor?: Advisor;
+  /** open questions, shown in the right rail — never answers */
+  consider?: string[];
+  /** the nudge in the bottom bar */
+  tip?: string;
   /** fallback lesson — guarantees the objective lands on every branch */
   lesson: Lesson;
   next: string;
+}
+
+/** A chapter groups missions and drives the top stepper and the left rail. */
+export interface Chapter {
+  number: number;
+  label: string;
+  title: string;
+  missionIds: string[];
+  /** short human names for the left-rail checklist, one per mission */
+  steps: string[];
 }
 
 export interface ChoiceMission extends MissionBase {
@@ -282,4 +364,6 @@ export interface Content {
   startNodeId: string;
   /** ordered mission ids, for progress display */
   missionOrder: string[];
+  /** chapter structure — drives the top stepper and the left rail */
+  chapters: Chapter[];
 }

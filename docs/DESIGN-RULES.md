@@ -20,7 +20,7 @@ A run succeeds if the player can afterwards describe how work moves from client 
 and name one decision that constrained a later one.
 
 **P4 — Respect the player's time.**
-Ten missions, ~25 minutes. Any new mission must displace an existing one unless it teaches
+Ten missions, ~35 minutes. Any new mission must displace an existing one unless it teaches
 something genuinely absent.
 
 ---
@@ -43,9 +43,19 @@ The teaching lives in the consequence, never in the scoring.
 → *Checked by* `validateContent()` — a mission without a lesson fails.
 
 **G3 — Never reveal a projected outcome before the decision.**
-Before committing, the player may see **cost and commitment** (`commits`). They may never see
-predicted effect. No "+12 Winability", no "Risk: Medium", no ⭐ *Recommended*.
-→ *Checked by* `validateContent()` — outcome-predicting words in `commits` fail the build.
+Before committing, the player may see **cost and commitment** — `commits`, `pros`, `cons`,
+and `cost` (time and investment, 1–3). They may never see predicted effect. No
+"+12 Winability", no "Risk: Medium", no ⭐ *Recommended*, no impact preview per option.
+→ *Checked by* `validateContent()` — outcome-predicting words in `commits`, `description`,
+`pros`, `cons`, `tip`, `objective` or any `consider` line fail the build.
+
+**G3a — Pros and cons come in pairs.**
+An option that lists upsides and no costs presents itself as the answer. So does the reverse.
+→ *Checked by* `validateContent()` — one without the other fails.
+
+**G3b — `consider` asks; it never answers.**
+The right rail poses the open questions a colleague would ask. If a line can be read as a
+recommendation, rewrite it as a question. Minimum two — one reads as an instruction.
 
 **G4 — Every decision carries a real trade-off.**
 Free, reversible and strictly better is not a decision. Delete it or price it.
@@ -104,8 +114,14 @@ colour alone (each dimension has a glyph as well as a hue).
 → *Partly checked by* `verify.mjs` — any control without an accessible name fails.
 
 **E7 — Verify by running, not by claiming.**
-A screen is not done when it compiles. It is done when it has been loaded in a real browser
-and screenshotted.
+A screen is not done when it compiles. It is done when it has been loaded in a real browser,
+screenshotted, and *looked at* — at 1440×900 and at 390×844.
+
+**E8 — The game shell is required furniture, not decoration.**
+Every mission renders a chapter stepper, a mission rail (checklist, objective, estimated
+time, advisor), a factor read-out, open questions and a tip. A mission that omits one leaves
+a visible hole, so the fields are required rather than optional.
+→ *Checked by* `validateContent()` for the content, and by `verify.mjs` for the render.
 
 ---
 

@@ -180,6 +180,31 @@ export function validateContent(content: Content): Issue[] {
     if (!m.objective) err(m.id, "missing objective");
     if (!m.question) err(m.id, "missing question");
 
+    /* Briefing furniture. The shell renders a rail, a tip bar and a consider
+       panel on every mission; a missing one leaves a visible hole. */
+    if (!m.eyebrow) err(m.id, "missing eyebrow — the shell renders one above every headline");
+    if (!m.minutes || m.minutes < 1) err(m.id, "minutes must be a positive estimate");
+    if (!m.tip) err(m.id, "missing tip — the action bar renders one on every mission");
+    if (!m.advisor) err(m.id, "missing advisor — the left rail renders one on every mission");
+    if (!m.consider || m.consider.length < 2) {
+      err(m.id, "needs at least two things to consider — one reads as an instruction");
+    }
+
+    /* Every pre-decision surface is leak-checked, not just `commits`. Anything
+       the player reads BEFORE choosing may describe cost, never effect. */
+    const leakCheck = (text: string | undefined, where: string, field: string) => {
+      if (!text) return;
+      const lower = text.toLowerCase();
+      for (const term of OUTCOME_LEAK_TERMS) {
+        if (lower.includes(term)) {
+          err(where, `"${field}" predicts the outcome ("${term}") — describe cost, never effect`);
+        }
+      }
+    };
+    for (const c of m.consider ?? []) leakCheck(c, m.id, "consider");
+    leakCheck(m.tip, m.id, "tip");
+    leakCheck(m.objective, m.id, "objective");
+
     if (m.kind === "choice") {
       if (m.options.length < 2) err(m.id, "a choice needs at least two options");
       const optIds = new Set<string>();
@@ -194,16 +219,31 @@ export function validateContent(content: Content): Issue[] {
             "last outcome is conditional — every option needs an unconditional fallback",
           );
         }
-        if (o.commits) {
-          const lower = o.commits.toLowerCase();
+        const optLeak = (text: string | undefined, field: string) => {
+          if (!text) return;
+          const lower = text.toLowerCase();
           for (const term of OUTCOME_LEAK_TERMS) {
             if (lower.includes(term)) {
               err(
                 `${m.id}/${o.id}`,
-                `"commits" predicts the outcome ("${term}") — it may describe cost, never effect`,
+                `"${field}" predicts the outcome ("${term}") — it may describe cost, never effect`,
               );
             }
           }
+        };
+        optLeak(o.commits, "commits");
+        optLeak(o.description, "description");
+        for (const p of o.pros ?? []) optLeak(p, "pros");
+        for (const c of o.cons ?? []) optLeak(c, "cons");
+
+        // Cards render pros above cons. One without the other reads as a verdict.
+        const hasPros = (o.pros?.length ?? 0) > 0;
+        const hasCons = (o.cons?.length ?? 0) > 0;
+        if (hasPros !== hasCons) {
+          err(
+            `${m.id}/${o.id}`,
+            "an option lists pros without cons (or the reverse) — that presents it as the right answer",
+          );
         }
       }
     }
@@ -243,6 +283,51 @@ export function validateContent(content: Content): Issue[] {
   }
   for (const id of actualMissions) {
     if (!content.missionOrder.includes(id)) err("content", `mission "${id}" is missing from missionOrder`);
+  }
+
+  /* ── chapters ────────────────────────────────────────────────
+   * The stepper and the left-rail checklist are both generated from this,
+   * so a mismatch shows up as a mission with no step name or a chapter
+   * that never lights up. */
+
+  if (content.chapters.length === 0) err("content", "no chapters — the stepper would be empty");
+
+  const claimed = new Map<string, number>();
+  for (const ch of content.chapters) {
+    const where = `chapter ${ch.number}`;
+    if (!ch.label || !ch.title) err(where, "chapter needs both a short label and a title");
+    if (ch.missionIds.length === 0) err(where, "chapter contains no missions");
+    if (ch.steps.length !== ch.missionIds.length) {
+      err(
+        where,
+        `${ch.steps.length} step names for ${ch.missionIds.length} missions — the rail checklist needs one each`,
+      );
+    }
+    for (const id of ch.missionIds) {
+      const mission = content.nodes[id];
+      if (!mission || !isMission(mission)) {
+        err(where, `lists "${id}", which is not a mission`);
+        continue;
+      }
+      if (mission.chapter !== ch.number) {
+        err(where, `lists "${id}", but that mission declares chapter ${mission.chapter}`);
+      }
+      if (claimed.has(id)) {
+        err(where, `"${id}" is already claimed by chapter ${claimed.get(id)}`);
+      }
+      claimed.set(id, ch.number);
+    }
+  }
+  for (const id of actualMissions) {
+    if (!claimed.has(id)) err("content", `mission "${id}" belongs to no chapter`);
+  }
+
+  const chapterNumbers = new Set(content.chapters.map((c) => c.number));
+  for (const node of nodes) {
+    if (node.kind === "ending") continue;
+    if (!chapterNumbers.has(node.chapter)) {
+      err(node.id, `declares chapter ${node.chapter}, which is not in content.chapters`);
+    }
   }
 
   return issues;
