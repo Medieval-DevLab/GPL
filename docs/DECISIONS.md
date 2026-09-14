@@ -1,0 +1,127 @@
+# Decision log
+
+Every non-obvious call made while building GPL, why it was made, and what it cost.
+Newest first. Superseded direction is kept rather than deleted — knowing what was rejected,
+and why, is most of the value of a log like this.
+
+---
+
+## D-012 · Causal threads are derived, never authored per-run
+The closing debrief shows the specific chains the player created ("you met them on price →
+you could not fund the mitigation → month five went underwater"). Each thread declares the
+outcomes that must *both* have fired before it can appear, so a thread can never claim a
+causal link the player did not actually cause. No generated prose, no approximation.
+**Cost:** threads must be hand-written per pairing. Nine exist; more can be added cheaply.
+
+## D-011 · No `motion` / animation library
+Considered `motion` (the framer-motion successor, React 19 compatible). Skipped. Every beat
+this game needs — meter fill, staggered reveal, card lift, the resolving shimmer — is a CSS
+transition or keyframe. Adding a 30 kB animation runtime to avoid writing twelve lines of CSS
+is a bad trade in a game whose entire bundle is 94 kB gzipped.
+**Reversible:** yes, trivially, if card-stack gestures are ever added.
+
+## D-010 · Stylesheet must use explicit cascade layers
+Found via screenshot, not via types: the "Begin" button rendered with dark text on purple.
+Cause — a bare `button { color: inherit }` in base CSS is *unlayered*, and unlayered CSS
+outranks every layered Tailwind utility, so it silently beat `text-white`. All base styles
+now live in `@layer base`, components in `@layer components`, animation helpers in
+`@layer utilities`.
+**Lesson worth keeping:** typecheck and tests were both green while this was broken. Only
+looking at the rendered page caught it.
+
+## D-009 · Exhaustive state sweep, deduplicated on flags only
+The naive sweep enumerated ~4.1 million playthroughs and exhausted the Node heap. Keying the
+dedup on flags alone (ignoring dimension values) collapses it to a few thousand states, and is
+**exact** here because no branch gates on a numeric value — only on flags.
+`validateContent()` emits a warning if a dimension gate is ever introduced, because the sweep
+would silently stop being exhaustive at that point.
+**Cost:** a future dimension-gated branch requires widening the dedup key.
+
+## D-008 · Dominance detection as the mechanical test for "no right answer"
+An option whose *worst* outcome beats another option's *best* outcome on all three dimensions
+is a fake choice. The test caught three real ones on first run: at mission 1, Northwind
+strictly dominated both alternatives; at mission 3, the point-of-view play strictly dominated
+the campaign. Fixed by giving the alternatives genuine compensating upside rather than by
+weakening the strong option — chasing a stretch client really does teach the team something,
+and a broad campaign really is the option that does not burn senior people.
+**This is the single most valuable check in the suite.** Without it, "no right answers" is an
+aspiration rather than a property.
+
+## D-007 · Situation text varies by state
+The mission 9 risk review names *the risk the player's own proposal created*, and the mission
+10 crisis names *the promise they actually made*. Implemented as `variants` on a mission —
+first matching condition wins, static `situation` is the fallback.
+**Why:** without this, the payoff mission reads as a generic event rather than as a
+consequence, and the whole compounding design is invisible at exactly the moment it matters.
+
+## D-006 · Ten missions, not twenty-one
+The earlier direction specified 21 missions across 5–6 chapters in a two-hour session. At a
+realistic 5–6 minutes per mission that is nearly three hours, and much of it was repetition —
+several missions taught the same thing at different points in the value chain. GPL covers each
+of the six stages exactly once, plus the four pivotal moments (qualification, competitor
+event, pricing pressure, risk review). Ten missions, ~25 minutes, no redundancy.
+**Cost:** less total content. **Benefit:** it gets finished.
+
+## D-005 · No randomness anywhere
+Uncertainty comes entirely from information the player does not have. No dice, no probability
+rolls, no hidden variance.
+**Why:** a player who can attribute a bad outcome to luck learns nothing from it, and a game
+built to teach through consequence cannot afford dismissible results. It also makes the whole
+run reproducible and the test suite exact.
+**Cost:** replay variety must come from branching and from what the player chooses to
+investigate, rather than from variance. That is a better source anyway.
+
+## D-004 · Pure client-side: Vite + React + TypeScript + Tailwind
+No backend, no database, no auth, no accounts. Progress in `localStorage`. Ships as static
+files.
+**Why:** single-player with no persistence requirement has no honest need for a server, and
+every piece of infrastructure added here would be infrastructure to maintain, secure and host.
+Rejected: Next.js (server features unused), the existing `C:\mpl` stack (its Prisma/Postgres/
+auth layer exists to serve a multiplayer league that no longer exists).
+
+## D-003 · Greenfield, with principles salvaged from `C:\mpl` rather than code
+The predecessor is a mature Next.js/Prisma B2B marketing *simulation*. Almost none of its game
+is in scope now. What was taken:
+- **Determinism as a discipline**, and specifically its hard-won rule that *randomness must
+  not be the only source of uncertainty, because pure noise destroys attribution* — which is
+  what led to D-005 removing randomness entirely.
+- **"Advisory, never blocking"** — a simulation that prevents a bad decision cannot teach that
+  it was bad.
+- **The variance-bridge shape** — *what you chose → what happened → why → what changed* — now
+  the fixed structure of every consequence screen.
+- **"Never invent a number"** and **one model, one answer**.
+- The design tokens (`#6D35E8`, Inter, the 8px scale).
+
+What was left behind: attraction/power-share maths, segments, capabilities, levers, Enterprise
+Value, Rule of 40, bots, the league, and the entire executive-simulator framing.
+
+## D-002 · Single-player
+No teams, no facilitator, no cohort, no multiplayer sync.
+**Why:** the loop has to be proven engaging for one person before any of that is worth
+building, and team play was adding real-time synchronisation complexity to a product whose
+core mechanic had never been played by anyone.
+**Not closed:** team play remains a reasonable v2. The engine is pure and serialisable, so
+the state is already in a shape that could be shared.
+
+## D-001 · Reigns, not Markstrat
+The north star is a tiny decision surface, a few meters in visible tension, immediate
+consequence, and a run that finishes in one sitting — not an executive dashboard.
+The supplied mockups were treated as reference, not as specification, on instruction.
+
+---
+
+## Superseded
+
+**The team-based two-hour simulation.** An earlier pass in this session produced a PRD for a
+16-mission, cohort-play, facilitator-led product with a behavioural analytics layer. That
+direction was corrected by the product owner before any of it was built: GPL is single-player,
+shorter, and simpler. Those documents were removed rather than archived, because a plausible
+but wrong spec sitting next to a correct one is a trap for the next reader.
+
+Two findings from that pass survive and are recorded here because they will recur:
+1. **Content is the critical path, not code.** Ten missions with branching consequences is
+   roughly 120 authored pieces of business prose. The engine took hours; the writing is the
+   expensive part and always will be.
+2. **Team play and individual behavioural assessment undermine each other.** If people suspect
+   they are being individually profiled, candour drops and the bonding objective dies. If team
+   play is ever added, keep analytics at team level.

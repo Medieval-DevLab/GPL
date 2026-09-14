@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+
+# Regenerable verification evidence — `npm run verify` recreates all of it.
+docs/screenshots/
