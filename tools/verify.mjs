@@ -15,14 +15,39 @@ import { mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 
 const BASE = process.argv[2] ?? "http://localhost:5173";
-const SHOTS = path.resolve("docs/screenshots");
 const MAX_STEPS = 80;
+
+// GPL_VIEWPORT=390x844 npm run verify   → phone-width pass into docs/screenshots-390
+const [vw, vh] = (process.env.GPL_VIEWPORT ?? "1440x900").split("x").map(Number);
+const VIEWPORT = { width: vw || 1440, height: vh || 900 };
+const SHOTS = path.resolve(
+  VIEWPORT.width === 1440 ? "docs/screenshots" : `docs/screenshots-${VIEWPORT.width}`,
+);
 
 const problems = [];
 let shotIndex = 0;
 
+/**
+ * Screenshot after entry animations have settled.
+ *
+ * Without the wait, staggered content is still at opacity 0 and the capture
+ * silently shows a half-rendered screen — which looks exactly like missing
+ * content and wasted real time chasing a bug that was not there.
+ */
 async function shot(page, name) {
   shotIndex += 1;
+  await page.waitForTimeout(450);
+  await page
+    .evaluate(() => {
+      // Infinite animations (the resolving shimmer) never settle, so exclude them
+      // or this waits forever.
+      const finite = document.getAnimations().filter((a) => {
+        const timing = a.effect?.getComputedTiming?.();
+        return timing && timing.iterations !== Infinity;
+      });
+      return Promise.all(finite.map((a) => a.finished.catch(() => undefined)));
+    })
+    .catch(() => undefined);
   const file = path.join(SHOTS, `${String(shotIndex).padStart(2, "0")}-${name}.png`);
   await page.screenshot({ path: file, fullPage: true });
   console.log(`   📸 ${path.basename(file)}`);
@@ -41,7 +66,7 @@ async function main() {
   await mkdir(SHOTS, { recursive: true });
 
   const browser = await chromium.launch();
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const context = await browser.newContext({ viewport: VIEWPORT });
   const page = await context.newPage();
 
   page.on("console", (m) => {
@@ -188,7 +213,9 @@ async function main() {
     for (const p of problems) console.error(`  · ${p}`);
     process.exit(1);
   }
-  console.log(`\n✓ full playthrough clean — ${shotIndex} screenshots in docs/screenshots\n`);
+  console.log(
+    `\n✓ full playthrough clean at ${VIEWPORT.width}×${VIEWPORT.height} — ${shotIndex} screenshots in ${path.relative(process.cwd(), SHOTS)}\n`,
+  );
 }
 
 main().catch((e) => {

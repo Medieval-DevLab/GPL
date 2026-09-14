@@ -116,14 +116,17 @@ export function StageRail({ current }: { current: StageId | null }) {
   const currentIndex = current ? STAGES.findIndex((s) => s.id === current) : -1;
 
   return (
-    <ol className="flex items-center gap-1" aria-label="Progress through the client journey">
+    <ol
+      className="flex items-center gap-1 overflow-x-auto"
+      aria-label="Progress through the client journey"
+    >
       {STAGES.map((s, i) => {
         const done = currentIndex > i;
         const active = currentIndex === i;
         return (
-          <li key={s.id} className="flex items-center gap-1">
+          <li key={s.id} className="flex shrink-0 items-center gap-1">
             <span
-              className="rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors duration-300"
+              className="whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors duration-300"
               style={{
                 background: active
                   ? "var(--color-accent)"
