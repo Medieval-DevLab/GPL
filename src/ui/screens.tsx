@@ -75,7 +75,9 @@ export function TitleScreen({
           {
             icon: "scale" as const,
             t: "Every option is defensible",
-            d: "Every option is defensible. Whether it works depends on what you know and what you already promised.",
+            /* This used to open by repeating its own heading verbatim, on the first
+               screen anyone reads. */
+            d: "Whether one works depends on what you know by then, and what you have already promised.",
           },
           {
             icon: "target" as const,

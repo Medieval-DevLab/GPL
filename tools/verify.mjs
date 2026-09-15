@@ -39,6 +39,8 @@ const SHOTS = path.resolve(
 );
 
 const problems = [];
+/* Fit overruns measured below the enforcement height: reported, not fatal. */
+const overflows = [];
 let shotIndex = 0;
 
 async function shot(page, name) {
@@ -63,9 +65,21 @@ async function shot(page, name) {
   console.log(`   📸 ${path.basename(file)}`);
 }
 
-/** The console rule, as a test. */
+/**
+ * The console rule, as a test.
+ *
+ * `ENFORCE_FIT` requires a viewport at least 1000px tall and the default is 900, so for
+ * every run of the documented workflow this function returned on its first line. The
+ * fits-one-screen rule — which the docstring at the top of this file calls what separates
+ * the console from a form — has not been checked by the mandatory gate at all, and screens
+ * do overflow at 1440×900: a decide screen by 26px, a consequence by 70px, the ending by
+ * 1,867px. A gate that skips itself is worse than no gate, because it reports green.
+ *
+ * So the measurement now always runs. Below the enforcement height it reports rather than
+ * fails, because the rule is authored for a taller screen and turning the default run red
+ * would just get this flag flipped back. The numbers being visible is the point.
+ */
 async function checkFit(page, where) {
-  if (!ENFORCE_FIT) return;
   const fit = await page.evaluate(() => {
     const el = document.querySelector("[data-work-area]");
     if (!el) return null;
@@ -77,10 +91,11 @@ async function checkFit(page, where) {
   }
   const over = fit.scroll - fit.client;
   if (over > 4) {
-    problems.push(
+    const note =
       `${where}: working area overflows by ${over}px (${fit.scroll} in ${fit.client}). ` +
-        `A mission must fit one screen — see docs/UI-AUDIT.md F1.`,
-    );
+      `A mission must fit one screen — see docs/UI-AUDIT.md F1.`;
+    if (ENFORCE_FIT) problems.push(note);
+    else overflows.push(note);
   }
 }
 
@@ -150,6 +165,7 @@ async function main() {
 
     if ((await page.getByText("How it ended", { exact: true }).count()) > 0) {
       await page.waitForTimeout(450);
+      await checkFit(page, "the ending");
       await shot(page, "ending");
       console.log("\n✓ reached the ending");
       break;
@@ -247,6 +263,7 @@ async function main() {
       }
 
       if (consequences <= 2 || consequences === 16) {
+        await checkFit(page, `consequence ${consequences}`);
         await shot(page, `consequence-${consequences}`);
       }
       await next.click();

@@ -6,6 +6,13 @@ You have just been handed your first client to win. A company you have never met
 to become a promise someone has to keep. Sixteen decisions stand between those two things.
 Roughly 70 minutes, start to finish.
 
+**Needs a laptop or desktop browser, at least 1024px wide.** The brief, your options and
+where you stand are meant to be read side by side, and below that width there is no
+honest way to show them at once — so narrow windows get a short notice rather than a
+layout nobody designed. A run in progress is saved in the browser either way. A real
+small-screen design is a precondition for deploying this as required training, not a
+nice-to-have; see `D-041`.
+
 ```
 Client → Lead → Opportunity → Solution → Deal → Delivery
 ```

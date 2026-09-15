@@ -74,7 +74,11 @@ export const DIMENSION_META: Record<
   },
   profit: {
     label: "Profitability",
-    question: "Should we win it?",
+    /* "Should we win it?" was wrong, and wrong in a way that matters: that is the
+       strategic-value question, of which margin is one input among several. It made the
+       beachhead trade — thin margin, high strategic value, take it anyway — unaskable,
+       and the game punishes it. Flagged by the pursuit partner on the panel. */
+    question: "Is it worth winning?",
     glyph: "●",
     icon: "coins",
     fillVar: "--color-profit-solid",

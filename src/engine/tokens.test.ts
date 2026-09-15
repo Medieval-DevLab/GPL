@@ -176,6 +176,49 @@ describe("colour discipline", () => {
   });
 });
 
+/**
+ * Artwork is content, and content integrity is checkable.
+ *
+ * Five portraits shipped for four advisors and a sponsor. All five were crops of the same
+ * woman; `portrait-arjun.webp` was a photograph of a woman rendered beside a male-named
+ * character on every Chapter 3 brief; and `portrait-sarah.webp` was referenced nowhere
+ * while the client sponsor — who speaks four verbatim quotes — was the only character
+ * without a face. Typecheck, 45 tests and 45 screenshots all passed.
+ *
+ * Nothing here can tell whether a photograph is *good*. It can tell whether an asset is
+ * orphaned and whether two characters are sharing one image, which is what went wrong.
+ */
+const artFiles = Object.keys(
+  import.meta.glob("../../public/art/*.webp", { eager: true }),
+).map((p) => p.split("/").pop()?.replace(/\.webp$/, "") as string);
+
+const storyModules = import.meta.glob("../content/story.ts", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
+const storySource = Object.values(storyModules)[0] as string;
+
+describe("artwork", () => {
+  it("loaded the manifest", () => {
+    expect(artFiles.length).toBeGreaterThan(10);
+    expect(storySource.length).toBeGreaterThan(10_000);
+  });
+
+  it("ships no asset that nothing references", () => {
+    const orphans = artFiles.filter((name) => !storySource.includes(`"${name}"`));
+    expect(orphans).toEqual([]);
+  });
+
+  it("gives every character their own portrait", () => {
+    const portraits = artFiles.filter((n) => n.startsWith("portrait-"));
+    expect(portraits.length).toBeGreaterThan(1);
+    // Distinct files is necessary but not sufficient — they were distinct files of one
+    // person. Byte-identity is what a copy-paste produces, so it is worth asserting.
+    expect(new Set(portraits).size).toBe(portraits.length);
+  });
+});
+
 describe("the tokens themselves", () => {
   it("declares the three dimension triads and the single risk hue", () => {
     for (const d of ["win", "profit", "deliver"]) {

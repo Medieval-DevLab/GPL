@@ -12,6 +12,8 @@
  * rather than aspirational.
  */
 
+import { useEffect, useState } from "react";
+
 import {
   BADGE_META,
   DIMENSIONS,
@@ -111,17 +113,52 @@ export function ChapterStepper({
 
 /* ───────────────────────────── console frame ───────────────────────────── */
 
+/**
+ * Discarding the run takes two deliberate activations.
+ *
+ * This is the most destructive control in the product and it was the easiest to hit: a
+ * single unconfirmed click that clears `localStorage`, sitting beside the score readout
+ * players are drawn to — and, because the header comes first in the DOM, it was **tab
+ * stop #1 on all 56 screens**. Four reviewers found it independently. A run is around 70
+ * minutes; anyone with a tremor, a switch device or a stray Enter lost all of it.
+ *
+ * Confirming in place rather than in a modal is deliberate: a dialogue is a new
+ * focus-management surface and a new way to trap a keyboard user, for a decision that
+ * needs one bit of confirmation.
+ */
+function StartOver({ onRestart }: { onRestart: () => void }) {
+  const [armed, setArmed] = useState(false);
+
+  useEffect(() => {
+    if (!armed) return;
+    // Disarm on its own, so a mis-click does not leave a live trigger sitting there.
+    const t = window.setTimeout(() => setArmed(false), 4000);
+    return () => window.clearTimeout(t);
+  }, [armed]);
+
+  return (
+    <button
+      onClick={() => (armed ? onRestart() : setArmed(true))}
+      onBlur={() => setArmed(false)}
+      aria-label={armed ? "Confirm starting over. This discards your run." : "Start over"}
+      className={`rounded-lg px-2.5 py-1.5 text-[12px] font-medium transition-colors ${
+        armed
+          ? "bg-(--color-risk-tint) text-(--color-risk-text)"
+          : "text-(--color-muted) hover:bg-(--color-canvas-deep) hover:text-(--color-ink)"
+      }`}
+    >
+      {armed ? "Discard this run?" : "Start over"}
+    </button>
+  );
+}
+
 export function TopBar({
   chapters,
   currentChapter,
-  score,
-  showScore,
   onRestart,
 }: {
   chapters: Chapter[];
   currentChapter: number;
-  score: number;
-  showScore: boolean;
   onRestart: () => void;
 }) {
   return (
@@ -146,24 +183,18 @@ export function TopBar({
           <ChapterStepper chapters={chapters} current={currentChapter} />
         </div>
 
+        {/* There used to be a "Score" here, the mean of the three meters, appearing from
+            consequence 1 onward in the most persistent slot on screen.
+
+            Four reviewers asked independently for its deletion and they were right. It
+            contradicted the game's own position — the debrief deliberately drops a letter
+            grade because "a score invites the player to optimise the grader" — it
+            duplicated the meters two columns away, it read 78 for a run with
+            Profitability at 34, and it was the surface a meter-greedy policy optimised to
+            100/100/100 without reading a word. Invariant furniture should be invariant,
+            and a grader should not be the thing that never leaves the screen. */}
         <div className="ml-auto flex shrink-0 items-center gap-4">
-          {showScore && (
-            <div className="flex items-center gap-2">
-              <span aria-hidden="true" className="text-(--color-warn)">
-                <Icon name="trophy" size={17} />
-              </span>
-              <span className="text-[15px] font-medium text-(--color-ink-soft)">Score</span>
-              <span className="text-[18px] font-bold tabular-nums text-(--color-accent-deep)">
-                {score}
-              </span>
-            </div>
-          )}
-          <button
-            onClick={onRestart}
-            className="rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-(--color-muted) transition-colors hover:bg-(--color-canvas-deep) hover:text-(--color-ink)"
-          >
-            Start over
-          </button>
+          <StartOver onRestart={onRestart} />
         </div>
       </header>
 
@@ -740,8 +771,14 @@ export function ActionBar({
   /** left-hand content — the prediction strip on a decide screen */
   children?: React.ReactNode;
 }) {
+  /* `flex-wrap` matters more than it looks. Three children with fixed widths — a 300px
+     advisor card, the prediction strip and a 280px button — give this bar a ~640px hard
+     minimum, and the console shell is `overflow-hidden`. Below about 660px the primary
+     action was therefore CLIPPED rather than wrapped: 250px of it gone at 390px wide,
+     with no scrollbar, and focusing a prediction chip scrolled the whole application
+     sideways. `gap-y-2` was already here, so wrapping was always the intent. */
   return (
-    <div data-region="commit" className="flex min-h-[66px] shrink-0 items-center gap-x-5 gap-y-2 border-t border-(--color-line) bg-(--color-surface) px-5 py-2.5">
+    <div data-region="commit" className="flex min-h-[66px] shrink-0 flex-wrap items-center gap-x-5 gap-y-2 border-t border-(--color-line) bg-(--color-surface) px-5 py-2.5">
       {aside && (
         <div className="flex w-[300px] shrink-0 items-center gap-3 rounded-xl border border-(--color-line) px-3.5 py-2.5">
           {aside.photo ? (

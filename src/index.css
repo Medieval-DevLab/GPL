@@ -425,9 +425,16 @@
   background: var(--color-surface-hover);
 }
 
-/* Selected must be unmistakable at a glance: purple rim, tinted fill, and a
-   solid bar down the leading edge. */
-.choice[data-selected="true"] {
+/* Selected must be unmistakable at a glance: ink rim and a tinted fill.
+
+   `:not(:disabled)` is not decoration — it raises this to the same specificity as
+   `.choice:hover:not(:disabled)` above, and being declared later it now wins. Without it
+   hover won (0,3,0 against 0,2,0), and since the pointer is necessarily on the card the
+   player just clicked, the selected state was only ever visible after the mouse left.
+   The game was misreporting the player's own input at the moment of commitment, in the
+   one object repeated 45 times — and the screenshot suite could not see it, because the
+   harness never puts the mouse where a player's mouse is. */
+.choice[data-selected="true"]:not(:disabled) {
   border-color: var(--color-brand-solid);
   border-width: 2px;
   background: var(--color-surface-selected);

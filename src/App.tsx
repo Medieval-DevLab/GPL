@@ -26,7 +26,12 @@ import {
 } from "./engine/types";
 import { ConsequenceScreen, ResolvingScreen } from "./ui/consequence";
 import { BriefBody, DecideBody } from "./ui/mission";
-import { EndingScreen, InterludeScreen, SetupScreen, TitleScreen } from "./ui/screens";
+import {
+  EndingScreen,
+  InterludeScreen,
+  SetupScreen,
+  TitleScreen,
+} from "./ui/screens";
 import {
   ActionBar,
   Console,
@@ -34,14 +39,15 @@ import {
   MissionRail,
   PredictionStrip,
   TopBar,
-  scoreOf,
 } from "./ui/shell";
 
 const STORAGE_KEY = "gpl.save.v3";
 const content = story;
 
 function chapterFor(number: number): Chapter {
-  return content.chapters.find((c) => c.number === number) ?? content.chapters[0];
+  return (
+    content.chapters.find((c) => c.number === number) ?? content.chapters[0]
+  );
 }
 
 function loadSave(): GameState | null {
@@ -50,7 +56,12 @@ function loadSave(): GameState | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as GameState;
     // Cheap sanity check — a save from older content must not half-load.
-    if (!parsed || typeof parsed.nodeId !== "string" || !content.nodes[parsed.nodeId]) return null;
+    if (
+      !parsed ||
+      typeof parsed.nodeId !== "string" ||
+      !content.nodes[parsed.nodeId]
+    )
+      return null;
     if (parsed.phase === "title") return null;
     return parsed;
   } catch {
@@ -58,8 +69,73 @@ function loadSave(): GameState | null {
   }
 }
 
+/**
+ * Is the window wide enough for the console?
+ *
+ * A media query rather than `lg:hidden`, because hiding with CSS leaves the narrow-screen
+ * heading in the DOM at every width — two `h1`s on every screen, which is an accessibility
+ * defect in its own right and broke the browser harness, whose first `h1` was suddenly an
+ * invisible one. One tree renders, not two.
+ */
+function useWideEnough(): boolean {
+  const query = "(min-width: 1024px)";
+  const [wide, setWide] = useState(() =>
+    typeof window === "undefined" ? true : window.matchMedia(query).matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const onChange = (e: MediaQueryListEvent) => setWide(e.matches);
+    mq.addEventListener("change", onChange);
+    setWide(mq.matches);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return wide;
+}
+
+/**
+ * Below 1024px the game is not supported, and says so.
+ *
+ * The console is six regions visible at once by design; the option card alone is five
+ * information layers in a 274px column. At 390px the whole thing was rendering as a
+ * 2,700px vertical stack with the primary action clipped and the page silently scrolled
+ * 250px sideways inside an `overflow-hidden` shell — a layout nobody designed, which
+ * looked supported.
+ *
+ * The panel split on this. The UX reviewer's position — a reflow nobody designed is the
+ * one dishonest option — is what ships, because a phone architecture is a second design
+ * to author and test. The accessibility reviewer's objection is recorded and stands: a
+ * README line is not a reasonable adjustment, so a real mobile layout is a precondition
+ * for any mandatory deployment, not a nice-to-have. Verified clean at 1024×768 and up.
+ */
+function NarrowScreen() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
+      <span
+        aria-hidden="true"
+        className="flex h-11 w-11 items-center justify-center rounded-[13px] text-[13px] font-bold text-white"
+        style={{ background: "var(--color-brand-solid)" }}
+      >
+        GPL
+      </span>
+      <h1 className="text-[24px] font-bold leading-tight text-(--color-text-strong)">
+        This one needs a bigger screen
+      </h1>
+      <p className="max-w-[34ch] text-[15px] leading-relaxed text-(--color-text-muted)">
+        GPL puts the brief, your options and where you stand side by side, which
+        needs a laptop or desktop window at least 1024px wide.
+      </p>
+      <p className="max-w-[34ch] text-[13px] text-(--color-text-subtle)">
+        Nothing is lost — a run in progress is saved in this browser and will be
+        waiting.
+      </p>
+    </div>
+  );
+}
+
 export default function App() {
-  const [state, setState] = useState<GameState>(() => createInitialState(content));
+  const [state, setState] = useState<GameState>(() =>
+    createInitialState(content),
+  );
   const savedRef = useRef<GameState | null>(null);
   const [hasSave, setHasSave] = useState(false);
 
@@ -82,8 +158,14 @@ export default function App() {
 
   const doAdvance = useCallback(() => setState((s) => advance(s, content)), []);
   const doCommit = useCallback(() => setState((s) => commit(s, content)), []);
-  const doToggle = useCallback((id: string) => setState((s) => toggleSelection(s, content, id)), []);
-  const doPredict = useCallback((d: DimensionId) => setState((s) => setPrediction(s, d)), []);
+  const doToggle = useCallback(
+    (id: string) => setState((s) => toggleSelection(s, content, id)),
+    [],
+  );
+  const doPredict = useCallback(
+    (d: DimensionId) => setState((s) => setPrediction(s, d)),
+    [],
+  );
   // Chapter 0 picks in two steps like everything else: choose, then confirm.
   const [advantage, setAdvantage] = useState<string | null>(null);
   const doSetup = useCallback(() => {
@@ -117,7 +199,13 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
       const tag = (e.target as HTMLElement | null)?.tagName;
-      if (tag === "BUTTON" || tag === "SUMMARY" || tag === "INPUT" || tag === "TEXTAREA") return;
+      if (
+        tag === "BUTTON" ||
+        tag === "SUMMARY" ||
+        tag === "INPUT" ||
+        tag === "TEXTAREA"
+      )
+        return;
 
       if (state.phase === "decide" && isMission(node)) {
         const index = Number.parseInt(e.key, 10);
@@ -129,10 +217,14 @@ export default function App() {
           }
           return;
         }
-        const dim = { w: "win", p: "profit", d: "deliver" }[e.key.toLowerCase()] as
-          | DimensionId
-          | undefined;
-        if (dim && DIMENSIONS.includes(dim) && selectionComplete(state, content)) {
+        const dim = { w: "win", p: "profit", d: "deliver" }[
+          e.key.toLowerCase()
+        ] as DimensionId | undefined;
+        if (
+          dim &&
+          DIMENSIONS.includes(dim) &&
+          selectionComplete(state, content)
+        ) {
           e.preventDefault();
           doPredict(dim);
           return;
@@ -145,7 +237,9 @@ export default function App() {
       }
 
       const advanceable =
-        state.phase === "interlude" || state.phase === "consequence" || state.phase === "title";
+        state.phase === "interlude" ||
+        state.phase === "consequence" ||
+        state.phase === "title";
       if (e.key === "Enter" && advanceable) {
         e.preventDefault();
         doAdvance();
@@ -167,16 +261,21 @@ export default function App() {
   }, [node]);
 
   const isLastMission =
-    isMission(node) && content.missionOrder.indexOf(node.id) === content.missionOrder.length - 1;
+    isMission(node) &&
+    content.missionOrder.indexOf(node.id) === content.missionOrder.length - 1;
+
+  const wideEnough = useWideEnough();
 
   if (state.phase === "title") {
-    return (
+    return wideEnough ? (
       <TitleScreen
         onBegin={doAdvance}
         hasSave={hasSave}
         onResume={doResume}
         chapters={content.chapters}
       />
+    ) : (
+      <NarrowScreen />
     );
   }
 
@@ -195,8 +294,6 @@ export default function App() {
     <TopBar
       chapters={content.chapters}
       currentChapter={currentChapter}
-      score={scoreOf(state.dims)}
-      showScore={state.history.length > 0}
       onRestart={doRestart}
     />
   );
@@ -223,7 +320,10 @@ export default function App() {
         }
       >
         {selected ? (
-          <PredictionStrip prediction={state.prediction} onPredict={doPredict} />
+          <PredictionStrip
+            prediction={state.prediction}
+            onPredict={doPredict}
+          />
         ) : (
           <span className="text-[13px] text-(--color-muted)">
             {mission?.kind === "choice"
@@ -246,13 +346,21 @@ export default function App() {
     bottom = <ActionBar label="Begin the chapter" onAction={doAdvance} />;
   } else if (state.phase === "setup") {
     bottom = (
-      <ActionBar label="Start the pursuit" onAction={doSetup} disabled={!advantage}>
+      <ActionBar
+        label="Start the pursuit"
+        onAction={doSetup}
+        disabled={!advantage}
+      >
         <span className="text-[13px] text-(--color-muted)">
-          {advantage ? "This is who you are for the rest of the run." : "Pick your team's strength"}
+          {advantage
+            ? "This is who you are for the rest of the run."
+            : "Pick your team's strength"}
         </span>
       </ActionBar>
     );
   }
+
+  if (!wideEnough) return <NarrowScreen />;
 
   return (
     <Console
@@ -295,11 +403,18 @@ export default function App() {
       )}
 
       {state.phase === "setup" && node.kind === "setup" && (
-        <SetupScreen node={node as Setup} chosen={advantage} onChoose={setAdvantage} />
+        <SetupScreen
+          node={node as Setup}
+          chosen={advantage}
+          onChoose={setAdvantage}
+        />
       )}
 
       {state.phase === "interlude" && node.kind === "interlude" && (
-        <InterludeScreen node={node as Interlude} chapter={chapterFor(node.chapter)} />
+        <InterludeScreen
+          node={node as Interlude}
+          chapter={chapterFor(node.chapter)}
+        />
       )}
 
       {state.phase === "resolving" && <ResolvingScreen onDone={doAdvance} />}
@@ -318,7 +433,11 @@ export default function App() {
 }
 
 function requiredCount(mission: Mission): number {
-  return mission.kind === "choice" ? 1 : mission.kind === "investigate" ? mission.slots : mission.pick;
+  return mission.kind === "choice"
+    ? 1
+    : mission.kind === "investigate"
+      ? mission.slots
+      : mission.pick;
 }
 
 /**
@@ -330,14 +449,18 @@ function discoveredFile(state: GameState) {
   for (const node of Object.values(content.nodes)) {
     if (node.kind !== "investigate") continue;
     for (const e of node.evidence) {
-      if (state.discovered.includes(e.id)) out.push({ id: e.id, label: e.label, reveals: e.reveals });
+      if (state.discovered.includes(e.id))
+        out.push({ id: e.id, label: e.label, reveals: e.reveals });
     }
   }
   return out;
 }
 
 /** What the selected option would lock in, for the rail's "If you commit" preview. */
-function selectedCommits(mission: Mission, state: GameState): string | undefined {
+function selectedCommits(
+  mission: Mission,
+  state: GameState,
+): string | undefined {
   if (mission.kind !== "choice") return undefined;
   return mission.options.find((o) => o.id === state.selection[0])?.commits;
 }

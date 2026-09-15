@@ -6,6 +6,52 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-041 · Below 1024px the game says so, rather than reflowing into a layout nobody designed
+At 390px the console rendered as a 2,700px vertical stack with the primary action **250px
+clipped** inside an `overflow-hidden` shell, and focusing a prediction chip scrolled the
+whole application sideways with no scrollbar to get back. The screenshot harness captured
+45 images of this and passed, because it checks *vertical* overflow of the working area
+and the document reports no horizontal overflow when the shell clips.
+
+That reconciliation is the finding: **`overflow: hidden` converts a reflow failure into an
+invisible clip that satisfies both WCAG 1.4.10 and this repo's own fit gate.** An
+accessibility audit scored 1.4.10 a pass at 390px, correctly, by measuring the document;
+the UX audit measured the shell and found the button unreachable.
+
+Verified clean at 1024×768, 1152×800, 1280×800 and 1366×768, so the floor is measured
+rather than assumed. Below it, a designed notice. Also fixed regardless of width:
+`[data-region=commit]` now wraps — three fixed-width children gave it a ~640px hard
+minimum, and `gap-y-2` was already present, so wrapping was always the intent.
+
+**The panel split and the dissent is recorded.** The accessibility reviewer's position is
+that "desktop-only in the README" is not available for mandatory training, because it
+reaches people on loaned and personal devices and a README line is not a reasonable
+adjustment. That is right, and it is why this entry says a small-screen design is a
+**precondition for required deployment** rather than a backlog item. What ships today is
+honest about its limits; it is not sufficient for a compliance context.
+**Cost:** phone and tablet players get a notice. **Reversible:** yes — it is one branch.
+
+## D-040 · A gate that skips itself reports green
+`tools/verify.mjs` is mandatory per `CLAUDE.md`. Its fit check opened with
+`if (!ENFORCE_FIT) return;`, where `ENFORCE_FIT = DESKTOP && VIEWPORT.height >= 1000` and
+the default viewport is **1440×900** — so for every run of the documented workflow the
+fits-one-screen rule, which the file's own docstring calls what separates the console from
+a form, returned on its first line. It was also never *called* on the consequence screens
+or the ending: the screen carrying 100% of the teaching, and the densest screen in the
+game, were both unmeasured at any height.
+
+Now it always measures, calls on every screen type, and fails at the enforcement height
+while reporting below it. Reporting rather than failing below 1000px is a deliberate
+compromise — the rule is authored for a taller screen, and making the default run red
+would simply get the flag flipped back.
+
+**One thing this did not fix, and it is worth stating.** The harness plays exactly **one
+path**, so path-dependent overflow is still invisible: an auditor measured the ending
+overflowing by 1,867px on their run, and on the harness's first-option path it measures
+739 in 739. Two other reviewers reported the ending's ledger sliced mid-word, both noting
+it was path-dependent. Multi-path rendering is the outstanding gap.
+**Cost:** none. **Reversible:** trivially.
+
 ## D-039 · Nine perspectives audited the finished game; the diagnosis was none of the four things previously fixed
 Four rounds of feedback — "feels like a form", "too much text" ×3, "too densely packed, no
 system to read the flow" — had produced four fixes: colour, copy length, the brief/decide

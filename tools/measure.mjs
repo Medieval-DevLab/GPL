@@ -296,6 +296,20 @@ async function main() {
     { id: "targets", wt: 0, get: (r) => r.targets, lo: 3, hi: 9 },
   ];
 
+  /* Each brief→decide pair, and how much of the screen survives the transition. */
+  const beatPairs = [];
+  for (let i = 0; i < rows.length - 1; i++) {
+    const a = rows[i];
+    const b = rows[i + 1];
+    if (!a.screen.startsWith("brief") || !b.screen.startsWith("decide")) continue;
+    const A = new Set((a.regionNames ?? []).filter(Boolean));
+    const B = new Set((b.regionNames ?? []).filter(Boolean));
+    if (A.size === 0 || B.size === 0) continue;
+    const shared = [...A].filter((n) => B.has(n)).length;
+    const union = new Set([...A, ...B]).size;
+    beatPairs.push({ pair: b.screen, jaccard: Math.round((shared / union) * 100) / 100 });
+  }
+
   const worst = (f) => {
     const vals = decides.map(f.get);
     // Score the median screen, and report the range so outliers are visible.
@@ -352,6 +366,35 @@ async function main() {
     );
   }
 
+  /**
+   * Factor 10 — between-beat overlap. §C specifies it, marks it "auto", and it was never
+   * implemented, so the rubric was scored out of 92 while printing "92/92 — PASS".
+   *
+   * It is the only factor measuring continuity BETWEEN screens, which makes it the one
+   * that speaks directly to "there is no system to read the flow" — and it is the one
+   * that fails. Jaccard on the `data-region` names across each brief→decide pair.
+   */
+  if (beatPairs.length) {
+    const js = beatPairs.map((p) => p.jaccard).sort((a, b) => a - b);
+    const median = js[Math.floor(js.length / 2)];
+    const inBand = median >= 0.85;
+    const got = inBand ? 3 : 0;
+    score += got;
+    maxScore += 3;
+    if (!inBand) fails.push("overlap");
+    console.log(
+      ` ${inBand ? "✓" : "✗"} ${pad("overlap", 16)} ${pad(median, 7)} target ${pad("0.85–1", 10)} range ${pad(`${js[0]}–${js[js.length - 1]}`, 12)} ${got}/3`,
+    );
+  }
+
+  /* Factor 9 — disclosure share. Also specified, also never built. Counted as unearned
+     rather than quietly omitted from the denominator, which is what produced "92/92". */
+  maxScore += 5;
+  fails.push("disclosure (not implemented)");
+  console.log(
+    ` ✗ ${pad("disclosure", 16)} ${pad("—", 7)} target ${pad("0.25–0.40", 10)} ${pad("NOT IMPLEMENTED", 12)} 0/5`,
+  );
+
   const allSizes = [...new Set(decides.flatMap((r) => r.typeSizes))].sort((a, b) => a - b);
   const halfPixel = allSizes.filter((n) => n % 1 !== 0);
   console.log(`\n type sizes across the game: ${allSizes.join(", ")}`);
@@ -361,8 +404,13 @@ async function main() {
     console.log(` brief words: ${bw[0]}–${bw[bw.length - 1]}`);
   }
 
-  console.log(`\nSCORE ${score}/${maxScore}  —  ${score >= 80 ? "PASS" : "FAIL"}`);
-  if (fails.length) console.log(`zeroed factors (build failure): ${fails.join(", ")}`);
+  /* §C: "any factor scoring zero is a failure regardless of the total". The verdict read
+     only the total, so a screen could zero the continuity factor and still be told it
+     passed — which is how "92/92 — PASS" was reported three times, on a rubric whose
+     weights summed to 92 because two factors were specified and never built. */
+  const passed = score >= 80 && fails.length === 0;
+  console.log(`\nSCORE ${score}/${maxScore}  —  ${passed ? "PASS" : "FAIL"}`);
+  if (fails.length) console.log(`zeroed factors (any one fails): ${fails.join(", ")}`);
   console.log("");
 }
 main().catch((e) => {
