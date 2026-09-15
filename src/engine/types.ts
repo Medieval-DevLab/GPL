@@ -359,6 +359,12 @@ export interface Interlude {
   eyebrow: string;
   title: string;
   body: string[];
+  /**
+   * What the player just achieved, named. The PRD asks for milestones — FIRST LEAD,
+   * FIRST DELIVERY (p. 224) — because five identical chapter cards are not a
+   * progression system.
+   */
+  milestone?: string;
   next: string;
 }
 
@@ -367,7 +373,7 @@ export interface Ending {
   id: string;
 }
 
-export type GameNode = Mission | Interlude | Ending;
+export type GameNode = Mission | Interlude | Ending | Setup;
 
 export function isMission(node: GameNode): node is Mission {
   return node.kind === "choice" || node.kind === "investigate" || node.kind === "build";
@@ -377,6 +383,7 @@ export function isMission(node: GameNode): node is Mission {
 
 export type Phase =
   | "title"
+  | "setup"
   | "interlude"
   | "decide"
   | "resolving"

@@ -4,7 +4,7 @@ import { story } from "../content/story";
 import { advance, causalThreads, createInitialState, finalVerdict, getNode } from "./engine";
 import {
   findDominantOptions,
-  openingState,
+  pastSetup,
   playMission,
   playScript,
   possibleSelections,
@@ -62,7 +62,7 @@ describe("content validity", () => {
 describe("determinism", () => {
   it("produces identical state from identical choices", () => {
     const run = (): GameState => {
-      let s = openingState(content);
+      let s = pastSetup(content);
       let guard = 0;
       while (isMission(getNode(content, s.nodeId)) && guard++ < 50) {
         const mission = getNode(content, s.nodeId);
@@ -210,7 +210,7 @@ describe("the game teaches what it claims to teach", () => {
     ["o-handover"],
   ];
 
-  const reckless = playScript(content, RECKLESS);
+  const reckless = playScript(content, RECKLESS, "s-builder");
   const considered = playScript(content, CONSIDERED);
   const discounter = playScript(content, DISCOUNTER);
 
@@ -394,15 +394,22 @@ describe("no fake choices", () => {
 });
 
 describe("engine mechanics", () => {
-  it("starts at the title and advances into the story", () => {
+  it("starts at the title, then at chapter 0", () => {
     const s0 = createInitialState(content);
     expect(s0.phase).toBe("title");
     const s1 = advance(s0, content);
-    expect(s1.phase).toBe("interlude");
+    expect(s1.phase).toBe("setup");
+  });
+
+  it("takes a starting advantage before the first mission", () => {
+    const s = pastSetup(content, "s-builder");
+    expect(s.phase).toBe("decide");
+    expect(s.flags).toContain("start:builder");
+    expect(s.dims.deliver).toBeGreaterThan(50);
   });
 
   it("will not commit without a complete selection", () => {
-    const s = openingState(content);
+    const s = pastSetup(content);
     const mission = getNode(content, s.nodeId);
     expect(isMission(mission)).toBe(true);
     // no selection made
@@ -411,7 +418,7 @@ describe("engine mechanics", () => {
   });
 
   it("records one history entry per completed mission", () => {
-    let s = openingState(content);
+    let s = pastSetup(content);
     let guard = 0;
     while (isMission(getNode(content, s.nodeId)) && guard++ < 50) {
       const mission = getNode(content, s.nodeId);

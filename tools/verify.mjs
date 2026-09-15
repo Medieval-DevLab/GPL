@@ -120,6 +120,26 @@ async function main() {
   if (!begin) throw new Error("no start button on the title screen");
   await begin.click();
 
+  // Chapter 0 — the starting advantage. Must gate on a pick, like every other beat.
+  await page.waitForTimeout(250);
+  const start = await button(page, "Start the pursuit");
+  if (!start) {
+    problems.push("no chapter 0 starting-advantage screen after the title");
+  } else {
+    if (await start.isEnabled()) {
+      problems.push("chapter 0: the pursuit could start before a team was picked");
+    }
+    const teams = page.locator("button.choice");
+    if ((await teams.count()) < 2) problems.push("chapter 0: fewer than two starting advantages");
+    await checkFit(page, "chapter 0");
+    await shot(page, "setup");
+    await teams.first().click();
+    await page.waitForTimeout(80);
+    await shot(page, "setup-selected");
+    if (!(await start.isEnabled())) problems.push("chapter 0: still blocked after picking a team");
+    await start.click();
+  }
+
   let missions = 0;
   let consequences = 0;
   let lessons = 0;

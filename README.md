@@ -2,8 +2,9 @@
 
 **A short, single-player game about how work actually moves through a consulting firm.**
 
-A client you have never met becomes a promise you have to keep. Ten decisions stand between
-those two things. Roughly 35 minutes, start to finish.
+You have just been handed your first client to win. A company you have never met is about
+to become a promise someone has to keep. Sixteen decisions stand between those two things.
+Roughly 70 minutes, start to finish.
 
 ```
 Client → Lead → Opportunity → Solution → Deal → Delivery
@@ -62,9 +63,9 @@ src/
     engine.ts      the reducer, outcome selection, verdict, causal threads
     validate.ts    content rules, enforced mechanically
     analysis.ts    exhaustive playthrough sweep + dominance detection
-    engine.test.ts 24 tests
+    engine.test.ts 30 tests
   content/
-    story.ts       all ten missions, five chapters — data, not code
+    story.ts       chapter 0 + sixteen missions, five chapters — data, not code
   ui/              React. Renders state and dispatches actions. No game rules.
     shell.tsx      the persistent frame: stepper, rails, action bar
     mission.tsx    the briefing and the option cards
@@ -86,7 +87,7 @@ reproducible from the ordered list of choices.
 |---|---|---|
 | Types | `npm run typecheck` | the usual |
 | Content + engine | `npm test` | broken narrative, unreachable outcomes, fake choices |
-| Real browser | `npm run verify` | screens that do not render, dead ends, console errors |
+| Real browser | `npm run verify` | screens that do not render, dead ends, console errors, a mission that does not fit one screen |
 
 `npm run validate` runs typecheck + tests + build together.
 
@@ -104,11 +105,16 @@ value) and then asserts:
 That last group is the real test suite. It checks the pedagogy, not the plumbing.
 
 **`npm run verify`** needs the app running (`npm run dev` in another terminal), then plays a
-complete ten-mission run in headless Chromium, screenshots all 30 beats into
+complete sixteen-mission run in headless Chromium, screenshots every beat into
 `docs/screenshots/`, and fails on any console error, any unreachable control, any briefing
-missing part of the game shell, or any button without an accessible name.
+missing part of the game shell, a Commit that was not gated on a prediction, an
+unattributed "Tip.", a broken image, or any button without an accessible name.
+
+It also enforces the console rule — **a mission must fit one screen** at the reference
+height, measured rather than eyeballed.
 
 ```bash
+GPL_VIEWPORT=1440x1024 npm run verify    # the reference window; enforces the fit rule
 GPL_VIEWPORT=390x844 npm run verify      # phone-width pass → docs/screenshots-390/
 npm run verify http://localhost:4173     # against the production build
 ```
@@ -120,13 +126,17 @@ npm run verify http://localhost:4173     # against the production build
 All content is in `src/content/story.ts` as typed data. Adding or changing a mission never
 requires touching the engine.
 
-Three kinds of mission:
+One `setup` node (chapter 0 — the starting advantage) and three kinds of mission:
 
 | Kind | The player… | Example |
 |---|---|---|
 | `choice` | picks one of 3–4 strategies | *Who do you go after?* |
 | `investigate` | spends limited slots on what to find out | *You can look into two things. Not five.* |
-| `build` | assembles from components | *Pick three things for the proposal* |
+| `build` | assembles from components, or prioritises under a cap | *Pick three things for the proposal* |
+
+An `Outcome` may also carry its own `next`, which lets a branch divert the whole game —
+that is how walking away from the deal actually ends the pursuit instead of politely
+continuing to delivery.
 
 Every mission also carries its briefing. These are **required** — the shell renders each one
 unconditionally, so a missing field is a hole in the screen, not a graceful degradation:
@@ -134,10 +144,11 @@ unconditionally, so a missing field is a hole in the screen, not a graceful degr
 | Field | Renders as |
 |---|---|
 | `eyebrow`, `minutes` | the label above the headline, and the time estimate in the rail |
-| `objective` | "Your objective" in the left rail |
-| `advisor` | a named colleague with one line of dialogue |
-| `consider` | "Things to consider" — open questions, never answers (min. 2) |
-| `tip` | the nudge in the action bar |
+| `objective` | "The brief" in the left rail |
+| `advisor` | a named colleague, with their photograph and a line of dialogue |
+| `consider` | the open questions that colleague is asking — never answers (min. 2) |
+| `tip` | their practical steer, in the action bar, attributed to them by name |
+| `prompt` | one line under the question, telling the player how to read the options |
 | `client`, `assessment` | the client profile strip and the factor bars *(optional)* |
 | `saidQuote`, `concerns` | "What they said" and "Key concerns" *(optional)* |
 

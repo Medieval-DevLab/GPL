@@ -384,9 +384,31 @@ export function validateContent(content: Content): Issue[] {
 
   const chapterNumbers = new Set(content.chapters.map((c) => c.number));
   for (const node of nodes) {
-    if (node.kind === "ending") continue;
+    // Chapter 0 deliberately sits outside the stepper, and the ending outside the
+    // chapters entirely.
+    if (node.kind === "ending" || node.kind === "setup") continue;
     if (!chapterNumbers.has(node.chapter)) {
       err(node.id, `declares chapter ${node.chapter}, which is not in content.chapters`);
+    }
+  }
+
+  /* ── chapter 0 ────────────────────────────────────────────── */
+
+  for (const node of nodes) {
+    if (node.kind !== "setup") continue;
+    if (node.options.length < 2) err(node.id, "a starting advantage needs at least two options");
+    for (const o of node.options) {
+      if (o.flags.length === 0) {
+        err(`${node.id}/${o.id}`, "a starting advantage that sets no flags is not an advantage");
+      }
+      if (o.strengths.length === 0) err(`${node.id}/${o.id}`, "missing strengths");
+      if (!o.tradeoff) {
+        err(`${node.id}/${o.id}`, "missing tradeoff — every advantage costs something");
+      }
+      const n = words(o.description);
+      if (n > BUDGET.description) {
+        err(`${node.id}/${o.id}`, `"description" is ${n} words, budget is ${BUDGET.description}`);
+      }
     }
   }
 

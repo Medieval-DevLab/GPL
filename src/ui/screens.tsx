@@ -1,9 +1,19 @@
 /** Title, chapter interludes, and the closing debrief. */
 
 import { causalThreads, finalVerdict, ledger } from "../engine/engine";
-import { BADGE_META, STAGES, type Chapter, type GameState, type Interlude } from "../engine/types";
+import {
+  BADGE_META,
+  DIMENSIONS,
+  DIMENSION_META,
+  STAGES,
+  type DimensionId,
+  type Chapter,
+  type GameState,
+  type Interlude,
+  type Setup,
+} from "../engine/types";
 import { Icon, Pill, SectionTitle } from "./icons";
-import { BadgeChip, Eyebrow, FactorGrid, PrimaryButton } from "./shell";
+import { BadgeChip, Eyebrow, FactorGrid, PrimaryButton, artUrl } from "./shell";
 
 /* ─────────────────────────── title ─────────────────────────── */
 
@@ -107,6 +117,136 @@ export function TitleScreen({
   );
 }
 
+/* ─────────────────────────── chapter 0 ─────────────────────────── */
+
+/**
+ * The starting advantage.
+ *
+ * Deliberately not styled as a mission: no rails, no prediction gate, no consequence.
+ * You are picking who you are, not deciding anything yet — and the PRD's whole argument
+ * for this screen is that a beginning state beats a tutorial (p. 55).
+ */
+export function SetupScreen({
+  node,
+  chosen,
+  onChoose,
+}: {
+  node: Setup;
+  chosen: string | null;
+  onChoose: (id: string) => void;
+}) {
+  return (
+    <div className="mx-auto flex min-h-full max-w-5xl flex-col justify-center px-5 py-8">
+      <div className="anim-fade">
+        <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
+          {node.eyebrow}
+        </p>
+        <h1 className="mt-2 text-[34px] font-bold leading-[1.1] tracking-[-0.025em] text-(--color-ink)">
+          {node.title}
+        </h1>
+        <div className="mt-3 max-w-2xl space-y-1.5">
+          {node.body.map((p, i) => (
+            <p key={i} className="text-[15px] leading-[1.55] text-(--color-ink-soft)">
+              {p}
+            </p>
+          ))}
+        </div>
+      </div>
+
+      <h2 className="mt-7 text-[20px] font-bold text-(--color-ink)">{node.question}</h2>
+
+      <div
+        className="mt-3 grid items-stretch gap-3 sm:grid-cols-3"
+        style={{ gridTemplateRows: "repeat(5, auto)" }}
+      >
+        {node.options.map((o) => {
+          const on = chosen === o.id;
+          return (
+            <button
+              key={o.id}
+              className="choice grid gap-0 !p-0 text-left"
+              style={{ gridRow: "span 5", gridTemplateRows: "subgrid" }}
+              data-selected={on}
+              aria-pressed={on}
+              onClick={() => onChoose(o.id)}
+            >
+              <div>
+                {o.image && (
+                  <img
+                    src={artUrl(o.image)}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    className="h-[96px] w-full object-cover"
+                  />
+                )}
+                <div className="-mt-6 flex justify-center">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-[48px] w-[48px] items-center justify-center rounded-full border-[3px] border-(--color-surface)"
+                    style={{
+                      background: on ? "var(--color-accent)" : "var(--color-accent-tint)",
+                      color: on ? "#fff" : "var(--color-accent)",
+                    }}
+                  >
+                    <Icon name={o.icon} size={23} />
+                  </span>
+                </div>
+              </div>
+
+              <p
+                className="px-4 pt-2 text-center text-[17px] font-bold"
+                style={{ color: on ? "var(--color-accent-deep)" : "var(--color-ink)" }}
+              >
+                {o.title}
+              </p>
+              <p className="px-4 pt-1.5 text-center text-[13px] leading-snug text-(--color-muted)">
+                {o.description}
+              </p>
+
+              <div className="px-4 pt-3">
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  {o.strengths.map((t) => (
+                    <Pill key={t} tone="good">
+                      <Icon name="check" size={11} />
+                      {t}
+                    </Pill>
+                  ))}
+                </div>
+                <p className="mt-2.5 border-t border-(--color-line) pt-2.5 text-[12px] leading-snug text-(--color-muted)">
+                  {o.tradeoff}
+                </p>
+              </div>
+
+              <div className="self-end p-4">
+                <span
+                  className="flex w-full items-center justify-center gap-1.5 rounded-[10px] border px-2 py-[7px] text-[12.5px] font-bold"
+                  style={
+                    on
+                      ? {
+                          background: "var(--color-accent)",
+                          borderColor: "var(--color-accent)",
+                          color: "#fff",
+                        }
+                      : {
+                          background: "var(--color-surface)",
+                          borderColor: "var(--color-line-strong)",
+                          color: "var(--color-accent)",
+                        }
+                  }
+                >
+                  {on ? "This is us" : "Pick this team"}
+                  <span aria-hidden="true">{on ? "✓" : "→"}</span>
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ─────────────────────────── interlude ─────────────────────────── */
 
 export function InterludeScreen({
@@ -131,7 +271,15 @@ export function InterludeScreen({
         >
           {node.chapter}
         </span>
-        <p className="eyebrow mt-5">{node.eyebrow}</p>
+        {node.milestone && (
+          <p className="mt-5">
+            <Pill tone="good">
+              <Icon name="check" size={12} />
+              {node.milestone}
+            </Pill>
+          </p>
+        )}
+        <p className={`eyebrow ${node.milestone ? "mt-3" : "mt-5"}`}>{node.eyebrow}</p>
         <h1 className="mt-2.5 text-[40px] font-bold leading-[1.08] tracking-[-0.025em] text-(--color-ink)">
           {node.title}
         </h1>
@@ -177,6 +325,68 @@ const LEDGER_COLOUR = {
   bad: "var(--color-bad)",
 } as const;
 
+/**
+ * Three arcs, one per dimension, with the run's score in the middle.
+ *
+ * The mockups put a letter grade in a ring here, and the PRD does too. We keep their
+ * geometry and drop the letter: a grade invites the player to optimise the grader, and
+ * `docs/ENGAGEMENT-MODEL.md` rejects an end-of-run rank outright. Three arcs say the same
+ * thing better anyway — you can see at a glance which one took the strain.
+ */
+function BalanceRing({ dims }: { dims: Record<DimensionId, number> }) {
+  const size = 148;
+  const c = size / 2;
+  const rings = DIMENSIONS.map((d, i) => ({
+    d,
+    r: 62 - i * 15,
+    colour: `var(${DIMENSION_META[d].varName})`,
+    value: dims[d],
+  }));
+  const score = Math.round((dims.win + dims.profit + dims.deliver) / 3);
+
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+        <g transform={`rotate(-90 ${c} ${c})`}>
+          {rings.map(({ d, r, colour, value }) => {
+            const circ = 2 * Math.PI * r;
+            return (
+              <g key={d}>
+                <circle
+                  cx={c}
+                  cy={c}
+                  r={r}
+                  fill="none"
+                  stroke="var(--color-canvas-deep)"
+                  strokeWidth={9}
+                />
+                <circle
+                  cx={c}
+                  cy={c}
+                  r={r}
+                  fill="none"
+                  stroke={colour}
+                  strokeWidth={9}
+                  strokeLinecap="round"
+                  strokeDasharray={`${(circ * value) / 100} ${circ}`}
+                />
+              </g>
+            );
+          })}
+        </g>
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-[26px] font-bold leading-none tabular-nums text-(--color-ink)">
+          {score}
+        </span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-(--color-faint)">
+          Overall
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function EndingScreen({ state, onRestart }: { state: GameState; onRestart: () => void }) {
   const verdict = finalVerdict(state.dims, state.flags);
   const threads = causalThreads(state);
@@ -193,7 +403,12 @@ export function EndingScreen({ state, onRestart }: { state: GameState; onRestart
       </div>
 
       <div className="card mt-7 p-6">
-        <FactorGrid dims={state.dims} />
+        <div className="flex flex-col items-center gap-6 sm:flex-row">
+          <BalanceRing dims={state.dims} />
+          <div className="min-w-0 flex-1">
+            <FactorGrid dims={state.dims} />
+          </div>
+        </div>
         <p className="mt-5 border-t border-(--color-line) pt-4 text-[13.5px] leading-relaxed text-(--color-muted)">
           These three pull against each other on purpose. A deal that scores full marks on all of
           them is not a sign of skill — it is a sign the game was too easy.

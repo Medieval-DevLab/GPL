@@ -20,7 +20,7 @@ A run succeeds if the player can afterwards describe how work moves from client 
 and name one decision that constrained a later one.
 
 **P4 — Respect the player's time.**
-Ten missions, ~35 minutes. Any new mission must displace an existing one unless it teaches
+Sixteen missions, ~70 minutes. Any new mission must displace an existing one unless it teaches
 something genuinely absent.
 
 ---
@@ -89,6 +89,18 @@ metrics on screen.
 Rendered so the player feels they cannot maximise all three. Never summed into a single
 player-facing number.
 
+**G9a — Walking away must sometimes be right.**
+At least one path must let the player decline the work and be vindicated for it. Without
+that, the game teaches "always accept the contract" — PRD p. 132.
+→ *Checked by* the walk-away tests: the same action must resolve `strong` on a deal that
+had gone bad and `hard` on a deal that was sound.
+
+**G9b — Advice comes from a person, never from the interface.**
+The player is a first-time pursuit lead, so a named colleague briefing them is onboarding.
+The same words in a box labelled "Tip" are condescending. Every steer is attributed, with
+a face and a job title, and the UI never speaks in its own voice.
+→ *Checked by* `verify.mjs` — an unattributed "Tip." on a decision screen fails.
+
 **G10 — No randomness.**
 No dice, anywhere. Uncertainty comes from information the player does not have. This is what
 makes every outcome attributable, and attribution is the entire teaching mechanism.
@@ -124,6 +136,12 @@ colour alone (each dimension has a glyph as well as a hue).
 **E7 — Verify by running, not by claiming.**
 A screen is not done when it compiles. It is done when it has been loaded in a real browser,
 screenshotted, and *looked at* — at 1440×900 and at 390×844.
+
+**E7a — A mission fits one screen at the reference height.**
+GPL is a console: top bar, rails, working area and action bar are visible at once and the
+working area does not scroll at 1440×1024, the mockups' own window. Below 1000px tall it
+may scroll *inside* the console — the chrome still never moves.
+→ *Checked by* `verify.mjs` `checkFit`, on every briefing.
 
 **E8a — Colour carries hierarchy; the page must be scannable without being read.**
 Section headings are `.section-title` (dark, bold, coloured icon) — never faint uppercase.

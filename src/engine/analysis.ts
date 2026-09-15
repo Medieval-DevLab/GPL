@@ -16,7 +16,14 @@
  * Pure and deterministic. Runs in the test suite.
  */
 
-import { advance, commit, createInitialState, evaluateCondition, getNode } from "./engine";
+import {
+  advance,
+  chooseSetup,
+  commit,
+  createInitialState,
+  evaluateCondition,
+  getNode,
+} from "./engine";
 import {
   DIMENSIONS,
   isMission,
@@ -148,10 +155,26 @@ export function playMission(state: GameState, content: Content, selection: strin
   return s;
 }
 
-/** The state at the first mission, past the title and opening interlude. */
+/**
+ * The state at the first decision, past the title and any opening interlude.
+ *
+ * Stops AT chapter 0 rather than through it — the starting advantage is a real branch
+ * and the sweep has to cover all of them, so it is expanded in the sweep loop.
+ */
 export function openingState(content: Content): GameState {
   let s = createInitialState(content);
   s = advance(s, content); // title -> start node
+  let guard = 0;
+  while (s.phase === "interlude" && guard++ < 20) s = advance(s, content);
+  return s;
+}
+
+/** Past chapter 0, taking the first advantage. For scripted runs that skip setup. */
+export function pastSetup(content: Content, optionId?: string): GameState {
+  let s = openingState(content);
+  const node = getNode(content, s.nodeId);
+  if (node.kind !== "setup") return s;
+  s = chooseSetup(s, content, optionId ?? (node.options[0]?.id as string));
   let guard = 0;
   while (s.phase === "interlude" && guard++ < 20) s = advance(s, content);
   return s;
@@ -232,6 +255,21 @@ export function sweep(content: Content): SweepResult {
     for (const [nodeId, states] of byNode) {
       const node = getNode(content, nodeId);
 
+      // Chapter 0: a real branch, so every starting advantage gets swept.
+      if (node.kind === "setup") {
+        for (const state of states) {
+          for (const option of node.options) {
+            let after = chooseSetup(state, content, option.id);
+            let g = 0;
+            while (after.phase === "interlude" && g++ < 20) after = advance(after, content);
+            for (const f of after.flags) result.reachableFlags.add(f);
+            const key = stateKey(after, suffix.get(after.nodeId));
+            if (!next.has(key)) next.set(key, after);
+          }
+        }
+        continue;
+      }
+
       if (!isMission(node)) {
         result.endings += states.length;
         for (const s of states) widen(result.finalRange, s.dims);
@@ -292,8 +330,12 @@ export function sweep(content: Content): SweepResult {
 /* ─────────────────── scripted playthroughs ─────────────────── */
 
 /** Play a named sequence of selections straight through. */
-export function playScript(content: Content, script: string[][]): GameState {
-  let s = openingState(content);
+export function playScript(
+  content: Content,
+  script: string[][],
+  advantage?: string,
+): GameState {
+  let s = pastSetup(content, advantage);
   for (const selection of script) {
     if (!isMission(getNode(content, s.nodeId))) break;
     s = playMission(s, content, selection);

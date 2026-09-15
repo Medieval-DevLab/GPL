@@ -151,6 +151,7 @@ function enterNode(state: GameState, content: Content, id: string): GameState {
     resolution: null,
   };
 
+  if (node.kind === "setup") return { ...base, phase: "setup" };
   if (node.kind === "interlude") return { ...base, phase: "interlude" };
   if (node.kind === "ending") return { ...base, phase: "ending" };
   return { ...base, phase: "decide" };
@@ -226,6 +227,32 @@ export function toggleSelection(state: GameState, content: Content, id: string):
   }
   if (state.selection.length >= limit) return state;
   return { ...state, selection: [...state.selection, id], prediction: null };
+}
+
+/**
+ * Chapter 0 — take your starting advantage and begin.
+ *
+ * Not a decision with a consequence, so it does not go through `commit`: there is
+ * nothing to resolve and nothing to learn from yet. The PRD's point is ownership —
+ * "a beginning state is much stronger than a tutorial" (p. 55).
+ */
+export function chooseSetup(state: GameState, content: Content, optionId: string): GameState {
+  const node = getNode(content, state.nodeId);
+  if (node.kind !== "setup" || state.phase !== "setup") return state;
+  const option = node.options.find((o) => o.id === optionId);
+  if (!option) return state;
+
+  const applied = applyEffect(
+    { dims: option.dims, flags: option.flags },
+    state.dims,
+    state.flags,
+    state.badges,
+  );
+  return enterNode(
+    { ...state, dims: applied.dims, flags: applied.flags, badges: applied.badges },
+    content,
+    node.next,
+  );
 }
 
 /** Record the player's call on which dimension this will cost most. */
@@ -394,6 +421,7 @@ export function advance(state: GameState, content: Content): GameState {
       return enterNode(state, content, to);
     }
 
+    case "setup":
     case "decide":
     case "ending":
       return state;

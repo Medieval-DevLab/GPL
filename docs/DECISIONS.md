@@ -6,6 +6,47 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-029 · The debrief ring shows balance, not a grade
+The mockups put a letter grade in a circular progress ring, and the PRD does the same
+("Round Grade B+"). `docs/ENGAGEMENT-MODEL.md` rejects an end-of-run grade outright — it
+invites the player to optimise the grader instead of reading the world.
+
+We kept the geometry and dropped the letter: three concentric arcs, one per dimension,
+with the run's score in the middle. It says more than a grade would, because you can see
+at a glance *which one took the strain* rather than being handed a verdict on yourself.
+
+## D-028 · Chapter 0 is its own node kind, not a mission
+The starting advantage has nothing to resolve and nothing to teach yet, so routing it
+through `commit` would have produced an empty consequence beat and a meaningless lesson.
+It is a `setup` node with its own phase and a `chooseSetup` action.
+
+Each advantage grants a flag that real conditions later read — a Connector starts with
+`credibility`, so they walk into the competitor mission already able to hold their nerve;
+a Builder starts with `has:data`, which is what makes an outcome-based deal honest in
+`m6b`. The choice therefore keeps mattering rather than being flavour.
+**Cost:** the sweep has to branch on it, and `playScript` needed an advantage parameter.
+It also sits outside the chapter stepper, so `validate.ts` exempts it from the chapter
+check. PRD p. 55: "starting with a beginning state is much stronger than starting with a
+tutorial."
+
+## D-027 · A truncated sweep now throws instead of continuing
+Adding six missions pushed the exhaustive sweep past its frontier ceiling at mission 10 of
+16. It carried on regardless and reported four perfectly reachable outcomes as dead
+content — a false alarm that cost real time to diagnose.
+
+Two changes. The dedup key now uses only flags that some condition READS, and only those
+read by the current mission **or a later one**: `knows:real_pain` matters up to the
+solution missions and is inert afterwards, so carrying it past that point splits states
+that can no longer behave differently. Both exclusions are exact, and together they took
+the peak frontier from 60,000-capped to a true 19,836 — the sweep also got 10× faster.
+
+And the cap now **throws**. A sweep that has been cut short makes every "is this
+reachable?" answer unsound, so silence is the one thing it must not do. If it fires, the
+fix is to narrow the key further, not to raise the ceiling.
+**Also:** the frontier is grouped by node each round, because a branch can now divert the
+whole game and states can sit at different nodes simultaneously. The old loop sampled one
+state and assumed the whole level was at the same node.
+
 ## D-026 · Option cards are laid out on a CSS subgrid
 Columns alone did not deliver the cross-comparison that F2 exists for. A two-line title in
 one card pushed its checklist 36px below its neighbours', so the eye could not read across

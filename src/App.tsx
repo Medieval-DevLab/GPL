@@ -4,6 +4,7 @@ import { story } from "./content/story";
 import {
   advance,
   canCommit,
+  chooseSetup,
   commit,
   createInitialState,
   getNode,
@@ -21,10 +22,11 @@ import {
   type GameState,
   type Interlude,
   type Mission,
+  type Setup,
 } from "./engine/types";
 import { ConsequenceScreen, LessonScreen, ResolvingScreen } from "./ui/consequence";
 import { MissionBody } from "./ui/mission";
-import { EndingScreen, InterludeScreen, TitleScreen } from "./ui/screens";
+import { EndingScreen, InterludeScreen, SetupScreen, TitleScreen } from "./ui/screens";
 import {
   ActionBar,
   Console,
@@ -82,6 +84,11 @@ export default function App() {
   const doCommit = useCallback(() => setState((s) => commit(s, content)), []);
   const doToggle = useCallback((id: string) => setState((s) => toggleSelection(s, content, id)), []);
   const doPredict = useCallback((d: DimensionId) => setState((s) => setPrediction(s, d)), []);
+  // Chapter 0 picks in two steps like everything else: choose, then confirm.
+  const [advantage, setAdvantage] = useState<string | null>(null);
+  const doSetup = useCallback(() => {
+    if (advantage) setState((s) => chooseSetup(s, content, advantage));
+  }, [advantage]);
 
   const doRestart = useCallback(() => {
     try {
@@ -230,6 +237,14 @@ export default function App() {
     );
   } else if (state.phase === "interlude") {
     bottom = <ActionBar label="Begin the chapter" onAction={doAdvance} />;
+  } else if (state.phase === "setup") {
+    bottom = (
+      <ActionBar label="Start the pursuit" onAction={doSetup} disabled={!advantage}>
+        <span className="text-[12.5px] text-(--color-muted)">
+          {advantage ? "This is who you are for the rest of the run." : "Pick your team's strength"}
+        </span>
+      </ActionBar>
+    );
   }
 
   return (
@@ -265,6 +280,10 @@ export default function App() {
     >
       {onDecide && mission && (
         <MissionBody mission={mission} state={state} onToggle={doToggle} />
+      )}
+
+      {state.phase === "setup" && node.kind === "setup" && (
+        <SetupScreen node={node as Setup} chosen={advantage} onChoose={setAdvantage} />
       )}
 
       {state.phase === "interlude" && node.kind === "interlude" && (

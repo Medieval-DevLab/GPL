@@ -92,6 +92,66 @@ const ORION: ClientProfile = {
 };
 
 const nodes: GameNode[] = [
+  /* ══════════════════════════ CHAPTER 0 ══════════════════════════ */
+
+  /**
+   * The starting advantage — the only setup stage in the game.
+   *
+   * PRD p. 55: "Starting with a 'beginning state' is much stronger than starting with
+   * a tutorial." p. 56: the player should feel "these are our starting strengths."
+   *
+   * Each advantage grants a flag that real conditions later read, so the choice keeps
+   * mattering — a Connector walks into the competitor mission already able to hold
+   * their nerve; a Builder can offer an outcome-based deal because they can measure it.
+   */
+  {
+    kind: "setup",
+    id: "setup",
+    eyebrow: "Before you start",
+    title: "What kind of team is this?",
+    body: [
+      "You have been handed your first client to win, and six people to do it with.",
+      "Every team is good at something and short somewhere else. Pick what yours is good at — it will still be true in month five.",
+    ],
+    question: "What is your team's strength?",
+    options: [
+      {
+        id: "s-connector",
+        title: "Connectors",
+        icon: "talk",
+        image: "approach-networking",
+        description: "You know people, and people take your call.",
+        strengths: ["Trusted early", "Doors open"],
+        tradeoff: "You are better at getting in the room than at proving what you can build.",
+        flags: ["start:connector", "credibility"],
+        dims: { win: 8 },
+      },
+      {
+        id: "s-builder",
+        title: "Builders",
+        icon: "layers",
+        image: "solution-in-store-tech",
+        description: "You have delivered this kind of work, and it shows.",
+        strengths: ["Evidence to hand", "Delivery is real"],
+        tradeoff: "You are better at showing the work than at selling it.",
+        flags: ["start:builder", "has:data"],
+        dims: { deliver: 8 },
+      },
+      {
+        id: "s-challenger",
+        title: "Challengers",
+        icon: "scale",
+        image: "hero-boardroom",
+        description: "You read the market, and you say the awkward thing.",
+        strengths: ["Know the field", "Say the hard thing"],
+        tradeoff: "You are better at being right than at being liked.",
+        flags: ["start:challenger", "knows:rivals"],
+        dims: { profit: 8 },
+      },
+    ],
+    next: "int-1",
+  },
+
   /* ══════════════════════════ CHAPTER 1 ══════════════════════════ */
   {
     kind: "interlude",
@@ -517,6 +577,7 @@ const nodes: GameNode[] = [
       "You have their attention. That is not the same as having a deal.",
       "Interest becomes an opportunity when someone is willing to spend money, and you are willing to spend effort.",
     ],
+    milestone: "Lead generated",
     next: "m4",
   },
 
@@ -861,6 +922,7 @@ const nodes: GameNode[] = [
       "Now you have to say what you would actually do.",
       "This is where a deal stops being a conversation and starts being a promise.",
     ],
+    milestone: "Opportunity created",
     next: "m6",
   },
 
@@ -1142,6 +1204,7 @@ const nodes: GameNode[] = [
       "A proposal the client loves and you cannot profitably deliver is not a win.",
       "Now the three questions start pulling against each other in public.",
     ],
+    milestone: "Solution designed",
     next: "m8",
   },
 
@@ -1510,6 +1573,7 @@ const nodes: GameNode[] = [
       "The contract is signed. A different set of people now has to keep everything you said.",
       "This is where you find out what you actually agreed to.",
     ],
+    milestone: "Contract signed",
     next: "m10",
   },
 
@@ -2647,7 +2711,7 @@ const nodes: GameNode[] = [
 ];
 
 export const story: Content = {
-  startNodeId: "int-1",
+  startNodeId: "setup",
   missionOrder: [
     "m1",
     "m2",
