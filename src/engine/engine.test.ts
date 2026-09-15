@@ -13,6 +13,7 @@ import {
 import {
   findDominantOptions,
   pastSetup,
+  reachableExtremes,
   playMission,
   playScript,
   possibleSelections,
@@ -147,6 +148,30 @@ describe("every path is playable", () => {
       expect(result.finalRange[d].max).toBeLessThanOrEqual(100);
     }
   });
+
+  /**
+   * The assertion above is satisfied by `clamp` and therefore cannot fail — it looks like
+   * a meter-bounds test and is not one. The real question is whether a verdict threshold
+   * is crossable, and `finalRange` cannot answer it: the dedup key drops dimensions, so
+   * its ranges are first-arrival samples. They reported profit ≤ 90 and deliver ≥ 20
+   * while both are wrong, and two reviewers read the win figure as proof that the
+   * "did not win the work" ending was dead.
+   *
+   * `reachableExtremes` replays greedy policies, so every number is witnessed.
+   */
+  it("reports witnessed extremes wider than the sweep's sampled ranges", () => {
+    const witnessed = reachableExtremes(content);
+    for (const d of DIMENSIONS) {
+      // A witnessed path is proof; the sample cannot legitimately exceed it on either end.
+      expect(
+        witnessed[d].max,
+        `${d}: sweep claims max ${result.finalRange[d].max}, witnessed only ${witnessed[d].max}`,
+      ).toBeGreaterThanOrEqual(result.finalRange[d].max);
+    }
+    // Every meter can be driven to the ceiling, which is itself a finding: see D-040.
+    expect(witnessed.profit.max).toBe(100);
+    expect(witnessed.deliver.max).toBe(100);
+  }, 120_000);
 
   it("exercises every option at least once", () => {
     const declared: string[] = [];

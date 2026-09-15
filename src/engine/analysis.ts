@@ -9,9 +9,13 @@
  * lets us answer questions a human reviewer cannot:
  *
  *   · Is every outcome reachable? (dead content)
- *   · Can the delivery crisis actually fire? (meter bounds)
  *   · Does any option beat its siblings on all three dimensions in every
  *     case? (a fake choice — the mechanical test for "no right answer")
+ *
+ * It does NOT answer questions about meter bounds, though it used to claim to. Because
+ * the dedup key excludes dimensions, `entryRanges` and `finalRange` are samples of
+ * first-arriving paths. `reachableExtremes` answers that question instead, by replaying
+ * greedy policies — so every value it reports is witnessed by an actual playthrough.
  *
  * Pure and deterministic. Runs in the test suite.
  */
@@ -202,9 +206,22 @@ export interface SweepResult {
   exercisedOptions: Set<string>;
   /** flags that were set on at least one path */
   reachableFlags: Set<string>;
-  /** dimension range observed on ENTRY to each mission */
+  /**
+   * Dimension range observed on ENTRY to each mission — **a sample, not a bound.**
+   *
+   * `stateKey` excludes dimensions and the frontier keeps the first state to arrive at
+   * each key, so every other dimension vector reaching that key is discarded and its
+   * successors are never explored from those numbers. These ranges therefore describe
+   * whichever paths happened to arrive first.
+   *
+   * They were read as bounds, including by this file's own header, and the error was not
+   * small: the sweep reported profit ≤ 90 and deliver ≥ 20, while a one-step-greedy walk
+   * reaches 100/100/100 and drives deliver to 3. Two reviewers independently concluded the
+   * loss verdict was unreachable by quoting `finalRange.win.min`. For a real bound, use
+   * `reachableExtremes`, where every number is a replayed path.
+   */
   entryRanges: Record<string, Record<DimensionId, DimRange>>;
-  /** dimension range observed at the ending */
+  /** Dimension range observed at the ending. Same caveat as `entryRanges`. */
   finalRange: Record<DimensionId, DimRange>;
   /** distinct terminal states */
   endings: number;
@@ -333,6 +350,61 @@ export function sweep(content: Content): SweepResult {
   }
 
   return result;
+}
+
+/* ─────────────────── witnessed meter extremes ─────────────────── */
+
+/**
+ * How far the meters can actually be driven, established by playing.
+ *
+ * This exists because the sweep cannot answer it. Deduplicating on flags is what makes
+ * the sweep tractable, and it is exact for "is this outcome reachable?" — but it discards
+ * dimension vectors, so its ranges are a sample. Asking it for bounds produced confident
+ * wrong answers: profit ≤ 90 when 100 is reachable, deliver ≥ 20 when 3 is.
+ *
+ * A greedy one-step walk is not a proof of the true optimum — it can be led into a local
+ * maximum — so this is a **lower bound on the achievable range**, and every number in it
+ * is witnessed by a playthrough that can be replayed. That asymmetry is the point: a
+ * threshold set inside this range is known to be crossable, which is exactly what a rule
+ * like "the pursuit is lost below 40" needs before it can be trusted.
+ */
+export function reachableExtremes(content: Content): Record<DimensionId, DimRange> {
+  const range = emptyRange();
+  const setups = pastSetupOptions(content);
+
+  for (const advantage of setups) {
+    for (const sign of [1, -1]) {
+      let s = pastSetup(content, advantage);
+      let guard = 0;
+      while (isMission(getNode(content, s.nodeId)) && guard++ < 40) {
+        const mission = getNode(content, s.nodeId);
+        if (!isMission(mission)) break;
+        let best: GameState | null = null;
+        let bestScore = -Infinity;
+        for (const selection of possibleSelections(mission, s)) {
+          const after = playMission(s, content, selection);
+          const score = sign * DIMENSIONS.reduce((total, d) => total + after.dims[d], 0);
+          if (score > bestScore) {
+            bestScore = score;
+            best = after;
+          }
+        }
+        if (!best) break;
+        s = best;
+        widen(range, s.dims);
+      }
+      widen(range, s.dims);
+    }
+  }
+  return range;
+}
+
+/** The ids of chapter 0's options, or an empty pick if there is no setup node. */
+function pastSetupOptions(content: Content): (string | undefined)[] {
+  for (const node of Object.values(content.nodes)) {
+    if (node.kind === "setup") return node.options.map((o) => o.id);
+  }
+  return [undefined];
 }
 
 /* ─────────────────── scripted playthroughs ─────────────────── */
