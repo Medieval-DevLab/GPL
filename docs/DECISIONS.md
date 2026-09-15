@@ -6,6 +6,58 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-023 · The mockup photography is reused, extracted by a committed script
+`tools/extract-art.py` crops 22 images out of the mockup PNGs into `public/art/` — hero
+shots, client premises, option-card scenes, advisor portraits. 139 kB total as WebP.
+Confirmed licensed and appropriate for the product (STRATEGY.md D4). This closes
+`UI-AUDIT.md` finding F3: a quarter of the pixels above the fold in every mockup are
+photographic and we had none.
+
+The first version detected photographs automatically — the UI is flat, photographs are
+colourful. It failed: these renders are heavily desaturated (mean saturation 0.05–0.10,
+barely above the flat purple chrome), so the mask came out sparse and morphological
+closing merged three separate option-card photos together with the panel between them.
+Replaced with a hand-written manifest of crop boxes plus a **contact sheet** that gets
+looked at. Two passes were needed — the first left stray UI in nine crops (headline
+fragments, the purple quote rule, a "Recommended" ribbon).
+**Cost:** boxes are hand-maintained and tied to the mockups' 1536×1024 coordinates.
+**Constraint:** images are separate lazily-loaded assets and must never block first paint.
+
+## D-022 · Six project-local agents, because plugin installs are blocked
+`claude plugin install` refuses every plugin in `claude-plugins-official` — blocked by
+organisation policy. So the review system is built in-repo as `.claude/agents/`:
+`gpl-design`, `gpl-content`, `gpl-engine`, `gpl-verify`, and two **read-only** critics,
+`gpl-visual-critic` and `gpl-pedagogy`.
+
+The read-only critics are the point. Every genuine failure on this project was caught by
+looking at a rendered screen — never by a test — and the author of a change is unreliable
+at judging it against a reference. The critics cannot edit, so they cannot rationalise.
+Anthropic's own `frontend-design` skill was read from a local clone as a reference; it
+names five traits that mark a design as AI-generated and we exhibited all five.
+
+## D-021 · The player is a first-time pursuit lead
+The source PRD is team-based end to end and **never defines a single-player role**; when
+MPL became GPL nobody decided who the player is, and the build inherited no answer.
+This was the root of "it doesn't feel cohesive".
+
+Naming the role as *newly handed your first client to win* resolves the condescension
+problem structurally rather than cosmetically: a colleague briefing a new lead is
+onboarding, not patronising. So the advisory furniture gets **attributed** rather than
+deleted — every piece of advice comes from a named person with a stake, and **the
+interface never speaks**. "Tip:" becomes Priya saying something.
+
+## D-020 · Scope goes back up to ~15 decisions plus the frame
+D-006 cut 21 missions to 10. A page-cited reading of the PRD shows **what was cut was
+mostly frame, not repetition** — Chapter 0's starting advantage, the journey map,
+milestones and unlocks, the deal decision (*"Walking away must sometimes be a good
+decision. Otherwise the game teaches: Always accept the contract"*, p. 132), and the
+recovery beat. Those beats are short; cutting them removed the game's spine while leaving
+ten interchangeable question screens.
+
+Restoring them plus five named decision missions (prioritisation, innovation, solution
+review, capacity, unexpected situation) lands at ~15 decisions / ~70 min.
+**Supersedes D-006.**
+
 ## D-019 · Pre-decision copy is on a word budget, enforced by the build
 Colour alone did not fix "too much text", because the problem was the text. Counting the
 mockups: an option card there is an icon, a three-word title and **one short sentence**.
