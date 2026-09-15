@@ -16,6 +16,7 @@ import {
   type DimensionId,
   type Effect,
   type Evidence,
+  type IconId,
   type GameNode,
   type GameState,
   type HistoryEntry,
@@ -413,6 +414,8 @@ export interface LedgerEntry {
   label: string;
   detail: string;
   tone: "good" | "neutral" | "bad";
+  /** its own pictogram — the rail was six identical dots before */
+  icon: IconId;
 }
 
 interface LedgerRule extends LedgerEntry {
@@ -426,24 +429,28 @@ const LEDGER_RULES: LedgerRule[] = [
     label: "Their real problem",
     detail: "The damage is post-purchase, not in-store. You have their complaint data.",
     tone: "good",
+    icon: "search",
   },
   {
     when: { all: ["knows:ops_constraint"] },
     label: "Who can stop this",
     detail: "Marcus Reed owns every system that would have to change.",
     tone: "good",
+    icon: "people",
   },
   {
     when: { all: ["knows:rival_gap"] },
     label: "The rival's blind spot",
     detail: "Their platform does nothing about deliveries, returns or support.",
     tone: "good",
+    icon: "scale",
   },
   {
     when: { all: ["knows:history"] },
     label: "The last attempt",
     detail: "Cancelled at month five when Operations refused the changes.",
     tone: "neutral",
+    icon: "clock",
   },
   // Where you stand
   {
@@ -451,18 +458,21 @@ const LEDGER_RULES: LedgerRule[] = [
     label: "Operations invested",
     detail: "Marcus has people named in the proposal. He has a stake in it working.",
     tone: "good",
+    icon: "check",
   },
   {
     when: { all: ["evidenced"] },
     label: "Argued from their data",
     detail: "Your position is defensible without you in the room.",
     tone: "good",
+    icon: "chart",
   },
   {
     when: { all: ["has_access"] },
     label: "Inside the business",
     detail: "Paid discovery bought you access nobody else has.",
     tone: "good",
+    icon: "target",
   },
   // What you have spent
   {
@@ -470,24 +480,28 @@ const LEDGER_RULES: LedgerRule[] = [
     label: "Discount given",
     detail: "The contingency is gone. There is nothing to absorb a problem with.",
     tone: "bad",
+    icon: "coins",
   },
   {
     when: { all: ["descoped"] },
     label: "Scope removed",
     detail: "Something load-bearing left the contract to reach their number.",
     tone: "bad",
+    icon: "cross",
   },
   {
     when: { all: ["risk_accepted"] },
     label: "Risk accepted",
     detail: "Documented, unmanaged, and on the record that you knew.",
     tone: "bad",
+    icon: "warning",
   },
   {
     when: { all: ["thin_mitigation"] },
     label: "Mitigation underfunded",
     detail: "Thinner than the review asked for. No margin for error.",
     tone: "bad",
+    icon: "layers",
   },
   // What you have promised
   {
@@ -495,30 +509,34 @@ const LEDGER_RULES: LedgerRule[] = [
     label: "Platform rebuild promised",
     detail: "The systems at the centre of their operation.",
     tone: "neutral",
+    icon: "clock",
   },
   {
     when: { all: ["promised:fast"] },
     label: "Eight weeks promised",
     detail: "Something live and demonstrable, with a board watching.",
     tone: "neutral",
+    icon: "block",
   },
   {
     when: { all: ["unanchored"] },
     label: "No route to production",
     detail: "Nothing in the proposal says how the changes reach the business.",
     tone: "bad",
+    icon: "warning",
   },
   {
     when: { all: ["fragile_timeline"] },
     label: "Timeline assumes access",
     detail: "Nobody has confirmed the data exists in a usable form.",
     tone: "bad",
+    icon: "clock",
   },
 ];
 
 export function ledger(state: GameState): LedgerEntry[] {
   return LEDGER_RULES.filter((r) => evaluateCondition(r.when, state.flags, state.dims)).map(
-    ({ label, detail, tone }) => ({ label, detail, tone }),
+    ({ label, detail, tone, icon }) => ({ label, detail, tone, icon }),
   );
 }
 

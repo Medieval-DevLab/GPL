@@ -197,7 +197,20 @@ export default function App() {
   let bottom: React.ReactNode = null;
   if (onDecide) {
     bottom = (
-      <ActionBar label="Commit to this" onAction={doCommit} disabled={!ready}>
+      <ActionBar
+        label="Commit to this"
+        onAction={doCommit}
+        disabled={!ready}
+        aside={
+          mission?.tip && mission.advisor
+            ? {
+                from: mission.advisor.name.split(" ")[0],
+                text: mission.tip,
+                photo: mission.advisor.photo,
+              }
+            : undefined
+        }
+      >
         {selected ? (
           <PredictionStrip prediction={state.prediction} onPredict={doPredict} />
         ) : (
@@ -231,13 +244,10 @@ export default function App() {
             missionNumber={missionNumber ?? 1}
             totalMissions={content.missionOrder.length}
             completed={state.completed}
-            // The mission's steer used to be an unattributed "Tip" in a box at the
-            // bottom of the screen. It is the same words, now coming out of a named
-            // colleague's mouth — which is the whole difference between a briefing and
-            // a lecture. See docs/STRATEGY.md D1.
-            advisor={
-              mission.advisor && { ...mission.advisor, steer: mission.tip ?? mission.advisor.steer }
-            }
+            advisor={mission.advisor}
+            objective={mission.objective}
+            minutes={mission.minutes}
+            file={discoveredFile(state)}
           />
         ) : undefined
       }
@@ -254,7 +264,7 @@ export default function App() {
       }
     >
       {onDecide && mission && (
-        <MissionBody mission={mission} state={state} content={content} onToggle={doToggle} />
+        <MissionBody mission={mission} state={state} onToggle={doToggle} />
       )}
 
       {state.phase === "interlude" && node.kind === "interlude" && (
@@ -278,6 +288,21 @@ export default function App() {
 
 function requiredCount(mission: Mission): number {
   return mission.kind === "choice" ? 1 : mission.kind === "investigate" ? mission.slots : mission.pick;
+}
+
+/**
+ * Everything the player has paid to find out, for the rail's file. Reference material
+ * that is present and never tested — see docs/ENGAGEMENT-MODEL.md on Papers, Please.
+ */
+function discoveredFile(state: GameState) {
+  const out: { id: string; label: string; reveals: string }[] = [];
+  for (const node of Object.values(content.nodes)) {
+    if (node.kind !== "investigate") continue;
+    for (const e of node.evidence) {
+      if (state.discovered.includes(e.id)) out.push({ id: e.id, label: e.label, reveals: e.reveals });
+    }
+  }
+  return out;
 }
 
 /** What the selected option would lock in, for the rail's "If you commit" preview. */

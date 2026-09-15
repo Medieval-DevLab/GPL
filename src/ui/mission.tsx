@@ -10,14 +10,10 @@
  * vertical space — `tools/verify.mjs` fails if the working area overflows at 1440×900.
  */
 
-import { useMemo } from "react";
-
 import { availableOptions, requiredSelectionCount, resolveSituation } from "../engine/engine";
 import type {
   AssessmentFactor,
   ClientProfile,
-  Content,
-  Evidence,
   GameState,
   Mission,
   Option,
@@ -34,12 +30,12 @@ function Header({ mission, situation }: { mission: Mission; situation: string[] 
         <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
           {mission.eyebrow}
         </p>
-        <h1 className="mt-1.5 text-[27px] font-bold leading-[1.12] tracking-[-0.015em] text-(--color-ink)">
+        <h1 className="mt-1.5 text-[32px] font-bold leading-[1.1] tracking-[-0.015em] text-(--color-ink)">
           {mission.title}
         </h1>
         <div className="mt-2 space-y-1">
           {situation.map((p, i) => (
-            <p key={i} className="text-[13.5px] leading-[1.5] text-(--color-ink-soft)">
+            <p key={i} className="text-[15px] leading-[1.52] text-(--color-ink-soft)">
               {p}
             </p>
           ))}
@@ -53,7 +49,7 @@ function Header({ mission, situation }: { mission: Mission; situation: string[] 
           alt=""
           loading="eager"
           decoding="async"
-          className="hidden h-[150px] w-[38%] shrink-0 object-cover md:block"
+          className="hidden h-[172px] w-[40%] shrink-0 object-cover md:block"
           style={{
             maskImage: "linear-gradient(to right, transparent, #000 22%)",
             WebkitMaskImage: "linear-gradient(to right, transparent, #000 22%)",
@@ -80,7 +76,7 @@ function ClientStrip({ client, compact }: { client: ClientProfile; compact?: boo
           alt=""
           loading="lazy"
           decoding="async"
-          className="h-[46px] w-[82px] shrink-0 rounded-[8px] object-cover"
+          className="h-[74px] w-[150px] shrink-0 rounded-[10px] object-cover"
         />
       ) : (
         <span
@@ -96,7 +92,7 @@ function ClientStrip({ client, compact }: { client: ClientProfile; compact?: boo
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-          <h2 className="text-[15px] font-bold leading-tight text-(--color-ink)">{client.name}</h2>
+          <h2 className="text-[17px] font-bold leading-tight text-(--color-ink)">{client.name}</h2>
           {client.tags.map((t) => (
             <Pill key={t} tone="accent">
               {t}
@@ -104,7 +100,7 @@ function ClientStrip({ client, compact }: { client: ClientProfile; compact?: boo
           ))}
         </div>
         {!compact && (
-          <p className="mt-1 text-[12.5px] leading-snug text-(--color-muted)">{client.blurb}</p>
+          <p className="mt-1 text-[13px] leading-snug text-(--color-muted)">{client.blurb}</p>
         )}
       </div>
 
@@ -115,8 +111,8 @@ function ClientStrip({ client, compact }: { client: ClientProfile; compact?: boo
               <Icon name={f.icon} size={16} />
             </span>
             <div>
-              <dt className="text-[10.5px] font-semibold text-(--color-muted)">{f.label}</dt>
-              <dd className="text-[13px] font-bold leading-tight text-(--color-ink)">{f.value}</dd>
+              <dt className="text-[11px] font-semibold text-(--color-muted)">{f.label}</dt>
+              <dd className="text-[14px] font-bold leading-tight text-(--color-ink)">{f.value}</dd>
             </div>
           </div>
         ))}
@@ -139,23 +135,20 @@ const LEVEL: Record<
   strong: { pct: 96, tone: "good", colour: "var(--color-good)", word: "Strong" },
 };
 
-const FACTOR_ICON_TONE: Tone[] = ["accent", "good", "warn", "bad", "neutral"];
-
 function Assessment({ factors }: { factors: AssessmentFactor[] }) {
   return (
     <section className="border-t border-(--color-line) px-5 py-2.5">
-      <div className="grid gap-x-5 gap-y-2 sm:grid-cols-2 xl:grid-cols-4">
-        {factors.map((f, i) => {
+      <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2 xl:grid-cols-4">
+        {factors.map((f) => {
           const l = LEVEL[f.level];
-          const iconTone = FACTOR_ICON_TONE[i % FACTOR_ICON_TONE.length];
+          const iconTone = f.tone;
           return (
-            <div key={f.label}>
+            <div key={f.label} className="card px-3 py-2">
               <div className="flex items-center gap-2">
-                <IconTile name={f.icon} tone={iconTone} size={26} />
-                <span className="min-w-0 flex-1 text-[12.5px] font-bold leading-tight text-(--color-ink)">
+                <IconTile name={f.icon} tone={iconTone} size={30} />
+                <span className="min-w-0 flex-1 text-[13px] font-bold leading-tight text-(--color-ink)">
                   {f.label}
                 </span>
-                <Pill tone={l.tone}>{l.word}</Pill>
               </div>
               <div
                 className="mt-2 h-1.5 w-full overflow-hidden rounded-full"
@@ -166,7 +159,10 @@ function Assessment({ factors }: { factors: AssessmentFactor[] }) {
                   style={{ width: `${l.pct}%`, background: l.colour }}
                 />
               </div>
-              <p className="mt-1 text-[11px] leading-snug text-(--color-muted)">{f.note}</p>
+              <p className="mt-1 text-[14px] font-bold leading-none" style={{ color: l.colour }}>
+                {l.word}
+              </p>
+              <p className="mt-1 text-[11.5px] leading-snug text-(--color-muted)">{f.note}</p>
             </div>
           );
         })}
@@ -186,18 +182,16 @@ function SaidAndConcerns({
   return (
     <div className="grid border-t border-(--color-line) lg:grid-cols-2">
       {said && (
-        <section className="px-5 py-3">
-          <div className="flex gap-2.5">
-            <IconTile name="talk" tone="accent" size={30} />
-            <div className="min-w-0">
-              <blockquote className="text-[13.5px] italic leading-snug text-(--color-ink)">
-                “{said.text}”
-              </blockquote>
-              <p className="mt-1 text-[11.5px] font-bold text-(--color-accent-deep)">
-                {said.attribution}
-              </p>
-            </div>
-          </div>
+        <section className="px-5 py-3" style={{ background: "var(--color-accent-tint)" }}>
+          <SectionTitle icon="talk" className="mb-2">
+            What they said
+          </SectionTitle>
+          <blockquote className="text-[14px] italic leading-snug text-(--color-ink)">
+            “{said.text}”
+          </blockquote>
+          <p className="mt-1.5 text-[12px] font-bold text-(--color-accent-deep)">
+            {said.attribution}
+          </p>
         </section>
       )}
       {concerns && concerns.length > 0 && (
@@ -213,7 +207,7 @@ function SaidAndConcerns({
             {concerns.map((c) => (
               <li
                 key={c}
-                className="flex gap-2 text-[12.5px] leading-snug text-(--color-ink-soft)"
+                className="flex gap-2 text-[13px] leading-snug text-(--color-ink-soft)"
               >
                 <span
                   aria-hidden="true"
@@ -226,48 +220,6 @@ function SaidAndConcerns({
         </section>
       )}
     </div>
-  );
-}
-
-function Notes({ discovered, content }: { discovered: string[]; content: Content }) {
-  const items = useMemo(() => {
-    const found: Evidence[] = [];
-    for (const node of Object.values(content.nodes)) {
-      if (node.kind !== "investigate") continue;
-      for (const e of node.evidence) if (discovered.includes(e.id)) found.push(e);
-    }
-    return found;
-  }, [discovered, content]);
-
-  if (items.length === 0) return null;
-
-  return (
-    <details className="group border-t border-(--color-line)">
-      <summary className="flex cursor-pointer list-none items-center gap-2 px-5 py-2 transition-colors hover:bg-(--color-surface-sunk)">
-        <span
-          className="shrink-0 text-(--color-accent) transition-transform group-open:rotate-90"
-          aria-hidden="true"
-        >
-          ▸
-        </span>
-        <span className="shrink-0 text-(--color-accent)">
-          <Icon name="search" size={15} />
-        </span>
-        <span className="text-[13.5px] font-bold text-(--color-ink)">Your file</span>
-        <Pill tone="accent">{items.length}</Pill>
-      </summary>
-      <div
-        className="space-y-2 border-t border-(--color-line) px-5 py-3"
-        style={{ background: "var(--color-surface-sunk)" }}
-      >
-        {items.map((e) => (
-          <div key={e.id}>
-            <p className="text-[11.5px] font-bold text-(--color-accent-deep)">{e.label}</p>
-            <p className="text-[12.5px] leading-snug text-(--color-ink-soft)">{e.reveals}</p>
-          </div>
-        ))}
-      </div>
-    </details>
   );
 }
 
@@ -297,6 +249,17 @@ function CostRow({ icon, label, value }: { icon: "clock" | "coins"; label: strin
 
 /* ───────────────────────────── option cards ───────────────────────────── */
 
+/**
+ * An option, as a vertical poster: media, medallion, title, blurb, checklist, cost, button.
+ *
+ * Laid out on a CSS **subgrid** so that every card's checklist, cost panel and button sit
+ * on the same baseline as its neighbours' regardless of how many lines the title or
+ * description takes. Without that, comparing across columns — the entire reason options
+ * are columns (UI-AUDIT F2) — silently stops working: one two-line title pushed the
+ * checklists 36px out of step.
+ */
+const CARD_ROWS = 6;
+
 function OptionCard({
   option,
   selected,
@@ -308,95 +271,106 @@ function OptionCard({
 }) {
   return (
     <button
-      className="choice flex flex-col !p-0 text-left"
+      className="choice grid gap-0 !p-0 text-left"
+      style={{ gridRow: `span ${CARD_ROWS}`, gridTemplateRows: "subgrid" }}
       data-selected={selected}
       onClick={onToggle}
       aria-pressed={selected}
     >
-      {option.image && (
-        <img
-          src={artUrl(option.image)}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          className="h-[64px] w-full shrink-0 object-cover"
-        />
-      )}
-
-      <div className="flex min-h-0 flex-1 flex-col p-3">
-        {/* Medallion overlaps the photo's lower edge, as the mockups do. */}
-        <div className={option.image ? "-mt-7 mb-1" : "mb-1"}>
+      {/* 1 · media + medallion */}
+      <div className="relative">
+        {option.image && (
+          <img
+            src={artUrl(option.image)}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="h-[88px] w-full object-cover"
+          />
+        )}
+        <div className={`flex justify-center px-3 ${option.image ? "-mt-6" : "pt-3"}`}>
           <span
             aria-hidden="true"
-            className="flex h-[36px] w-[36px] items-center justify-center rounded-full border-2 border-(--color-surface)"
+            className="flex h-[48px] w-[48px] items-center justify-center rounded-full border-[3px] border-(--color-surface)"
             style={{
               background: selected ? "var(--color-accent)" : "var(--color-accent-tint)",
               color: selected ? "#fff" : "var(--color-accent)",
             }}
           >
-            <Icon name={option.icon ?? "target"} size={18} />
+            <Icon name={option.icon ?? "target"} size={23} />
           </span>
         </div>
+      </div>
 
-        <p className="text-[14.5px] font-bold leading-snug text-(--color-ink)">{option.title}</p>
-        <p className="mt-1 text-[12px] leading-snug text-(--color-muted)">{option.description}</p>
+      {/* 2 · title — the only thing the mockups centre */}
+      <p
+        className="px-3.5 pt-2 text-center text-[16px] font-bold leading-snug"
+        style={{ color: selected ? "var(--color-accent-deep)" : "var(--color-ink)" }}
+      >
+        {option.title}
+      </p>
 
+      {/* 3 · what it is */}
+      <p className="px-3.5 pt-1.5 text-center text-[12.5px] leading-snug text-(--color-muted)">
+        {option.description}
+      </p>
+
+      {/* 4 · what it trades */}
+      <div className="px-3.5 pt-2.5">
         {(option.pros?.length || option.cons?.length) && (
-          <ul className="mt-2 space-y-0.5 border-t border-(--color-line) pt-2">
-            {option.pros?.map((p) => (
-              <li key={p} className="flex items-start gap-1.5 text-[11.5px] leading-snug">
+          <ul className="space-y-1 border-t border-(--color-line) pt-2.5">
+            {option.pros?.map((t) => (
+              <li key={t} className="flex items-start gap-1.5 text-[12px] leading-snug">
                 <span className="mt-[2px] shrink-0 text-(--color-good)">
-                  <Icon name="check" size={12} />
+                  <Icon name="check" size={13} />
                 </span>
-                <span className="font-medium text-(--color-ink-soft)">{p}</span>
+                <span className="font-medium text-(--color-ink-soft)">{t}</span>
               </li>
             ))}
-            {option.cons?.map((c) => (
-              <li key={c} className="flex items-start gap-1.5 text-[11.5px] leading-snug">
+            {option.cons?.map((t) => (
+              <li key={t} className="flex items-start gap-1.5 text-[12px] leading-snug">
                 <span className="mt-[2px] shrink-0 text-(--color-bad)">
-                  <Icon name="cross" size={12} />
+                  <Icon name="cross" size={13} />
                 </span>
-                <span className="text-(--color-muted)">{c}</span>
+                <span className="text-(--color-muted)">{t}</span>
               </li>
             ))}
           </ul>
         )}
+      </div>
 
+      {/* 5 · what it costs — never what it returns */}
+      <div className="px-3.5 pt-2.5">
         {option.cost && (
           <div
-            className="mt-2 space-y-1 rounded-lg px-2.5 py-1.5"
+            className="space-y-1 rounded-lg px-2.5 py-2"
             style={{ background: "var(--color-surface-sunk)" }}
           >
+            <p className="text-[10px] font-bold uppercase tracking-wide text-(--color-faint)">
+              Resource cost
+            </p>
             <CostRow icon="clock" label="Time" value={option.cost.time} />
             <CostRow icon="coins" label="Investment" value={option.cost.investment} />
           </div>
         )}
+      </div>
 
-        {/* The card's own button carries the selected state — outlined, then solid. */}
-        <div className="mt-auto pt-2.5">
-          <CardButton selected={selected} on="Selected" off="Select this option" />
-        </div>
+      {/* 6 · the card's own button carries the selected state */}
+      <div className="self-end px-3.5 pb-3.5 pt-3">
+        <CardButton selected={selected} on="Selected" off="Select this option" />
       </div>
     </button>
   );
 }
 
 /**
- * The selected state lives on the card's own button, as in every mockup. Kept in one
- * place because three different card kinds use it and they must not drift apart.
+ * The selected state lives on the card's own button, as in every mockup: outlined with
+ * purple text, then solid purple. Kept in one place because three card kinds use it.
  */
-function CardButton({
-  selected,
-  on,
-  off,
-}: {
-  selected: boolean;
-  on: string;
-  off: string;
-}) {
+function CardButton({ selected, on, off }: { selected: boolean; on: string; off: string }) {
   return (
     <span
-      className="flex w-full items-center justify-center gap-1.5 rounded-lg border px-2 py-1.5 text-[12.5px] font-bold transition-colors"
+      className="flex w-full items-center justify-center gap-1.5 rounded-[10px] border px-2 py-[7px] text-[12.5px] font-bold transition-colors"
       style={
         selected
           ? { background: "var(--color-accent)", borderColor: "var(--color-accent)", color: "#fff" }
@@ -408,7 +382,8 @@ function CardButton({
       }
     >
       {selected ? on : off}
-      {selected && <Icon name="check" size={13} />}
+      {/* The brief has an arrow on every card button. DESIGN-LANGUAGE says the brief wins. */}
+      <span aria-hidden="true">{selected ? "✓" : "→"}</span>
     </span>
   );
 }
@@ -435,7 +410,10 @@ function ChoiceList({
   const chosen = state.selection[0];
 
   return (
-    <div className={`grid items-stretch gap-3 ${columns(options.length)}`}>
+    <div
+      className={`grid items-stretch gap-3 ${columns(options.length)}`}
+      style={{ gridTemplateRows: `repeat(${CARD_ROWS}, auto)` }}
+    >
       {options.map((o) => (
         <OptionCard
           key={o.id}
@@ -533,12 +511,10 @@ function ComponentList({
 export function MissionBody({
   mission,
   state,
-  content,
   onToggle,
 }: {
   mission: Mission;
   state: GameState;
-  content: Content;
   onToggle: (id: string) => void;
 }) {
   const situation = resolveSituation(mission, state);
@@ -556,15 +532,19 @@ export function MissionBody({
         )}
         {mission.assessment && <Assessment factors={mission.assessment} />}
         <SaidAndConcerns said={mission.saidQuote} concerns={mission.concerns} />
-        <Notes discovered={state.discovered} content={content} />
       </div>
 
       {/* The decision */}
       <div className="flex-1 px-5 pb-3 pt-3">
         <div className="mb-2.5 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-[19px] font-bold tracking-[-0.01em] text-(--color-ink)">
-            {mission.question}
-          </h2>
+          <div className="min-w-0">
+            <h2 className="text-[24px] font-bold tracking-[-0.015em] text-(--color-ink)">
+              {mission.question}
+            </h2>
+            {mission.prompt && (
+              <p className="mt-0.5 text-[13.5px] text-(--color-muted)">{mission.prompt}</p>
+            )}
+          </div>
           {mission.kind !== "choice" && (
             <Pill tone={ready ? "good" : "accent"}>
               {mission.kind === "investigate" ? "Choose" : "Pick"} {need} · {have}/{need}

@@ -7,7 +7,8 @@
    AND icon-coded — colour never carries meaning alone.
    ─────────────────────────────────────────────────────────────── */
 @theme {
-  --color-canvas: #f5f4fa;
+  --color-page: #eeecf6;
+  --color-canvas: #f7f7fb;
   --color-canvas-deep: #eceaf4;
   --color-surface: #ffffff;
   --color-surface-sunk: #f9f8fd;
@@ -23,9 +24,9 @@
   --color-line: #e6e3f0;
   --color-line-strong: #d3cfe2;
 
-  --color-accent: #6d35e8;
-  --color-accent-hover: #5d28d1;
-  --color-accent-deep: #4a1ba8;
+  --color-accent: #7c3aed;
+  --color-accent-hover: #6d28d9;
+  --color-accent-deep: #5b21b6;
   --color-accent-tint: #f2ecff;
   --color-accent-ring: #c9b2ff;
 
@@ -39,11 +40,11 @@
 
   /* Semantics. Each has a tint, so status can be a filled chip rather than
      coloured text — a chip is scannable, coloured text is still reading. */
-  --color-good: #0f7f5e;
+  --color-good: #10b981;
   --color-good-tint: #e4f5ef;
-  --color-warn: #b46613;
+  --color-warn: #f59e0b;
   --color-warn-tint: #fdf2e0;
-  --color-bad: #c73636;
+  --color-bad: #ef4444;
   --color-bad-tint: #fceaea;
 
   /* One family. Every mockup is sans throughout; a serif display face was a
@@ -91,7 +92,7 @@
     background:
       radial-gradient(1100px 620px at 12% -8%, #ffffff 0%, rgb(255 255 255 / 0) 62%),
       radial-gradient(900px 560px at 92% 0%, #f0eaff 0%, rgb(240 234 255 / 0) 58%),
-      var(--color-canvas);
+      var(--color-page);
     background-attachment: fixed;
     color: var(--color-ink);
     font-family: var(--font-sans);
@@ -227,8 +228,8 @@
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 2px rgb(20 18 31 / 0.03);
 }
 
 /* A region, not a card. Rails and fact strips sit on this so the eye can tell
@@ -304,16 +305,8 @@
    solid bar down the leading edge. */
 .choice[data-selected="true"] {
   border-color: var(--color-accent);
+  border-width: 2px;
   background: var(--color-accent-tint);
-  box-shadow: var(--shadow-lift);
-}
-
-.choice[data-selected="true"]::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: var(--color-accent);
 }
 
 .choice:disabled {

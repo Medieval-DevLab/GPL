@@ -215,12 +215,22 @@ export interface ClientProfile {
 
 export type FactorLevel = "low" | "medium" | "high" | "strong";
 
+/** Semantic colour for an icon. Assigned by meaning in content, never by position. */
+export type IconTone = "accent" | "good" | "warn" | "bad" | "neutral";
+
 /** A read on the situation, shown as a labelled bar. Describes NOW, not the future. */
 export interface AssessmentFactor {
   icon: IconId;
   label: string;
   level: FactorLevel;
   note: string;
+  /**
+   * Icon colour. MUST be set from what the factor means.
+   *
+   * This was previously assigned by array index, which painted "Value: High" with a red
+   * icon — misinforming the player, which is worse than a monochrome row.
+   */
+  tone: IconTone;
 }
 
 interface MissionBase {
@@ -232,6 +242,8 @@ interface MissionBase {
   eyebrow: string;
   /** what the player is trying to do, in plain words */
   objective: string;
+  /** one line under the question, telling the player how to read the options */
+  prompt?: string;
   /** roughly how long this mission takes, in minutes */
   minutes: number;
   /** header photograph, filename in public/art/ without extension */
@@ -297,6 +309,40 @@ export interface BuildMission extends MissionBase {
 }
 
 export type Mission = ChoiceMission | InvestigateMission | BuildMission;
+
+/**
+ * Chapter 0 — the starting advantage.
+ *
+ * Not a decision with a consequence: character creation. The PRD is explicit that
+ * "starting with a 'beginning state' is much stronger than starting with a tutorial"
+ * (p. 55) and that the player should feel "these are our starting strengths" (p. 56).
+ * It sits before the chapter stepper begins, so it is its own node kind rather than a
+ * mission — there is nothing to resolve and nothing to learn from yet.
+ */
+export interface SetupOption {
+  id: string;
+  title: string;
+  description: string;
+  icon: IconId;
+  image?: string;
+  /** what this advantage means in play, as short tags */
+  strengths: string[];
+  /** and what it costs you */
+  tradeoff: string;
+  flags: string[];
+  dims?: Partial<Record<DimensionId, number>>;
+}
+
+export interface Setup {
+  kind: "setup";
+  id: string;
+  eyebrow: string;
+  title: string;
+  body: string[];
+  question: string;
+  options: SetupOption[];
+  next: string;
+}
 
 export interface Interlude {
   kind: "interlude";

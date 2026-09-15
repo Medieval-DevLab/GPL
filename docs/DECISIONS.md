@@ -6,6 +6,43 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-026 · Option cards are laid out on a CSS subgrid
+Columns alone did not deliver the cross-comparison that F2 exists for. A two-line title in
+one card pushed its checklist 36px below its neighbours', so the eye could not read across
+a row — the critic measured checklist row 1 starting at y≈557/557/573/**593** on mission 8.
+
+Each card is now `grid-row: span 6; grid-template-rows: subgrid` against a parent
+declaring `repeat(6, auto)`: media, title, blurb, checklist, cost, button. Every card's
+checklist and button now sit on a shared baseline whatever the text length.
+**Cost:** the card is locked to six rows, so adding a section means touching `CARD_ROWS`
+and every card kind. Worth it — this is the mechanism the whole layout is for.
+
+## D-025 · Advice is attributed, but it keeps the mockups' slot
+The mockups carry an unattributed "Tip" in the action bar on every decision screen. The
+research says that furniture is the condescension, and removing it left the action bar 90%
+empty — a case of fixing the tone by breaking the layout.
+
+Resolution: keep the mockups' treatment exactly — portrait, label, two lines, bottom-left
+of the action bar — and make the label **a person's name**. "Tip: there is no single right
+answer" becomes *Riya: "No single right answer. Weigh the value against what you would risk."*
+Same words, same slot, and the interface no longer speaks in its own voice.
+Also: "Your objective" became **"The brief"**, and the discovered-evidence accordion moved
+out of the centre column into the rail as **"Your file"** — reference material on the desk,
+present and never tested.
+
+## D-024 · The fits-one-screen rule is enforced at 1440×1024, not 900
+The mockups are drawn for a 1536×1024 window and their densest briefing needs ~835px of
+working area. At 1440×900 the console leaves ~745px. Matching their type and image scale
+and fitting a 900px window are mutually exclusive — the first attempt fitted 900 by
+rendering everything 15–35% smaller than the reference, which the critic correctly called
+"a miniature of the mockup with the furniture removed".
+
+We chose the reference scale. `verify.mjs` enforces the fit rule at heights ≥1000px, and
+below that the working area may scroll **inside** the console — the chrome never moves, so
+the console still reads as an instrument rather than a page.
+**Cost:** a 900px-tall laptop scrolls on the three densest missions.
+**Reversible:** yes, by shrinking the scale again, at the price of the miniature problem.
+
 ## D-023 · The mockup photography is reused, extracted by a committed script
 `tools/extract-art.py` crops 22 images out of the mockup PNGs into `public/art/` — hero
 shots, client premises, option-card scenes, advisor portraits. 139 kB total as WebP.

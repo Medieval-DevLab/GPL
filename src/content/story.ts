@@ -131,6 +131,7 @@ const nodes: GameNode[] = [
       "What does being wrong cost us?",
     ],
     tip: "There is no perfect client. Weigh what they need against what you can demonstrate.",
+    prompt: "Each is a different bet. One team, one pursuit.",
     question: "Who do you go after?",
     options: [
       {
@@ -253,6 +254,7 @@ const nodes: GameNode[] = [
       "Is the ask the same as the problem?",
     ],
     tip: "Spend questions on what could change your answer, not what confirms it.",
+    prompt: "You have time for two. Choose what could change your mind.",
     question: "What do you look into?",
     slots: 2,
     evidence: [
@@ -378,6 +380,7 @@ const nodes: GameNode[] = [
       "Would this work if we knew nothing about them?",
     ],
     tip: "Reach, access and credibility are three different goals. Pick the one you need first.",
+    prompt: "Match the approach to what you need from the next conversation.",
     question: "How do you approach them?",
     options: [
       {
@@ -532,11 +535,37 @@ const nodes: GameNode[] = [
       "All of this is still their version of the problem.",
     ],
     client: ORION,
+    // Icon tone comes from what the factor MEANS: a real need and real value are good
+    // news, an undefined brief and two rivals are cautions.
     assessment: [
-      { icon: "flag", label: "Client need", level: "high", note: "Something is wrong, and they have said so." },
-      { icon: "target", label: "Our fit", level: "medium", note: "Close to past work, but the brief is undefined." },
-      { icon: "people", label: "Competition", level: "medium", note: "Two firms actively in the conversation." },
-      { icon: "chart", label: "Value", level: "high", note: "Multi-year, if the first phase works." },
+      {
+        icon: "flag",
+        label: "Client need",
+        level: "high",
+        tone: "good",
+        note: "Something is wrong, and they have said so.",
+      },
+      {
+        icon: "target",
+        label: "Our fit",
+        level: "medium",
+        tone: "warn",
+        note: "Close to past work, but the brief is undefined.",
+      },
+      {
+        icon: "people",
+        label: "Competition",
+        level: "medium",
+        tone: "bad",
+        note: "Two firms actively in the conversation.",
+      },
+      {
+        icon: "chart",
+        label: "Value",
+        level: "high",
+        tone: "good",
+        note: "Multi-year, if the first phase works.",
+      },
     ],
     advisor: RIYA,
     consider: [
@@ -545,6 +574,7 @@ const nodes: GameNode[] = [
       "Is there a smaller version to commit to?",
     ],
     tip: "No single right answer. Weigh the value against what you would risk to chase it.",
+    prompt: "Weigh the value against what you would risk to chase it.",
     question: "How do you take this forward?",
     options: [
       {
@@ -681,6 +711,7 @@ const nodes: GameNode[] = [
       "What does silence cost us?",
     ],
     tip: "React to everything and you look panicked. React to nothing and you look absent.",
+    prompt: "Decide whether the facts changed, or only the noise.",
     question: "What do you do?",
     options: [
       {
@@ -855,6 +886,7 @@ const nodes: GameNode[] = [
       "Would our rival's proposal look the same?",
     ],
     tip: "A brief describes the symptom they can see. That is not always where the damage is.",
+    prompt: "Everything after this serves the problem you name here.",
     question: "What do you propose to fix?",
     options: [
       {
@@ -984,6 +1016,7 @@ const nodes: GameNode[] = [
       "What happens if Operations says no?",
     ],
     tip: "Everything in a proposal is a promise somebody else has to keep.",
+    prompt: "Three of six. Each makes the offer stronger somewhere and weaker elsewhere.",
     question: "What do you put in?",
     pick: 3,
     components: [
@@ -1142,6 +1175,7 @@ const nodes: GameNode[] = [
       "Can we lower commitment without lowering rate?",
     ],
     tip: "A discount is spent twice — once to win the work, and again when delivery needs it.",
+    prompt: "Every route to their number costs you something.",
     question: "How do you respond?",
     options: [
       {
@@ -1328,6 +1362,7 @@ const nodes: GameNode[] = [
       "Do we still have the money to fix it?",
     ],
     tip: "Risk is cheapest before you sign. Everything after that costs more.",
+    prompt: "Cheaper to handle now than in month five.",
     question: "What do you do about it?",
     options: [
       {
@@ -1529,6 +1564,7 @@ const nodes: GameNode[] = [
       "What if they hear it from someone else?",
     ],
     tip: "Whatever is on the table now was decided long before anyone started building.",
+    prompt: "Whatever is on the table was decided months ago.",
     question: "How do you respond?",
     options: [
       {

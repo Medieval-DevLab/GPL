@@ -23,7 +23,7 @@ import {
   type IconId,
 } from "../engine/types";
 import type { LedgerEntry } from "../engine/engine";
-import { Icon, SectionTitle, type Tone } from "./icons";
+import { Icon, IconTile, SectionTitle, type Tone } from "./icons";
 
 export const artUrl = (name: string) => `${import.meta.env.BASE_URL}art/${name}.webp`;
 
@@ -39,57 +39,62 @@ export function ChapterStepper({
   /** Phone width: only the chapter you are in is named. Five labels do not fit. */
   compact?: boolean;
 }) {
+  /* Circle over label, joined by a single track that fills behind you. Two tiers is the
+     mockups' geometry; a row of circle-beside-label chips is not. */
+  const doneCount = chapters.filter((c) => c.number < current).length;
+  const pct = chapters.length > 1 ? (doneCount / (chapters.length - 1)) * 100 : 0;
+
   return (
-    <ol className="flex items-center gap-1" aria-label="Chapters">
-      {chapters.map((c, i) => {
-        const done = c.number < current;
+    <ol
+      className={`relative flex items-start justify-between ${compact ? "w-full max-w-[320px]" : "w-full max-w-[560px]"}`}
+      aria-label="Chapters"
+    >
+      <span
+        aria-hidden="true"
+        className="absolute left-3 right-3 top-[11px] h-[2px] rounded-full"
+        style={{ background: "var(--color-line-strong)" }}
+      />
+      <span
+        aria-hidden="true"
+        className="absolute left-3 top-[11px] h-[2px] rounded-full transition-[width] duration-500"
+        style={{ width: `calc(${pct}% - 24px)`, background: "var(--color-good)" }}
+      />
+
+      {chapters.map((c) => {
+        const isDone = c.number < current;
         const active = c.number === current;
-        const showLabel = !compact || active;
         return (
-          <li key={c.number} className="flex shrink-0 items-center gap-1">
+          <li
+            key={c.number}
+            className="relative flex flex-col items-center gap-1.5"
+            aria-current={active ? "step" : undefined}
+          >
             <span
-              className={`flex items-center gap-2 whitespace-nowrap rounded-full py-1 pl-1 transition-colors duration-300 ${showLabel ? "pr-3" : "pr-1"}`}
-              style={{ background: active ? "var(--color-accent-tint)" : "transparent" }}
-              aria-current={active ? "step" : undefined}
-            >
-              <span
-                aria-hidden="true"
-                className="flex h-[22px] w-[22px] items-center justify-center rounded-full text-[11px] font-bold transition-colors duration-300"
-                style={{
-                  background: active
+              aria-hidden="true"
+              className="flex h-[24px] w-[24px] items-center justify-center rounded-full text-[11px] font-bold ring-4 ring-(--color-surface) transition-colors duration-300"
+              style={{
+                background: isDone
+                  ? "var(--color-good)"
+                  : active
                     ? "var(--color-accent)"
-                    : done
-                      ? "var(--color-good)"
-                      : "var(--color-canvas-deep)",
-                  color: active || done ? "#fff" : "var(--color-faint)",
-                }}
-              >
-                {done ? <Icon name="check" size={12} /> : c.number}
-              </span>
-              <span
-                className={`text-[11px] font-bold uppercase tracking-[0.08em] ${showLabel ? "" : "sr-only"}`}
-                style={{
-                  color: active
-                    ? "var(--color-accent-deep)"
-                    : done
-                      ? "var(--color-ink-soft)"
-                      : "var(--color-faint)",
-                }}
-              >
-                {c.label}
-              </span>
+                    : "var(--color-canvas-deep)",
+                color: active || isDone ? "#fff" : "var(--color-faint)",
+              }}
+            >
+              {isDone ? <Icon name="check" size={13} /> : c.number}
             </span>
-            {i < chapters.length - 1 && (
-              // The track fills behind you, so progress is legible without a label.
-              <span
-                aria-hidden="true"
-                className="h-[2px] shrink-0 rounded-full"
-                style={{
-                  width: compact ? 8 : 20,
-                  background: done ? "var(--color-good)" : "var(--color-line-strong)",
-                }}
-              />
-            )}
+            <span
+              className={`whitespace-nowrap text-[10.5px] font-bold uppercase tracking-[0.08em] ${compact && !active ? "sr-only" : ""}`}
+              style={{
+                color: active
+                  ? "var(--color-accent-deep)"
+                  : isDone
+                    ? "var(--color-ink-soft)"
+                    : "var(--color-faint)",
+              }}
+            >
+              {c.label}
+            </span>
           </li>
         );
       })}
@@ -114,7 +119,7 @@ export function TopBar({
 }) {
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center gap-6 border-b border-(--color-line) px-5">
+      <header className="flex h-[66px] shrink-0 items-center gap-6 border-b border-(--color-line) px-5">
         <div className="flex shrink-0 items-center gap-2.5">
           <span
             aria-hidden="true"
@@ -241,7 +246,16 @@ export function RailCard({
   );
 }
 
-/** Left rail: where you are, and who is talking to you. */
+/**
+ * Left rail: where you are, what you were asked to do, who is talking to you, and the
+ * file of things you have found out.
+ *
+ * "The brief" rather than "Your objective", and a file rather than a progress panel.
+ * The words matter: the rail is furniture for a pursuit lead, not a worksheet for a
+ * student (docs/STRATEGY.md D1). "Your file" also lives here rather than in the centre
+ * because reference material belongs on the desk, not in the decision — Papers, Please's
+ * rulebook, not a quiz.
+ */
 export function MissionRail({
   chapter,
   missionId,
@@ -249,6 +263,9 @@ export function MissionRail({
   totalMissions,
   completed,
   advisor,
+  objective,
+  minutes,
+  file,
 }: {
   chapter: Chapter;
   missionId: string | null;
@@ -256,12 +273,15 @@ export function MissionRail({
   totalMissions: number;
   completed: string[];
   advisor?: Advisor;
+  objective?: string;
+  minutes?: number;
+  file?: { id: string; label: string; reveals: string }[];
 }) {
   return (
     <div className="space-y-3.5">
       <div>
         <p className="text-[12px] font-bold text-(--color-accent)">Chapter {chapter.number}</p>
-        <h2 className="mt-0.5 text-[18px] font-bold leading-tight text-(--color-ink)">
+        <h2 className="mt-0.5 text-[19px] font-bold leading-tight text-(--color-ink)">
           {chapter.title}
         </h2>
         <p className="mt-1 text-[12px] font-medium text-(--color-muted) tabular-nums">
@@ -312,7 +332,38 @@ export function MissionRail({
         })}
       </ol>
 
+      {objective && (
+        <section className="border-t border-(--color-line) pt-3.5">
+          <SectionTitle icon="target" className="mb-2">
+            The brief
+          </SectionTitle>
+          <p className="text-[13.5px] leading-relaxed text-(--color-ink-soft)">{objective}</p>
+          {minutes !== undefined && (
+            <p className="mt-2.5 flex items-center gap-2 text-[12px] text-(--color-muted)">
+              <Icon name="clock" size={14} />
+              About {minutes} min
+            </p>
+          )}
+        </section>
+      )}
+
       {advisor && <AdvisorCard advisor={advisor} />}
+
+      {file && file.length > 0 && (
+        <section className="border-t border-(--color-line) pt-3.5">
+          <SectionTitle icon="search" className="mb-2">
+            Your file
+          </SectionTitle>
+          <ul className="space-y-2.5">
+            {file.map((e) => (
+              <li key={e.id}>
+                <p className="text-[12px] font-bold text-(--color-accent-deep)">{e.label}</p>
+                <p className="text-[12px] leading-snug text-(--color-muted)">{e.reveals}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }
@@ -360,11 +411,6 @@ export function AdvisorCard({ advisor }: { advisor: Advisor }) {
       <p className="mt-3 border-l-2 border-(--color-accent-ring) pl-3 text-[13px] italic leading-relaxed text-(--color-ink-soft)">
         “{advisor.quote}”
       </p>
-      {advisor.steer && (
-        <p className="mt-2.5 border-l-2 border-(--color-accent-ring) pl-3 text-[13px] italic leading-relaxed text-(--color-ink-soft)">
-          “{advisor.steer}”
-        </p>
-      )}
     </section>
   );
 }
@@ -391,10 +437,10 @@ export function FactorBars({
           <div key={d}>
             <div className="mb-1 flex items-baseline justify-between gap-2">
               <span
-                className="flex items-center gap-1.5 text-[12px] font-semibold"
+                className="flex items-center gap-1.5 text-[12.5px] font-bold"
                 style={{ color: colour }}
               >
-                <span aria-hidden="true" className="text-[8px]">
+                <span aria-hidden="true" className="text-[10px]">
                   {meta.glyph}
                 </span>
                 {meta.label}
@@ -571,19 +617,7 @@ export function InsightRail({
               const t = LEDGER_TONE[e.tone];
               return (
                 <li key={e.label} className="flex gap-2">
-                  <span
-                    className="mt-[3px] shrink-0"
-                    style={{
-                      color:
-                        e.tone === "good"
-                          ? "var(--color-good)"
-                          : e.tone === "bad"
-                            ? "var(--color-bad)"
-                            : "var(--color-accent)",
-                    }}
-                  >
-                    <Icon name={t.icon} size={13} />
-                  </span>
+                  <IconTile name={e.icon} tone={t.tone} size={26} />
                   <span className="min-w-0">
                     <span className="block text-[12.5px] font-bold leading-snug text-(--color-ink)">
                       {e.label}
@@ -600,26 +634,28 @@ export function InsightRail({
       </RailCard>
 
       {consider && consider.length > 0 && (
-        <RailCard
-          title={advisorName ? `${advisorName.split(" ")[0]} is asking` : "Open questions"}
-          icon="talk"
-          tone="warn"
+        <section
+          className="rounded-xl px-3.5 py-3"
+          style={{ background: "var(--color-accent-tint)" }}
         >
-          <ul className="space-y-2.5">
+          <h3 className="mb-2 flex items-center gap-2 text-[14px] font-bold text-(--color-accent-deep)">
+            <Icon name="bulb" size={16} />
+            {advisorName ? `${advisorName.split(" ")[0]} is asking` : "Open questions"}
+          </h3>
+          <ul className="space-y-2">
             {consider.map((c) => (
               <li
                 key={c}
-                className="flex gap-2.5 text-[13px] leading-relaxed text-(--color-ink-soft)"
+                className="flex gap-2 text-[13px] leading-relaxed text-(--color-ink-soft)"
               >
-                <span
-                  aria-hidden="true"
-                  className="mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full bg-(--color-accent)"
-                />
+                <span aria-hidden="true" className="shrink-0 font-bold text-(--color-accent)">
+                  +
+                </span>
                 {c}
               </li>
             ))}
           </ul>
-        </RailCard>
+        </section>
       )}
     </div>
   );
@@ -675,25 +711,51 @@ export function ActionBar({
   label,
   onAction,
   disabled,
+  aside,
   children,
 }: {
   label: string;
   onAction: () => void;
   disabled?: boolean;
+  /**
+   * The colleague's practical steer. The mockups carry an unattributed "Tip" in this
+   * slot; we keep their treatment — portrait, label, two lines — but the label is a
+   * person's name, because the interface does not get to tell the player what to think.
+   */
+  aside?: { from: string; text: string; photo?: string };
   /** left-hand content — the prediction strip on a decide screen */
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-3 border-t border-(--color-line) bg-(--color-surface) px-5 py-3">
+    <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-2 border-t border-(--color-line) bg-(--color-surface) px-5 py-2.5">
+      {aside && (
+        <div className="flex min-w-0 max-w-[400px] flex-1 items-start gap-2.5">
+          {aside.photo ? (
+            <img
+              src={artUrl(aside.photo)}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-9 w-9 shrink-0 rounded-[9px] object-cover"
+            />
+          ) : (
+            <IconTile name="bulb" tone="neutral" size={36} />
+          )}
+          <p className="text-[12.5px] leading-snug text-(--color-ink-soft)">
+            <span className="font-bold text-(--color-ink)">{aside.from}: </span>
+            “{aside.text}”
+          </p>
+        </div>
+      )}
       {children}
       <div className="ml-auto shrink-0">
         <button
           onClick={onAction}
           disabled={disabled}
-          className="rounded-xl px-6 py-2.5 text-[14.5px] font-semibold transition-all duration-150 enabled:text-white enabled:shadow-[0_6px_18px_rgb(109_53_232/0.28)] enabled:hover:-translate-y-0.5 enabled:active:translate-y-0 disabled:cursor-not-allowed"
+          className="rounded-[12px] px-6 py-2.5 text-[14.5px] font-bold transition-colors duration-150 enabled:text-white disabled:cursor-not-allowed"
           style={
             disabled
-              ? { background: "var(--color-accent-tint)", color: "var(--color-accent-ring)" }
+              ? { background: "var(--color-accent-tint)", color: "var(--color-accent-deep)" }
               : { background: "var(--color-accent)" }
           }
         >
@@ -722,10 +784,10 @@ export function PrimaryButton({
       <button
         onClick={onClick}
         disabled={disabled}
-        className="rounded-xl px-6 py-3 text-[15px] font-semibold transition-all duration-150 enabled:text-white enabled:shadow-[0_6px_18px_rgb(109_53_232/0.28)] enabled:hover:-translate-y-0.5 enabled:active:translate-y-0 disabled:cursor-not-allowed"
+        className="rounded-[12px] px-6 py-3 text-[15px] font-bold transition-colors duration-150 enabled:text-white disabled:cursor-not-allowed"
         style={
           disabled
-            ? { background: "var(--color-accent-tint)", color: "var(--color-accent-ring)" }
+            ? { background: "var(--color-accent-tint)", color: "var(--color-accent-deep)" }
             : { background: "var(--color-accent)" }
         }
       >
