@@ -117,6 +117,12 @@ colour alone (each dimension has a glyph as well as a hue).
 A screen is not done when it compiles. It is done when it has been loaded in a real browser,
 screenshotted, and *looked at* — at 1440×900 and at 390×844.
 
+**E8a — Colour carries hierarchy; the page must be scannable without being read.**
+Section headings are `.section-title` (dark, bold, coloured icon) — never faint uppercase.
+`.eyebrow` is only for the kicker above a headline. Status is a filled `Pill`, not coloured
+body text. Supporting regions sit on `--color-panel`. Every tint is a token; `Pill` and
+`SectionTitle` are the only ways to apply one.
+
 **E8 — The game shell is required furniture, not decoration.**
 Every mission renders a chapter stepper, a mission rail (checklist, objective, estimated
 time, advisor), a factor read-out, open questions and a tip. A mission that omits one leaves

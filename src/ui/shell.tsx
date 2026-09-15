@@ -19,8 +19,9 @@ import {
   type BadgeId,
   type Chapter,
   type DimensionId,
+  type IconId,
 } from "../engine/types";
-import { Icon } from "./icons";
+import { Icon, Pill, SectionTitle, type Tone } from "./icons";
 
 /* ─────────────────────────── chapter stepper ─────────────────────────── */
 
@@ -56,9 +57,9 @@ export function ChapterStepper({
                   background: active
                     ? "var(--color-accent)"
                     : done
-                      ? "var(--color-accent-ring)"
+                      ? "var(--color-good)"
                       : "var(--color-canvas-deep)",
-                  color: active ? "#fff" : done ? "var(--color-accent-deep)" : "var(--color-faint)",
+                  color: active || done ? "#fff" : "var(--color-faint)",
                 }}
               >
                 {done ? <Icon name="check" size={12} /> : c.number}
@@ -69,7 +70,7 @@ export function ChapterStepper({
                   color: active
                     ? "var(--color-accent-deep)"
                     : done
-                      ? "var(--color-muted)"
+                      ? "var(--color-ink-soft)"
                       : "var(--color-faint)",
                 }}
               >
@@ -77,10 +78,15 @@ export function ChapterStepper({
               </span>
             </span>
             {i < chapters.length - 1 && (
+              // The connector is filled behind you — the track shows how far
+              // through the game you are without needing a label.
               <span
                 aria-hidden="true"
-                className="h-px shrink-0"
-                style={{ width: compact ? 8 : 16, background: "var(--color-line-strong)" }}
+                className="h-[2px] shrink-0 rounded-full"
+                style={{
+                  width: compact ? 8 : 16,
+                  background: done ? "var(--color-good)" : "var(--color-line-strong)",
+                }}
               />
             )}
           </li>
@@ -166,11 +172,13 @@ export function TopBar({
 export function RailCard({
   title,
   icon,
+  tone = "accent",
   children,
   accent = false,
 }: {
   title?: string;
-  icon?: Parameters<typeof Icon>[0]["name"];
+  icon?: IconId;
+  tone?: Tone;
   children: React.ReactNode;
   accent?: boolean;
 }) {
@@ -183,10 +191,9 @@ export function RailCard({
       }}
     >
       {title && (
-        <h3 className="mb-2.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-(--color-faint)">
-          {icon && <Icon name={icon} size={13} />}
+        <SectionTitle icon={icon} tone={tone} className="mb-2.5">
           {title}
-        </h3>
+        </SectionTitle>
       )}
       {children}
     </section>
@@ -214,18 +221,18 @@ export function MissionRail({
   advisor?: Advisor;
 }) {
   return (
-    <div className="space-y-3.5">
+    <div className="panel space-y-3.5 p-4">
       <div>
-        <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
-          Chapter {chapter.number}
-        </p>
-        <h2 className="display mt-1 text-[21px] text-(--color-ink)">{chapter.title}</h2>
-        <p className="mt-1.5 text-[12px] font-medium text-(--color-muted) tabular-nums">
+        <p className="text-[12px] font-bold text-(--color-accent)">Chapter {chapter.number}</p>
+        <h2 className="display mt-0.5 text-[20px] text-(--color-ink)">{chapter.title}</h2>
+        <p className="mt-1 text-[12px] font-medium text-(--color-muted) tabular-nums">
           Mission {missionNumber} of {totalMissions}
         </p>
       </div>
 
-      <ol className="space-y-1">
+      {/* Numbered, not bulleted. A number tells you where you are in the
+          chapter; a dot only tells you that there is a list. */}
+      <ol className="space-y-0.5 border-t border-(--color-line) pt-3">
         {chapter.missionIds.map((id, i) => {
           const done = completed.includes(id);
           const active = id === missionId;
@@ -233,31 +240,22 @@ export function MissionRail({
             <li
               key={id}
               className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors"
-              style={{ background: active ? "var(--color-accent-tint)" : "transparent" }}
+              style={{ background: active ? "var(--color-surface)" : "transparent" }}
               aria-current={active ? "step" : undefined}
             >
               <span
                 aria-hidden="true"
-                className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border"
+                className="flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
                 style={{
-                  borderColor: done
-                    ? "var(--color-good)"
-                    : active
-                      ? "var(--color-accent)"
-                      : "var(--color-line-strong)",
                   background: done
                     ? "var(--color-good)"
                     : active
                       ? "var(--color-accent)"
-                      : "transparent",
-                  color: "#fff",
+                      : "var(--color-canvas-deep)",
+                  color: done || active ? "#fff" : "var(--color-faint)",
                 }}
               >
-                {done ? (
-                  <Icon name="check" size={11} />
-                ) : active ? (
-                  <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                ) : null}
+                {done ? <Icon name="check" size={12} /> : i + 1}
               </span>
               <span
                 className="text-[13px] leading-snug"
@@ -265,9 +263,9 @@ export function MissionRail({
                   color: active
                     ? "var(--color-accent-deep)"
                     : done
-                      ? "var(--color-muted)"
+                      ? "var(--color-ink-soft)"
                       : "var(--color-faint)",
-                  fontWeight: active ? 600 : 500,
+                  fontWeight: active ? 700 : 500,
                 }}
               >
                 {chapter.steps[i] ?? `Mission ${i + 1}`}
@@ -281,10 +279,15 @@ export function MissionRail({
         <RailCard title="Your objective" icon="target">
           <p className="text-[13.5px] leading-relaxed text-(--color-ink-soft)">{objective}</p>
           {minutes !== undefined && (
-            <p className="mt-2.5 flex items-center gap-1.5 border-t border-(--color-line) pt-2.5 text-[12px] text-(--color-muted)">
-              <Icon name="clock" size={13} />
-              About {minutes} min
-            </p>
+            <div className="mt-3 flex items-center gap-2 border-t border-(--color-line) pt-2.5">
+              <span className="text-(--color-accent)">
+                <Icon name="clock" size={14} />
+              </span>
+              <span className="text-[12px] text-(--color-muted)">Estimated time</span>
+              <span className="ml-auto text-[12px] font-bold text-(--color-ink)">
+                {minutes} min
+              </span>
+            </div>
           )}
         </RailCard>
       )}
@@ -302,7 +305,10 @@ export function AdvisorCard({ advisor }: { advisor: Advisor }) {
     .slice(0, 2);
 
   return (
-    <RailCard title="Team discussion" icon="people">
+    <section
+      className="rounded-[14px] border p-4"
+      style={{ borderColor: "var(--color-line)", background: "var(--color-surface)" }}
+    >
       <div className="flex items-center gap-2.5">
         <span
           aria-hidden="true"
@@ -314,14 +320,16 @@ export function AdvisorCard({ advisor }: { advisor: Advisor }) {
           {initials}
         </span>
         <div className="min-w-0">
-          <p className="truncate text-[13px] font-bold text-(--color-ink)">{advisor.name}</p>
-          <p className="truncate text-[11.5px] text-(--color-muted)">{advisor.role}</p>
+          <p className="truncate text-[13.5px] font-bold text-(--color-ink)">{advisor.name}</p>
+          <p className="truncate text-[11.5px] font-medium text-(--color-accent)">{advisor.role}</p>
         </div>
       </div>
-      <p className="mt-2.5 text-[13px] italic leading-relaxed text-(--color-ink-soft)">
+      {/* Quote mark rather than a heading — a colleague's aside does not need a
+          label telling you it is a colleague's aside. */}
+      <p className="mt-3 border-l-2 border-(--color-accent-ring) pl-3 text-[13px] italic leading-relaxed text-(--color-ink-soft)">
         “{advisor.quote}”
       </p>
-    </RailCard>
+    </section>
   );
 }
 
@@ -477,17 +485,23 @@ export function InsightRail({
   knownCount: number;
 }) {
   return (
-    <div className="space-y-3.5">
+    <div className="panel space-y-3.5 p-4">
       <RailCard title="Key factors" icon="chart">
         <FactorBars dims={dims} />
       </RailCard>
 
       {consider && consider.length > 0 && (
-        <RailCard title="Things to consider" icon="spark">
-          <ul className="space-y-2">
+        <RailCard title="Things to consider" icon="bulb" tone="warn">
+          <ul className="space-y-2.5">
             {consider.map((c) => (
-              <li key={c} className="flex gap-2 text-[13px] leading-relaxed text-(--color-ink-soft)">
-                <span aria-hidden="true" className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-(--color-accent-ring)" />
+              <li
+                key={c}
+                className="flex gap-2.5 text-[13px] leading-relaxed text-(--color-ink-soft)"
+              >
+                <span
+                  aria-hidden="true"
+                  className="mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full bg-(--color-accent)"
+                />
                 {c}
               </li>
             ))}
@@ -495,7 +509,7 @@ export function InsightRail({
         </RailCard>
       )}
 
-      <RailCard title="Learning in progress" icon="flag">
+      <RailCard title="Progress" icon="flag" tone="good">
         <p className="text-[12.5px] leading-relaxed text-(--color-muted)">
           {knownCount > 0 ? (
             <>
@@ -507,14 +521,10 @@ export function InsightRail({
           )}
         </p>
         {badges.length > 0 && (
-          <ul className="mt-2.5 space-y-1.5 border-t border-(--color-line) pt-2.5">
+          <ul className="mt-3 flex flex-wrap gap-1.5 border-t border-(--color-line) pt-3">
             {badges.map((b) => (
-              <li
-                key={b}
-                className="flex items-center gap-1.5 text-[12px] font-semibold text-(--color-accent-deep)"
-              >
-                <span aria-hidden="true">★</span>
-                {BADGE_META[b].label}
+              <li key={b}>
+                <Pill tone="accent">★ {BADGE_META[b].label}</Pill>
               </li>
             ))}
           </ul>
@@ -582,15 +592,18 @@ export function ActionBar({
           column and the hint lands on top of it. */}
       <div className="mx-auto flex max-w-[1500px] flex-col gap-2.5 px-4 py-3 sm:flex-row sm:items-center sm:gap-5 lg:px-6">
         {tip && (
-          <p className="flex min-w-0 items-start gap-2 text-[12.5px] leading-snug text-(--color-muted) sm:flex-1">
+          <div
+            className="flex min-w-0 items-start gap-2.5 rounded-xl px-3 py-2 sm:flex-1"
+            style={{ background: "var(--color-accent-tint)" }}
+          >
             <span className="mt-px shrink-0 text-(--color-accent)">
-              <Icon name="spark" size={14} />
+              <Icon name="bulb" size={15} />
             </span>
-            <span>
-              <span className="font-semibold text-(--color-ink-soft)">Tip. </span>
+            <p className="text-[12.5px] leading-snug text-(--color-ink-soft)">
+              <span className="font-bold text-(--color-accent-deep)">Tip. </span>
               {tip}
-            </span>
-          </p>
+            </p>
+          </div>
         )}
         <div className="flex shrink-0 items-center justify-end gap-3 sm:ml-auto">
           {hint && <span className="text-[12.5px] text-(--color-muted)">{hint}</span>}

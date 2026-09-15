@@ -18,8 +18,8 @@
 import { useEffect } from "react";
 
 import type { OutcomeTone, Resolution } from "../engine/types";
-import { Icon } from "./icons";
-import { ActionBar, BadgeChip, Eyebrow, FactorGrid } from "./shell";
+import { Icon, SectionTitle } from "./icons";
+import { ActionBar, BadgeChip, FactorGrid } from "./shell";
 
 const TONE: Record<
   OutcomeTone,
@@ -95,36 +95,41 @@ export function ConsequenceScreen({
         </div>
 
         {resolution.revealed.length > 0 && (
-          <div className="stagger mt-7 space-y-3">
-            <Eyebrow>What you found</Eyebrow>
+          <div className="card stagger mt-6 overflow-hidden">
             {resolution.revealed.map((e) => (
-              <div key={e.id} className="card p-5">
-                <p className="eyebrow">{e.label}</p>
-                <p className="mt-1.5 text-[15px] leading-relaxed text-(--color-ink)">{e.reveals}</p>
+              <div
+                key={e.id}
+                className="border-b border-(--color-line) px-5 py-4 last:border-b-0 sm:px-6"
+              >
+                <SectionTitle icon="search" className="mb-1.5">
+                  {e.label}
+                </SectionTitle>
+                <p className="text-[15px] leading-relaxed text-(--color-ink-soft)">{e.reveals}</p>
               </div>
             ))}
           </div>
         )}
 
-        <div className="mt-8">
-          <Eyebrow>What is now different</Eyebrow>
-          <ul className="mt-3 space-y-2.5">
+        <div className="card mt-6 px-5 py-4 sm:px-6">
+          <SectionTitle icon="spark" className="mb-3">
+            What is now different
+          </SectionTitle>
+          <ul className="space-y-2">
             {resolution.outcome.changed.map((c, i) => (
               <li
                 key={i}
-                className="flex items-start gap-3 text-[15.5px] leading-relaxed text-(--color-ink-soft)"
+                className="flex items-start gap-2.5 text-[15px] leading-relaxed text-(--color-ink-soft)"
               >
-                <span
-                  aria-hidden="true"
-                  className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-(--color-accent)"
-                />
+                <span aria-hidden="true" className="mt-px shrink-0 font-bold text-(--color-accent)">
+                  →
+                </span>
                 {c}
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="card mt-8 p-6">
+        <div className="card mt-6 p-6">
           <FactorGrid dims={resolution.dimsAfter} deltas={resolution.deltas} showDeltas />
         </div>
       </div>

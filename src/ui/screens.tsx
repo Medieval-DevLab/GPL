@@ -2,7 +2,7 @@
 
 import { causalThreads, finalVerdict } from "../engine/engine";
 import { BADGE_META, STAGES, type Chapter, type GameState, type Interlude } from "../engine/types";
-import { Icon } from "./icons";
+import { Icon, SectionTitle } from "./icons";
 import { BadgeChip, Eyebrow, FactorGrid, PrimaryButton } from "./shell";
 
 /* ─────────────────────────── title ─────────────────────────── */
@@ -212,7 +212,9 @@ export function EndingScreen({ state, onRestart }: { state: GameState; onRestart
 
       {state.badges.length > 0 && (
         <div className="anim-rise mt-10" style={{ animationDelay: "0.16s" }}>
-          <Eyebrow>What you did well</Eyebrow>
+          <SectionTitle icon="check" tone="good">
+            What you did well
+          </SectionTitle>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {state.badges.map((b) => (
               <BadgeChip key={b} id={b} />
@@ -223,7 +225,7 @@ export function EndingScreen({ state, onRestart }: { state: GameState; onRestart
 
       {threads.length > 0 && (
         <div className="anim-rise mt-11" style={{ animationDelay: "0.18s" }}>
-          <Eyebrow>What led to what</Eyebrow>
+          <SectionTitle icon="layers">What led to what</SectionTitle>
           <p className="mt-2 text-[14px] text-(--color-muted)">
             Nothing in this game is random. These are the chains your own decisions created.
           </p>
@@ -249,7 +251,7 @@ export function EndingScreen({ state, onRestart }: { state: GameState; onRestart
       )}
 
       <div className="anim-rise mt-11" style={{ animationDelay: "0.2s" }}>
-        <Eyebrow>Your decisions</Eyebrow>
+        <SectionTitle icon="flag">Your decisions</SectionTitle>
         <ol className="mt-4 space-y-0">
           {state.history.map((h, i) => {
             const stage = STAGES.find((s) => s.id === h.stage);
@@ -284,7 +286,9 @@ export function EndingScreen({ state, onRestart }: { state: GameState; onRestart
       </div>
 
       <div className="anim-rise mt-6" style={{ animationDelay: "0.24s" }}>
-        <Eyebrow>What this run taught</Eyebrow>
+        <SectionTitle icon="bulb" tone="warn">
+          What this run taught
+        </SectionTitle>
         <ul className="mt-4 space-y-3">
           {state.history.map((h) => (
             <li key={h.missionId} className="flex items-start gap-3">

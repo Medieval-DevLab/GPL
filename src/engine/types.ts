@@ -125,7 +125,8 @@ export type IconId =
   | "rocket"
   | "layers"
   | "scale"
-  | "flag";
+  | "flag"
+  | "bulb";
 
 export interface Option {
   id: string;

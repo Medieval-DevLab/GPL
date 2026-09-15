@@ -19,93 +19,114 @@ import type {
   Mission,
   Option,
 } from "../engine/types";
-import { Icon, IconTile } from "./icons";
+import { Icon, IconTile, Pill, SectionTitle, type Tone } from "./icons";
 
 /* ───────────────────────── briefing blocks ───────────────────────── */
 
-function ClientStrip({ client }: { client: ClientProfile }) {
+/** A divided band inside the briefing card. Keeps the brief as one object. */
+function Band({
+  title,
+  icon,
+  tone = "accent",
+  children,
+}: {
+  title: string;
+  icon: Parameters<typeof SectionTitle>[0]["icon"];
+  tone?: Tone;
+  children: React.ReactNode;
+}) {
   return (
-    <section className="card mt-6 overflow-hidden">
-      <div className="flex flex-wrap items-center gap-4 p-4">
-        <span
-          aria-hidden="true"
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[13px] text-[16px] font-bold text-white"
-          style={{
-            background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-deep))",
-          }}
-        >
-          {client.monogram}
-        </span>
-        <div className="min-w-0 flex-1">
-          <h2 className="text-[17px] font-bold leading-tight text-(--color-ink)">{client.name}</h2>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {client.tags.map((t) => (
-              <span
-                key={t}
-                className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                style={{ background: "var(--color-canvas-deep)", color: "var(--color-muted)" }}
-              >
-                {t}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-      <p className="border-t border-(--color-line) px-4 py-3 text-[14px] leading-relaxed text-(--color-ink-soft)">
-        {client.blurb}
-      </p>
-      {/* Separators run horizontally when stacked and vertically when side by
-          side, so the divider follows the layout rather than the source order. */}
-      <dl
-        className="grid grid-cols-1 border-t border-(--color-line) sm:grid-cols-3"
-        style={{ background: "var(--color-surface-sunk)" }}
-      >
-        {client.facts.map((f) => (
-          <div
-            key={f.label}
-            className="flex items-center gap-2.5 border-t border-(--color-line) px-4 py-3 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0"
-          >
-            <span className="shrink-0 text-(--color-accent)">
-              <Icon name={f.icon} size={16} />
-            </span>
-            <div className="min-w-0">
-              <dt className="text-[11px] font-semibold uppercase tracking-wider text-(--color-faint)">
-                {f.label}
-              </dt>
-              <dd className="text-[13.5px] font-bold text-(--color-ink)">{f.value}</dd>
-            </div>
-          </div>
-        ))}
-      </dl>
+    <section className="border-t border-(--color-line) px-5 py-4 sm:px-6">
+      <SectionTitle icon={icon} tone={tone} className="mb-3">
+        {title}
+      </SectionTitle>
+      {children}
     </section>
   );
 }
 
-const LEVEL_FILL: Record<AssessmentFactor["level"], { pct: number; colour: string; word: string }> =
-  {
-    low: { pct: 28, colour: "var(--color-faint)", word: "Low" },
-    medium: { pct: 55, colour: "var(--color-warn)", word: "Medium" },
-    high: { pct: 80, colour: "var(--color-deliver)", word: "High" },
-    strong: { pct: 96, colour: "var(--color-good)", word: "Strong" },
-  };
+function ClientStrip({ client }: { client: ClientProfile }) {
+  return (
+    <>
+      <section className="border-t border-(--color-line) px-5 py-4 sm:px-6">
+        <div className="flex flex-wrap items-center gap-3.5">
+          <span
+            aria-hidden="true"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[13px] text-[16px] font-bold text-white"
+            style={{
+              background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-deep))",
+            }}
+          >
+            {client.monogram}
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[17px] font-bold leading-tight text-(--color-ink)">
+              {client.name}
+            </h2>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {client.tags.map((t) => (
+                <Pill key={t} tone="accent">
+                  {t}
+                </Pill>
+              ))}
+            </div>
+          </div>
+        </div>
+        <p className="mt-3 text-[14px] leading-relaxed text-(--color-ink-soft)">{client.blurb}</p>
+      </section>
+
+      {/* Separators run horizontally when stacked and vertically when side by
+          side, so the divider follows the layout rather than the source order. */}
+      <dl
+        className="grid grid-cols-1 border-t border-(--color-line) sm:grid-cols-3"
+        style={{ background: "var(--color-panel)" }}
+      >
+        {client.facts.map((f) => (
+          <div
+            key={f.label}
+            className="flex items-center gap-2.5 border-t border-(--color-line) px-5 py-3 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0"
+          >
+            <span className="shrink-0 text-(--color-accent)">
+              <Icon name={f.icon} size={17} />
+            </span>
+            <div className="min-w-0">
+              <dt className="text-[11px] font-semibold text-(--color-muted)">{f.label}</dt>
+              <dd className="text-[14px] font-bold text-(--color-ink)">{f.value}</dd>
+            </div>
+          </div>
+        ))}
+      </dl>
+    </>
+  );
+}
+
+/** Level → a filled chip and a matching bar. Two encodings, one glance. */
+const LEVEL: Record<
+  AssessmentFactor["level"],
+  { pct: number; tone: Tone; colour: string; word: string }
+> = {
+  low: { pct: 28, tone: "neutral", colour: "var(--color-faint)", word: "Low" },
+  medium: { pct: 55, tone: "warn", colour: "var(--color-warn)", word: "Medium" },
+  high: { pct: 80, tone: "accent", colour: "var(--color-accent)", word: "High" },
+  strong: { pct: 96, tone: "good", colour: "var(--color-good)", word: "Strong" },
+};
 
 function Assessment({ factors }: { factors: AssessmentFactor[] }) {
   return (
-    <section className="mt-6">
-      <h2 className="eyebrow mb-2.5">Where this stands today</h2>
-      <div className="grid gap-2.5 sm:grid-cols-2">
+    <Band title="Where this stands today" icon="chart">
+      <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
         {factors.map((f) => {
-          const l = LEVEL_FILL[f.level];
+          const l = LEVEL[f.level];
           return (
-            <div key={f.label} className="card p-3.5">
+            <div key={f.label}>
               <div className="flex items-center gap-2">
-                <span className="shrink-0 text-(--color-muted)">
+                <span className="shrink-0 text-(--color-accent)">
                   <Icon name={f.icon} size={15} />
                 </span>
-                <span className="flex-1 text-[13px] font-bold text-(--color-ink)">{f.label}</span>
-                <span className="text-[11px] font-bold uppercase" style={{ color: l.colour }}>
-                  {l.word}
+                <span className="flex-1 text-[13.5px] font-bold text-(--color-ink)">
+                  {f.label}
                 </span>
+                <Pill tone={l.tone}>{l.word}</Pill>
               </div>
               <div
                 className="mt-2 h-1.5 w-full overflow-hidden rounded-full"
@@ -116,12 +137,12 @@ function Assessment({ factors }: { factors: AssessmentFactor[] }) {
                   style={{ width: `${l.pct}%`, background: l.colour }}
                 />
               </div>
-              <p className="mt-2 text-[12.5px] leading-snug text-(--color-muted)">{f.note}</p>
+              <p className="mt-1.5 text-[12.5px] leading-snug text-(--color-muted)">{f.note}</p>
             </div>
           );
         })}
       </div>
-    </section>
+    </Band>
   );
 }
 
@@ -134,37 +155,37 @@ function SaidAndConcerns({
 }) {
   if (!said && !concerns?.length) return null;
   return (
-    <div className="mt-6 grid gap-3.5 lg:grid-cols-2">
+    <div className="grid border-t border-(--color-line) lg:grid-cols-2">
       {said && (
-        <section
-          className="rounded-[14px] border p-4"
-          style={{ borderColor: "var(--color-accent-ring)", background: "var(--color-accent-tint)" }}
-        >
-          <h2 className="eyebrow mb-2 flex items-center gap-1.5" style={{ color: "var(--color-accent)" }}>
-            <Icon name="megaphone" size={13} />
+        <section className="px-5 py-4 sm:px-6">
+          <SectionTitle icon="megaphone" className="mb-2.5">
             What they said
-          </h2>
-          <blockquote className="text-[14.5px] italic leading-relaxed text-(--color-ink)">
+          </SectionTitle>
+          <blockquote
+            className="rounded-xl px-4 py-3 text-[14.5px] italic leading-relaxed text-(--color-ink)"
+            style={{ background: "var(--color-accent-tint)" }}
+          >
             “{said.text}”
+            <footer className="mt-2 text-[12px] font-bold not-italic text-(--color-accent-deep)">
+              {said.attribution}
+            </footer>
           </blockquote>
-          <p className="mt-2 text-[12px] font-semibold text-(--color-accent-deep)">
-            {said.attribution}
-          </p>
         </section>
       )}
       {concerns && concerns.length > 0 && (
-        <section className="card p-4">
-          <h2 className="eyebrow mb-2 flex items-center gap-1.5">
-            <Icon name="warning" size={13} />
+        <section className="border-t border-(--color-line) px-5 py-4 sm:px-6 lg:border-l lg:border-t-0">
+          <SectionTitle icon="warning" tone="warn" className="mb-2.5">
             Key concerns
-          </h2>
-          <ul className="space-y-1.5">
+          </SectionTitle>
+          <ul className="space-y-2">
             {concerns.map((c) => (
               <li
                 key={c}
-                className="flex gap-2 text-[13.5px] leading-relaxed text-(--color-ink-soft)"
+                className="flex gap-2.5 text-[13.5px] leading-relaxed text-(--color-ink-soft)"
               >
-                <span aria-hidden="true" className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-(--color-warn)" />
+                <span className="mt-[3px] shrink-0 text-(--color-warn)">
+                  <Icon name="warning" size={13} />
+                </span>
                 {c}
               </li>
             ))}
@@ -188,20 +209,30 @@ function Notes({ discovered, content }: { discovered: string[]; content: Content
   if (items.length === 0) return null;
 
   return (
-    <details className="card group mt-6 overflow-hidden">
-      <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[13px] font-semibold text-(--color-ink-soft) transition-colors hover:bg-(--color-surface-sunk)">
-        <span className="transition-transform group-open:rotate-90" aria-hidden="true">
+    <details className="group border-t border-(--color-line)">
+      <summary className="flex cursor-pointer list-none items-center gap-2 px-5 py-3 transition-colors hover:bg-(--color-surface-sunk) sm:px-6">
+        <span
+          className="shrink-0 transition-transform group-open:rotate-90 text-(--color-accent)"
+          aria-hidden="true"
+        >
           ▸
         </span>
-        <Icon name="search" size={14} />
-        What you found out
-        <span className="font-normal text-(--color-faint)">({items.length})</span>
+        <span className="shrink-0 text-(--color-accent)">
+          <Icon name="search" size={16} />
+        </span>
+        <span className="text-[15px] font-bold text-(--color-ink)">What you found out</span>
+        <Pill tone="accent">{items.length}</Pill>
       </summary>
-      <div className="space-y-3 border-t border-(--color-line) px-4 py-3.5">
+      <div
+        className="space-y-3 border-t border-(--color-line) px-5 py-4 sm:px-6"
+        style={{ background: "var(--color-surface-sunk)" }}
+      >
         {items.map((e) => (
           <div key={e.id}>
-            <p className="eyebrow">{e.label}</p>
-            <p className="mt-1 text-[13.5px] leading-relaxed text-(--color-ink-soft)">{e.reveals}</p>
+            <p className="text-[12px] font-bold text-(--color-accent-deep)">{e.label}</p>
+            <p className="mt-0.5 text-[13.5px] leading-relaxed text-(--color-ink-soft)">
+              {e.reveals}
+            </p>
           </div>
         ))}
       </div>
@@ -249,20 +280,11 @@ function OptionCard({
 
   return (
     <button className="choice" data-selected={selected} onClick={onToggle} aria-pressed={selected}>
-      {/* header */}
+      {/* header — the scan line. Icon and title carry the weight; everything
+          below is detail you only read once a title has caught your eye. */}
       <div className="flex items-center gap-3">
-        {option.icon ? (
-          <IconTile name={option.icon} tone={selected ? "accent" : "neutral"} size={36} />
-        ) : (
-          <span
-            aria-hidden="true"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-[14px] font-bold"
-            style={{ background: "var(--color-canvas-deep)", color: "var(--color-muted)" }}
-          >
-            {index + 1}
-          </span>
-        )}
-        <p className="min-w-0 flex-1 text-[16px] font-bold leading-snug text-(--color-ink)">
+        <IconTile name={option.icon ?? "target"} tone="accent" size={38} />
+        <p className="min-w-0 flex-1 text-[16.5px] font-bold leading-snug text-(--color-ink)">
           {option.title}
         </p>
         <span
@@ -277,51 +299,70 @@ function OptionCard({
         </span>
       </div>
 
-      {/* body: what it is | what it trades */}
-      <div className={`mt-3 gap-x-6 gap-y-3 ${hasTradeoffs ? "sm:flex" : ""}`}>
-        <p className="flex-1 text-[14px] leading-relaxed text-(--color-ink-soft)">
-          {option.description}
-        </p>
-        {hasTradeoffs && (
-          <ul className="mt-3 shrink-0 space-y-1 sm:mt-0 sm:w-[46%]">
+      <p className="mt-2 text-[14px] leading-relaxed text-(--color-muted)">
+        {option.description}
+      </p>
+
+      {/* Pros beside cons, not stacked. Stacked, a four-item list made every
+          card 60px taller than its description needed and left dead space. */}
+      {hasTradeoffs && (
+        <div
+          className="mt-2.5 grid gap-x-4 gap-y-1.5 rounded-xl px-3.5 py-2.5 sm:grid-cols-2"
+          style={{ background: "var(--color-surface-sunk)" }}
+        >
+          <ul className="space-y-1.5">
             {option.pros?.map((p) => (
               <li key={p} className="flex items-start gap-2 text-[13px] leading-snug">
-                <span className="mt-[3px] shrink-0 text-(--color-good)">
-                  <Icon name="check" size={12} />
+                <span className="mt-[2px] shrink-0 text-(--color-good)">
+                  <Icon name="check" size={13} />
                 </span>
-                <span className="text-(--color-ink-soft)">{p}</span>
+                <span className="font-medium text-(--color-ink-soft)">{p}</span>
               </li>
             ))}
+          </ul>
+          <ul className="space-y-1.5">
             {option.cons?.map((c) => (
               <li key={c} className="flex items-start gap-2 text-[13px] leading-snug">
-                <span className="mt-[3px] shrink-0 text-(--color-bad)">
-                  <Icon name="cross" size={12} />
+                <span className="mt-[2px] shrink-0 text-(--color-bad)">
+                  <Icon name="cross" size={13} />
                 </span>
                 <span className="text-(--color-muted)">{c}</span>
               </li>
             ))}
           </ul>
-        )}
-      </div>
-
-      {/* footer: what it costs — never what it returns */}
-      {(option.cost || option.commits) && (
-        <div className="mt-3.5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-(--color-line) pt-3">
-          {option.cost && (
-            <>
-              <CostDots label="Time" value={option.cost.time} />
-              <CostDots label="Investment" value={option.cost.investment} />
-            </>
-          )}
-          {/* Full width until there is room beside the dots — squeezed into the
-              leftover inches it wraps to two words a line. */}
-          {option.commits && (
-            <span className="w-full text-[12.5px] leading-snug text-(--color-muted) md:w-auto md:min-w-0 md:flex-1">
-              {option.commits}
-            </span>
-          )}
         </div>
       )}
+
+      {/* footer: what it costs — never what it returns */}
+      <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-(--color-line) pt-3">
+        {/* The game is keyboard playable; this is where you find that out. */}
+        <kbd
+          className="hidden h-[19px] min-w-[19px] shrink-0 items-center justify-center rounded-[5px] border border-(--color-line-strong) px-1 font-sans text-[10.5px] font-bold text-(--color-faint) sm:flex"
+          style={{ background: "var(--color-surface)" }}
+        >
+          {index + 1}
+        </kbd>
+        {option.cost && (
+          <>
+            <CostDots label="Time" value={option.cost.time} />
+            <CostDots label="Investment" value={option.cost.investment} />
+          </>
+        )}
+        {/* Full width until there is room beside the dots — squeezed into the
+            leftover inches it wraps to two words a line. */}
+        {option.commits && (
+          <span className="w-full text-[12.5px] leading-snug text-(--color-muted) md:w-auto md:min-w-0 md:flex-1">
+            {option.commits}
+          </span>
+        )}
+        <span
+          className="ml-auto flex shrink-0 items-center gap-1.5 text-[12.5px] font-bold"
+          style={{ color: selected ? "var(--color-accent-deep)" : "var(--color-accent)" }}
+        >
+          {selected ? "Selected" : `Select this option`}
+          <span aria-hidden="true">{selected ? "✓" : "→"}</span>
+        </span>
+      </div>
     </button>
   );
 }
@@ -380,10 +421,10 @@ function EvidenceList({
             aria-pressed={selected}
           >
             <div className="flex items-start gap-3">
-              <IconTile name="search" tone={selected ? "accent" : "neutral"} size={34} />
+              <IconTile name="search" tone="accent" size={36} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="eyebrow">{e.label}</p>
+                  <p className="text-[11.5px] font-bold text-(--color-accent)">{e.label}</p>
                   {/* Square, not round: this is multi-select. `rounded-md` is
                       12px under our theme, which reads as a radio button. */}
                   <span
@@ -397,7 +438,7 @@ function EvidenceList({
                     {selected && <Icon name="check" size={12} />}
                   </span>
                 </div>
-                <p className="mt-1 text-[14.5px] font-semibold leading-snug text-(--color-ink)">
+                <p className="mt-1 text-[15px] font-bold leading-snug text-(--color-ink)">
                   {e.question}
                 </p>
               </div>
@@ -434,7 +475,7 @@ function ComponentList({
             aria-pressed={selected}
           >
             <div className="flex items-start justify-between gap-3">
-              <p className="text-[15px] font-bold leading-snug text-(--color-ink)">{c.title}</p>
+              <p className="text-[15.5px] font-bold leading-snug text-(--color-ink)">{c.title}</p>
               <span
                 aria-hidden="true"
                 className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border-2 text-white transition-colors"
@@ -446,15 +487,12 @@ function ComponentList({
                 {selected && <Icon name="check" size={12} />}
               </span>
             </div>
-            <p className="mt-1.5 text-[13.5px] leading-relaxed text-(--color-ink-soft)">
+            <p className="mt-1.5 text-[13.5px] leading-relaxed text-(--color-muted)">
               {c.description}
             </p>
-            <span
-              className="mt-2.5 inline-block rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide"
-              style={{ background: "var(--color-canvas-deep)", color: "var(--color-muted)" }}
-            >
-              {c.tag}
-            </span>
+            <div className="mt-3 border-t border-(--color-line) pt-2.5">
+              <Pill tone={selected ? "accent" : "neutral"}>{c.tag}</Pill>
+            </div>
           </button>
         );
       })}
@@ -482,52 +520,56 @@ export function MissionBody({
 
   return (
     <div key={mission.id} className="anim-rise">
-      <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
-        {mission.eyebrow}
-      </p>
-      <h1 className="display mt-1.5 text-[30px] text-(--color-ink) sm:text-[36px]">
-        {mission.title}
-      </h1>
-
-      <div className="mt-4 space-y-3">
-        {situation.map((p, i) => (
-          <p key={i} className="text-[16px] leading-[1.65] text-(--color-ink-soft)">
-            {p}
+      {/* THE BRIEF — one card, divided into bands. Previously these were six
+          separate floating cards, which gave the page no structure to scan and
+          made everything feel equally important. */}
+      <section className="card overflow-hidden">
+        <div className="px-5 pb-5 pt-5 sm:px-6 sm:pb-6">
+          <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
+            {mission.eyebrow}
           </p>
-        ))}
-      </div>
+          <h1 className="display mt-1.5 text-[29px] text-(--color-ink) sm:text-[34px]">
+            {mission.title}
+          </h1>
 
-      {mission.context && mission.context.length > 0 && (
-        <div className="mt-5 flex flex-wrap gap-2">
-          {mission.context.map((c) => (
-            <span
-              key={c.label}
-              className="rounded-lg border border-(--color-line) bg-(--color-surface) px-3 py-1.5 text-[12.5px]"
-            >
-              <span className="text-(--color-muted)">{c.label}: </span>
-              <span className="font-semibold text-(--color-ink)">{c.value}</span>
-            </span>
-          ))}
+          <div className="mt-3.5 space-y-3">
+            {situation.map((p, i) => (
+              <p key={i} className="text-[15.5px] leading-[1.65] text-(--color-ink-soft)">
+                {p}
+              </p>
+            ))}
+          </div>
+
+          {mission.context && mission.context.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {mission.context.map((c) => (
+                <span
+                  key={c.label}
+                  className="rounded-lg px-3 py-1.5 text-[12.5px]"
+                  style={{ background: "var(--color-panel)" }}
+                >
+                  <span className="text-(--color-muted)">{c.label}: </span>
+                  <span className="font-bold text-(--color-ink)">{c.value}</span>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-      )}
 
-      {mission.client && <ClientStrip client={mission.client} />}
-      {mission.assessment && <Assessment factors={mission.assessment} />}
-      <SaidAndConcerns said={mission.saidQuote} concerns={mission.concerns} />
-      <Notes discovered={state.discovered} content={content} />
+        {mission.client && <ClientStrip client={mission.client} />}
+        {mission.assessment && <Assessment factors={mission.assessment} />}
+        <SaidAndConcerns said={mission.saidQuote} concerns={mission.concerns} />
+        <Notes discovered={state.discovered} content={content} />
+      </section>
 
-      <div className="mt-8 mb-4 flex flex-wrap items-baseline justify-between gap-3 border-t border-(--color-line) pt-6">
+      {/* THE DECISION */}
+      <div className="mb-3.5 mt-7 flex flex-wrap items-center justify-between gap-3">
         <h2 className="display text-[22px] text-(--color-ink)">{mission.question}</h2>
         {mission.kind !== "choice" && (
-          <span
-            className="rounded-full px-3 py-1 text-[12px] font-bold"
-            style={{
-              background: ready ? "var(--color-accent-tint)" : "var(--color-canvas-deep)",
-              color: ready ? "var(--color-accent-deep)" : "var(--color-muted)",
-            }}
-          >
+          <Pill tone={ready ? "good" : "accent"}>
+            {ready ? "✓ " : ""}
             {mission.kind === "investigate" ? "Choose" : "Pick"} {need} · {have}/{need}
-          </span>
+          </Pill>
         )}
       </div>
 

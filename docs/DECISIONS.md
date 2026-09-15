@@ -6,6 +6,34 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-018 · Colour carries hierarchy, so the page can be scanned instead of read
+"It feels like I have to read everything" was the symptom. The cause was that every
+label on the page was the same faint grey uppercase `.eyebrow`, every card was white on
+near-white, and every icon was grey — so nothing had more weight than anything else and
+the only way to find information was to read all of it.
+
+Four changes, taken from the mockups:
+
+1. **`.eyebrow` is now reserved for the kicker above a headline.** Section headings are
+   `.section-title` — dark, bold, with a coloured icon beside them. This is most of the win.
+2. **`.chip` — a filled status pill.** Assessment levels, client tags, badges and the
+   selection counter are now tinted chips. A chip is read in peripheral vision; coloured
+   body text still has to be read word by word.
+3. **`--color-panel` for regions.** Both rails and the client fact strip sit on it, so
+   "supporting information" is distinguishable from "the thing I am deciding" without
+   reading either.
+4. **Icons are purple by default**, semantic where it means something (green good, amber
+   warn, red bad). Every semantic colour gained a `-tint` so it can fill a chip.
+
+Also: the brief became **one card with divided bands** instead of six floating cards, and
+option cards put pros beside cons rather than stacked — stacked, a four-item list made
+every card 60px taller than its content needed.
+
+**Cost:** more colour to keep disciplined. The guard is that every tint is a token, and
+`Pill`/`SectionTitle` are the only ways to apply them.
+**Not adopted from the mockups:** photographs, tab strips, and per-option impact previews.
+The last of those would breach G3.
+
 ## D-017 · A sticky action bar cannot be a grid item
 The confirm bar is `position: sticky; bottom: 0`. Placed inside the layout grid it never
 pinned, because a sticky grid item is constrained to its own grid area and that area is

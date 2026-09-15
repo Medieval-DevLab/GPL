@@ -12,7 +12,8 @@ const PATHS: Record<IconId, string> = {
   talk: "M20.5 11.7a8 8 0 0 1-8.6 8 8.7 8.7 0 0 1-3.2-.6L3.5 20.5l1.6-4.8a7.8 7.8 0 0 1-.7-3.3 8 8 0 0 1 8.6-8 8 8 0 0 1 7.5 7.3Z",
   megaphone: "M4 10v4a1 1 0 0 0 1 1h2l6 4V5L7 9H5a1 1 0 0 0-1 1Zm13-1a4 4 0 0 1 0 6",
   shield: "M12 21s7-3.2 7-9V6l-7-3-7 3v6c0 5.8 7 9 7 9Z",
-  spark: "M12 3v3m0 12v3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M3 12h3m12 0h3M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
+  // A four-point sparkle. The previous eight-ray sun turned to mush at 16px.
+  spark: "M12 3.5l1.9 5.6 5.6 1.9-5.6 1.9L12 18.5l-1.9-5.6L4.5 11l5.6-1.9L12 3.5Z",
   chart: "M5 20V11m7 9V5m7 15v-6M3 20h18",
   clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-13.5V12l3 2",
   coins: "M12 11c3.9 0 7-1.3 7-3s-3.1-3-7-3-7 1.3-7 3 3.1 3 7 3Zm7-3v8c0 1.7-3.1 3-7 3s-7-1.3-7-3V8m14 4c0 1.7-3.1 3-7 3s-7-1.3-7-3",
@@ -24,6 +25,7 @@ const PATHS: Record<IconId, string> = {
   layers: "m12 3 9 4.5-9 4.5-9-4.5L12 3Zm9 9-9 4.5L3 12m18 4.5L12 21l-9-4.5",
   scale: "M12 4v16M7 20h10M12 6 5 9m7-3 7 3M5 9l-2.5 5a2.8 2.8 0 0 0 5 0L5 9Zm14 0-2.5 5a2.8 2.8 0 0 0 5 0L19 9Z",
   flag: "M5 21V4m0 0 6.5 1.8a3 3 0 0 0 2.3-.3L19 3v10l-5.2 2.5a3 3 0 0 1-2.3.3L5 14",
+  bulb: "M9 18h6m-5 3h4M12 3a6 6 0 0 1 3.6 10.8c-.4.3-.6.8-.6 1.2v1H9v-1c0-.4-.2-.9-.6-1.2A6 6 0 0 1 12 3Z",
 };
 
 const FILLED: Partial<Record<IconId, boolean>> = {};
@@ -59,6 +61,16 @@ export function Icon({
   );
 }
 
+export type Tone = "accent" | "neutral" | "good" | "warn" | "bad";
+
+export const TONES: Record<Tone, { bg: string; fg: string }> = {
+  accent: { bg: "var(--color-accent-tint)", fg: "var(--color-accent)" },
+  neutral: { bg: "var(--color-canvas-deep)", fg: "var(--color-muted)" },
+  good: { bg: "var(--color-good-tint)", fg: "var(--color-good)" },
+  warn: { bg: "var(--color-warn-tint)", fg: "var(--color-warn)" },
+  bad: { bg: "var(--color-bad-tint)", fg: "var(--color-bad)" },
+};
+
 /** Small rounded tile behind an icon, used on option and fact cards. */
 export function IconTile({
   name,
@@ -66,22 +78,60 @@ export function IconTile({
   size = 36,
 }: {
   name: IconId;
-  tone?: "accent" | "neutral" | "good" | "bad";
+  tone?: Tone;
   size?: number;
 }) {
-  const tones = {
-    accent: { bg: "var(--color-accent-tint)", fg: "var(--color-accent)" },
-    neutral: { bg: "var(--color-canvas-deep)", fg: "var(--color-muted)" },
-    good: { bg: "#e4f5ef", fg: "var(--color-good)" },
-    bad: { bg: "#fbeaea", fg: "var(--color-bad)" },
-  }[tone];
-
+  const t = TONES[tone];
   return (
     <span
       className="flex shrink-0 items-center justify-center rounded-[10px]"
-      style={{ width: size, height: size, background: tones.bg, color: tones.fg }}
+      style={{ width: size, height: size, background: t.bg, color: t.fg }}
     >
       <Icon name={name} size={Math.round(size * 0.52)} />
     </span>
+  );
+}
+
+/**
+ * Filled status chip. The main scannability device on the page: a tinted chip
+ * is read in peripheral vision, whereas coloured body text still has to be
+ * read word by word.
+ */
+export function Pill({
+  children,
+  tone = "neutral",
+}: {
+  children: React.ReactNode;
+  tone?: Tone;
+}) {
+  const t = TONES[tone];
+  return (
+    <span className="chip" style={{ background: t.bg, color: t.fg }}>
+      {children}
+    </span>
+  );
+}
+
+/** Dark, bold, with a coloured icon. Never a faint uppercase label. */
+export function SectionTitle({
+  icon,
+  tone = "accent",
+  children,
+  className,
+}: {
+  icon?: IconId;
+  tone?: Tone;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <h2 className={`section-title ${className ?? ""}`}>
+      {icon && (
+        <span className="shrink-0" style={{ color: TONES[tone].fg }}>
+          <Icon name={icon} size={16} />
+        </span>
+      )}
+      {children}
+    </h2>
   );
 }
