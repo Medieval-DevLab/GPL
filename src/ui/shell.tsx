@@ -42,7 +42,10 @@ export function ChapterStepper({
   /* Circle over label, joined by a single track that fills behind you. Two tiers is the
      mockups' geometry; a row of circle-beside-label chips is not. */
   const doneCount = chapters.filter((c) => c.number < current).length;
-  const pct = chapters.length > 1 ? (doneCount / (chapters.length - 1)) * 100 : 0;
+  // Equal-width items put node i's centre at (2i+1)/(2n), so the track must start and
+  // end inset by half a cell — otherwise a stub renders to the left of node 1.
+  const edge = 100 / (2 * chapters.length);
+  const span = 100 - 2 * edge;
 
   return (
     <ol
@@ -51,13 +54,17 @@ export function ChapterStepper({
     >
       <span
         aria-hidden="true"
-        className="absolute left-3 right-3 top-[11px] h-[2px] rounded-full"
-        style={{ background: "var(--color-line-strong)" }}
+        className="absolute top-[11px] h-[2px] rounded-full"
+        style={{ left: `${edge}%`, right: `${edge}%`, background: "var(--color-line-strong)" }}
       />
       <span
         aria-hidden="true"
-        className="absolute left-3 top-[11px] h-[2px] rounded-full transition-[width] duration-500"
-        style={{ width: `calc(${pct}% - 24px)`, background: "var(--color-good)" }}
+        className="absolute top-[11px] h-[2px] rounded-full transition-[width] duration-500"
+        style={{
+          left: `${edge}%`,
+          width: `${(span * doneCount) / (chapters.length - 1 || 1)}%`,
+          background: "var(--color-good)",
+        }}
       />
 
       {chapters.map((c) => {
@@ -66,7 +73,7 @@ export function ChapterStepper({
         return (
           <li
             key={c.number}
-            className="relative flex flex-col items-center gap-1.5"
+            className="relative flex flex-1 flex-col items-center gap-1.5"
             aria-current={active ? "step" : undefined}
           >
             <span
@@ -130,9 +137,8 @@ export function TopBar({
           >
             GPL
           </span>
-          <span className="hidden text-[13px] font-semibold leading-tight text-(--color-ink) sm:block">
-            Global Pursuit
-            <span className="block text-[11px] font-medium text-(--color-faint)">League</span>
+          <span className="hidden whitespace-nowrap text-[14px] font-semibold text-(--color-ink) sm:block">
+            Global Pursuit League
           </span>
         </div>
 
@@ -144,12 +150,10 @@ export function TopBar({
           {showScore && (
             <div className="flex items-center gap-2">
               <span aria-hidden="true" className="text-(--color-warn)">
-                <Icon name="flag" size={15} />
+                <Icon name="trophy" size={17} />
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-(--color-faint)">
-                Score
-              </span>
-              <span className="text-[17px] font-bold tabular-nums text-(--color-accent-deep)">
+              <span className="text-[15px] font-medium text-(--color-ink-soft)">Score</span>
+              <span className="text-[19px] font-bold tabular-nums text-(--color-accent-deep)">
                 {score}
               </span>
             </div>
@@ -358,7 +362,7 @@ export function MissionRail({
             {file.map((e) => (
               <li key={e.id}>
                 <p className="text-[12px] font-bold text-(--color-accent-deep)">{e.label}</p>
-                <p className="text-[12px] leading-snug text-(--color-muted)">{e.reveals}</p>
+                <p className="line-clamp-3 text-[12px] leading-snug text-(--color-muted)">{e.reveals}</p>
               </li>
             ))}
           </ul>
@@ -437,12 +441,10 @@ export function FactorBars({
           <div key={d}>
             <div className="mb-1 flex items-baseline justify-between gap-2">
               <span
-                className="flex items-center gap-1.5 text-[12.5px] font-bold"
+                className="flex items-center gap-2 text-[12.5px] font-bold"
                 style={{ color: colour }}
               >
-                <span aria-hidden="true" className="text-[10px]">
-                  {meta.glyph}
-                </span>
+                <Icon name={meta.icon} size={15} />
                 {meta.label}
               </span>
               <span className="flex items-baseline gap-1.5">
@@ -678,9 +680,9 @@ export function PredictionStrip({
   onPredict: (d: DimensionId) => void;
 }) {
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
       <span className="text-[12.5px] font-semibold text-(--color-ink-soft)">
-        Before you commit — what will this cost most?
+        Which of the three will move least?
       </span>
       <div className="flex gap-1.5">
         {DIMENSIONS.map((d) => {
@@ -727,21 +729,21 @@ export function ActionBar({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-2 border-t border-(--color-line) bg-(--color-surface) px-5 py-2.5">
+    <div className="flex min-h-[66px] shrink-0 items-center gap-x-5 gap-y-2 border-t border-(--color-line) bg-(--color-surface) px-5 py-2.5">
       {aside && (
-        <div className="flex min-w-0 max-w-[400px] flex-1 items-start gap-2.5">
+        <div className="flex w-[300px] shrink-0 items-center gap-3 rounded-xl border border-(--color-line) px-3.5 py-2.5">
           {aside.photo ? (
             <img
               src={artUrl(aside.photo)}
               alt=""
               loading="lazy"
               decoding="async"
-              className="h-9 w-9 shrink-0 rounded-[9px] object-cover"
+              className="h-[38px] w-[38px] shrink-0 rounded-[9px] object-cover"
             />
           ) : (
-            <IconTile name="bulb" tone="neutral" size={36} />
+            <IconTile name="bulb" tone="neutral" size={38} />
           )}
-          <p className="text-[12.5px] leading-snug text-(--color-ink-soft)">
+          <p className="min-w-0 text-[12.5px] leading-snug text-(--color-ink-soft)">
             <span className="font-bold text-(--color-ink)">{aside.from}: </span>
             “{aside.text}”
           </p>
@@ -752,7 +754,7 @@ export function ActionBar({
         <button
           onClick={onAction}
           disabled={disabled}
-          className="rounded-[12px] px-6 py-2.5 text-[14.5px] font-bold transition-colors duration-150 enabled:text-white disabled:cursor-not-allowed"
+          className="flex h-[48px] min-w-[280px] items-center justify-center gap-2.5 rounded-[12px] px-8 text-[15.5px] font-bold transition-colors duration-150 enabled:text-white disabled:cursor-not-allowed"
           style={
             disabled
               ? { background: "var(--color-accent-tint)", color: "var(--color-accent-deep)" }
@@ -760,6 +762,7 @@ export function ActionBar({
           }
         >
           {label}
+          <span aria-hidden="true">→</span>
         </button>
       </div>
     </div>

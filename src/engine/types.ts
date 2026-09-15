@@ -12,6 +12,29 @@
  *     objective is surfaced. The teaching lives in the consequence, not in the scoring.
  */
 
+/** Icon keys. Rendered as inline SVG — no image assets anywhere in this game. */
+export type IconId =
+  | "target"
+  | "search"
+  | "people"
+  | "talk"
+  | "megaphone"
+  | "shield"
+  | "spark"
+  | "chart"
+  | "clock"
+  | "coins"
+  | "warning"
+  | "check"
+  | "cross"
+  | "block"
+  | "rocket"
+  | "layers"
+  | "scale"
+  | "flag"
+  | "bulb"
+  | "trophy";
+
 /** The three questions every engagement is judged on. */
 export type DimensionId = "win" | "profit" | "deliver";
 
@@ -19,11 +42,29 @@ export const DIMENSIONS: readonly DimensionId[] = ["win", "profit", "deliver"] a
 
 export const DIMENSION_META: Record<
   DimensionId,
-  { label: string; question: string; glyph: string; varName: string }
+  { label: string; question: string; glyph: string; icon: IconId; varName: string }
 > = {
-  win: { label: "Winability", question: "Can we win it?", glyph: "◆", varName: "--color-win" },
-  profit: { label: "Profitability", question: "Should we win it?", glyph: "●", varName: "--color-profit" },
-  deliver: { label: "Deliverability", question: "Can we deliver it?", glyph: "▲", varName: "--color-deliver" },
+  win: {
+    label: "Winability",
+    question: "Can we win it?",
+    glyph: "◆",
+    icon: "target",
+    varName: "--color-win",
+  },
+  profit: {
+    label: "Profitability",
+    question: "Should we win it?",
+    glyph: "●",
+    icon: "coins",
+    varName: "--color-profit",
+  },
+  deliver: {
+    label: "Deliverability",
+    question: "Can we deliver it?",
+    glyph: "▲",
+    icon: "layers",
+    varName: "--color-deliver",
+  },
 };
 
 /** Stages of the client journey. Used for the progress rail. */
@@ -47,10 +88,10 @@ export type BadgeId =
   | "held_nerve";
 
 export const BADGE_META: Record<BadgeId, { label: string; note: string }> = {
-  good_question: { label: "Good Question", note: "You found information that changed your decision." },
+  good_question: { label: "Asked first", note: "You found information that changed your decision." },
   adapt: { label: "Adapt", note: "You changed course when the situation changed." },
   connected_dots: { label: "Connected the Dots", note: "You used something you learned earlier." },
-  smart_tradeoff: { label: "Smart Trade-off", note: "You gave something up on purpose, and said why." },
+  smart_tradeoff: { label: "Traded on purpose", note: "You gave something up on purpose, and said why." },
   recovered: { label: "Recovered", note: "You turned a bad position around." },
   held_nerve: { label: "Held Your Nerve", note: "You stayed with a plan under pressure, and it held." },
 };
@@ -113,28 +154,6 @@ export interface Outcome {
    */
   next?: string;
 }
-
-/** Icon keys. Rendered as inline SVG — no image assets anywhere in this game. */
-export type IconId =
-  | "target"
-  | "search"
-  | "people"
-  | "talk"
-  | "megaphone"
-  | "shield"
-  | "spark"
-  | "chart"
-  | "clock"
-  | "coins"
-  | "warning"
-  | "check"
-  | "cross"
-  | "block"
-  | "rocket"
-  | "layers"
-  | "scale"
-  | "flag"
-  | "bulb";
 
 export interface Option {
   id: string;
@@ -272,6 +291,15 @@ interface MissionBase {
   concerns?: string[];
   /** a colleague's steer */
   advisor?: Advisor;
+  /**
+   * What that colleague says on THIS mission, overriding their standing quote.
+   *
+   * Without it an advisor repeats one sentence across every mission they own — Aisha
+   * said the same thing about the proposal on four consecutive screens, including the
+   * one where the sponsor resigns and the proposal is not in question. Frozen is not
+   * the same as consistent.
+   */
+  advisorLine?: string;
   /** open questions, shown in the right rail — never answers */
   consider?: string[];
   /** the nudge in the bottom bar */
@@ -388,7 +416,6 @@ export type Phase =
   | "decide"
   | "resolving"
   | "consequence"
-  | "lesson"
   | "ending";
 
 export interface HistoryEntry {

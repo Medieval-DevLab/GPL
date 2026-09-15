@@ -129,6 +129,11 @@ export function validateContent(content: Content): Issue[] {
   const written = new Set<string>();
   const read = new Map<string, string>(); // flag -> first place it is read
 
+  // Chapter 0 writes flags too, and it is not a mission.
+  for (const node of nodes) {
+    if (node.kind === "setup") for (const o of node.options) for (const f of o.flags) written.add(f);
+  }
+
   for (const node of nodes) {
     if (!isMission(node)) continue;
 

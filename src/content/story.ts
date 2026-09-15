@@ -144,7 +144,7 @@ const nodes: GameNode[] = [
         image: "hero-boardroom",
         description: "You read the market, and you say the awkward thing.",
         strengths: ["Know the field", "Say the hard thing"],
-        tradeoff: "You are better at being right than at being liked.",
+        tradeoff: "You are better at reading the field than at being trusted inside it.",
         flags: ["start:challenger", "knows:rivals"],
         dims: { profit: 8 },
       },
@@ -187,11 +187,11 @@ const nodes: GameNode[] = [
     advisor: PRIYA,
     consider: [
       "Which needs something we can already prove?",
-      "Is the biggest number the best opportunity?",
+      "What would Apex need to see to shortlist us?",
       "What does being wrong cost us?",
     ],
-    tip: "There is no perfect client. Weigh what they need against what you can demonstrate.",
-    prompt: "Each is a different bet. One team, one pursuit.",
+    tip: "I put Meridian forward last year and it never closed. I would still take it.",
+    prompt: "One team, one pursuit. Three very different bets.",
     question: "Who do you go after?",
     options: [
       {
@@ -228,6 +228,23 @@ const nodes: GameNode[] = [
         cons: ["No comparable references", "Six weeks committed"],
         cost: { time: 3, investment: 3 },
         outcomes: [
+          {
+            id: "m1-apex-read",
+            when: { any: ["start:challenger", "knows:rivals"] },
+            tone: "mixed",
+            headline: "You knew the field, so you knew what to lead with.",
+            detail:
+              "Apex still shortlists on industrial depth and you still do not have it. But you went in knowing that, led with the partner you would bring, and left with a name to call in eighteen months rather than a polite no.",
+            changed: [
+              "Six weeks spent deliberately",
+              "Orion is your pursuit",
+              "Apex will take your call next cycle",
+            ],
+            effect: {
+              dims: { win: -4, profit: -2, deliver: 6 },
+              flags: ["client:northwind", "late_start", "knows:rivals"],
+            },
+          },
           {
             id: "m1-apex",
             tone: "hard",
@@ -307,13 +324,14 @@ const nodes: GameNode[] = [
       "You can dig into two things. Not five. Choosing what to ignore is the job.",
     ],
     client: ORION,
+    advisorLine: "I would rather go in knowing one awkward thing than five comfortable ones.",
     advisor: PRIYA,
     consider: [
       "What could change our mind?",
       "Who has not been in the room, and why?",
       "Is the ask the same as the problem?",
     ],
-    tip: "Spend questions on what could change your answer, not what confirms it.",
+    tip: "I would spend one on the money. My last three deals died in procurement, not the pitch.",
     prompt: "You have time for two. Choose what could change your mind.",
     question: "What do you look into?",
     slots: 2,
@@ -414,7 +432,7 @@ const nodes: GameNode[] = [
       because:
         "You were never going to get all five. Choosing which two mattered was the real decision, and you made it before you knew the answers.",
       watchFor:
-        "When information is limited, spend it on what could change your mind — not on what confirms it.",
+        "Marcus Reed was in none of the five cards you could open. That is usually where the constraint is.",
     },
     next: "m3",
   },
@@ -433,13 +451,14 @@ const nodes: GameNode[] = [
       "Orion is open to talking to partners. You get roughly one shot at a first impression worth following up.",
     ],
     client: ORION,
+    advisorLine: "First contact sets what they think we are. It is very hard to move afterwards.",
     advisor: PRIYA,
     consider: [
       "Do we need attention, access, or credibility?",
       "Who exactly are we trying to move?",
       "Would this work if we knew nothing about them?",
     ],
-    tip: "Reach, access and credibility are three different goals. Pick the one you need first.",
+    tip: "Sarah will not read a white paper. Her deputy will, and he writes her briefings.",
     prompt: "Match the approach to what you need from the next conversation.",
     question: "How do you approach them?",
     options: [
@@ -634,7 +653,7 @@ const nodes: GameNode[] = [
       "Do we know enough to price it?",
       "Is there a smaller version to commit to?",
     ],
-    tip: "No single right answer. Weigh the value against what you would risk to chase it.",
+    tip: "I have qualified two of these off a one-line brief. One paid for the year.",
     prompt: "Weigh the value against what you would risk to chase it.",
     question: "How do you take this forward?",
     options: [
@@ -682,6 +701,19 @@ const nodes: GameNode[] = [
         cons: ["Much smaller first number", "Rivals can move"],
         cost: { time: 2, investment: 1 },
         outcomes: [
+          {
+            id: "m4-workshop-blind",
+            when: { none: ["knows:real_pain", "knows:ops_constraint", "has_access"] },
+            tone: "mixed",
+            headline: "They agree, and you spend two weeks learning what you could have asked.",
+            detail:
+              "A paid discovery is the right instrument. Pointed at a business you have not examined at all, the first week goes on questions you could have answered from the outside, and the second on the ones that actually mattered.",
+            changed: ["A smaller, safer first commitment", "Half the discovery spent catching up"],
+            effect: {
+              dims: { profit: 3, deliver: 4, win: -2 },
+              flags: ["landed_small", "has_access"],
+            },
+          },
           {
             id: "m4-workshop",
             tone: "strong",
@@ -737,7 +769,7 @@ const nodes: GameNode[] = [
       principle: "Not every lead deserves the same amount of your team.",
       because:
         "Qualifying is deciding how much to risk before you know whether you will win. Commit too early and you spend your best people on a guess; commit too late and someone else is already in front of the client.",
-      watchFor: "Ask what it would cost to be wrong about this one.",
+      watchFor: "Six weeks of your best people is the most expensive thing you can spend without approval.",
     },
     next: "m5",
   },
@@ -765,13 +797,14 @@ const nodes: GameNode[] = [
       "A demo that is easy to show a board",
       "Your difference has not been stated plainly",
     ],
+    advisorLine: "Something changed in the market. Whether it changed anything real is your call.",
     advisor: RIYA,
     consider: [
       "What changed — the facts, or the noise?",
       "Can we name what their offer misses?",
       "What does silence cost us?",
     ],
-    tip: "React to everything and you look panicked. React to nothing and you look absent.",
+    tip: "I have seen three of these announcements. Two of them never shipped anything.",
     prompt: "Decide whether the facts changed, or only the noise.",
     question: "What do you do?",
     options: [
@@ -906,7 +939,7 @@ const nodes: GameNode[] = [
       principle: "When the situation changes, you have to decide whether your plan still fits it.",
       because:
         "A competitor's move is information. Reacting to all of it makes you thrash; reacting to none of it makes you irrelevant.",
-      watchFor: "Ask what actually changed — the facts, or just the noise.",
+      watchFor: "A press release is a claim about the future. It is not evidence that anything shipped.",
     },
     next: "m5b",
   },
@@ -947,8 +980,8 @@ const nodes: GameNode[] = [
       "What would let us disagree with their brief?",
       "Would our rival's proposal look the same?",
     ],
-    tip: "A brief describes the symptom they can see. That is not always where the damage is.",
-    prompt: "Everything after this serves the problem you name here.",
+    tip: "I read their complaints last night. The store barely comes up. Make of that what you like.",
+    prompt: "Three readings of the same one-line brief.",
     question: "What do you propose to fix?",
     options: [
       {
@@ -1053,7 +1086,7 @@ const nodes: GameNode[] = [
       principle: "What a client asks for and what a client needs are often two different things.",
       because:
         "Their brief described a symptom they could see. The job is to work out whether that is where the damage actually is — and then to be able to show it.",
-      watchFor: "Ask what evidence you would need before you are allowed to disagree with the brief.",
+      watchFor: "A client who wrote the brief has usually already suspected it was wrong.",
     },
     next: "m6b",
   },
@@ -1077,7 +1110,7 @@ const nodes: GameNode[] = [
       "Which wins the deal, and which survives it?",
       "What happens if Operations says no?",
     ],
-    tip: "Everything in a proposal is a promise somebody else has to keep.",
+    tip: "Aisha will inherit this document. She reads every line and she remembers.",
     prompt: "Three of six. Each makes the offer stronger somewhere and weaker elsewhere.",
     question: "What do you put in?",
     pick: 3,
@@ -1103,7 +1136,7 @@ const nodes: GameNode[] = [
         title: "Operations integration workstream",
         description: "A stream to get changes into Operations' release schedule, with their people.",
         tag: "Unglamorous",
-        dims: { deliver: 13, win: 1 },
+        dims: { deliver: 13, win: 1, profit: -5 },
         flags: ["has:ops_workstream"],
       },
       {
@@ -1111,7 +1144,7 @@ const nodes: GameNode[] = [
         title: "Staff training and adoption",
         description: "Make sure the people who use it every day actually do. Cheap and effective.",
         tag: "Adoption",
-        dims: { deliver: 7, win: 2, profit: 1 },
+        dims: { deliver: 7, win: 2, profit: -2 },
         flags: ["has:training"],
       },
       {
@@ -1187,8 +1220,8 @@ const nodes: GameNode[] = [
     lesson: {
       principle: "A solution is what you can deliver, not what you can describe.",
       because:
-        "Every component you chose made the proposal more attractive, harder to deliver, or less profitable. There was no option that did all three well — that is not a flaw in the choices, it is the actual job.",
-      watchFor: "Notice which parts of a proposal exist to win it, and which exist to survive it.",
+        "Every component made the proposal more attractive, harder to deliver, or less profitable. Three of six was the constraint; which three was the decision.",
+      watchFor: "The parts that win a proposal and the parts that survive it are rarely the same three.",
     },
     next: "m7b",
   },
@@ -1237,8 +1270,8 @@ const nodes: GameNode[] = [
       "If we discount, what becomes impossible later?",
       "Can we lower commitment without lowering rate?",
     ],
-    tip: "A discount is spent twice — once to win the work, and again when delivery needs it.",
-    prompt: "Every route to their number costs you something.",
+    tip: "I gave eight percent away on Meridian. We spent the next year explaining it.",
+    prompt: "Four routes to their number.",
     question: "How do you respond?",
     options: [
       {
@@ -1257,7 +1290,7 @@ const nodes: GameNode[] = [
             // Proposing the same thing as the competitor removes that difference,
             // whatever else you have going for you.
             when: {
-              any: ["evidenced", "ops_onside", "reframed", "knows:rival_gap"],
+              any: ["evidenced", "ops_onside", "reframed", "knows:rival_gap", "knows:rivals"],
               none: ["scope:storefront"],
             },
             tone: "strong",
@@ -1424,8 +1457,8 @@ const nodes: GameNode[] = [
       "What does this cost now versus month five?",
       "Do we still have the money to fix it?",
     ],
-    tip: "Risk is cheapest before you sign. Everything after that costs more.",
-    prompt: "Cheaper to handle now than in month five.",
+    tip: "The reviewers have no stake in this closing. That is exactly why I read them twice.",
+    prompt: "Four ways to answer a review finding.",
     question: "What do you do about it?",
     options: [
       {
@@ -1627,8 +1660,8 @@ const nodes: GameNode[] = [
       "What can we still afford to do?",
       "What if they hear it from someone else?",
     ],
-    tip: "Whatever is on the table now was decided long before anyone started building.",
-    prompt: "Whatever is on the table was decided months ago.",
+    tip: "Whatever you decide, I have to tell the team on Monday. Tell me what to say.",
+    prompt: "The delivery lead has thirty minutes and needs a decision to take away.",
     question: "How do you respond?",
     options: [
       {
@@ -1745,6 +1778,19 @@ const nodes: GameNode[] = [
         cost: { time: 1, investment: 1 },
         outcomes: [
           {
+            id: "m10-quiet-covered",
+            when: { any: ["ops_onside", "broad_base"] },
+            tone: "mixed",
+            headline: "Nobody notices, because the people who would have noticed are inside it.",
+            detail:
+              "Operations knows what was trimmed and why, and they are the ones the business asks. It holds — but you are now relying on other people to explain a decision you chose not to announce.",
+            changed: [
+              "Short-term pressure relieved",
+              "Operations is carrying an explanation you did not give",
+            ],
+            effect: { dims: { deliver: 3, win: -4, profit: 4 } },
+          },
+          {
             id: "m10-quiet",
             tone: "hard",
             headline: "It works until somebody opens the original document.",
@@ -1798,13 +1844,14 @@ const nodes: GameNode[] = [
       "Sarah wants five things done before you propose. Your people have a fortnight and there is room for two.",
       "Nobody will tell you which two. The other three simply will not happen.",
     ],
+    advisorLine: "Two weeks of my team's time. Tell me what it is buying.",
     advisor: RIYA,
     consider: [
       "Which of these changes what we propose?",
       "What do we still not know?",
       "Which would we regret skipping in month five?",
     ],
-    tip: "We cannot do everything. Choosing what not to do is the decision.",
+    tip: "I would take the workshop. Marcus has killed one of these before and I was there.",
     prompt: "Two of five. The other three do not happen.",
     question: "What do you fund?",
     pick: 2,
@@ -1840,6 +1887,14 @@ const nodes: GameNode[] = [
         tag: "Foundation",
         dims: { deliver: 6, profit: 3, win: -2 },
         flags: ["has:data"],
+      },
+      {
+        id: "c-complaints",
+        title: "Pull their complaint data",
+        description: "Get the actual post-purchase contact volumes out of their systems.",
+        tag: "Evidence",
+        dims: { win: 5, deliver: 2, profit: -2 },
+        flags: ["knows:real_pain"],
       },
       {
         id: "c-stakeholders",
@@ -1907,14 +1962,15 @@ const nodes: GameNode[] = [
     situation: [
       "Two firms are proposing versions of the same thing. There is a third way to answer this, and it is not on anybody's slide yet.",
     ],
+    advisorLine: "Everyone is answering the question as asked. That is usually an opening.",
     advisor: ARJUN,
     consider: [
       "What would we do if we could not staff it?",
       "Who else already solved part of this?",
       "What would make us the only credible answer?",
     ],
-    tip: "The interesting answers are usually the ones that change the shape of the deal.",
-    prompt: "None of these is the safe option. That is the point.",
+    tip: "Our returns platform is sitting there. I am not saying use it. I am saying it exists.",
+    prompt: "Four shapes of answer. Two firms are already writing the fifth.",
     question: "What do you bring them?",
     options: [
       {
@@ -1929,7 +1985,7 @@ const nodes: GameNode[] = [
         outcomes: [
           {
             id: "m6b-partner-fit",
-            when: { any: ["knows:real_pain", "has:data"] },
+            when: { any: ["knows:real_pain", "has:data", "knows:rivals"] },
             tone: "strong",
             headline: "The partner makes your weakest claim your strongest.",
             detail:
@@ -2087,13 +2143,14 @@ const nodes: GameNode[] = [
         ],
       },
     ],
+    advisorLine: "I would rather be argued with now than agreed with and then blamed.",
     advisor: ARJUN,
     consider: [
       "Which of the three is actually weakest?",
       "What would fixing it cost the other two?",
       "Is the review right, or just cautious?",
     ],
-    tip: "A review is free advice from people with nothing to sell you.",
+    tip: "I have overruled a review twice. Once I was right, and I still think about the other one.",
     prompt: "A week to spend, or a case to make.",
     question: "What do you do with the week?",
     options: [
@@ -2212,7 +2269,7 @@ const nodes: GameNode[] = [
       principle: "A week before signature buys more than a month after it.",
       because:
         "Whatever you spent the week on, it was cheap. The same fix during delivery costs a renegotiation, and the same gap left open costs a client.",
-      watchFor: "Ask which of the three your proposal is weakest on, before somebody else does.",
+      watchFor: "The reviewers do not care whether you win. That is the whole value of them.",
     },
     next: "int-4",
   },
@@ -2238,8 +2295,8 @@ const nodes: GameNode[] = [
     minutes: 4,
     hero: "hero-negotiation",
     situation: [
-      "Everything is agreed. Nothing is signed. This is the last moment at which saying no costs you nothing but the pursuit.",
-      "Read your own position honestly before you answer.",
+      "Everything is agreed. Nothing is signed.",
+      "Sarah’s board has the date. Your reviewers have their concerns in writing.",
     ],
     variants: [
       {
@@ -2264,22 +2321,23 @@ const nodes: GameNode[] = [
     concerns: [
       "Everything after this is expensive to change",
       "Delivery inherits every sentence",
-      "Saying no now costs only the pursuit",
+      "Procurement has already scheduled the kickoff",
     ],
+    advisorLine: "I have signed things I should not have. Nobody ever remembers the deals you declined.",
     advisor: RIYA_DEAL,
     consider: [
       "Would we staff this ourselves?",
       "What has the deal become since we started?",
       "Is saying no still available?",
     ],
-    tip: "The last cheap moment to say no is the moment before you sign.",
-    prompt: "No is a real answer here.",
+    tip: "I have walked away from one deal in nine years. I think about it more than the ones I signed.",
+    prompt: "Three ways to answer, and one of them ends it.",
     question: "What is your call?",
     options: [
       {
         id: "o-proceed",
         title: "Proceed as agreed",
-        icon: "check",
+        icon: "flag",
         description: "Sign it as it stands and get on with the work.",
         commits: "Everything in the document becomes a commitment.",
         pros: ["Momentum kept", "Relationship intact"],
@@ -2323,7 +2381,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "She takes the call, because you have earned it.",
             detail:
-              "Reopening a signed-in-principle deal is only survivable if the client believes you are doing it for the programme rather than for the margin. Sarah does. Both clauses move.",
+              "Reopening a signed-in-principle deal is only survivable if the client believes you are doing it for the programme rather than for the margin. Sarah does not argue. Both clauses move.",
             changed: ["Two real risks removed before signature", "Two weeks lost"],
             effect: {
               dims: { deliver: 9, profit: 4, win: -2 },
@@ -2358,7 +2416,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "You stopped something that was going to hurt.",
             detail:
-              "This deal had accumulated a shape nobody would have chosen deliberately. Saying so cost you a quarter and saved you a year — and Sarah, who has watched a programme die here before, understands exactly what you just did.",
+              "This deal had accumulated a shape nobody would have chosen deliberately. Saying so cost you a quarter and saved you a year, and Sarah does not argue with a word of it.",
             changed: [
               "No contract, and no loss-making delivery",
               "Your people are free for work you can do well",
@@ -2405,7 +2463,7 @@ const nodes: GameNode[] = [
       principle: "Signing is a decision, and so is not signing.",
       because:
         "Everything before this was reversible. The signature is the line after which the promises belong to somebody else.",
-      watchFor: "Ask what the deal has become since you started chasing it.",
+      watchFor: "A pursuit accumulates concessions. Nobody ever decides to end up where you ended up.",
     },
     next: "int-5",
   },
@@ -2424,13 +2482,14 @@ const nodes: GameNode[] = [
     situation: [
       "The plan needs two more people than the firm has spare. One of your best is being pulled onto a bigger account and the replacement is available in six weeks.",
     ],
+    advisorLine: "I can staff this with the people who exist, or the people in the plan. Not both.",
     advisor: AISHA,
     consider: [
       "Who actually has to be senior here?",
       "What happens to the rest of the firm?",
       "Does the client need to know?",
     ],
-    tip: "Every plan assumes people. Check which of them exist.",
+    tip: "The two graduates are good. They are also going to need someone, and that someone is you.",
     prompt: "Somebody is going to be disappointed.",
     question: "How do you staff it?",
     options: [
@@ -2587,13 +2646,14 @@ const nodes: GameNode[] = [
       "Nobody else has publicly backed this",
       "A new sponsor will want their own priorities",
     ],
+    advisorLine: "I have had two sponsors leave mid-programme. The one that survived had three names on it.",
     advisor: AISHA,
     consider: [
       "Who else already has a stake in this?",
       "What would a new sponsor cancel first?",
       "What can we prove in three weeks?",
     ],
-    tip: "A programme that depends on one person is one resignation from trouble.",
+    tip: "Marcus is not going anywhere. Whether that helps depends on what you did in chapter three.",
     prompt: "Three weeks before the room changes.",
     question: "What do you do with the three weeks?",
     options: [
@@ -2608,7 +2668,7 @@ const nodes: GameNode[] = [
         cost: { time: 2, investment: 1 },
         outcomes: [
           {
-            id: "m10b-broaden-ops",
+            id: "m10c-broaden-ops",
             when: { any: ["ops_onside", "has:ops_workstream"] },
             tone: "strong",
             headline: "Marcus becomes the sponsor, and he was never going to leave.",
@@ -2625,7 +2685,7 @@ const nodes: GameNode[] = [
             },
           },
           {
-            id: "m10b-broaden-cold",
+            id: "m10c-broaden-cold",
             tone: "mixed",
             headline: "You find two names. Neither of them is invested.",
             detail:
@@ -2702,7 +2762,7 @@ const nodes: GameNode[] = [
       principle: "Relationships are infrastructure, and single points of failure are real.",
       because:
         "Nothing about the work changed. One person left, and the programme's future changed with them — because its future was attached to that one person.",
-      watchFor: "Ask who would defend this programme if your sponsor stopped being able to.",
+      watchFor: "Sponsors move roughly every eighteen months. Programmes rarely finish faster than that.",
     },
     next: "end",
   },

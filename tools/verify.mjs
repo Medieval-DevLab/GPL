@@ -142,7 +142,6 @@ async function main() {
 
   let missions = 0;
   let consequences = 0;
-  let lessons = 0;
   let interludes = 0;
 
   for (let step = 0; step < MAX_STEPS; step++) {
@@ -183,7 +182,7 @@ async function main() {
       // Select until the prediction gate becomes available.
       let clicked = 0;
       for (let i = 0; i < count && clicked < 4; i++) {
-        if ((await page.getByText("what will this cost most?", { exact: false }).count()) > 0) break;
+        if ((await page.getByText("will move least?", { exact: false }).count()) > 0) break;
         await choices.nth(i).click();
         clicked += 1;
         await page.waitForTimeout(70);
@@ -213,20 +212,26 @@ async function main() {
     }
 
     // ── consequence ────────────────────────────────────────
-    const why = await button(page, "Why did that happen?");
-    if (why) {
-      consequences += 1;
-      await page.waitForTimeout(650); // let the meters animate
-      if (consequences <= 2 || consequences === 10) await shot(page, `consequence-${consequences}`);
-      await why.click();
-      continue;
-    }
-
-    // ── lesson ─────────────────────────────────────────────
     const next = (await button(page, "Next mission")) ?? (await button(page, "See how it went"));
     if (next) {
-      lessons += 1;
-      if (lessons <= 2) await shot(page, `lesson-${lessons}`);
+      consequences += 1;
+      await page.waitForTimeout(650); // let the meters animate
+
+      // The teaching must come from a named person, not from the interface. There used
+      // to be a separate unattributed "lesson" screen here; if it ever comes back, or
+      // the advisor read goes missing, this catches it.
+      const named = await page.evaluate(() => {
+        const el = document.querySelector("[data-work-area]");
+        return el ? /[A-Z][a-z]+ [A-Z][a-z]+/.test(el.textContent ?? "") : false;
+      });
+      if (!named) problems.push(`consequence ${consequences}: no attributed read on the outcome`);
+      if ((await page.getByText("Next time.", { exact: false }).count()) > 0) {
+        problems.push(`consequence ${consequences}: the unattributed "Next time." caption is back`);
+      }
+
+      if (consequences <= 2 || consequences === 16) {
+        await shot(page, `consequence-${consequences}`);
+      }
       await next.click();
       continue;
     }
@@ -256,11 +261,10 @@ async function main() {
   const expected = 16;
   if (missions !== expected) problems.push(`played ${missions} missions, expected ${expected}`);
   if (consequences !== expected) problems.push(`saw ${consequences} consequences, expected ${expected}`);
-  if (lessons !== expected) problems.push(`saw ${lessons} lessons, expected ${expected}`);
   if (interludes !== 5) problems.push(`saw ${interludes} interludes, expected 5`);
 
   const body = (await page.locator("body").innerText()).toLowerCase();
-  for (const t of ["your decisions", "what this run taught", "the account", "take a new brief"]) {
+  for (const t of ["your decisions", "the account", "how it ended"]) {
     if (!body.includes(t)) problems.push(`ending is missing "${t}"`);
   }
 
@@ -284,7 +288,7 @@ async function main() {
   await browser.close();
 
   console.log(
-    `\nmissions ${missions} · consequences ${consequences} · lessons ${lessons} · interludes ${interludes}`,
+    `\nmissions ${missions} · consequences ${consequences} · interludes ${interludes}`,
   );
 
   if (problems.length) {

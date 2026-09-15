@@ -24,7 +24,7 @@ import {
   type Mission,
   type Setup,
 } from "./engine/types";
-import { ConsequenceScreen, LessonScreen, ResolvingScreen } from "./ui/consequence";
+import { ConsequenceScreen, ResolvingScreen } from "./ui/consequence";
 import { MissionBody } from "./ui/mission";
 import { EndingScreen, InterludeScreen, SetupScreen, TitleScreen } from "./ui/screens";
 import {
@@ -145,10 +145,7 @@ export default function App() {
       }
 
       const advanceable =
-        state.phase === "interlude" ||
-        state.phase === "consequence" ||
-        state.phase === "lesson" ||
-        state.phase === "title";
+        state.phase === "interlude" || state.phase === "consequence" || state.phase === "title";
       if (e.key === "Enter" && advanceable) {
         e.preventDefault();
         doAdvance();
@@ -185,6 +182,10 @@ export default function App() {
 
   const onDecide = state.phase === "decide" && isMission(node);
   const mission = isMission(node) ? node : null;
+  /* On a consequence beat the node has not moved yet, so `mission` is still the one just
+     played — which is exactly whose rail, advisor and hero photo belong on screen. */
+  const onResult = state.phase === "consequence" && mission !== null;
+  const framed = onDecide || onResult;
   const need = mission ? requiredCount(mission) : 0;
   const ready = canCommit(state, content);
   const selected = selectionComplete(state, content);
@@ -211,7 +212,7 @@ export default function App() {
         aside={
           mission?.tip && mission.advisor
             ? {
-                from: mission.advisor.name.split(" ")[0],
+                from: mission.advisor.name,
                 text: mission.tip,
                 photo: mission.advisor.photo,
               }
@@ -230,11 +231,14 @@ export default function App() {
       </ActionBar>
     );
   } else if (state.phase === "consequence") {
-    bottom = <ActionBar label="Why did that happen?" onAction={doAdvance} />;
-  } else if (state.phase === "lesson") {
     bottom = (
-      <ActionBar label={isLastMission ? "See how it went" : "Next mission"} onAction={doAdvance} />
+      <ActionBar
+        label={isLastMission ? "See how it went" : "Next mission"}
+        onAction={doAdvance}
+      />
     );
+  } else if (state.phase === "ending") {
+    bottom = <ActionBar label="Take a new brief" onAction={doRestart} />;
   } else if (state.phase === "interlude") {
     bottom = <ActionBar label="Begin the chapter" onAction={doAdvance} />;
   } else if (state.phase === "setup") {
@@ -252,14 +256,18 @@ export default function App() {
       bars={bars}
       bottom={bottom}
       left={
-        onDecide && mission ? (
+        framed && mission ? (
           <MissionRail
             chapter={chapterFor(mission.chapter)}
             missionId={mission.id}
             missionNumber={missionNumber ?? 1}
             totalMissions={content.missionOrder.length}
             completed={state.completed}
-            advisor={mission.advisor}
+            advisor={
+              mission.advisor && mission.advisorLine
+                ? { ...mission.advisor, quote: mission.advisorLine }
+                : mission.advisor
+            }
             objective={mission.objective}
             minutes={mission.minutes}
             file={discoveredFile(state)}
@@ -267,13 +275,13 @@ export default function App() {
         ) : undefined
       }
       right={
-        onDecide && mission ? (
+        framed && mission ? (
           <InsightRail
             dims={state.dims}
             entries={ledger(state)}
             consider={mission.consider}
             advisorName={mission.advisor?.name}
-            commits={selectedCommits(mission, state)}
+            commits={onDecide ? selectedCommits(mission, state) : undefined}
           />
         ) : undefined
       }
@@ -293,14 +301,14 @@ export default function App() {
       {state.phase === "resolving" && <ResolvingScreen onDone={doAdvance} />}
 
       {state.phase === "consequence" && state.resolution && (
-        <ConsequenceScreen resolution={state.resolution} />
+        <ConsequenceScreen
+          resolution={state.resolution}
+          advisor={mission?.advisor}
+          hero={mission?.hero}
+        />
       )}
 
-      {state.phase === "lesson" && state.resolution && (
-        <LessonScreen resolution={state.resolution} />
-      )}
-
-      {state.phase === "ending" && <EndingScreen state={state} onRestart={doRestart} />}
+      {state.phase === "ending" && <EndingScreen state={state} />}
     </Console>
   );
 }

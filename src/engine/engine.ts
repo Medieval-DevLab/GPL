@@ -262,18 +262,15 @@ export function setPrediction(state: GameState, dim: DimensionId): GameState {
 }
 
 /**
- * Which dimension actually took the biggest hit.
+ * Which dimension moved least.
  *
- * Null when nothing went backwards — which is a real and interesting result, not a
- * missing value, so the UI says so rather than hiding it.
+ * The prediction gate used to ask which dimension this would HURT, which has no answer
+ * on the 27-of-85 outcomes where nothing goes backwards — so on most of the game's good
+ * beats the player's committed claim was discarded and a compliment shown instead.
+ * "Moves least" is always answerable, so the gate now pays off everywhere.
  */
-export function worstDimension(deltas: Record<DimensionId, number>): DimensionId | null {
-  let worst: DimensionId | null = null;
-  for (const d of DIMENSIONS) {
-    if (deltas[d] >= 0) continue;
-    if (worst === null || deltas[d] < deltas[worst]) worst = d;
-  }
-  return worst;
+export function leastMoved(deltas: Record<DimensionId, number>): DimensionId {
+  return DIMENSIONS.reduce((a, b) => (deltas[a] <= deltas[b] ? a : b));
 }
 
 /* ───────────────────────────── resolution ───────────────────────────── */
@@ -366,7 +363,7 @@ export function commit(state: GameState, content: Content): GameState {
     newBadges: [...afterSelection.newBadges, ...afterOutcome.newBadges],
     revealed: sel.revealed,
     predicted: state.prediction,
-    actualWorst: worstDimension(deltas),
+    actualWorst: leastMoved(deltas),
   };
 
   const entry: HistoryEntry = {
@@ -411,10 +408,7 @@ export function advance(state: GameState, content: Content): GameState {
     case "resolving":
       return { ...state, phase: "consequence" };
 
-    case "consequence":
-      return { ...state, phase: "lesson" };
-
-    case "lesson": {
+    case "consequence": {
       if (!isMission(node)) return state;
       // A branch may divert the whole game — walking away from the deal skips delivery.
       const to = state.resolution?.outcome.next ?? node.next;
@@ -626,35 +620,21 @@ const THREAD_RULES: ThreadRule[] = [
       "Something shipped on the promised date that could not actually reach the business it was built for.",
   },
   {
-    needsOutcomes: ["m6-real-hunch"],
-    because: "You identified the real problem without the evidence to prove it.",
-    soLater:
-      "Being right was not enough — you were asking them to abandon their own brief on your instinct.",
-  },
-  {
-    needsOutcomes: ["m5-hold-risky"],
-    because: "You stayed quiet while a competitor was telling a story about your client.",
-    soLater: "Their framing became the client's framing, and you spent the rest of the pursuit arguing uphill.",
-  },
-  {
-    needsOutcomes: ["m8-hold-weak"],
-    because: "You held a premium the client could not see a reason for.",
-    soLater: "Conviction without a visible difference reads as stubbornness, and it cost you ground.",
-  },
-  {
     needsOutcomes: ["m2-both", "m6-real-evidenced"],
     because: "You spent your two questions on the complaints and on who actually decides.",
     soLater:
       "You could open the solution conversation with their own evidence, which is why nobody argued with you.",
   },
-  {
-    needsOutcomes: ["m10-quiet"],
-    because: "You reduced what got delivered without saying so.",
-    soLater:
-      "The scope decision was probably defensible. Not mentioning it turned it into a question about trust.",
-  },
 ];
 
+/**
+ * A thread needs at least two outcomes.
+ *
+ * Four rules used to fire on a single outcome, so a section introduced as "the chains
+ * your own decisions created" presented one decision restated as a chain — and one of
+ * them simply paraphrased its own outcome's detail text. Two genuine threads read as
+ * authored; nine restatements read as padding.
+ */
 export function causalThreads(state: GameState): CausalThread[] {
   const fired = new Set(state.history.map((h) => h.outcomeId));
   const out: CausalThread[] = [];
@@ -708,13 +688,13 @@ export function finalVerdict(
     return {
       title: "A deal worth having",
       summary:
-        "You won work you understood, priced honestly and could actually deliver. All three at once is harder than it looks, and you got there.",
+        "You won work you understood, priced honestly and could deliver. All three at once is unusual.",
     };
   }
   return {
     title: "A workable deal",
     summary: `You got it over the line with compromises, and ${
       lowest === "win" ? "winability" : lowest === "profit" ? "profitability" : "deliverability"
-    } took most of the strain. That is normal — the skill is choosing which one gives.`,
+    } took most of the strain. Which one gave was a choice you made, several times.`,
   };
 }

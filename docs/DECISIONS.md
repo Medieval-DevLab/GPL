@@ -6,6 +6,54 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-032 · The lesson screen is deleted; the colleague says it instead
+Two independent critics landed on the same thing. Sixteen full screens carrying a moral
+in 26px bold under the caption **"Next time."** — no speaker, no artefact, no interaction,
+nothing to disagree with. `ENGAGEMENT-MODEL.md` had specified that this screen become "a
+claim the player commits, then has confirmed"; instead the `"The point"` eyebrow was
+removed and the screen it captioned was kept. That beat was where the feeling of being
+lectured at actually lived.
+
+The `lesson` phase is gone. `principle` and `because` now appear on the consequence
+screen under the portrait of the colleague who briefed you, in quotation marks, as their
+read on what just happened. Same words; the difference is that a named person with a job
+and a stake is saying them about a specific event.
+
+This collapsed three separate findings at once. With no lesson screen there is no "Next
+time." box re-issuing the question the rail asked before the decision, and no third and
+fourth delivery of the same sixteen sentences in the debrief — so **"What this run
+taught"** was deleted from the ending too, where it had listed every principle a fourth
+time under the most schoolroom heading in the build.
+**Cost:** one phase, the `watchFor` field's prominence, and a rewrite of the harness.
+
+## D-031 · The prediction gate asks which dimension moves LEAST
+It used to ask which one this would *hurt*. That question has no answer on the **27 of 85**
+outcomes where nothing goes backwards — including the best branch of nine missions — so on
+most of the game's good beats the player's committed claim was silently discarded and
+replaced with "Nothing went backwards. That is rarer than it should be." A compliment,
+in place of the one mechanic the research calls the highest-leverage change available.
+
+"Which moves least" is always answerable, so the gate now pays off on every beat.
+
+## D-030 · Advice has to be a stake, not an answer
+Attributing the steer to a named colleague fixed the label and not the semantics. On
+mission 1 Priya appeared three times on one screen: quoted in the left rail, *"Priya is
+asking"* with three open questions in the right rail, and *"Priya:"* in the action bar
+answering them. She asked "Is the biggest number the best opportunity?" and then told the
+player "there is no perfect client — weigh what they need against what you can
+demonstrate." One character interrogating and then patronising the player in the same
+breath is worse than an unattributed Tip, not better.
+
+Every `tip` is now a **stake**: a partial, arguable view from someone with skin in the
+game. *"I put Meridian forward last year and it never closed. I would still take it."*
+*"I have walked away from one deal in nine years. I think about it more than the ones I
+signed."* None of them resolves the rail's questions.
+
+Also: `advisorLine` lets a colleague say something specific to the mission at hand. Aisha
+was repeating one sentence about the proposal across four consecutive screens, including
+the one where the sponsor resigns and the proposal is not in question. Frozen is not the
+same as consistent.
+
 ## D-029 · The debrief ring shows balance, not a grade
 The mockups put a letter grade in a circular progress ring, and the PRD does the same
 ("Round Grade B+"). `docs/ENGAGEMENT-MODEL.md` rejects an end-of-run grade outright — it

@@ -26,7 +26,7 @@ import { artUrl } from "./shell";
 function Header({ mission, situation }: { mission: Mission; situation: string[] }) {
   return (
     <div className="flex items-stretch gap-5">
-      <div className="min-w-0 flex-1 px-5 pt-4">
+      <div className="min-w-0 flex-1 px-5 pt-3.5">
         <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
           {mission.eyebrow}
         </p>
@@ -35,12 +35,23 @@ function Header({ mission, situation }: { mission: Mission; situation: string[] 
         </h1>
         <div className="mt-2 space-y-1">
           {situation.map((p, i) => (
-            <p key={i} className="text-[15px] leading-[1.52] text-(--color-ink-soft)">
+            <p key={i} className="text-[14.5px] leading-[1.5] text-(--color-ink-soft)">
               {p}
             </p>
           ))}
         </div>
       </div>
+
+      {mission.saidQuote && (
+        <div className="hidden w-[186px] shrink-0 py-4 pr-5 lg:block">
+          <blockquote className="border-l-[3px] border-(--color-accent) pl-3 text-[13px] italic leading-snug text-(--color-ink-soft)">
+            “{mission.saidQuote.text}”
+          </blockquote>
+          <p className="mt-2 pl-3 text-[11.5px] font-bold text-(--color-ink)">
+            {mission.saidQuote.attribution}
+          </p>
+        </div>
+      )}
 
       {/* Bleeds to the top-right corner, as in every mockup. */}
       {mission.hero && (
@@ -49,7 +60,7 @@ function Header({ mission, situation }: { mission: Mission; situation: string[] 
           alt=""
           loading="eager"
           decoding="async"
-          className="hidden h-[172px] w-[40%] shrink-0 object-cover md:block"
+          className={`hidden h-[172px] shrink-0 object-cover md:block ${mission.saidQuote ? "w-[28%]" : "w-[38%]"}`}
           style={{
             maskImage: "linear-gradient(to right, transparent, #000 22%)",
             WebkitMaskImage: "linear-gradient(to right, transparent, #000 22%)",
@@ -69,7 +80,7 @@ function Header({ mission, situation }: { mission: Mission; situation: string[] 
  */
 function ClientStrip({ client, compact }: { client: ClientProfile; compact?: boolean }) {
   return (
-    <section className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-(--color-line) px-5 py-2.5">
+    <section className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-(--color-line) px-5 py-2">
       {client.image ? (
         <img
           src={artUrl(client.image)}
@@ -131,19 +142,19 @@ const LEVEL: Record<
 > = {
   low: { pct: 26, tone: "neutral", colour: "var(--color-faint)", word: "Low" },
   medium: { pct: 54, tone: "warn", colour: "var(--color-warn)", word: "Medium" },
-  high: { pct: 80, tone: "accent", colour: "var(--color-accent)", word: "High" },
+  high: { pct: 80, tone: "good", colour: "var(--color-good)", word: "High" },
   strong: { pct: 96, tone: "good", colour: "var(--color-good)", word: "Strong" },
 };
 
 function Assessment({ factors }: { factors: AssessmentFactor[] }) {
   return (
-    <section className="border-t border-(--color-line) px-5 py-2.5">
+    <section className="border-t border-(--color-line) px-5 py-2">
       <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2 xl:grid-cols-4">
         {factors.map((f) => {
           const l = LEVEL[f.level];
           const iconTone = f.tone;
           return (
-            <div key={f.label} className="card px-3 py-2">
+            <div key={f.label} className="card px-3 py-1.5">
               <div className="flex items-center gap-2">
                 <IconTile name={f.icon} tone={iconTone} size={30} />
                 <span className="min-w-0 flex-1 text-[13px] font-bold leading-tight text-(--color-ink)">
@@ -162,7 +173,7 @@ function Assessment({ factors }: { factors: AssessmentFactor[] }) {
               <p className="mt-1 text-[14px] font-bold leading-none" style={{ color: l.colour }}>
                 {l.word}
               </p>
-              <p className="mt-1 text-[11.5px] leading-snug text-(--color-muted)">{f.note}</p>
+              <p className="mt-0.5 line-clamp-2 text-[11.5px] leading-snug text-(--color-muted)">{f.note}</p>
             </div>
           );
         })}
@@ -171,55 +182,34 @@ function Assessment({ factors }: { factors: AssessmentFactor[] }) {
   );
 }
 
-function SaidAndConcerns({
-  said,
-  concerns,
-}: {
-  said?: { text: string; attribution: string };
-  concerns?: string[];
-}) {
-  if (!said && !concerns?.length) return null;
+/**
+ * Only the concerns. The client's own words are in the header pull-quote, where every
+ * mockup puts them — rendering both was the same quote twice on one screen.
+ */
+function Concerns({ concerns }: { concerns?: string[] }) {
+  if (!concerns?.length) return null;
   return (
-    <div className="grid border-t border-(--color-line) lg:grid-cols-2">
-      {said && (
-        <section className="px-5 py-3" style={{ background: "var(--color-accent-tint)" }}>
-          <SectionTitle icon="talk" className="mb-2">
-            What they said
-          </SectionTitle>
-          <blockquote className="text-[14px] italic leading-snug text-(--color-ink)">
-            “{said.text}”
-          </blockquote>
-          <p className="mt-1.5 text-[12px] font-bold text-(--color-accent-deep)">
-            {said.attribution}
-          </p>
-        </section>
-      )}
-      {concerns && concerns.length > 0 && (
-        // Rose panel: sentiment is encoded by the surface, not just the icon.
-        <section
-          className="border-t border-(--color-line) px-5 py-3 lg:border-l lg:border-t-0"
-          style={{ background: "var(--color-bad-tint)" }}
-        >
-          <SectionTitle icon="warning" tone="bad" className="mb-1.5">
-            Key concerns
-          </SectionTitle>
-          <ul className="space-y-1">
-            {concerns.map((c) => (
-              <li
-                key={c}
-                className="flex gap-2 text-[13px] leading-snug text-(--color-ink-soft)"
-              >
-                <span
-                  aria-hidden="true"
-                  className="mt-[6px] h-1 w-1 shrink-0 rounded-full bg-(--color-bad)"
-                />
-                {c}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </div>
+    <section className="border-t border-(--color-line) px-5 py-2">
+      <div
+        className="rounded-xl px-4 py-2"
+        style={{ background: "var(--color-bad-tint)" }}
+      >
+        <SectionTitle icon="warning" tone="bad" className="mb-1.5">
+          Key concerns
+        </SectionTitle>
+        <ul className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
+          {concerns.map((c) => (
+            <li key={c} className="flex gap-2 text-[13px] leading-snug text-(--color-ink-soft)">
+              <span
+                aria-hidden="true"
+                className="mt-[6px] h-1 w-1 shrink-0 rounded-full bg-(--color-bad)"
+              />
+              {c}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 }
 
@@ -285,42 +275,39 @@ function OptionCard({
             alt=""
             loading="lazy"
             decoding="async"
-            className="h-[88px] w-full object-cover"
+            className="h-[72px] w-full object-cover"
           />
         )}
-        <div className={`flex justify-center px-3 ${option.image ? "-mt-6" : "pt-3"}`}>
+        <div className={`flex justify-center px-3 ${option.image ? "-mt-7" : "pt-3"}`}>
           <span
             aria-hidden="true"
-            className="flex h-[48px] w-[48px] items-center justify-center rounded-full border-[3px] border-(--color-surface)"
-            style={{
-              background: selected ? "var(--color-accent)" : "var(--color-accent-tint)",
-              color: selected ? "#fff" : "var(--color-accent)",
-            }}
+            className="flex h-[52px] w-[52px] items-center justify-center rounded-full border-[3px] border-(--color-surface)"
+            style={{ background: "var(--color-accent-tint)", color: "var(--color-accent)" }}
           >
-            <Icon name={option.icon ?? "target"} size={23} />
+            <Icon name={option.icon ?? "target"} size={24} />
           </span>
         </div>
       </div>
 
       {/* 2 · title — the only thing the mockups centre */}
       <p
-        className="px-3.5 pt-2 text-center text-[16px] font-bold leading-snug"
+        className="px-3.5 pt-1.5 text-center text-[15.5px] font-bold leading-snug"
         style={{ color: selected ? "var(--color-accent-deep)" : "var(--color-ink)" }}
       >
         {option.title}
       </p>
 
       {/* 3 · what it is */}
-      <p className="px-3.5 pt-1.5 text-center text-[12.5px] leading-snug text-(--color-muted)">
+      <p className="px-3.5 pt-1.5 text-[12.5px] leading-snug text-(--color-muted)">
         {option.description}
       </p>
 
       {/* 4 · what it trades */}
       <div className="px-3.5 pt-2.5">
         {(option.pros?.length || option.cons?.length) && (
-          <ul className="space-y-1 border-t border-(--color-line) pt-2.5">
+          <ul className="space-y-0.5 border-t border-(--color-line) pt-2">
             {option.pros?.map((t) => (
-              <li key={t} className="flex items-start gap-1.5 text-[12px] leading-snug">
+              <li key={t} className="flex items-start gap-1.5 text-[11.5px] leading-snug">
                 <span className="mt-[2px] shrink-0 text-(--color-good)">
                   <Icon name="check" size={13} />
                 </span>
@@ -328,9 +315,13 @@ function OptionCard({
               </li>
             ))}
             {option.cons?.map((t) => (
-              <li key={t} className="flex items-start gap-1.5 text-[12px] leading-snug">
-                <span className="mt-[2px] shrink-0 text-(--color-bad)">
-                  <Icon name="cross" size={13} />
+              <li key={t} className="flex items-start gap-1.5 text-[11.5px] leading-snug">
+                <span
+                  aria-hidden="true"
+                  className="mt-[2px] flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full text-white"
+                  style={{ background: "var(--color-bad)" }}
+                >
+                  <Icon name="cross" size={9} />
                 </span>
                 <span className="text-(--color-muted)">{t}</span>
               </li>
@@ -343,12 +334,10 @@ function OptionCard({
       <div className="px-3.5 pt-2.5">
         {option.cost && (
           <div
-            className="space-y-1 rounded-lg px-2.5 py-2"
+            className="space-y-0.5 rounded-lg px-2.5 py-1.5"
             style={{ background: "var(--color-surface-sunk)" }}
           >
-            <p className="text-[10px] font-bold uppercase tracking-wide text-(--color-faint)">
-              Resource cost
-            </p>
+            <p className="text-[12.5px] font-bold text-(--color-ink-soft)">Resource cost</p>
             <CostRow icon="clock" label="Time" value={option.cost.time} />
             <CostRow icon="coins" label="Investment" value={option.cost.investment} />
           </div>
@@ -356,7 +345,7 @@ function OptionCard({
       </div>
 
       {/* 6 · the card's own button carries the selected state */}
-      <div className="self-end px-3.5 pb-3.5 pt-3">
+      <div className="self-end px-3.5 pb-3 pt-2.5">
         <CardButton selected={selected} on="Selected" off="Select this option" />
       </div>
     </button>
@@ -382,8 +371,8 @@ function CardButton({ selected, on, off }: { selected: boolean; on: string; off:
       }
     >
       {selected ? on : off}
-      {/* The brief has an arrow on every card button. DESIGN-LANGUAGE says the brief wins. */}
-      <span aria-hidden="true">{selected ? "✓" : "→"}</span>
+      {/* The brief has an arrow on every card button, selected or not. */}
+      <span aria-hidden="true">→</span>
     </span>
   );
 }
@@ -531,12 +520,12 @@ export function MissionBody({
           <ClientStrip client={mission.client} compact={Boolean(mission.assessment)} />
         )}
         {mission.assessment && <Assessment factors={mission.assessment} />}
-        <SaidAndConcerns said={mission.saidQuote} concerns={mission.concerns} />
+        <Concerns concerns={mission.concerns} />
       </div>
 
       {/* The decision */}
-      <div className="flex-1 px-5 pb-3 pt-3">
-        <div className="mb-2.5 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex-1 px-5 pb-3 pt-2.5">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <h2 className="text-[24px] font-bold tracking-[-0.015em] text-(--color-ink)">
               {mission.question}

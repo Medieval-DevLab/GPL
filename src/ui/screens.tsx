@@ -2,7 +2,6 @@
 
 import { causalThreads, finalVerdict, ledger } from "../engine/engine";
 import {
-  BADGE_META,
   DIMENSIONS,
   DIMENSION_META,
   STAGES,
@@ -75,7 +74,7 @@ export function TitleScreen({
         {[
           {
             icon: "scale" as const,
-            t: "There are no right answers",
+            t: "Every option is defensible",
             d: "Every option is defensible. Whether it works depends on what you know and what you already promised.",
           },
           {
@@ -153,7 +152,12 @@ export function SetupScreen({
         </div>
       </div>
 
-      <h2 className="mt-7 text-[20px] font-bold text-(--color-ink)">{node.question}</h2>
+      <div className="mt-7">
+        <h2 className="text-[22px] font-bold text-(--color-ink)">{node.question}</h2>
+        <p className="mt-0.5 text-[13.5px] text-(--color-muted)">
+          Three teams. None of them is good at everything.
+        </p>
+      </div>
 
       <div
         className="mt-3 grid items-stretch gap-3 sm:grid-cols-3"
@@ -205,17 +209,26 @@ export function SetupScreen({
               </p>
 
               <div className="px-4 pt-3">
-                <div className="flex flex-wrap justify-center gap-1.5">
+                <ul className="space-y-1 border-t border-(--color-line) pt-2.5">
                   {o.strengths.map((t) => (
-                    <Pill key={t} tone="good">
-                      <Icon name="check" size={11} />
-                      {t}
-                    </Pill>
+                    <li key={t} className="flex items-start gap-1.5 text-[12px] leading-snug">
+                      <span className="mt-[2px] shrink-0 text-(--color-good)">
+                        <Icon name="check" size={13} />
+                      </span>
+                      <span className="font-medium text-(--color-ink-soft)">{t}</span>
+                    </li>
                   ))}
-                </div>
-                <p className="mt-2.5 border-t border-(--color-line) pt-2.5 text-[12px] leading-snug text-(--color-muted)">
-                  {o.tradeoff}
-                </p>
+                  <li className="flex items-start gap-1.5 text-[12px] leading-snug">
+                    <span
+                      aria-hidden="true"
+                      className="mt-[2px] flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full text-white"
+                      style={{ background: "var(--color-bad)" }}
+                    >
+                      <Icon name="cross" size={9} />
+                    </span>
+                    <span className="text-(--color-muted)">{o.tradeoff}</span>
+                  </li>
+                </ul>
               </div>
 
               <div className="self-end p-4">
@@ -236,7 +249,7 @@ export function SetupScreen({
                   }
                 >
                   {on ? "This is us" : "Pick this team"}
-                  <span aria-hidden="true">{on ? "✓" : "→"}</span>
+                  <span aria-hidden="true">→</span>
                 </span>
               </div>
             </button>
@@ -376,18 +389,15 @@ function BalanceRing({ dims }: { dims: Record<DimensionId, number> }) {
         </g>
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[26px] font-bold leading-none tabular-nums text-(--color-ink)">
+        <span className="text-[24px] font-bold leading-none tabular-nums text-(--color-ink)">
           {score}
-        </span>
-        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-(--color-faint)">
-          Overall
         </span>
       </div>
     </div>
   );
 }
 
-export function EndingScreen({ state, onRestart }: { state: GameState; onRestart: () => void }) {
+export function EndingScreen({ state }: { state: GameState }) {
   const verdict = finalVerdict(state.dims, state.flags);
   const threads = causalThreads(state);
   const account = ledger(state);
@@ -410,8 +420,8 @@ export function EndingScreen({ state, onRestart }: { state: GameState; onRestart
           </div>
         </div>
         <p className="mt-5 border-t border-(--color-line) pt-4 text-[13.5px] leading-relaxed text-(--color-muted)">
-          These three pull against each other on purpose. A deal that scores full marks on all of
-          them is not a sign of skill — it is a sign the game was too easy.
+          No engagement finishes level on all three. The one that gave is the one you decided
+          could.
         </p>
       </div>
 
@@ -447,7 +457,7 @@ export function EndingScreen({ state, onRestart }: { state: GameState; onRestart
         <div className="mt-8">
           <SectionTitle icon="target">What led to what</SectionTitle>
           <p className="mt-1.5 text-[13.5px] text-(--color-muted)">
-            Nothing here is random. These are the chains your own decisions created.
+            Each of these starts with something you chose.
           </p>
           <div className="mt-3 space-y-3">
             {threads.map((t, i) => (
@@ -480,9 +490,6 @@ export function EndingScreen({ state, onRestart }: { state: GameState; onRestart
               <BadgeChip key={b} id={b} />
             ))}
           </div>
-          <p className="mt-3 text-center text-[12.5px] text-(--color-faint)">
-            {state.badges.length} of {Object.keys(BADGE_META).length} recognised this run
-          </p>
         </div>
       )}
 
@@ -522,25 +529,6 @@ export function EndingScreen({ state, onRestart }: { state: GameState; onRestart
         </ol>
       </div>
 
-      <div className="mt-4">
-        <SectionTitle icon="bulb" tone="warn">
-          What this run taught
-        </SectionTitle>
-        <ul className="mt-3 space-y-2.5">
-          {state.history.map((h) => (
-            <li key={h.missionId} className="flex items-start gap-3">
-              <span
-                aria-hidden="true"
-                className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-(--color-accent)"
-              />
-              <p className="text-[15px] leading-relaxed text-(--color-ink-soft)">
-                {h.lesson.principle}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </div>
-
       <div
         className="card mt-9 p-6"
         style={{
@@ -553,9 +541,6 @@ export function EndingScreen({ state, onRestart }: { state: GameState; onRestart
           Ask different questions at the start and the same decisions later on produce a different
           engagement. The most interesting version of this is the second one.
         </p>
-        <div className="mt-5">
-          <PrimaryButton onClick={onRestart}>Take a new brief</PrimaryButton>
-        </div>
       </div>
     </div>
   );
