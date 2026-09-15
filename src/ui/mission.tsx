@@ -1,10 +1,13 @@
 /**
- * The decide screen — the core gameplay surface.
+ * The mission briefing — the core gameplay surface.
  *
- * The centre column reads top to bottom as a briefing: who you are dealing
- * with, what is true right now, what they said, and then the question. The
- * option cards carry cost and trade-off but never a prediction — `pros` and
- * `cons` describe the APPROACH. The validator enforces that.
+ * Options are laid out as **side-by-side columns**, not stacked rows. Their checklists
+ * line up, so the player compares across in one eye movement instead of reading four
+ * bands top to bottom. That is the difference between a hand of cards and a radio list,
+ * and it is `docs/UI-AUDIT.md` finding F2.
+ *
+ * Everything here is sized to fit the console without scrolling. Be careful adding
+ * vertical space — `tools/verify.mjs` fails if the working area overflows at 1440×900.
  */
 
 import { useMemo } from "react";
@@ -20,110 +23,136 @@ import type {
   Option,
 } from "../engine/types";
 import { Icon, IconTile, Pill, SectionTitle, type Tone } from "./icons";
+import { artUrl } from "./shell";
 
-/* ───────────────────────── briefing blocks ───────────────────────── */
+/* ───────────────────────── header ───────────────────────── */
 
-/** A divided band inside the briefing card. Keeps the brief as one object. */
-function Band({
-  title,
-  icon,
-  tone = "accent",
-  children,
-}: {
-  title: string;
-  icon: Parameters<typeof SectionTitle>[0]["icon"];
-  tone?: Tone;
-  children: React.ReactNode;
-}) {
+function Header({ mission, situation }: { mission: Mission; situation: string[] }) {
   return (
-    <section className="border-t border-(--color-line) px-5 py-4 sm:px-6">
-      <SectionTitle icon={icon} tone={tone} className="mb-3">
-        {title}
-      </SectionTitle>
-      {children}
-    </section>
+    <div className="flex items-stretch gap-5">
+      <div className="min-w-0 flex-1 px-5 pt-4">
+        <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
+          {mission.eyebrow}
+        </p>
+        <h1 className="mt-1.5 text-[27px] font-bold leading-[1.12] tracking-[-0.015em] text-(--color-ink)">
+          {mission.title}
+        </h1>
+        <div className="mt-2 space-y-1">
+          {situation.map((p, i) => (
+            <p key={i} className="text-[13.5px] leading-[1.5] text-(--color-ink-soft)">
+              {p}
+            </p>
+          ))}
+        </div>
+      </div>
+
+      {/* Bleeds to the top-right corner, as in every mockup. */}
+      {mission.hero && (
+        <img
+          src={artUrl(mission.hero)}
+          alt=""
+          loading="eager"
+          decoding="async"
+          className="hidden h-[150px] w-[38%] shrink-0 object-cover md:block"
+          style={{
+            maskImage: "linear-gradient(to right, transparent, #000 22%)",
+            WebkitMaskImage: "linear-gradient(to right, transparent, #000 22%)",
+          }}
+        />
+      )}
+    </div>
   );
 }
 
-function ClientStrip({ client }: { client: ClientProfile }) {
-  return (
-    <>
-      <section className="border-t border-(--color-line) px-5 py-4 sm:px-6">
-        <div className="flex flex-wrap items-center gap-3.5">
-          <span
-            aria-hidden="true"
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[13px] text-[16px] font-bold text-white"
-            style={{
-              background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-deep))",
-            }}
-          >
-            {client.monogram}
-          </span>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-[17px] font-bold leading-tight text-(--color-ink)">
-              {client.name}
-            </h2>
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {client.tags.map((t) => (
-                <Pill key={t} tone="accent">
-                  {t}
-                </Pill>
-              ))}
-            </div>
-          </div>
-        </div>
-        <p className="mt-3 text-[14px] leading-relaxed text-(--color-ink-soft)">{client.blurb}</p>
-      </section>
+/* ───────────────────────── situation panels ───────────────────────── */
 
-      {/* Separators run horizontally when stacked and vertically when side by
-          side, so the divider follows the layout rather than the source order. */}
-      <dl
-        className="grid grid-cols-1 border-t border-(--color-line) sm:grid-cols-3"
-        style={{ background: "var(--color-panel)" }}
-      >
+/**
+ * When an assessment is also on screen it already characterises the situation, so the
+ * client's one-line blurb is redundant — and dropping it is what lets mission 4, the
+ * densest briefing in the game, fit one screen.
+ */
+function ClientStrip({ client, compact }: { client: ClientProfile; compact?: boolean }) {
+  return (
+    <section className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-(--color-line) px-5 py-2.5">
+      {client.image ? (
+        <img
+          src={artUrl(client.image)}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="h-[46px] w-[82px] shrink-0 rounded-[8px] object-cover"
+        />
+      ) : (
+        <span
+          aria-hidden="true"
+          className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[11px] text-[14px] font-bold text-white"
+          style={{
+            background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-deep))",
+          }}
+        >
+          {client.monogram}
+        </span>
+      )}
+
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          <h2 className="text-[15px] font-bold leading-tight text-(--color-ink)">{client.name}</h2>
+          {client.tags.map((t) => (
+            <Pill key={t} tone="accent">
+              {t}
+            </Pill>
+          ))}
+        </div>
+        {!compact && (
+          <p className="mt-1 text-[12.5px] leading-snug text-(--color-muted)">{client.blurb}</p>
+        )}
+      </div>
+
+      <dl className="flex shrink-0 flex-wrap gap-x-6 gap-y-2 border-(--color-line) lg:border-l lg:pl-6">
         {client.facts.map((f) => (
-          <div
-            key={f.label}
-            className="flex items-center gap-2.5 border-t border-(--color-line) px-5 py-3 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0"
-          >
+          <div key={f.label} className="flex items-center gap-2">
             <span className="shrink-0 text-(--color-accent)">
-              <Icon name={f.icon} size={17} />
+              <Icon name={f.icon} size={16} />
             </span>
-            <div className="min-w-0">
-              <dt className="text-[11px] font-semibold text-(--color-muted)">{f.label}</dt>
-              <dd className="text-[14px] font-bold text-(--color-ink)">{f.value}</dd>
+            <div>
+              <dt className="text-[10.5px] font-semibold text-(--color-muted)">{f.label}</dt>
+              <dd className="text-[13px] font-bold leading-tight text-(--color-ink)">{f.value}</dd>
             </div>
           </div>
         ))}
       </dl>
-    </>
+    </section>
   );
 }
 
-/** Level → a filled chip and a matching bar. Two encodings, one glance. */
+/**
+ * Level → a chip and a matching bar, and each factor carries its own icon colour.
+ * Polychrome icons are a large part of what makes the mockups read as rich (F4).
+ */
 const LEVEL: Record<
   AssessmentFactor["level"],
   { pct: number; tone: Tone; colour: string; word: string }
 > = {
-  low: { pct: 28, tone: "neutral", colour: "var(--color-faint)", word: "Low" },
-  medium: { pct: 55, tone: "warn", colour: "var(--color-warn)", word: "Medium" },
+  low: { pct: 26, tone: "neutral", colour: "var(--color-faint)", word: "Low" },
+  medium: { pct: 54, tone: "warn", colour: "var(--color-warn)", word: "Medium" },
   high: { pct: 80, tone: "accent", colour: "var(--color-accent)", word: "High" },
   strong: { pct: 96, tone: "good", colour: "var(--color-good)", word: "Strong" },
 };
 
+const FACTOR_ICON_TONE: Tone[] = ["accent", "good", "warn", "bad", "neutral"];
+
 function Assessment({ factors }: { factors: AssessmentFactor[] }) {
   return (
-    <Band title="Where this stands today" icon="chart">
-      <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
-        {factors.map((f) => {
+    <section className="border-t border-(--color-line) px-5 py-2.5">
+      <div className="grid gap-x-5 gap-y-2 sm:grid-cols-2 xl:grid-cols-4">
+        {factors.map((f, i) => {
           const l = LEVEL[f.level];
+          const iconTone = FACTOR_ICON_TONE[i % FACTOR_ICON_TONE.length];
           return (
             <div key={f.label}>
               <div className="flex items-center gap-2">
-                <span className="shrink-0 text-(--color-accent)">
-                  <Icon name={f.icon} size={15} />
-                </span>
-                <span className="flex-1 text-[13.5px] font-bold text-(--color-ink)">
+                <IconTile name={f.icon} tone={iconTone} size={26} />
+                <span className="min-w-0 flex-1 text-[12.5px] font-bold leading-tight text-(--color-ink)">
                   {f.label}
                 </span>
                 <Pill tone={l.tone}>{l.word}</Pill>
@@ -137,12 +166,12 @@ function Assessment({ factors }: { factors: AssessmentFactor[] }) {
                   style={{ width: `${l.pct}%`, background: l.colour }}
                 />
               </div>
-              <p className="mt-1.5 text-[12.5px] leading-snug text-(--color-muted)">{f.note}</p>
+              <p className="mt-1 text-[11px] leading-snug text-(--color-muted)">{f.note}</p>
             </div>
           );
         })}
       </div>
-    </Band>
+    </section>
   );
 }
 
@@ -157,35 +186,39 @@ function SaidAndConcerns({
   return (
     <div className="grid border-t border-(--color-line) lg:grid-cols-2">
       {said && (
-        <section className="px-5 py-4 sm:px-6">
-          <SectionTitle icon="megaphone" className="mb-2.5">
-            What they said
-          </SectionTitle>
-          <blockquote
-            className="rounded-xl px-4 py-3 text-[14.5px] italic leading-relaxed text-(--color-ink)"
-            style={{ background: "var(--color-accent-tint)" }}
-          >
-            “{said.text}”
-            <footer className="mt-2 text-[12px] font-bold not-italic text-(--color-accent-deep)">
-              {said.attribution}
-            </footer>
-          </blockquote>
+        <section className="px-5 py-3">
+          <div className="flex gap-2.5">
+            <IconTile name="talk" tone="accent" size={30} />
+            <div className="min-w-0">
+              <blockquote className="text-[13.5px] italic leading-snug text-(--color-ink)">
+                “{said.text}”
+              </blockquote>
+              <p className="mt-1 text-[11.5px] font-bold text-(--color-accent-deep)">
+                {said.attribution}
+              </p>
+            </div>
+          </div>
         </section>
       )}
       {concerns && concerns.length > 0 && (
-        <section className="border-t border-(--color-line) px-5 py-4 sm:px-6 lg:border-l lg:border-t-0">
-          <SectionTitle icon="warning" tone="warn" className="mb-2.5">
+        // Rose panel: sentiment is encoded by the surface, not just the icon.
+        <section
+          className="border-t border-(--color-line) px-5 py-3 lg:border-l lg:border-t-0"
+          style={{ background: "var(--color-bad-tint)" }}
+        >
+          <SectionTitle icon="warning" tone="bad" className="mb-1.5">
             Key concerns
           </SectionTitle>
-          <ul className="space-y-2">
+          <ul className="space-y-1">
             {concerns.map((c) => (
               <li
                 key={c}
-                className="flex gap-2.5 text-[13.5px] leading-relaxed text-(--color-ink-soft)"
+                className="flex gap-2 text-[12.5px] leading-snug text-(--color-ink-soft)"
               >
-                <span className="mt-[3px] shrink-0 text-(--color-warn)">
-                  <Icon name="warning" size={13} />
-                </span>
+                <span
+                  aria-hidden="true"
+                  className="mt-[6px] h-1 w-1 shrink-0 rounded-full bg-(--color-bad)"
+                />
                 {c}
               </li>
             ))}
@@ -210,29 +243,27 @@ function Notes({ discovered, content }: { discovered: string[]; content: Content
 
   return (
     <details className="group border-t border-(--color-line)">
-      <summary className="flex cursor-pointer list-none items-center gap-2 px-5 py-3 transition-colors hover:bg-(--color-surface-sunk) sm:px-6">
+      <summary className="flex cursor-pointer list-none items-center gap-2 px-5 py-2 transition-colors hover:bg-(--color-surface-sunk)">
         <span
-          className="shrink-0 transition-transform group-open:rotate-90 text-(--color-accent)"
+          className="shrink-0 text-(--color-accent) transition-transform group-open:rotate-90"
           aria-hidden="true"
         >
           ▸
         </span>
         <span className="shrink-0 text-(--color-accent)">
-          <Icon name="search" size={16} />
+          <Icon name="search" size={15} />
         </span>
-        <span className="text-[15px] font-bold text-(--color-ink)">What you found out</span>
+        <span className="text-[13.5px] font-bold text-(--color-ink)">Your file</span>
         <Pill tone="accent">{items.length}</Pill>
       </summary>
       <div
-        className="space-y-3 border-t border-(--color-line) px-5 py-4 sm:px-6"
+        className="space-y-2 border-t border-(--color-line) px-5 py-3"
         style={{ background: "var(--color-surface-sunk)" }}
       >
         {items.map((e) => (
           <div key={e.id}>
-            <p className="text-[12px] font-bold text-(--color-accent-deep)">{e.label}</p>
-            <p className="mt-0.5 text-[13.5px] leading-relaxed text-(--color-ink-soft)">
-              {e.reveals}
-            </p>
+            <p className="text-[11.5px] font-bold text-(--color-accent-deep)">{e.label}</p>
+            <p className="text-[12.5px] leading-snug text-(--color-ink-soft)">{e.reveals}</p>
           </div>
         ))}
       </div>
@@ -240,14 +271,15 @@ function Notes({ discovered, content }: { discovered: string[]; content: Content
   );
 }
 
-/* ───────────────────────────── cost dots ───────────────────────────── */
+/* ───────────────────────────── cost rows ───────────────────────────── */
 
-function CostDots({ label, value }: { label: string; value: number }) {
+function CostRow({ icon, label, value }: { icon: "clock" | "coins"; label: string; value: number }) {
   return (
-    <span className="flex items-center gap-1.5" aria-label={`${label}: ${value} of 3`}>
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-(--color-faint)">
-        {label}
+    <div className="flex items-center gap-2" aria-label={`${label}: ${value} of 3`}>
+      <span className="shrink-0 text-(--color-muted)">
+        <Icon name={icon} size={13} />
       </span>
+      <span className="flex-1 text-[11px] font-medium text-(--color-muted)">{label}</span>
       <span aria-hidden="true" className="flex gap-[3px]">
         {[1, 2, 3].map((n) => (
           <span
@@ -259,7 +291,7 @@ function CostDots({ label, value }: { label: string; value: number }) {
           />
         ))}
       </span>
-    </span>
+    </div>
   );
 }
 
@@ -267,99 +299,127 @@ function CostDots({ label, value }: { label: string; value: number }) {
 
 function OptionCard({
   option,
-  index,
   selected,
   onToggle,
 }: {
   option: Option;
-  index: number;
   selected: boolean;
   onToggle: () => void;
 }) {
-  const hasTradeoffs = Boolean(option.pros?.length || option.cons?.length);
-
   return (
-    <button className="choice" data-selected={selected} onClick={onToggle} aria-pressed={selected}>
-      {/* header — the scan line. Icon and title carry the weight; everything
-          below is detail you only read once a title has caught your eye. */}
-      <div className="flex items-center gap-3">
-        <IconTile name={option.icon ?? "target"} tone="accent" size={38} />
-        <p className="min-w-0 flex-1 text-[16.5px] font-bold leading-snug text-(--color-ink)">
-          {option.title}
-        </p>
-        <span
-          aria-hidden="true"
-          className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border-2 text-white transition-colors"
-          style={{
-            borderColor: selected ? "var(--color-accent)" : "var(--color-line-strong)",
-            background: selected ? "var(--color-accent)" : "transparent",
-          }}
-        >
-          {selected && <Icon name="check" size={13} />}
-        </span>
-      </div>
+    <button
+      className="choice flex flex-col !p-0 text-left"
+      data-selected={selected}
+      onClick={onToggle}
+      aria-pressed={selected}
+    >
+      {option.image && (
+        <img
+          src={artUrl(option.image)}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="h-[64px] w-full shrink-0 object-cover"
+        />
+      )}
 
-      <p className="mt-1.5 text-[13.5px] leading-snug text-(--color-muted)">
-        {option.description}
-      </p>
-
-      {/* Trade-offs as tags, not sentences. Four bulleted clauses per card put
-          ~240 words on a four-option screen, and the only way through it was to
-          read all of it. Budgets in validate.ts keep them short. */}
-      {hasTradeoffs && (
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
-          {option.pros?.map((p) => (
-            <Pill key={p} tone="good">
-              <Icon name="check" size={11} />
-              {p}
-            </Pill>
-          ))}
-          {option.cons?.map((c) => (
-            <Pill key={c} tone="bad">
-              <Icon name="cross" size={11} />
-              {c}
-            </Pill>
-          ))}
+      <div className="flex min-h-0 flex-1 flex-col p-3">
+        {/* Medallion overlaps the photo's lower edge, as the mockups do. */}
+        <div className={option.image ? "-mt-7 mb-1" : "mb-1"}>
+          <span
+            aria-hidden="true"
+            className="flex h-[36px] w-[36px] items-center justify-center rounded-full border-2 border-(--color-surface)"
+            style={{
+              background: selected ? "var(--color-accent)" : "var(--color-accent-tint)",
+              color: selected ? "#fff" : "var(--color-accent)",
+            }}
+          >
+            <Icon name={option.icon ?? "target"} size={18} />
+          </span>
         </div>
-      )}
 
-      {/* footer: what it costs — never what it returns */}
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-(--color-line) pt-2.5">
-        {/* The game is keyboard playable; this is where you find that out. */}
-        <kbd
-          className="hidden h-[19px] min-w-[19px] shrink-0 items-center justify-center rounded-[5px] border border-(--color-line-strong) px-1 font-sans text-[10.5px] font-bold text-(--color-faint) sm:flex"
-          style={{ background: "var(--color-surface)" }}
-        >
-          {index + 1}
-        </kbd>
-        {option.cost && (
-          <>
-            <CostDots label="Time" value={option.cost.time} />
-            <CostDots label="Investment" value={option.cost.investment} />
-          </>
+        <p className="text-[14.5px] font-bold leading-snug text-(--color-ink)">{option.title}</p>
+        <p className="mt-1 text-[12px] leading-snug text-(--color-muted)">{option.description}</p>
+
+        {(option.pros?.length || option.cons?.length) && (
+          <ul className="mt-2 space-y-0.5 border-t border-(--color-line) pt-2">
+            {option.pros?.map((p) => (
+              <li key={p} className="flex items-start gap-1.5 text-[11.5px] leading-snug">
+                <span className="mt-[2px] shrink-0 text-(--color-good)">
+                  <Icon name="check" size={12} />
+                </span>
+                <span className="font-medium text-(--color-ink-soft)">{p}</span>
+              </li>
+            ))}
+            {option.cons?.map((c) => (
+              <li key={c} className="flex items-start gap-1.5 text-[11.5px] leading-snug">
+                <span className="mt-[2px] shrink-0 text-(--color-bad)">
+                  <Icon name="cross" size={12} />
+                </span>
+                <span className="text-(--color-muted)">{c}</span>
+              </li>
+            ))}
+          </ul>
         )}
-        <span
-          className="ml-auto flex shrink-0 items-center gap-1.5 text-[12.5px] font-bold"
-          style={{ color: selected ? "var(--color-accent-deep)" : "var(--color-accent)" }}
-        >
-          {selected ? "Selected" : `Select this option`}
-          <span aria-hidden="true">{selected ? "✓" : "→"}</span>
-        </span>
-      </div>
 
-      {/* What you are locking in. Only on the chosen card — a two-step commit,
-          and it keeps three unread commitment lines off the screen. */}
-      {selected && option.commits && (
-        <p
-          className="anim-fade mt-2.5 rounded-lg px-3 py-2 text-[12.5px] leading-snug"
-          style={{ background: "var(--color-surface)", color: "var(--color-ink-soft)" }}
-        >
-          <span className="font-bold text-(--color-accent-deep)">This commits you: </span>
-          {option.commits}
-        </p>
-      )}
+        {option.cost && (
+          <div
+            className="mt-2 space-y-1 rounded-lg px-2.5 py-1.5"
+            style={{ background: "var(--color-surface-sunk)" }}
+          >
+            <CostRow icon="clock" label="Time" value={option.cost.time} />
+            <CostRow icon="coins" label="Investment" value={option.cost.investment} />
+          </div>
+        )}
+
+        {/* The card's own button carries the selected state — outlined, then solid. */}
+        <div className="mt-auto pt-2.5">
+          <CardButton selected={selected} on="Selected" off="Select this option" />
+        </div>
+      </div>
     </button>
   );
+}
+
+/**
+ * The selected state lives on the card's own button, as in every mockup. Kept in one
+ * place because three different card kinds use it and they must not drift apart.
+ */
+function CardButton({
+  selected,
+  on,
+  off,
+}: {
+  selected: boolean;
+  on: string;
+  off: string;
+}) {
+  return (
+    <span
+      className="flex w-full items-center justify-center gap-1.5 rounded-lg border px-2 py-1.5 text-[12.5px] font-bold transition-colors"
+      style={
+        selected
+          ? { background: "var(--color-accent)", borderColor: "var(--color-accent)", color: "#fff" }
+          : {
+              background: "var(--color-surface)",
+              borderColor: "var(--color-line-strong)",
+              color: "var(--color-accent)",
+            }
+      }
+    >
+      {selected ? on : off}
+      {selected && <Icon name="check" size={13} />}
+    </span>
+  );
+}
+
+/** Column count. Four options at ~205px each is the mockups' own arrangement. */
+function columns(n: number): string {
+  if (n <= 2) return "sm:grid-cols-2";
+  if (n === 3) return "sm:grid-cols-2 lg:grid-cols-3";
+  if (n === 4) return "sm:grid-cols-2 lg:grid-cols-4";
+  if (n === 5) return "sm:grid-cols-3 lg:grid-cols-5";
+  return "sm:grid-cols-3";
 }
 
 function ChoiceList({
@@ -374,15 +434,12 @@ function ChoiceList({
   const options = availableOptions(mission, state);
   const chosen = state.selection[0];
 
-  // Stacked, not gridded. Three options in a two-column grid leaves a lonely
-  // third card, and the trade-off columns need the width anyway.
   return (
-    <div className="stagger space-y-3">
-      {options.map((o, i) => (
+    <div className={`grid items-stretch gap-3 ${columns(options.length)}`}>
+      {options.map((o) => (
         <OptionCard
           key={o.id}
           option={o}
-          index={i}
           selected={chosen === o.id}
           onToggle={() => onToggle(o.id)}
         />
@@ -403,40 +460,25 @@ function EvidenceList({
   const full = state.selection.length >= mission.slots;
 
   return (
-    <div className="stagger grid gap-3 sm:grid-cols-2">
+    <div className={`grid items-stretch gap-3 ${columns(mission.evidence.length)}`}>
       {mission.evidence.map((e) => {
         const selected = state.selection.includes(e.id);
         return (
           <button
             key={e.id}
-            className="choice"
+            className="choice flex flex-col"
             data-selected={selected}
             data-dimmed={!selected && full}
             onClick={() => onToggle(e.id)}
             aria-pressed={selected}
           >
-            <div className="flex items-start gap-3">
-              <IconTile name="search" tone="accent" size={36} />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-[11.5px] font-bold text-(--color-accent)">{e.label}</p>
-                  {/* Square, not round: this is multi-select. `rounded-md` is
-                      12px under our theme, which reads as a radio button. */}
-                  <span
-                    aria-hidden="true"
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border-2 text-white transition-colors"
-                    style={{
-                      borderColor: selected ? "var(--color-accent)" : "var(--color-line-strong)",
-                      background: selected ? "var(--color-accent)" : "transparent",
-                    }}
-                  >
-                    {selected && <Icon name="check" size={12} />}
-                  </span>
-                </div>
-                <p className="mt-1 text-[15px] font-bold leading-snug text-(--color-ink)">
-                  {e.question}
-                </p>
-              </div>
+            <IconTile name="search" tone="accent" size={30} />
+            <p className="mt-2 text-[11px] font-bold text-(--color-accent)">{e.label}</p>
+            <p className="mt-0.5 text-[13.5px] font-bold leading-snug text-(--color-ink)">
+              {e.question}
+            </p>
+            <div className="mt-auto pt-2.5">
+              <CardButton selected={selected} on="Chosen" off="Look into this" />
             </div>
           </button>
         );
@@ -457,36 +499,27 @@ function ComponentList({
   const full = state.selection.length >= mission.pick;
 
   return (
-    <div className="stagger grid gap-3 sm:grid-cols-2">
+    <div className={`grid items-stretch gap-3 ${columns(mission.components.length)}`}>
       {mission.components.map((c) => {
         const selected = state.selection.includes(c.id);
         return (
           <button
             key={c.id}
-            className="choice"
+            className="choice flex flex-col"
             data-selected={selected}
             data-dimmed={!selected && full}
             onClick={() => onToggle(c.id)}
             aria-pressed={selected}
           >
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-[15.5px] font-bold leading-snug text-(--color-ink)">{c.title}</p>
-              <span
-                aria-hidden="true"
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border-2 text-white transition-colors"
-                style={{
-                  borderColor: selected ? "var(--color-accent)" : "var(--color-line-strong)",
-                  background: selected ? "var(--color-accent)" : "transparent",
-                }}
-              >
-                {selected && <Icon name="check" size={12} />}
-              </span>
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-[13.5px] font-bold leading-snug text-(--color-ink)">{c.title}</p>
+              <Pill tone={selected ? "accent" : "neutral"}>{c.tag}</Pill>
             </div>
-            <p className="mt-1.5 text-[13.5px] leading-relaxed text-(--color-muted)">
+            <p className="mt-1.5 text-[12.5px] leading-snug text-(--color-muted)">
               {c.description}
             </p>
-            <div className="mt-3 border-t border-(--color-line) pt-2.5">
-              <Pill tone={selected ? "accent" : "neutral"}>{c.tag}</Pill>
+            <div className="mt-auto pt-2.5">
+              <CardButton selected={selected} on="In the proposal" off="Include this" />
             </div>
           </button>
         );
@@ -514,69 +547,41 @@ export function MissionBody({
   const ready = have === need;
 
   return (
-    <div key={mission.id} className="anim-rise">
-      {/* THE BRIEF — one card, divided into bands. Previously these were six
-          separate floating cards, which gave the page no structure to scan and
-          made everything feel equally important. */}
-      <section className="card overflow-hidden">
-        <div className="px-5 pb-5 pt-5 sm:px-6 sm:pb-6">
-          <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
-            {mission.eyebrow}
-          </p>
-          <h1 className="display mt-1.5 text-[29px] text-(--color-ink) sm:text-[34px]">
-            {mission.title}
-          </h1>
-
-          <div className="mt-3.5 space-y-3">
-            {situation.map((p, i) => (
-              <p key={i} className="text-[15.5px] leading-[1.65] text-(--color-ink-soft)">
-                {p}
-              </p>
-            ))}
-          </div>
-
-          {mission.context && mission.context.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {mission.context.map((c) => (
-                <span
-                  key={c.label}
-                  className="rounded-lg px-3 py-1.5 text-[12.5px]"
-                  style={{ background: "var(--color-panel)" }}
-                >
-                  <span className="text-(--color-muted)">{c.label}: </span>
-                  <span className="font-bold text-(--color-ink)">{c.value}</span>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {mission.client && <ClientStrip client={mission.client} />}
+    <div key={mission.id} className="anim-fade flex min-h-full flex-col">
+      {/* The brief — bands divided by rules, on one continuous surface. */}
+      <div className="bg-(--color-surface)">
+        <Header mission={mission} situation={situation} />
+        {mission.client && (
+          <ClientStrip client={mission.client} compact={Boolean(mission.assessment)} />
+        )}
         {mission.assessment && <Assessment factors={mission.assessment} />}
         <SaidAndConcerns said={mission.saidQuote} concerns={mission.concerns} />
         <Notes discovered={state.discovered} content={content} />
-      </section>
-
-      {/* THE DECISION */}
-      <div className="mb-3.5 mt-7 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="display text-[22px] text-(--color-ink)">{mission.question}</h2>
-        {mission.kind !== "choice" && (
-          <Pill tone={ready ? "good" : "accent"}>
-            {ready ? "✓ " : ""}
-            {mission.kind === "investigate" ? "Choose" : "Pick"} {need} · {have}/{need}
-          </Pill>
-        )}
       </div>
 
-      {mission.kind === "choice" && (
-        <ChoiceList mission={mission} state={state} onToggle={onToggle} />
-      )}
-      {mission.kind === "investigate" && (
-        <EvidenceList mission={mission} state={state} onToggle={onToggle} />
-      )}
-      {mission.kind === "build" && (
-        <ComponentList mission={mission} state={state} onToggle={onToggle} />
-      )}
+      {/* The decision */}
+      <div className="flex-1 px-5 pb-3 pt-3">
+        <div className="mb-2.5 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-[19px] font-bold tracking-[-0.01em] text-(--color-ink)">
+            {mission.question}
+          </h2>
+          {mission.kind !== "choice" && (
+            <Pill tone={ready ? "good" : "accent"}>
+              {mission.kind === "investigate" ? "Choose" : "Pick"} {need} · {have}/{need}
+            </Pill>
+          )}
+        </div>
+
+        {mission.kind === "choice" && (
+          <ChoiceList mission={mission} state={state} onToggle={onToggle} />
+        )}
+        {mission.kind === "investigate" && (
+          <EvidenceList mission={mission} state={state} onToggle={onToggle} />
+        )}
+        {mission.kind === "build" && (
+          <ComponentList mission={mission} state={state} onToggle={onToggle} />
+        )}
+      </div>
     </div>
   );
 }

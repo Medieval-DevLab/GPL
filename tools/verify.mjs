@@ -1,13 +1,17 @@
 /**
  * Browser verification.
  *
- * Typecheck and unit tests cannot tell you whether a screen actually renders,
- * whether a button is reachable, or whether the game can be finished by a human.
- * This plays a complete run in a real browser, screenshots every beat, and fails
- * on any console error.
+ * Typecheck and unit tests cannot tell you whether a screen renders, whether a button is
+ * reachable, or whether a human can finish the game. This plays a complete run in a real
+ * browser, screenshots every beat, and fails on any console error.
+ *
+ * It also enforces the console rule: at desktop width the working area must not overflow.
+ * "A mission fits one screen" is the property that separates this from a form, so it is
+ * checked mechanically rather than left to judgement.
  *
  *   node tools/verify.mjs                 # against http://localhost:5173
  *   node tools/verify.mjs http://host     # against anything else
+ *   GPL_VIEWPORT=390x844 node tools/...   # phone pass
  */
 
 import { chromium } from "playwright";
@@ -15,11 +19,11 @@ import { mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 
 const BASE = process.argv[2] ?? "http://localhost:5173";
-const MAX_STEPS = 80;
+const MAX_STEPS = 90;
 
-// GPL_VIEWPORT=390x844 npm run verify   → phone-width pass into docs/screenshots-390
 const [vw, vh] = (process.env.GPL_VIEWPORT ?? "1440x900").split("x").map(Number);
 const VIEWPORT = { width: vw || 1440, height: vh || 900 };
+const DESKTOP = VIEWPORT.width >= 1024;
 const SHOTS = path.resolve(
   VIEWPORT.width === 1440 ? "docs/screenshots" : `docs/screenshots-${VIEWPORT.width}`,
 );
@@ -27,51 +31,47 @@ const SHOTS = path.resolve(
 const problems = [];
 let shotIndex = 0;
 
-/**
- * Screenshot after entry animations have settled.
- *
- * Without the wait, staggered content is still at opacity 0 and the capture
- * silently shows a half-rendered screen — which looks exactly like missing
- * content and wasted real time chasing a bug that was not there.
- */
 async function shot(page, name) {
   shotIndex += 1;
-  await page.waitForTimeout(450);
+  await page.waitForTimeout(400);
   await page
     .evaluate(() => {
-      // Infinite animations (the resolving shimmer) never settle, so exclude them
-      // or this waits forever.
+      // Infinite animations (the resolving shimmer) never settle, so exclude them or
+      // this waits forever.
       const finite = document.getAnimations().filter((a) => {
-        const timing = a.effect?.getComputedTiming?.();
-        return timing && timing.iterations !== Infinity;
+        const t = a.effect?.getComputedTiming?.();
+        return t && t.iterations !== Infinity;
       });
       return Promise.all(finite.map((a) => a.finished.catch(() => undefined)));
     })
     .catch(() => undefined);
 
-  // A full-page capture resolves sticky elements against the viewport, so the
-  // top bar and the confirm bar land in the middle of the image and sit on top
-  // of real content. That looks exactly like a layout bug. Drop them into
-  // normal flow for the capture, then put them back.
-  await page.evaluate(() => {
-    window.__unstuck = [];
-    for (const el of document.querySelectorAll("*")) {
-      if (getComputedStyle(el).position === "sticky") {
-        window.__unstuck.push([el, el.style.position]);
-        el.style.position = "relative";
-      }
-    }
-  });
-
   const file = path.join(SHOTS, `${String(shotIndex).padStart(2, "0")}-${name}.png`);
-  await page.screenshot({ path: file, fullPage: true });
-
-  await page.evaluate(() => {
-    for (const [el, prev] of window.__unstuck ?? []) el.style.position = prev;
-    window.__unstuck = [];
-  });
-
+  // Not fullPage: the console owns the viewport and scrolls its own working area, so the
+  // viewport IS the screen. Overflow is caught by checkFit instead.
+  await page.screenshot({ path: file, fullPage: !DESKTOP });
   console.log(`   📸 ${path.basename(file)}`);
+}
+
+/** The console rule, as a test. */
+async function checkFit(page, where) {
+  if (!DESKTOP) return;
+  const fit = await page.evaluate(() => {
+    const el = document.querySelector("[data-work-area]");
+    if (!el) return null;
+    return { scroll: el.scrollHeight, client: el.clientHeight };
+  });
+  if (!fit) {
+    problems.push(`${where}: no [data-work-area] — the console shell is missing`);
+    return;
+  }
+  const over = fit.scroll - fit.client;
+  if (over > 4) {
+    problems.push(
+      `${where}: working area overflows by ${over}px (${fit.scroll} in ${fit.client}). ` +
+        `A mission must fit one screen — see docs/UI-AUDIT.md F1.`,
+    );
+  }
 }
 
 /** Is a button with this exact accessible name present and enabled? */
@@ -95,109 +95,125 @@ async function main() {
   });
   page.on("pageerror", (e) => problems.push(`page error: ${e.message}`));
   page.on("requestfailed", (r) => {
-    const url = r.url();
-    if (url.startsWith(BASE)) problems.push(`request failed: ${url}`);
+    if (r.url().startsWith(BASE)) problems.push(`request failed: ${r.url()}`);
   });
 
-  console.log(`\n▶ verifying ${BASE}\n`);
+  console.log(`\n▶ verifying ${BASE} at ${VIEWPORT.width}×${VIEWPORT.height}\n`);
   await page.goto(BASE, { waitUntil: "networkidle" });
 
-  // Title
   await page.waitForSelector("h1");
   const title = (await page.locator("h1").first().innerText()).trim();
   if (title !== "GPL") problems.push(`title screen h1 was "${title}", expected "GPL"`);
   await shot(page, "title");
 
-  const begin = (await button(page, "Begin")) ?? (await button(page, "Start again"));
-  if (!begin) throw new Error("no Begin button on the title screen");
+  const begin = (await button(page, "Take the brief")) ?? (await button(page, "Start again"));
+  if (!begin) throw new Error("no start button on the title screen");
   await begin.click();
 
-  let missionsSeen = 0;
-  let consequencesSeen = 0;
-  let lessonsSeen = 0;
-  let interludesSeen = 0;
+  let missions = 0;
+  let consequences = 0;
+  let lessons = 0;
+  let interludes = 0;
 
   for (let step = 0; step < MAX_STEPS; step++) {
-    await page.waitForTimeout(160);
+    await page.waitForTimeout(150);
 
-    // Ending?
     if ((await page.getByText("How it ended", { exact: true }).count()) > 0) {
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(450);
       await shot(page, "ending");
       console.log("\n✓ reached the ending");
       break;
     }
 
-    // Decide
-    const commit = await button(page, "Confirm decision");
+    // ── decide ─────────────────────────────────────────────
+    const commit = await button(page, "Commit to this");
     if (commit) {
-      missionsSeen += 1;
+      missions += 1;
       const heading = (await page.locator("h1").first().innerText()).trim();
-      console.log(`\n── mission ${missionsSeen}: ${heading}`);
-      await shot(page, `mission-${missionsSeen}-decide`);
+      console.log(`\n── mission ${missions}: ${heading}`);
 
       // The game shell must be present on every briefing, not just the first.
-      for (const required of ["Your objective", "Key factors", "Tip."]) {
+      for (const required of ["Chapter", "Key factors", "Where you stand"]) {
         if ((await page.getByText(required, { exact: false }).count()) === 0) {
           problems.push(`${heading}: shell is missing "${required}"`);
         }
       }
+      // Advice must be attributed to a person, never spoken by the interface.
+      if ((await page.getByText("Tip.", { exact: false }).count()) > 0) {
+        problems.push(`${heading}: an unattributed "Tip." is on screen`);
+      }
+
+      await checkFit(page, `mission ${missions} (${heading})`);
+      await shot(page, `mission-${missions}-decide`);
 
       const choices = page.locator("button.choice");
       const count = await choices.count();
       if (count < 2) problems.push(`${heading}: only ${count} choices rendered`);
 
-      // Click options until Commit becomes enabled.
+      // Select until the prediction gate becomes available.
       let clicked = 0;
       for (let i = 0; i < count && clicked < 4; i++) {
-        if (await commit.isEnabled()) break;
+        if ((await page.getByText("what will this cost most?", { exact: false }).count()) > 0) break;
         await choices.nth(i).click();
         clicked += 1;
-        await page.waitForTimeout(80);
+        await page.waitForTimeout(70);
       }
 
-      if (!(await commit.isEnabled())) {
-        problems.push(`${heading}: Commit never became enabled after ${clicked} selections`);
+      // The prediction is the game's "before" — commit must be gated on it.
+      if (await commit.isEnabled()) {
+        problems.push(`${heading}: Commit was enabled before a prediction was made`);
+      }
+      const predict = await button(page, "Deliverability");
+      if (!predict) {
+        problems.push(`${heading}: no prediction control after selecting`);
+        await shot(page, `stuck-predict-${missions}`);
         break;
       }
-      await shot(page, `mission-${missionsSeen}-selected`);
+      await predict.click();
+      await page.waitForTimeout(70);
+
+      if (!(await commit.isEnabled())) {
+        problems.push(`${heading}: Commit never enabled after ${clicked} selections + prediction`);
+        break;
+      }
+      await checkFit(page, `mission ${missions} selected (${heading})`);
+      await shot(page, `mission-${missions}-selected`);
       await commit.click();
       continue;
     }
 
-    // Consequence
+    // ── consequence ────────────────────────────────────────
     const why = await button(page, "Why did that happen?");
     if (why) {
-      consequencesSeen += 1;
-      await page.waitForTimeout(700); // let meters animate
-      if (consequencesSeen <= 2 || consequencesSeen === 10) {
-        await shot(page, `consequence-${consequencesSeen}`);
-      }
+      consequences += 1;
+      await page.waitForTimeout(650); // let the meters animate
+      if (consequences <= 2 || consequences === 10) await shot(page, `consequence-${consequences}`);
       await why.click();
       continue;
     }
 
-    // Lesson
-    const seeHow = await button(page, "See how it went");
-    const cont = await button(page, "Continue");
-    if (seeHow || cont) {
-      // A lesson screen always has the "The point" eyebrow; an interlude does not.
-      const isLesson = (await page.getByText("The point", { exact: true }).count()) > 0;
-      if (isLesson) {
-        lessonsSeen += 1;
-        if (lessonsSeen <= 2) await shot(page, `lesson-${lessonsSeen}`);
-      } else {
-        interludesSeen += 1;
-        if (interludesSeen <= 2) await shot(page, `interlude-${interludesSeen}`);
-      }
-      await (seeHow ?? cont).click();
+    // ── lesson ─────────────────────────────────────────────
+    const next = (await button(page, "Next mission")) ?? (await button(page, "See how it went"));
+    if (next) {
+      lessons += 1;
+      if (lessons <= 2) await shot(page, `lesson-${lessons}`);
+      await next.click();
       continue;
     }
 
-    // Resolving beat — just wait.
+    // ── interlude ──────────────────────────────────────────
+    const begins = await button(page, "Begin the chapter");
+    if (begins) {
+      interludes += 1;
+      if (interludes <= 2) await shot(page, `interlude-${interludes}`);
+      await begins.click();
+      continue;
+    }
+
+    // ── resolving ──────────────────────────────────────────
     if ((await page.getByText("Seeing what happens…").count()) > 0) {
       if (shotIndex < 6) await shot(page, "resolving");
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(450);
       continue;
     }
 
@@ -207,19 +223,18 @@ async function main() {
   }
 
   /* ── assertions ─────────────────────────────────────────── */
-  if (missionsSeen !== 10) problems.push(`played ${missionsSeen} missions, expected 10`);
-  if (consequencesSeen !== 10) problems.push(`saw ${consequencesSeen} consequences, expected 10`);
-  if (lessonsSeen !== 10) problems.push(`saw ${lessonsSeen} lessons, expected 10`);
-  if (interludesSeen !== 5) problems.push(`saw ${interludesSeen} interludes, expected 5`);
+  const expected = 10;
+  if (missions !== expected) problems.push(`played ${missions} missions, expected ${expected}`);
+  if (consequences !== expected) problems.push(`saw ${consequences} consequences, expected ${expected}`);
+  if (lessons !== expected) problems.push(`saw ${lessons} lessons, expected ${expected}`);
+  if (interludes !== 5) problems.push(`saw ${interludes} interludes, expected 5`);
 
-  // Ending content. Compared case-insensitively: several labels are uppercased
-  // by CSS, and innerText reports the transformed text.
-  const bodyText = (await page.locator("body").innerText()).toLowerCase();
-  for (const expected of ["your decisions", "what this run taught", "play again"]) {
-    if (!bodyText.includes(expected)) problems.push(`ending is missing "${expected}"`);
+  const body = (await page.locator("body").innerText()).toLowerCase();
+  for (const t of ["your decisions", "what this run taught", "the account", "take a new brief"]) {
+    if (!body.includes(t)) problems.push(`ending is missing "${t}"`);
   }
 
-  // Accessibility smoke: every interactive control must have an accessible name.
+  // Every interactive control must have an accessible name.
   const unnamed = await page.evaluate(() => {
     const out = [];
     for (const el of document.querySelectorAll("button, a[href], [role='button']")) {
@@ -230,10 +245,16 @@ async function main() {
   });
   for (const u of unnamed) problems.push(`control without an accessible name: ${u}`);
 
+  // Photography must actually load — a broken <img> is invisible in a screenshot.
+  const brokenImages = await page.evaluate(() =>
+    [...document.images].filter((i) => i.complete && i.naturalWidth === 0).map((i) => i.src),
+  );
+  for (const src of brokenImages) problems.push(`image failed to decode: ${src}`);
+
   await browser.close();
 
   console.log(
-    `\nmissions ${missionsSeen} · consequences ${consequencesSeen} · lessons ${lessonsSeen} · interludes ${interludesSeen}`,
+    `\nmissions ${missions} · consequences ${consequences} · lessons ${lessons} · interludes ${interludes}`,
   );
 
   if (problems.length) {
@@ -242,7 +263,7 @@ async function main() {
     process.exit(1);
   }
   console.log(
-    `\n✓ full playthrough clean at ${VIEWPORT.width}×${VIEWPORT.height} — ${shotIndex} screenshots in ${path.relative(process.cwd(), SHOTS)}\n`,
+    `\n✓ clean playthrough at ${VIEWPORT.width}×${VIEWPORT.height} — ${shotIndex} screenshots in ${path.relative(process.cwd(), SHOTS)}\n`,
   );
 }
 

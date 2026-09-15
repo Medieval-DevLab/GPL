@@ -30,41 +30,60 @@ import type { Advisor, ClientProfile, Content, GameNode } from "../engine/types"
 
 /* ───────────────────────── recurring cast ───────────────────────── */
 
+/**
+ * Your colleagues.
+ *
+ * Every piece of advice in this game comes from one of these people, by name, with a
+ * job and a stake of their own. Nothing in the interface tells the player what to
+ * think — you are a first-time pursuit lead, and a colleague briefing you is onboarding
+ * rather than lecturing (see docs/STRATEGY.md D1). `steer` is their practical view on
+ * the mission at hand; it used to be an unattributed "Tip" in a box.
+ *
+ * Riya appears in two chapters on purpose. A team the player recognises is continuity;
+ * a different face every chapter is decoration.
+ */
+
 const PRIYA: Advisor = {
   name: "Priya Sharma",
   role: "Client Growth Lead",
+  photo: "portrait-priya",
   quote: "Three names on the table, one team. We don't get to chase all of them.",
 };
 
-const RAHUL: Advisor = {
-  name: "Rahul Mehta",
+const RIYA: Advisor = {
+  name: "Riya Kapoor",
   role: "Engagement Director",
+  photo: "portrait-riya",
   quote: "Not every lead is the right opportunity. Decide early where your people go.",
 };
 
-const SOFIA: Advisor = {
-  name: "Sofia Marchetti",
-  role: "Solution Architect",
+const ARJUN: Advisor = {
+  name: "Arjun Mehta",
+  role: "Solutions Director",
+  photo: "portrait-arjun",
   quote: "Whatever we write down, somebody has to build. I'd rather promise less and mean it.",
 };
 
-const TOM: Advisor = {
-  name: "Tom Adeyemi",
-  role: "Commercial Lead",
+const RIYA_DEAL: Advisor = {
+  name: "Riya Kapoor",
+  role: "Engagement Director",
+  photo: "portrait-riya",
   quote: "Every concession on price is a concession on what we can do when something breaks.",
 };
 
 const AISHA: Advisor = {
   name: "Aisha Khan",
   role: "Delivery Lead",
+  photo: "portrait-aisha",
   quote: "My team inherits every sentence in that proposal. Which ones did you mean?",
 };
 
-const NORTHWIND: ClientProfile = {
-  name: "Northwind Retail",
-  monogram: "NR",
+const ORION: ClientProfile = {
+  name: "Orion Retail Group",
+  monogram: "OR",
   tags: ["Retail", "210 stores", "National"],
   blurb: "Wants to “improve the customer experience”. Nobody has said what that means.",
+  image: "thumb-retail-store",
   facts: [
     { icon: "chart", label: "Potential value", value: "High" },
     { icon: "clock", label: "Timeline", value: "6–12 months" },
@@ -96,6 +115,7 @@ const nodes: GameNode[] = [
     eyebrow: "The situation",
     objective: "Decide where your team spends this quarter.",
     minutes: 3,
+    hero: "hero-boardroom",
     situation: [
       "Three organisations want a partner. You can properly pursue one.",
       "You know what each says it wants. You do not know what any of them needs.",
@@ -115,8 +135,9 @@ const nodes: GameNode[] = [
     options: [
       {
         id: "o-northwind",
-        title: "Northwind Retail",
+        title: "Orion Retail",
         icon: "target",
+        image: "client-retail-store",
         description: "210 stores, real budget, vague timeline. You have done work shaped like this.",
         commits: "A crowded field — two other firms are already talking.",
         pros: ["Close to proven work", "Budget looks real"],
@@ -128,8 +149,8 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "You are in the conversation early.",
             detail:
-              "Northwind takes the meeting. Your previous work is close enough to what they are asking for that you do not have to explain why you are in the room.",
-            changed: ["Northwind is now your active pursuit", "You are early, not chasing"],
+              "Orion takes the meeting. Your previous work is close enough to what they are asking for that you do not have to explain why you are in the room.",
+            changed: ["Orion is now your active pursuit", "You are early, not chasing"],
             effect: { dims: { win: 6, profit: 2 }, flags: ["client:northwind"] },
           },
         ],
@@ -138,6 +159,7 @@ const nodes: GameNode[] = [
         id: "o-apex",
         title: "Apex Industrial",
         icon: "layers",
+        image: "client-energy-turbines",
         description:
           "The biggest number on the table. Needs industrial engineering your team does not have.",
         commits: "Stretches the team past anything it has delivered.",
@@ -150,10 +172,10 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "Apex shortlists on industrial depth. You are not on the list.",
             detail:
-              "They ask for three comparable references. You have none. The meeting is polite and short. Six weeks are gone, and Northwind — still open — has been talking to your competitors the whole time.",
+              "They ask for three comparable references. You have none. The meeting is polite and short. Six weeks are gone, and Orion — still open — has been talking to your competitors the whole time.",
             changed: [
               "You lost six weeks",
-              "Northwind is now your pursuit, but you are late to it",
+              "Orion is now your pursuit, but you are late to it",
               "The team came back knowing the competitive field far better",
             ],
             effect: {
@@ -163,7 +185,7 @@ const nodes: GameNode[] = [
             lesson: {
               principle: "The biggest opportunity is not automatically the best one.",
               because:
-                "Apex was worth more than Northwind on paper. But value you cannot credibly go after is not value available to you.",
+                "Apex was worth more than Orion on paper. But value you cannot credibly go after is not value available to you.",
               watchFor:
                 "Before size, ask: is there a real overlap between what they need and what we can actually prove?",
             },
@@ -174,6 +196,7 @@ const nodes: GameNode[] = [
         id: "o-meridian",
         title: "Meridian Health",
         icon: "shield",
+        image: "client-health-campus",
         description: "Patient engagement. Smaller, fast-moving, and healthcare procurement is slow.",
         commits: "Long and unpredictable approval cycles.",
         pros: ["Ambitious client", "A sector you want"],
@@ -185,11 +208,11 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "Meridian stalls in procurement. You park it.",
             detail:
-              "The team likes you. The process does not move. After a month of effort you make the call to park Meridian and pick up Northwind, which is still live.",
+              "The team likes you. The process does not move. After a month of effort you make the call to park Meridian and pick up Orion, which is still live.",
             changed: [
               "A month of effort spent with nothing to show",
               "You stopped before it became a sunk cost",
-              "Northwind becomes your pursuit, with your capacity intact",
+              "Orion becomes your pursuit, with your capacity intact",
             ],
             effect: {
               dims: { profit: -5, win: -2, deliver: 4 },
@@ -217,11 +240,12 @@ const nodes: GameNode[] = [
     eyebrow: "Understand the client",
     objective: "Work out what you need to know first.",
     minutes: 4,
+    hero: "hero-storefront-wide",
     situation: [
-      "Northwind's brief is one line: “improve the customer experience across our stores”.",
+      "Orion's brief is one line: “improve the customer experience across our stores”.",
       "You can dig into two things. Not five. Choosing what to ignore is the job.",
     ],
-    client: NORTHWIND,
+    client: ORION,
     advisor: PRIYA,
     consider: [
       "What could change our mind?",
@@ -245,7 +269,7 @@ const nodes: GameNode[] = [
         label: "The decision",
         question: "Who is driving this, and who can stop it?",
         reveals:
-          "Elena Brandt, the CMO, is sponsoring it and owns the budget. But every system that would have to change sits under Marcus Reed, the Operations Director, who has not been in a single meeting so far.",
+          "Sarah Lim, the Chief Transformation Officer, is sponsoring it and owns the budget. But every system that would have to change sits under Marcus Reed, the Operations Director, who has not been in a single meeting so far.",
         flags: ["knows:ops_constraint"],
       },
       {
@@ -290,7 +314,7 @@ const nodes: GameNode[] = [
         tone: "strong",
         headline: "You have found the person who can stop this.",
         detail:
-          "The CMO holds the budget, but Operations holds the systems. Most teams pitching this account will not discover that until they are already committed to a shape of solution.",
+          "Sarah holds the budget, but Operations holds the systems. Most teams pitching this account will not discover that until they are already committed to a shape of solution.",
         changed: ["You know where the real constraint sits"],
         effect: { dims: { deliver: 7, win: 3 }, badge: "good_question" },
       },
@@ -342,10 +366,11 @@ const nodes: GameNode[] = [
     eyebrow: "First contact",
     objective: "Turn a name on a list into a conversation.",
     minutes: 3,
+    hero: "hero-retail-plaza",
     situation: [
-      "Northwind is open to talking to partners. You get roughly one shot at a first impression worth following up.",
+      "Orion is open to talking to partners. You get roughly one shot at a first impression worth following up.",
     ],
-    client: NORTHWIND,
+    client: ORION,
     advisor: PRIYA,
     consider: [
       "Do we need attention, access, or credibility?",
@@ -359,6 +384,7 @@ const nodes: GameNode[] = [
         id: "o-pov",
         title: "Publish a point of view",
         icon: "spark",
+        image: "approach-networking",
         description: "A short, specific piece on what is going wrong for retailers like them.",
         commits: "Real preparation time before anything happens.",
         pros: ["Shows you know their world", "Reaches several people"],
@@ -369,7 +395,7 @@ const nodes: GameNode[] = [
             id: "m3-pov-hit",
             when: { all: ["knows:real_pain"] },
             tone: "strong",
-            headline: "The CMO forwards it internally with one line: “this is us”.",
+            headline: "Sarah forwards it internally with one line: “this is us”.",
             detail:
               "Because you wrote about post-purchase rather than storefronts, it read as though you had already been inside the business. You are invited in — and asked to bring it to Operations as well.",
             changed: [
@@ -400,7 +426,8 @@ const nodes: GameNode[] = [
         id: "o-direct",
         title: "Go straight to the sponsor",
         icon: "talk",
-        description: "A warm introduction, thirty minutes with the CMO, the case made in person.",
+        image: "approach-one-to-one",
+        description: "A warm introduction, thirty minutes with the sponsor, the case made in person.",
         commits: "Spends a relationship you cannot spend twice.",
         pros: ["Fastest to the budget holder", "A real conversation"],
         cons: ["Burns your introduction", "One stakeholder's view"],
@@ -412,16 +439,16 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "You ask the question nobody else has asked.",
             detail:
-              "Halfway through you ask who owns the systems that would have to change. Elena pauses, and says that is a fair question. You leave with a second meeting that includes Operations.",
+              "Halfway through you ask who owns the systems that would have to change. Sarah pauses, and says that is a fair question. You leave with a second meeting that includes Operations.",
             changed: ["You are trusted early", "Operations is now in the room"],
             effect: { dims: { win: 8, deliver: 5 }, flags: ["ops_engaged", "credibility"] },
           },
           {
             id: "m3-direct-blind",
             tone: "mixed",
-            headline: "The CMO is enthusiastic. Then adds a condition.",
+            headline: "Sarah is enthusiastic. Then adds a condition.",
             detail:
-              "It goes well right up to the last minute, when Elena says: “you will need Operations comfortable with this before we can move.” You had not planned for a second stakeholder, and now you are learning about them late.",
+              "It goes well right up to the last minute, when Sarah says: “you will need Operations comfortable with this before we can move.” You had not planned for a second stakeholder, and now you are learning about them late.",
             changed: [
               "You have the sponsor's interest",
               "You have discovered a second decision-maker, late",
@@ -437,6 +464,7 @@ const nodes: GameNode[] = [
         id: "o-campaign",
         title: "Run a broad campaign",
         icon: "megaphone",
+        image: "approach-billboard",
         description: "Put a retail transformation campaign into the market and let interest come.",
         commits: "Reaches many people, few of whom decide anything.",
         pros: ["Cheapest by far", "Senior people stay free"],
@@ -446,9 +474,9 @@ const nodes: GameNode[] = [
           {
             id: "m3-campaign",
             tone: "mixed",
-            headline: "Plenty of interest. Very little of it from Northwind.",
+            headline: "Plenty of interest. Very little of it from Orion.",
             detail:
-              "The campaign performs well by every measure you would put in a report. It generates conversations with people who are interested but cannot buy, and one lukewarm reply from a Northwind manager two levels below the sponsor.",
+              "The campaign performs well by every measure you would put in a report. It generates conversations with people who are interested but cannot buy, and one lukewarm reply from a Orion manager two levels below the sponsor.",
             changed: [
               "A lot of activity",
               "Barely any progress on the account you chose",
@@ -498,18 +526,19 @@ const nodes: GameNode[] = [
     eyebrow: "Opportunity assessment",
     objective: "Decide how much of your team to commit.",
     minutes: 4,
+    hero: "hero-retail-exterior",
     situation: [
-      "Northwind wants a proposal. Writing a serious one occupies several people for weeks, with no guarantee at the end.",
+      "Orion wants a proposal. Writing a serious one occupies several people for weeks, with no guarantee at the end.",
       "All of this is still their version of the problem.",
     ],
-    client: NORTHWIND,
+    client: ORION,
     assessment: [
       { icon: "flag", label: "Client need", level: "high", note: "Something is wrong, and they have said so." },
       { icon: "target", label: "Our fit", level: "medium", note: "Close to past work, but the brief is undefined." },
       { icon: "people", label: "Competition", level: "medium", note: "Two firms actively in the conversation." },
       { icon: "chart", label: "Value", level: "high", note: "Multi-year, if the first phase works." },
     ],
-    advisor: RAHUL,
+    advisor: RIYA,
     consider: [
       "What does being wrong cost us?",
       "Do we know enough to price it?",
@@ -567,7 +596,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "They agree — and you get paid to learn.",
             detail:
-              "Northwind accepts. It is a smaller first number than anyone hoped for, but you now have access, budget and permission to look at the parts of the business nobody was going to show you in a sales meeting.",
+              "Orion accepts. It is a smaller first number than anyone hoped for, but you now have access, budget and permission to look at the parts of the business nobody was going to show you in a sales meeting.",
             changed: [
               "A smaller, safer first commitment",
               "Real access to the business",
@@ -596,7 +625,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "They are surprised. Then they come back.",
             detail:
-              "Turning down work you cannot scope is a defensible thing to do, and it registers. Two weeks later Elena calls back with a narrower ask and a more honest description of the problem — but you have lost momentum against the firm that just said yes.",
+              "Turning down work you cannot scope is a defensible thing to do, and it registers. Two weeks later Sarah calls back with a narrower ask and a more honest description of the problem — but you have lost momentum against the firm that just said yes.",
             changed: [
               "Your judgement is taken seriously",
               "A narrower, better-defined opportunity",
@@ -631,20 +660,21 @@ const nodes: GameNode[] = [
     eyebrow: "Market response",
     objective: "React to a competitor changing the race.",
     minutes: 4,
+    hero: "hero-client-meeting",
     situation: [
       "A rival announces a partnership with a well-known retail technology vendor. Press release, launch event, glossy storefront demo.",
       "Your sponsor forwards it with four words: “should we be worried?”",
     ],
     saidQuote: {
       text: "We like your perspective, but this looks impressive and my board has already seen it. Help me understand how you are different.",
-      attribution: "Elena Brandt · CMO, Northwind Retail",
+      attribution: "Sarah Lim · Chief Transformation Officer, Orion Retail",
     },
     concerns: [
       "A recognisable vendor name attached",
       "A demo that is easy to show a board",
       "Your difference has not been stated plainly",
     ],
-    advisor: RAHUL,
+    advisor: RIYA,
     consider: [
       "What changed — the facts, or the noise?",
       "Can we name what their offer misses?",
@@ -678,7 +708,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "You learn what it is, a little late.",
             detail:
-              "It is a storefront platform, and it does not touch the operational side. Useful to know. The delay in answering cost you some of Elena's confidence — she wanted a view, not a research project.",
+              "It is a storefront platform, and it does not touch the operational side. Useful to know. The delay in answering cost you some of Sarah's confidence — she wanted a view, not a research project.",
             changed: [
               "You understand the rival's offer",
               "You looked slow at a moment that needed conviction",
@@ -702,7 +732,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "You are in the room within two days, with a half-formed argument.",
             detail:
-              "Speed reads as confidence, and Elena appreciates it. But you are arguing against something you have not examined, and twice you have to say you will come back with detail.",
+              "Speed reads as confidence, and Sarah appreciates it. But you are arguing against something you have not examined, and twice you have to say you will come back with detail.",
             changed: ["You held the relationship", "You spent credibility to do it"],
             effect: { dims: { win: 4, deliver: -2 } },
           },
@@ -736,7 +766,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "It sounds like a deflection, because you cannot prove it.",
             detail:
-              "The argument is correct. You simply do not have the evidence to support it, so it comes across as a firm losing a comparison and changing the subject. Elena is unconvinced but not unfriendly.",
+              "The argument is correct. You simply do not have the evidence to support it, so it comes across as a firm losing a comparison and changing the subject. Sarah is unconvinced but not unfriendly.",
             changed: ["You raised the right issue", "You could not back it up"],
             effect: { dims: { win: -2 } },
           },
@@ -767,7 +797,7 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "Silence gets filled by whoever is talking.",
             detail:
-              "For three weeks the only firm with a story about Northwind's future is the other one. By the time you re-engage, the storefront framing has hardened into how the client describes the project internally.",
+              "For three weeks the only firm with a story about Orion's future is the other one. By the time you re-engage, the storefront framing has hardened into how the client describes the project internally.",
             changed: ["The rival's framing is now the client's framing", "You are arguing uphill"],
             effect: { dims: { win: -9 } },
             lesson: {
@@ -812,12 +842,13 @@ const nodes: GameNode[] = [
     eyebrow: "Define the problem",
     objective: "Choose the problem your proposal answers.",
     minutes: 4,
+    hero: "hero-retail-interior",
     situation: [
       "The brief still says “improve the customer experience across our stores”.",
       "Everything follows from how you read that sentence. Get it wrong and every good decision after it serves the wrong goal.",
     ],
-    client: NORTHWIND,
-    advisor: SOFIA,
+    client: ORION,
+    advisor: ARJUN,
     consider: [
       "Is the ask where the money is leaking?",
       "What would let us disagree with their brief?",
@@ -830,6 +861,7 @@ const nodes: GameNode[] = [
         id: "o-asked",
         title: "The thing they asked for",
         icon: "check",
+        image: "solution-screen",
         description: "A store and digital experience redesign. What the brief says.",
         commits: "A direct comparison against a vendor partnership.",
         pros: ["Nobody can say you missed", "Easy to approve"],
@@ -858,6 +890,7 @@ const nodes: GameNode[] = [
         id: "o-real",
         title: "The post-purchase experience",
         icon: "target",
+        image: "solution-in-store-tech",
         description: "Argue the damage happens after the sale — deliveries, returns, support.",
         commits: "Contradicts the client's own brief in writing.",
         pros: ["Nobody else proposing it", "Hits the real problem"],
@@ -870,7 +903,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "You show them their own data, and the room changes.",
             detail:
-              "You open with their complaint volumes rather than your credentials. Nobody argues, because it is their own evidence. Elena says quietly that she has suspected this for a year and could not get it funded.",
+              "You open with their complaint volumes rather than your credentials. Nobody argues, because it is their own evidence. Sarah says quietly that she has suspected this for a year and could not get it funded.",
             changed: [
               "You are no longer being compared to the storefront proposal",
               "The sponsor now has the argument she needed internally",
@@ -903,6 +936,7 @@ const nodes: GameNode[] = [
         id: "o-diagnostic",
         title: "Propose to find out first",
         icon: "search",
+        image: "solution-workshop",
         description: "A short diagnostic to establish which of the two problems is costing them.",
         commits: "Delays the real decision by six weeks.",
         pros: ["Low risk", "Buys the evidence"],
@@ -939,10 +973,11 @@ const nodes: GameNode[] = [
     eyebrow: "Assemble the offer",
     objective: "Pick three components. You cannot afford six.",
     minutes: 5,
+    hero: "solution-workshop",
     situation: [
       "You have a shape. Every element you add makes the proposal more attractive and harder to deliver at the same time.",
     ],
-    advisor: SOFIA,
+    advisor: ARJUN,
     consider: [
       "For each item, who actually delivers it?",
       "Which wins the deal, and which survives it?",
@@ -1086,20 +1121,21 @@ const nodes: GameNode[] = [
     eyebrow: "Commercial pressure",
     objective: "Answer the price without giving away the margin.",
     minutes: 4,
+    hero: "hero-negotiation",
     situation: [
-      "Northwind comes back. You are thirty percent above the alternative, and procurement has said so in writing.",
-      "Elena still wants you. She needs something she can take to her board.",
+      "Orion comes back. You are thirty percent above the alternative, and procurement has said so in writing.",
+      "Sarah still wants you. She needs something she can take to her board.",
     ],
     saidQuote: {
       text: "I am not asking you to be the cheapest. I am asking for something I can defend in a board meeting that has already seen a smaller number.",
-      attribution: "Elena Brandt · CMO, Northwind Retail",
+      attribution: "Sarah Lim · Chief Transformation Officer, Orion Retail",
     },
     concerns: [
       "Procurement has the comparison in writing",
       "The board has seen the lower figure",
       "The difference between proposals is invisible",
     ],
-    advisor: TOM,
+    advisor: RIYA_DEAL,
     consider: [
       "What exactly are they comparing us to?",
       "If we discount, what becomes impossible later?",
@@ -1130,7 +1166,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "The difference is defensible, so the price holds.",
             detail:
-              "You are not comparing like with like, and you can show it. The other proposal does not touch the operational work. Procurement does not enjoy it, but Elena now has a straight answer for her board.",
+              "You are not comparing like with like, and you can show it. The other proposal does not touch the operational work. Procurement does not enjoy it, but Sarah now has a straight answer for her board.",
             changed: ["Full margin protected", "The comparison is neutralised"],
             effect: { dims: { profit: 10, win: 2 }, badge: "held_nerve" },
           },
@@ -1212,7 +1248,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "The board approves it because the first cheque is small.",
             detail:
-              "You have not moved your rate and you have not cut the work — you have changed what they have to commit to today. Elena gets an approvable number, and you get a second phase you are well placed to win.",
+              "You have not moved your rate and you have not cut the work — you have changed what they have to commit to today. Sarah gets an approvable number, and you get a second phase you are well placed to win.",
             changed: [
               "Margin protected",
               "Smaller decision for the client to make",
@@ -1250,6 +1286,7 @@ const nodes: GameNode[] = [
     eyebrow: "Quality and risk review",
     objective: "Handle the risk your own review just raised.",
     minutes: 4,
+    hero: "hero-boardroom",
     situation: [
       "Before signature it goes to internal quality and risk review, whose job is to ask what the deal team has stopped asking.",
       "The finding: the programme changes systems other teams depend on, and the proposal never says how those changes reach production.",
@@ -1259,7 +1296,7 @@ const nodes: GameNode[] = [
         when: { all: ["scope:heavy"], none: ["has:ops_workstream"] },
         situation: [
           "Before signature it goes to internal quality and risk review.",
-          "The finding is blunt. You committed to rebuilding the systems at the centre of Northwind's operation, and no workstream gets those changes through Operations. The reviewer also found that the last programme here died for exactly that reason.",
+          "The finding is blunt. You committed to rebuilding the systems at the centre of Orion's operation, and no workstream gets those changes through Operations. The reviewer also found that the last programme here died for exactly that reason.",
         ],
       },
       {
@@ -1280,7 +1317,7 @@ const nodes: GameNode[] = [
         when: { all: ["has:ops_workstream"] },
         situation: [
           "Before signature it goes to internal quality and risk review.",
-          "The finding is modest. Your integration workstream handles the hard part, so what remains is a dependency on two Northwind specialists whose time has not been formally committed.",
+          "The finding is modest. Your integration workstream handles the hard part, so what remains is a dependency on two Orion specialists whose time has not been formally committed.",
         ],
       },
     ],
@@ -1450,9 +1487,10 @@ const nodes: GameNode[] = [
     eyebrow: "Delivery reality",
     objective: "Deal with a decision you made months ago.",
     minutes: 4,
+    hero: "solution-in-store-tech",
     situation: [
       "Delivery is underway and something has given. The delivery lead wants thirty minutes.",
-      "Two Northwind specialists the plan depends on have been pulled onto another priority. You are three weeks behind and the gap is widening.",
+      "Two Orion specialists the plan depends on have been pulled onto another priority. You are three weeks behind and the gap is widening.",
     ],
     variants: [
       {
@@ -1611,7 +1649,7 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "It works until somebody opens the original document.",
             detail:
-              "The immediate pressure disappears. Four weeks later, a Northwind manager compares what was delivered with what was proposed and asks a question in writing. The issue is no longer the scope; it is that you did not say.",
+              "The immediate pressure disappears. Four weeks later, a Orion manager compares what was delivered with what was proposed and asks a question in writing. The issue is no longer the scope; it is that you did not say.",
             changed: [
               "Short-term pressure relieved",
               "Trust damaged in a way that is hard to repair",

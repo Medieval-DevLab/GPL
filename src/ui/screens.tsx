@@ -1,8 +1,8 @@
 /** Title, chapter interludes, and the closing debrief. */
 
-import { causalThreads, finalVerdict } from "../engine/engine";
+import { causalThreads, finalVerdict, ledger } from "../engine/engine";
 import { BADGE_META, STAGES, type Chapter, type GameState, type Interlude } from "../engine/types";
-import { Icon, SectionTitle } from "./icons";
+import { Icon, Pill, SectionTitle } from "./icons";
 import { BadgeChip, Eyebrow, FactorGrid, PrimaryButton } from "./shell";
 
 /* ─────────────────────────── title ─────────────────────────── */
@@ -19,39 +19,28 @@ export function TitleScreen({
   chapters: Chapter[];
 }) {
   return (
-    <div className="mx-auto flex min-h-[92vh] max-w-4xl flex-col justify-center px-5 py-14">
-      <div className="anim-rise">
+    <div className="mx-auto flex min-h-screen max-w-4xl flex-col justify-center px-5 py-14">
+      <div className="anim-fade">
         <p className="eyebrow">A short game about winning work</p>
-        <h1
-          className="display mt-4 text-[76px] leading-[0.9] tracking-tight sm:text-[112px]"
-          style={{
-            background:
-              "linear-gradient(120deg, var(--color-ink) 0%, var(--color-accent-deep) 52%, var(--color-accent) 100%)",
-            WebkitBackgroundClip: "text",
-            backgroundClip: "text",
-            color: "transparent",
-          }}
-        >
+        <h1 className="mt-3 text-[74px] font-bold leading-[0.95] tracking-[-0.04em] text-(--color-ink) sm:text-[104px]">
           GPL
         </h1>
-        <p className="mt-2 text-[15px] font-semibold uppercase tracking-[0.2em] text-(--color-faint)">
+        <p className="mt-1 text-[14px] font-bold uppercase tracking-[0.2em] text-(--color-accent)">
           Global Pursuit League
         </p>
-        <p className="mt-7 max-w-xl text-[20px] leading-[1.55] text-(--color-ink-soft)">
-          A client you have never met is about to become a promise you have to keep. Ten decisions
-          stand between those two things.
+        <p className="mt-7 max-w-xl text-[19px] leading-[1.55] text-(--color-ink-soft)">
+          You have just been handed your first client to win. A company you have never met is
+          about to become a promise someone has to keep.
         </p>
       </div>
 
       <div
-        className="anim-rise mt-10 flex flex-wrap items-center gap-1.5"
+        className="anim-fade mt-9 flex flex-wrap items-center gap-1.5"
         style={{ animationDelay: "0.08s" }}
       >
         {chapters.map((c, i) => (
           <span key={c.number} className="flex items-center gap-1.5">
-            <span
-              className="flex items-center gap-2 rounded-full border border-(--color-line) bg-(--color-surface) py-1 pl-1 pr-3"
-            >
+            <span className="flex items-center gap-2 rounded-full border border-(--color-line) bg-(--color-surface) py-1 pl-1 pr-3">
               <span
                 aria-hidden="true"
                 className="flex h-[20px] w-[20px] items-center justify-center rounded-full text-[10px] font-bold text-(--color-accent-deep)"
@@ -72,7 +61,7 @@ export function TitleScreen({
         ))}
       </div>
 
-      <div className="anim-rise mt-8 grid gap-4 sm:grid-cols-3" style={{ animationDelay: "0.14s" }}>
+      <div className="anim-fade mt-8 grid gap-4 sm:grid-cols-3" style={{ animationDelay: "0.14s" }}>
         {[
           {
             icon: "scale" as const,
@@ -82,12 +71,12 @@ export function TitleScreen({
           {
             icon: "target" as const,
             t: "Nothing is random",
-            d: "Every result can be explained. If something goes wrong in month five, you can trace it back to the decision that caused it.",
+            d: "Every result can be explained. If something goes wrong in month five, you can trace it to the decision that caused it.",
           },
           {
             icon: "clock" as const,
-            t: "About 35 minutes",
-            d: "One engagement, from first contact to delivery. Your choices carry all the way through.",
+            t: "Call it before you commit",
+            d: "You say what each decision will cost before you make it. Then you find out.",
           },
         ].map((c) => (
           <div key={c.t} className="card p-5">
@@ -101,10 +90,10 @@ export function TitleScreen({
       </div>
 
       <div
-        className="anim-rise mt-10 flex flex-wrap items-center gap-4"
+        className="anim-fade mt-9 flex flex-wrap items-center gap-4"
         style={{ animationDelay: "0.22s" }}
       >
-        <PrimaryButton onClick={onBegin}>{hasSave ? "Start again" : "Begin"}</PrimaryButton>
+        <PrimaryButton onClick={onBegin}>{hasSave ? "Start again" : "Take the brief"}</PrimaryButton>
         {hasSave && (
           <button
             onClick={onResume}
@@ -123,18 +112,16 @@ export function TitleScreen({
 export function InterludeScreen({
   node,
   chapter,
-  onContinue,
 }: {
   node: Interlude;
   chapter?: Chapter;
-  onContinue: () => void;
 }) {
   return (
     <div
       key={node.id}
-      className="mx-auto flex min-h-[74vh] max-w-2xl flex-col justify-center px-5 py-14"
+      className="mx-auto flex min-h-full max-w-2xl flex-col justify-center px-5 py-10"
     >
-      <div className="anim-rise">
+      <div className="anim-fade">
         <span
           aria-hidden="true"
           className="flex h-11 w-11 items-center justify-center rounded-[14px] text-[17px] font-bold text-white"
@@ -145,12 +132,12 @@ export function InterludeScreen({
           {node.chapter}
         </span>
         <p className="eyebrow mt-5">{node.eyebrow}</p>
-        <h1 className="display mt-3 text-[44px] leading-[1.05] text-(--color-ink) sm:text-[56px]">
+        <h1 className="mt-2.5 text-[40px] font-bold leading-[1.08] tracking-[-0.025em] text-(--color-ink)">
           {node.title}
         </h1>
-        <div className="mt-7 space-y-4">
+        <div className="mt-6 space-y-3.5">
           {node.body.map((p, i) => (
-            <p key={i} className="text-[18px] leading-[1.65] text-(--color-ink-soft)">
+            <p key={i} className="text-[17px] leading-[1.6] text-(--color-ink-soft)">
               {p}
             </p>
           ))}
@@ -172,10 +159,6 @@ export function InterludeScreen({
           </ul>
         )}
       </div>
-
-      <div className="anim-rise mt-10" style={{ animationDelay: "0.16s" }}>
-        <PrimaryButton onClick={onContinue}>Continue</PrimaryButton>
-      </div>
     </div>
   );
 }
@@ -188,53 +171,75 @@ const TONE_DOT: Record<string, string> = {
   hard: "var(--color-bad)",
 };
 
+const LEDGER_COLOUR = {
+  good: "var(--color-good)",
+  neutral: "var(--color-accent)",
+  bad: "var(--color-bad)",
+} as const;
+
 export function EndingScreen({ state, onRestart }: { state: GameState; onRestart: () => void }) {
   const verdict = finalVerdict(state.dims);
   const threads = causalThreads(state);
+  const account = ledger(state);
 
   return (
-    <div className="mx-auto max-w-3xl px-5 pb-24 pt-12">
-      <div className="anim-rise">
+    <div className="mx-auto max-w-3xl px-5 py-8">
+      <div className="anim-fade">
         <Eyebrow>How it ended</Eyebrow>
-        <h1 className="display mt-3 text-[38px] leading-[1.1] text-(--color-ink) sm:text-[48px]">
+        <h1 className="mt-2.5 text-[36px] font-bold leading-[1.1] tracking-[-0.025em] text-(--color-ink)">
           {verdict.title}
         </h1>
-        <p className="mt-5 text-[18px] leading-[1.65] text-(--color-ink-soft)">{verdict.summary}</p>
+        <p className="mt-4 text-[17px] leading-[1.6] text-(--color-ink-soft)">{verdict.summary}</p>
       </div>
 
-      <div className="card anim-rise mt-9 p-7" style={{ animationDelay: "0.1s" }}>
+      <div className="card mt-7 p-6">
         <FactorGrid dims={state.dims} />
-        <p className="mt-6 border-t border-(--color-line) pt-5 text-[13.5px] leading-relaxed text-(--color-muted)">
+        <p className="mt-5 border-t border-(--color-line) pt-4 text-[13.5px] leading-relaxed text-(--color-muted)">
           These three pull against each other on purpose. A deal that scores full marks on all of
           them is not a sign of skill — it is a sign the game was too easy.
         </p>
       </div>
 
-      {state.badges.length > 0 && (
-        <div className="anim-rise mt-10" style={{ animationDelay: "0.16s" }}>
-          <SectionTitle icon="check" tone="good">
-            What you did well
-          </SectionTitle>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {state.badges.map((b) => (
-              <BadgeChip key={b} id={b} />
+      {account.length > 0 && (
+        <div className="mt-7">
+          <SectionTitle icon="layers">The account</SectionTitle>
+          <p className="mt-1.5 text-[13.5px] text-(--color-muted)">
+            What you learned, what you promised, and what you spent to get here.
+          </p>
+          <div className="card mt-3 overflow-hidden">
+            {account.map((e) => (
+              <div
+                key={e.label}
+                className="flex gap-3 border-b border-(--color-line) px-5 py-3 last:border-b-0"
+              >
+                <span className="mt-0.5 shrink-0" style={{ color: LEDGER_COLOUR[e.tone] }}>
+                  <Icon
+                    name={e.tone === "good" ? "check" : e.tone === "bad" ? "warning" : "layers"}
+                    size={15}
+                  />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[14px] font-bold text-(--color-ink)">{e.label}</p>
+                  <p className="text-[13px] leading-snug text-(--color-muted)">{e.detail}</p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       )}
 
       {threads.length > 0 && (
-        <div className="anim-rise mt-11" style={{ animationDelay: "0.18s" }}>
-          <SectionTitle icon="layers">What led to what</SectionTitle>
-          <p className="mt-2 text-[14px] text-(--color-muted)">
-            Nothing in this game is random. These are the chains your own decisions created.
+        <div className="mt-8">
+          <SectionTitle icon="target">What led to what</SectionTitle>
+          <p className="mt-1.5 text-[13.5px] text-(--color-muted)">
+            Nothing here is random. These are the chains your own decisions created.
           </p>
-          <div className="mt-4 space-y-3">
+          <div className="mt-3 space-y-3">
             {threads.map((t, i) => (
               <div key={i} className="card overflow-hidden">
-                <div className="border-l-[3px] border-(--color-accent) px-5 py-4">
-                  <p className="text-[15px] leading-relaxed text-(--color-ink)">{t.because}</p>
-                  <p className="mt-2 flex items-start gap-2 text-[15px] leading-relaxed text-(--color-ink-soft)">
+                <div className="border-l-[3px] border-(--color-accent) px-5 py-3.5">
+                  <p className="text-[14.5px] leading-relaxed text-(--color-ink)">{t.because}</p>
+                  <p className="mt-1.5 flex items-start gap-2 text-[14.5px] leading-relaxed text-(--color-ink-soft)">
                     <span
                       aria-hidden="true"
                       className="mt-0.5 shrink-0 font-bold text-(--color-accent)"
@@ -250,13 +255,29 @@ export function EndingScreen({ state, onRestart }: { state: GameState; onRestart
         </div>
       )}
 
-      <div className="anim-rise mt-11" style={{ animationDelay: "0.2s" }}>
+      {state.badges.length > 0 && (
+        <div className="mt-8">
+          <SectionTitle icon="check" tone="good">
+            How you played
+          </SectionTitle>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {state.badges.map((b) => (
+              <BadgeChip key={b} id={b} />
+            ))}
+          </div>
+          <p className="mt-3 text-center text-[12.5px] text-(--color-faint)">
+            {state.badges.length} of {Object.keys(BADGE_META).length} recognised this run
+          </p>
+        </div>
+      )}
+
+      <div className="mt-8">
         <SectionTitle icon="flag">Your decisions</SectionTitle>
         <ol className="mt-4 space-y-0">
           {state.history.map((h, i) => {
             const stage = STAGES.find((s) => s.id === h.stage);
             return (
-              <li key={h.missionId} className="relative flex gap-4 pb-7">
+              <li key={h.missionId} className="relative flex gap-4 pb-6">
                 {i < state.history.length - 1 && (
                   <span
                     aria-hidden="true"
@@ -269,13 +290,14 @@ export function EndingScreen({ state, onRestart }: { state: GameState; onRestart
                   style={{ background: TONE_DOT[h.tone] }}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="eyebrow">
-                    {stage?.label} · {h.missionTitle}
-                  </p>
-                  <p className="mt-1 text-[15.5px] font-semibold text-(--color-ink)">
-                    {h.chosenLabel}
-                  </p>
-                  <p className="mt-1 text-[14.5px] leading-relaxed text-(--color-ink-soft)">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Pill tone="neutral">{stage?.label}</Pill>
+                    <span className="text-[12px] font-medium text-(--color-faint)">
+                      {h.missionTitle}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[15px] font-bold text-(--color-ink)">{h.chosenLabel}</p>
+                  <p className="text-[14px] leading-relaxed text-(--color-ink-soft)">
                     {h.headline}
                   </p>
                 </div>
@@ -285,18 +307,18 @@ export function EndingScreen({ state, onRestart }: { state: GameState; onRestart
         </ol>
       </div>
 
-      <div className="anim-rise mt-6" style={{ animationDelay: "0.24s" }}>
+      <div className="mt-4">
         <SectionTitle icon="bulb" tone="warn">
           What this run taught
         </SectionTitle>
-        <ul className="mt-4 space-y-3">
+        <ul className="mt-3 space-y-2.5">
           {state.history.map((h) => (
             <li key={h.missionId} className="flex items-start gap-3">
               <span
                 aria-hidden="true"
                 className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-(--color-accent)"
               />
-              <p className="text-[15.5px] leading-relaxed text-(--color-ink-soft)">
+              <p className="text-[15px] leading-relaxed text-(--color-ink-soft)">
                 {h.lesson.principle}
               </p>
             </li>
@@ -305,26 +327,21 @@ export function EndingScreen({ state, onRestart }: { state: GameState; onRestart
       </div>
 
       <div
-        className="card anim-rise mt-11 p-7"
+        className="card mt-9 p-6"
         style={{
-          animationDelay: "0.28s",
           background: "var(--color-accent-tint)",
           borderColor: "var(--color-accent-ring)",
         }}
       >
-        <p className="display text-[22px] text-(--color-accent-deep)">Run it differently</p>
-        <p className="mt-2.5 text-[15px] leading-relaxed text-(--color-ink-soft)">
+        <p className="text-[20px] font-bold text-(--color-accent-deep)">Run it differently</p>
+        <p className="mt-2 text-[15px] leading-relaxed text-(--color-ink-soft)">
           Ask different questions at the start and the same decisions later on produce a different
-          engagement. The most interesting version of this game is the second one.
+          engagement. The most interesting version of this is the second one.
         </p>
-        <div className="mt-6">
-          <PrimaryButton onClick={onRestart}>Play again</PrimaryButton>
+        <div className="mt-5">
+          <PrimaryButton onClick={onRestart}>Take a new brief</PrimaryButton>
         </div>
       </div>
-
-      <p className="mt-9 text-center text-[12.5px] text-(--color-faint)">
-        {state.badges.length} of {Object.keys(BADGE_META).length} recognitions earned this run
-      </p>
     </div>
   );
 }

@@ -144,6 +144,8 @@ export interface Option {
   cons?: string[];
   /** Relative cost, 1–3 dots. Honest about effort, silent about payoff. */
   cost?: { time: 1 | 2 | 3; investment: 1 | 2 | 3 };
+  /** card photograph, filename in public/art/ without extension */
+  image?: string;
   /** option is hidden unless this passes */
   requires?: Condition;
   outcomes: Outcome[];
@@ -185,20 +187,30 @@ export interface SituationVariant {
   situation: string[];
 }
 
-/** A colleague who gives you a steer. Adds a human voice without a tutorial. */
+/**
+ * A colleague. Every piece of advice in the game comes from one of these, never from
+ * the interface — a colleague briefing a new pursuit lead is onboarding, whereas the
+ * same words in a box labelled "Tip" are condescending.
+ */
 export interface Advisor {
   name: string;
   role: string;
   quote: string;
+  /** their practical steer on this mission — still their voice, not the game's */
+  steer?: string;
+  /** filename in public/art/, without extension */
+  photo?: string;
 }
 
-/** The client, shown as a profile strip. Monogram + gradient, never a photo. */
+/** The client, shown as a profile strip. */
 export interface ClientProfile {
   name: string;
   monogram: string;
   tags: string[];
   blurb: string;
   facts: { icon: IconId; label: string; value: string }[];
+  /** filename in public/art/, without extension */
+  image?: string;
 }
 
 export type FactorLevel = "low" | "medium" | "high" | "strong";
@@ -222,6 +234,8 @@ interface MissionBase {
   objective: string;
   /** roughly how long this mission takes, in minutes */
   minutes: number;
+  /** header photograph, filename in public/art/ without extension */
+  hero?: string;
   /** the scenario, as paragraphs — used when no variant matches */
   situation: string[];
   /** state-dependent rewrites of the scenario, checked before `situation` */
@@ -342,6 +356,10 @@ export interface Resolution {
   newBadges: BadgeId[];
   /** populated for investigate missions */
   revealed: Evidence[];
+  /** what the player said this would cost, before committing */
+  predicted: DimensionId | null;
+  /** what it actually cost most — null when nothing went backwards */
+  actualWorst: DimensionId | null;
 }
 
 export interface GameState {
@@ -354,6 +372,14 @@ export interface GameState {
   discovered: string[];
   /** in-progress selection on the current mission */
   selection: string[];
+  /**
+   * The player's call, before committing, on which dimension this will cost most.
+   *
+   * This is the game's "before". Without it the consequence screen can only TELL the
+   * player what happened, which is what made the game feel like it was lecturing. With
+   * it, the consequence confirms or corrects a claim they made themselves.
+   */
+  prediction: DimensionId | null;
   resolution: Resolution | null;
   history: HistoryEntry[];
   /** missions completed, for the progress rail */

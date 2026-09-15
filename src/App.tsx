@@ -7,17 +7,35 @@ import {
   commit,
   createInitialState,
   getNode,
-  requiredSelectionCount,
+  ledger,
   selectableIds,
+  selectionComplete,
+  setPrediction,
   toggleSelection,
 } from "./engine/engine";
-import { isMission, type Chapter, type GameState, type Interlude } from "./engine/types";
+import {
+  DIMENSIONS,
+  isMission,
+  type Chapter,
+  type DimensionId,
+  type GameState,
+  type Interlude,
+  type Mission,
+} from "./engine/types";
 import { ConsequenceScreen, LessonScreen, ResolvingScreen } from "./ui/consequence";
 import { MissionBody } from "./ui/mission";
 import { EndingScreen, InterludeScreen, TitleScreen } from "./ui/screens";
-import { ActionBar, GameLayout, InsightRail, MissionRail, TopBar, scoreOf } from "./ui/shell";
+import {
+  ActionBar,
+  Console,
+  InsightRail,
+  MissionRail,
+  PredictionStrip,
+  TopBar,
+  scoreOf,
+} from "./ui/shell";
 
-const STORAGE_KEY = "gpl.save.v2";
+const STORAGE_KEY = "gpl.save.v3";
 const content = story;
 
 function chapterFor(number: number): Chapter {
@@ -43,14 +61,12 @@ export default function App() {
   const savedRef = useRef<GameState | null>(null);
   const [hasSave, setHasSave] = useState(false);
 
-  // Read any previous run once, on mount.
   useEffect(() => {
     const save = loadSave();
     savedRef.current = save;
     setHasSave(save !== null);
   }, []);
 
-  // Persist every meaningful state change.
   useEffect(() => {
     if (state.phase === "title") return;
     try {
@@ -60,19 +76,12 @@ export default function App() {
     }
   }, [state]);
 
-  // Each beat starts at the top of the page.
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "auto" });
-  }, [state.phase, state.nodeId]);
-
   const node = getNode(content, state.nodeId);
 
   const doAdvance = useCallback(() => setState((s) => advance(s, content)), []);
   const doCommit = useCallback(() => setState((s) => commit(s, content)), []);
-  const doToggle = useCallback(
-    (id: string) => setState((s) => toggleSelection(s, content, id)),
-    [],
-  );
+  const doToggle = useCallback((id: string) => setState((s) => toggleSelection(s, content, id)), []);
+  const doPredict = useCallback((d: DimensionId) => setState((s) => setPrediction(s, d)), []);
 
   const doRestart = useCallback(() => {
     try {
@@ -91,10 +100,11 @@ export default function App() {
 
   /**
    * Keyboard play.
-   *   1–9   select the nth option on a decide screen
+   *   1–9   select the nth option
+   *   w/p/d call which dimension this will cost
    *   Enter commit when ready, or advance any non-interactive beat
-   * Ignored while focus is in a control, so Space/Enter on a focused button
-   * keeps its normal meaning for keyboard and screen-reader users.
+   * Ignored while focus is in a control, so Space/Enter on a focused button keeps its
+   * normal meaning for keyboard and screen-reader users.
    */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -105,12 +115,19 @@ export default function App() {
       if (state.phase === "decide" && isMission(node)) {
         const index = Number.parseInt(e.key, 10);
         if (Number.isInteger(index) && index >= 1 && index <= 9) {
-          const ids = selectableIds(node, state);
-          const id = ids[index - 1];
+          const id = selectableIds(node, state)[index - 1];
           if (id) {
             e.preventDefault();
             doToggle(id);
           }
+          return;
+        }
+        const dim = { w: "win", p: "profit", d: "deliver" }[e.key.toLowerCase()] as
+          | DimensionId
+          | undefined;
+        if (dim && DIMENSIONS.includes(dim) && selectionComplete(state, content)) {
+          e.preventDefault();
+          doPredict(dim);
           return;
         }
         if (e.key === "Enter" && canCommit(state, content)) {
@@ -132,7 +149,7 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [state, node, doAdvance, doCommit, doToggle]);
+  }, [state, node, doAdvance, doCommit, doToggle, doPredict]);
 
   const missionNumber = useMemo(() => {
     if (isMission(node)) return content.missionOrder.indexOf(node.id) + 1;
@@ -140,133 +157,131 @@ export default function App() {
     return Math.min(state.completed.length + 1, content.missionOrder.length);
   }, [node, state.phase, state.completed.length]);
 
-  /** Which chapter the stepper highlights. Interludes carry their own. */
   const currentChapter = useMemo(() => {
     if (node.kind === "ending") return content.chapters.length;
-    if (node.kind === "interlude") return node.chapter;
-    if (isMission(node)) return node.chapter;
-    return 1;
+    return node.kind === "interlude" || isMission(node) ? node.chapter : 1;
   }, [node]);
 
   const isLastMission =
     isMission(node) && content.missionOrder.indexOf(node.id) === content.missionOrder.length - 1;
 
-  const onDecideScreen = state.phase === "decide" && isMission(node);
+  if (state.phase === "title") {
+    return (
+      <TitleScreen
+        onBegin={doAdvance}
+        hasSave={hasSave}
+        onResume={doResume}
+        chapters={content.chapters}
+      />
+    );
+  }
+
+  const onDecide = state.phase === "decide" && isMission(node);
+  const mission = isMission(node) ? node : null;
+  const need = mission ? requiredCount(mission) : 0;
+  const ready = canCommit(state, content);
+  const selected = selectionComplete(state, content);
+
+  const bars = (
+    <TopBar
+      chapters={content.chapters}
+      currentChapter={currentChapter}
+      score={scoreOf(state.dims)}
+      showScore={state.history.length > 0}
+      onRestart={doRestart}
+    />
+  );
+
+  /* The action bar is part of the console, so it never scrolls away. Its label names
+     exactly what happens, and on a decide screen the prediction gate sits beside it. */
+  let bottom: React.ReactNode = null;
+  if (onDecide) {
+    bottom = (
+      <ActionBar label="Commit to this" onAction={doCommit} disabled={!ready}>
+        {selected ? (
+          <PredictionStrip prediction={state.prediction} onPredict={doPredict} />
+        ) : (
+          <span className="text-[12.5px] text-(--color-muted)">
+            {mission?.kind === "choice"
+              ? "Choose an approach to continue"
+              : `${state.selection.length} of ${need} chosen`}
+          </span>
+        )}
+      </ActionBar>
+    );
+  } else if (state.phase === "consequence") {
+    bottom = <ActionBar label="Why did that happen?" onAction={doAdvance} />;
+  } else if (state.phase === "lesson") {
+    bottom = (
+      <ActionBar label={isLastMission ? "See how it went" : "Next mission"} onAction={doAdvance} />
+    );
+  } else if (state.phase === "interlude") {
+    bottom = <ActionBar label="Begin the chapter" onAction={doAdvance} />;
+  }
 
   return (
-    <div className="min-h-full">
-      {state.phase !== "title" && (
-        <TopBar
-          chapters={content.chapters}
-          currentChapter={currentChapter}
-          score={scoreOf(state.dims)}
-          showScore={state.history.length > 0}
-          onRestart={doRestart}
-        />
+    <Console
+      bars={bars}
+      bottom={bottom}
+      left={
+        onDecide && mission ? (
+          <MissionRail
+            chapter={chapterFor(mission.chapter)}
+            missionId={mission.id}
+            missionNumber={missionNumber ?? 1}
+            totalMissions={content.missionOrder.length}
+            completed={state.completed}
+            // The mission's steer used to be an unattributed "Tip" in a box at the
+            // bottom of the screen. It is the same words, now coming out of a named
+            // colleague's mouth — which is the whole difference between a briefing and
+            // a lecture. See docs/STRATEGY.md D1.
+            advisor={
+              mission.advisor && { ...mission.advisor, steer: mission.tip ?? mission.advisor.steer }
+            }
+          />
+        ) : undefined
+      }
+      right={
+        onDecide && mission ? (
+          <InsightRail
+            dims={state.dims}
+            entries={ledger(state)}
+            consider={mission.consider}
+            advisorName={mission.advisor?.name}
+            commits={selectedCommits(mission, state)}
+          />
+        ) : undefined
+      }
+    >
+      {onDecide && mission && (
+        <MissionBody mission={mission} state={state} content={content} onToggle={doToggle} />
       )}
 
-      <main>
-        {state.phase === "title" && (
-          <TitleScreen
-            onBegin={doAdvance}
-            hasSave={hasSave}
-            onResume={doResume}
-            chapters={content.chapters}
-          />
-        )}
+      {state.phase === "interlude" && node.kind === "interlude" && (
+        <InterludeScreen node={node as Interlude} chapter={chapterFor(node.chapter)} />
+      )}
 
-        {state.phase === "interlude" && node.kind === "interlude" && (
-          <InterludeScreen
-            node={node as Interlude}
-            chapter={chapterFor(node.chapter)}
-            onContinue={doAdvance}
-          />
-        )}
+      {state.phase === "resolving" && <ResolvingScreen onDone={doAdvance} />}
 
-        {onDecideScreen && isMission(node) && (
-          <DecideScreen
-            state={state}
-            missionNumber={missionNumber ?? 1}
-            onToggle={doToggle}
-            onCommit={doCommit}
-            node={node}
-          />
-        )}
+      {state.phase === "consequence" && state.resolution && (
+        <ConsequenceScreen resolution={state.resolution} />
+      )}
 
-        {state.phase === "resolving" && <ResolvingScreen onDone={doAdvance} />}
+      {state.phase === "lesson" && state.resolution && (
+        <LessonScreen resolution={state.resolution} />
+      )}
 
-        {state.phase === "consequence" && state.resolution && (
-          <ConsequenceScreen resolution={state.resolution} onContinue={doAdvance} />
-        )}
-
-        {state.phase === "lesson" && state.resolution && (
-          <LessonScreen resolution={state.resolution} onContinue={doAdvance} isLast={isLastMission} />
-        )}
-
-        {state.phase === "ending" && <EndingScreen state={state} onRestart={doRestart} />}
-      </main>
-    </div>
+      {state.phase === "ending" && <EndingScreen state={state} onRestart={doRestart} />}
+    </Console>
   );
 }
 
-/** The briefing: rails on both sides, the mission in the middle, confirm at the bottom. */
-function DecideScreen({
-  node,
-  state,
-  missionNumber,
-  onToggle,
-  onCommit,
-}: {
-  node: ReturnType<typeof getNode>;
-  state: GameState;
-  missionNumber: number;
-  onToggle: (id: string) => void;
-  onCommit: () => void;
-}) {
-  if (!isMission(node)) return null;
+function requiredCount(mission: Mission): number {
+  return mission.kind === "choice" ? 1 : mission.kind === "investigate" ? mission.slots : mission.pick;
+}
 
-  const need = requiredSelectionCount(node);
-  const have = state.selection.length;
-  const ready = have === need;
-  const hint = ready
-    ? undefined
-    : node.kind === "choice"
-      ? "Pick one to continue"
-      : `${have} of ${need} chosen`;
-
-  return (
-    <GameLayout
-      left={
-        <MissionRail
-          chapter={chapterFor(node.chapter)}
-          missionId={node.id}
-          missionNumber={missionNumber}
-          totalMissions={content.missionOrder.length}
-          completed={state.completed}
-          objective={node.objective}
-          minutes={node.minutes}
-          advisor={node.advisor}
-        />
-      }
-      right={
-        <InsightRail
-          dims={state.dims}
-          consider={node.consider}
-          badges={state.badges}
-          knownCount={state.discovered.length}
-        />
-      }
-      bottom={
-        <ActionBar
-          tip={node.tip}
-          hint={hint}
-          label="Confirm decision"
-          onAction={onCommit}
-          disabled={!ready}
-        />
-      }
-    >
-      <MissionBody mission={node} state={state} content={content} onToggle={onToggle} />
-    </GameLayout>
-  );
+/** What the selected option would lock in, for the rail's "If you commit" preview. */
+function selectedCommits(mission: Mission, state: GameState): string | undefined {
+  if (mission.kind !== "choice") return undefined;
+  return mission.options.find((o) => o.id === state.selection[0])?.commits;
 }

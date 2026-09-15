@@ -127,6 +127,7 @@ export function createInitialState(content: Content): GameState {
     badges: [],
     discovered: [],
     selection: [],
+    prediction: null,
     resolution: null,
     history: [],
     completed: [],
@@ -141,7 +142,13 @@ export function getNode(content: Content, id: string): GameNode {
 
 function enterNode(state: GameState, content: Content, id: string): GameState {
   const node = getNode(content, id);
-  const base: GameState = { ...state, nodeId: id, selection: [], resolution: null };
+  const base: GameState = {
+    ...state,
+    nodeId: id,
+    selection: [],
+    prediction: null,
+    resolution: null,
+  };
 
   if (node.kind === "interlude") return { ...base, phase: "interlude" };
   if (node.kind === "ending") return { ...base, phase: "ending" };
@@ -189,10 +196,15 @@ export function requiredSelectionCount(mission: Mission): number {
   }
 }
 
-export function canCommit(state: GameState, content: Content): boolean {
+/** Has the player made their selection? Prediction is a separate gate. */
+export function selectionComplete(state: GameState, content: Content): boolean {
   const node = getNode(content, state.nodeId);
   if (!isMission(node) || state.phase !== "decide") return false;
   return state.selection.length === requiredSelectionCount(node);
+}
+
+export function canCommit(state: GameState, content: Content): boolean {
+  return selectionComplete(state, content) && state.prediction !== null;
 }
 
 /** Toggle an id in the current selection, respecting the mission's limit. */
@@ -203,12 +215,37 @@ export function toggleSelection(state: GameState, content: Content, id: string):
   const limit = requiredSelectionCount(node);
   const already = state.selection.includes(id);
 
-  if (already) return { ...state, selection: state.selection.filter((s) => s !== id) };
-
-  // Single-pick missions swap rather than block — less fiddly for the player.
-  if (limit === 1) return { ...state, selection: [id] };
+  // Changing your mind about the choice invalidates the call you made about it.
+  if (already) {
+    return { ...state, selection: state.selection.filter((s) => s !== id), prediction: null };
+  }
+  if (limit === 1) {
+    // Single-pick missions swap rather than block — less fiddly for the player.
+    return { ...state, selection: [id], prediction: null };
+  }
   if (state.selection.length >= limit) return state;
-  return { ...state, selection: [...state.selection, id] };
+  return { ...state, selection: [...state.selection, id], prediction: null };
+}
+
+/** Record the player's call on which dimension this will cost most. */
+export function setPrediction(state: GameState, dim: DimensionId): GameState {
+  if (state.phase !== "decide") return state;
+  return { ...state, prediction: state.prediction === dim ? null : dim };
+}
+
+/**
+ * Which dimension actually took the biggest hit.
+ *
+ * Null when nothing went backwards — which is a real and interesting result, not a
+ * missing value, so the UI says so rather than hiding it.
+ */
+export function worstDimension(deltas: Record<DimensionId, number>): DimensionId | null {
+  let worst: DimensionId | null = null;
+  for (const d of DIMENSIONS) {
+    if (deltas[d] >= 0) continue;
+    if (worst === null || deltas[d] < deltas[worst]) worst = d;
+  }
+  return worst;
 }
 
 /* ───────────────────────────── resolution ───────────────────────────── */
@@ -300,6 +337,8 @@ export function commit(state: GameState, content: Content): GameState {
     deltas,
     newBadges: [...afterSelection.newBadges, ...afterOutcome.newBadges],
     revealed: sel.revealed,
+    predicted: state.prediction,
+    actualWorst: worstDimension(deltas),
   };
 
   const entry: HistoryEntry = {
@@ -358,6 +397,129 @@ export function advance(state: GameState, content: Content): GameState {
 
 export function restart(content: Content): GameState {
   return createInitialState(content);
+}
+
+/* ───────────────────────────── the ledger ───────────────────────────── */
+
+/**
+ * What you have actually committed to, in the language of the work.
+ *
+ * The three dimensions are an abstraction; this is the concrete account behind them —
+ * what you know, what you have promised, what you have spent. It exists because a score
+ * invites the player to optimise the grader, whereas a ledger invites them to read their
+ * own position. Derived entirely from flags, so it cannot disagree with the game state.
+ */
+export interface LedgerEntry {
+  label: string;
+  detail: string;
+  tone: "good" | "neutral" | "bad";
+}
+
+interface LedgerRule extends LedgerEntry {
+  when: Condition;
+}
+
+const LEDGER_RULES: LedgerRule[] = [
+  // What you know
+  {
+    when: { all: ["knows:real_pain"] },
+    label: "Their real problem",
+    detail: "The damage is post-purchase, not in-store. You have their complaint data.",
+    tone: "good",
+  },
+  {
+    when: { all: ["knows:ops_constraint"] },
+    label: "Who can stop this",
+    detail: "Marcus Reed owns every system that would have to change.",
+    tone: "good",
+  },
+  {
+    when: { all: ["knows:rival_gap"] },
+    label: "The rival's blind spot",
+    detail: "Their platform does nothing about deliveries, returns or support.",
+    tone: "good",
+  },
+  {
+    when: { all: ["knows:history"] },
+    label: "The last attempt",
+    detail: "Cancelled at month five when Operations refused the changes.",
+    tone: "neutral",
+  },
+  // Where you stand
+  {
+    when: { all: ["ops_onside"] },
+    label: "Operations invested",
+    detail: "Marcus has people named in the proposal. He has a stake in it working.",
+    tone: "good",
+  },
+  {
+    when: { all: ["evidenced"] },
+    label: "Argued from their data",
+    detail: "Your position is defensible without you in the room.",
+    tone: "good",
+  },
+  {
+    when: { all: ["has_access"] },
+    label: "Inside the business",
+    detail: "Paid discovery bought you access nobody else has.",
+    tone: "good",
+  },
+  // What you have spent
+  {
+    when: { all: ["discounted"] },
+    label: "Discount given",
+    detail: "The contingency is gone. There is nothing to absorb a problem with.",
+    tone: "bad",
+  },
+  {
+    when: { all: ["descoped"] },
+    label: "Scope removed",
+    detail: "Something load-bearing left the contract to reach their number.",
+    tone: "bad",
+  },
+  {
+    when: { all: ["risk_accepted"] },
+    label: "Risk accepted",
+    detail: "Documented, unmanaged, and on the record that you knew.",
+    tone: "bad",
+  },
+  {
+    when: { all: ["thin_mitigation"] },
+    label: "Mitigation underfunded",
+    detail: "Thinner than the review asked for. No margin for error.",
+    tone: "bad",
+  },
+  // What you have promised
+  {
+    when: { all: ["scope:heavy"] },
+    label: "Platform rebuild promised",
+    detail: "The systems at the centre of their operation.",
+    tone: "neutral",
+  },
+  {
+    when: { all: ["promised:fast"] },
+    label: "Eight weeks promised",
+    detail: "Something live and demonstrable, with a board watching.",
+    tone: "neutral",
+  },
+  {
+    when: { all: ["unanchored"] },
+    label: "No route to production",
+    detail: "Nothing in the proposal says how the changes reach the business.",
+    tone: "bad",
+  },
+  {
+    when: { all: ["fragile_timeline"] },
+    label: "Timeline assumes access",
+    detail: "Nobody has confirmed the data exists in a usable form.",
+    tone: "bad",
+  },
+];
+
+export function ledger(state: GameState): LedgerEntry[] {
+  return LEDGER_RULES.filter((r) => evaluateCondition(r.when, state.flags, state.dims)).map(
+    ({ label, detail, tone }) => ({ label, detail, tone }),
+  );
 }
 
 /* ───────────────────────────── debrief ───────────────────────────── */

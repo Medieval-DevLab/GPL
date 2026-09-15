@@ -46,8 +46,10 @@
   --color-bad: #c73636;
   --color-bad-tint: #fceaea;
 
+  /* One family. Every mockup is sans throughout; a serif display face was a
+     divergence that made the screens look unlike the brief even when the layout
+     matched. See docs/UI-AUDIT.md Z16. */
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -73,6 +75,15 @@
   body,
   #root {
     height: 100%;
+  }
+
+  /* The console owns the viewport at desktop width and scrolls its own working area,
+     so the page itself must not scroll — that is what keeps the chrome in place. */
+  @media (min-width: 1024px) {
+    html,
+    body {
+      overflow: hidden;
+    }
   }
 
   body {
@@ -265,39 +276,28 @@
   white-space: nowrap;
 }
 
-.display {
-  font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.08;
-}
-
-/* Choice card — the most important interactive object in the game */
+/* Choice card — the most important interactive object in the game.
+   Sized for a column, not a full-width row: four of these sit side by side. */
 .choice {
   position: relative;
   width: 100%;
   text-align: left;
   background: var(--color-surface);
   border: 1.5px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  padding: 15px 18px;
+  border-radius: var(--radius-md);
+  padding: 14px;
   cursor: pointer;
   overflow: hidden;
+  /* No transform on hover. A lift on every card is the generic default and reads as
+     AI-generated; the border and fill are enough to show it is live. */
   transition:
-    transform 0.16s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.16s ease,
-    box-shadow 0.16s ease,
-    background-color 0.16s ease;
+    border-color 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .choice:hover:not(:disabled) {
-  transform: translateY(-3px);
   border-color: var(--color-accent-ring);
-  box-shadow: var(--shadow-lift);
-}
-
-.choice:active:not(:disabled) {
-  transform: translateY(-1px) scale(0.995);
+  background: var(--color-surface-sunk);
 }
 
 /* Selected must be unmistakable at a glance: purple rim, tinted fill, and a

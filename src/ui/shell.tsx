@@ -1,14 +1,15 @@
 /**
- * The game frame.
+ * The console.
  *
- * Everything persistent lives here: the chapter stepper across the top, the
- * mission rail on the left, the read-out on the right, and the confirm bar
- * pinned to the bottom. The centre column is the only thing that changes
- * between beats, which is what makes this feel like one continuous game
- * rather than a sequence of pages.
+ * GPL is an operations console, not a scrolling document. Top bar, chapter stepper,
+ * left rail, working area, right rail and action bar are all visible at once, and a
+ * mission is meant to fit without scrolling. That single property is what separates
+ * "a game you look across" from "a form you go down" — see docs/UI-AUDIT.md F1.
  *
- * Layout: three columns at xl, two at lg (the right rail folds under the
- * centre), one on a phone (both rails fold, in reading order).
+ * The working area is the only scrollable region, so if a mission does overflow, the
+ * chrome stays put rather than the page sliding away. `tools/verify.mjs` fails the build
+ * if it overflows at desktop width, which keeps the fits-one-screen rule mechanical
+ * rather than aspirational.
  */
 
 import {
@@ -21,9 +22,12 @@ import {
   type DimensionId,
   type IconId,
 } from "../engine/types";
-import { Icon, Pill, SectionTitle, type Tone } from "./icons";
+import type { LedgerEntry } from "../engine/engine";
+import { Icon, SectionTitle, type Tone } from "./icons";
 
-/* ─────────────────────────── chapter stepper ─────────────────────────── */
+export const artUrl = (name: string) => `${import.meta.env.BASE_URL}art/${name}.webp`;
+
+/* ───────────────────────────── chapter stepper ───────────────────────────── */
 
 export function ChapterStepper({
   chapters,
@@ -45,9 +49,7 @@ export function ChapterStepper({
           <li key={c.number} className="flex shrink-0 items-center gap-1">
             <span
               className={`flex items-center gap-2 whitespace-nowrap rounded-full py-1 pl-1 transition-colors duration-300 ${showLabel ? "pr-3" : "pr-1"}`}
-              style={{
-                background: active ? "var(--color-accent-tint)" : "transparent",
-              }}
+              style={{ background: active ? "var(--color-accent-tint)" : "transparent" }}
               aria-current={active ? "step" : undefined}
             >
               <span
@@ -78,13 +80,12 @@ export function ChapterStepper({
               </span>
             </span>
             {i < chapters.length - 1 && (
-              // The connector is filled behind you — the track shows how far
-              // through the game you are without needing a label.
+              // The track fills behind you, so progress is legible without a label.
               <span
                 aria-hidden="true"
                 className="h-[2px] shrink-0 rounded-full"
                 style={{
-                  width: compact ? 8 : 16,
+                  width: compact ? 8 : 20,
                   background: done ? "var(--color-good)" : "var(--color-line-strong)",
                 }}
               />
@@ -96,7 +97,7 @@ export function ChapterStepper({
   );
 }
 
-/* ───────────────────────────── top bar ───────────────────────────── */
+/* ───────────────────────────── console frame ───────────────────────────── */
 
 export function TopBar({
   chapters,
@@ -112,15 +113,12 @@ export function TopBar({
   onRestart: () => void;
 }) {
   return (
-    <header
-      className="sticky top-0 z-30 border-b border-(--color-line) backdrop-blur-xl"
-      style={{ background: "rgb(255 255 255 / 0.85)" }}
-    >
-      <div className="mx-auto flex max-w-[1500px] items-center gap-6 px-5 py-2.5">
+    <>
+      <header className="flex h-14 shrink-0 items-center gap-6 border-b border-(--color-line) px-5">
         <div className="flex shrink-0 items-center gap-2.5">
           <span
             aria-hidden="true"
-            className="flex h-8 w-8 items-center justify-center rounded-[10px] text-[13px] font-bold text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-[10px] text-[12px] font-bold text-white"
             style={{
               background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-deep))",
             }}
@@ -133,20 +131,20 @@ export function TopBar({
           </span>
         </div>
 
-        <div className="hidden min-w-0 flex-1 justify-center overflow-x-auto xl:flex">
+        <div className="hidden min-w-0 flex-1 justify-center xl:flex">
           <ChapterStepper chapters={chapters} current={currentChapter} />
         </div>
 
-        <div className="ml-auto flex shrink-0 items-center gap-3">
+        <div className="ml-auto flex shrink-0 items-center gap-4">
           {showScore && (
-            <div
-              className="flex items-center gap-2 rounded-full border border-(--color-line) px-3 py-1.5"
-              style={{ background: "var(--color-surface)" }}
-            >
+            <div className="flex items-center gap-2">
+              <span aria-hidden="true" className="text-(--color-warn)">
+                <Icon name="flag" size={15} />
+              </span>
               <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-(--color-faint)">
                 Score
               </span>
-              <span className="text-[15px] font-bold tabular-nums text-(--color-accent-deep)">
+              <span className="text-[17px] font-bold tabular-nums text-(--color-accent-deep)">
                 {score}
               </span>
             </div>
@@ -158,12 +156,63 @@ export function TopBar({
             Start over
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="flex justify-center border-t border-(--color-line) px-5 py-2 xl:hidden">
+      <div className="flex shrink-0 justify-center border-b border-(--color-line) py-2 xl:hidden">
         <ChapterStepper chapters={chapters} current={currentChapter} compact />
       </div>
-    </header>
+    </>
+  );
+}
+
+/**
+ * The console body. Rails are white; the working area is the tinted surface — the
+ * mockups are this way round and we previously had it inverted.
+ */
+export function Console({
+  bars,
+  left,
+  right,
+  bottom,
+  children,
+}: {
+  bars: React.ReactNode;
+  left?: React.ReactNode;
+  right?: React.ReactNode;
+  bottom?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="lg:h-screen lg:p-3">
+      <div
+        className="flex min-h-screen flex-col overflow-hidden border-(--color-line) bg-(--color-surface) lg:min-h-0 lg:h-full lg:rounded-[18px] lg:border"
+        style={{ boxShadow: "0 1px 2px rgb(20 18 31/0.04), 0 18px 50px rgb(20 18 31/0.08)" }}
+      >
+        {bars}
+
+        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+          {left && (
+            <aside className="order-2 shrink-0 border-t border-(--color-line) p-4 lg:order-none lg:w-[248px] lg:overflow-y-auto lg:border-r lg:border-t-0">
+              {left}
+            </aside>
+          )}
+          <div
+            data-work-area
+            className="order-1 min-w-0 flex-1 lg:order-none lg:overflow-y-auto"
+            style={{ background: "var(--color-canvas)" }}
+          >
+            {children}
+          </div>
+          {right && (
+            <aside className="order-3 shrink-0 border-t border-(--color-line) p-4 lg:order-none lg:w-[264px] lg:overflow-y-auto lg:border-l lg:border-t-0">
+              {right}
+            </aside>
+          )}
+        </div>
+
+        {bottom}
+      </div>
+    </div>
   );
 }
 
@@ -174,22 +223,14 @@ export function RailCard({
   icon,
   tone = "accent",
   children,
-  accent = false,
 }: {
   title?: string;
   icon?: IconId;
   tone?: Tone;
   children: React.ReactNode;
-  accent?: boolean;
 }) {
   return (
-    <section
-      className="rounded-[14px] border p-4"
-      style={{
-        borderColor: accent ? "var(--color-accent-ring)" : "var(--color-line)",
-        background: accent ? "var(--color-accent-tint)" : "var(--color-surface)",
-      }}
-    >
+    <section className="border-t border-(--color-line) pt-3.5 first:border-t-0 first:pt-0">
       {title && (
         <SectionTitle icon={icon} tone={tone} className="mb-2.5">
           {title}
@@ -200,15 +241,13 @@ export function RailCard({
   );
 }
 
-/** Left rail: where you are, what you are here to do, and who is advising you. */
+/** Left rail: where you are, and who is talking to you. */
 export function MissionRail({
   chapter,
   missionId,
   missionNumber,
   totalMissions,
   completed,
-  objective,
-  minutes,
   advisor,
 }: {
   chapter: Chapter;
@@ -216,22 +255,20 @@ export function MissionRail({
   missionNumber: number;
   totalMissions: number;
   completed: string[];
-  objective?: string;
-  minutes?: number;
   advisor?: Advisor;
 }) {
   return (
-    <div className="panel space-y-3.5 p-4">
+    <div className="space-y-3.5">
       <div>
         <p className="text-[12px] font-bold text-(--color-accent)">Chapter {chapter.number}</p>
-        <h2 className="display mt-0.5 text-[20px] text-(--color-ink)">{chapter.title}</h2>
+        <h2 className="mt-0.5 text-[18px] font-bold leading-tight text-(--color-ink)">
+          {chapter.title}
+        </h2>
         <p className="mt-1 text-[12px] font-medium text-(--color-muted) tabular-nums">
           Mission {missionNumber} of {totalMissions}
         </p>
       </div>
 
-      {/* Numbered, not bulleted. A number tells you where you are in the
-          chapter; a dot only tells you that there is a list. */}
       <ol className="space-y-0.5 border-t border-(--color-line) pt-3">
         {chapter.missionIds.map((id, i) => {
           const done = completed.includes(id);
@@ -240,7 +277,7 @@ export function MissionRail({
             <li
               key={id}
               className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors"
-              style={{ background: active ? "var(--color-surface)" : "transparent" }}
+              style={{ background: active ? "var(--color-accent-tint)" : "transparent" }}
               aria-current={active ? "step" : undefined}
             >
               <span
@@ -275,28 +312,17 @@ export function MissionRail({
         })}
       </ol>
 
-      {objective && (
-        <RailCard title="Your objective" icon="target">
-          <p className="text-[13.5px] leading-relaxed text-(--color-ink-soft)">{objective}</p>
-          {minutes !== undefined && (
-            <div className="mt-3 flex items-center gap-2 border-t border-(--color-line) pt-2.5">
-              <span className="text-(--color-accent)">
-                <Icon name="clock" size={14} />
-              </span>
-              <span className="text-[12px] text-(--color-muted)">Estimated time</span>
-              <span className="ml-auto text-[12px] font-bold text-(--color-ink)">
-                {minutes} min
-              </span>
-            </div>
-          )}
-        </RailCard>
-      )}
-
       {advisor && <AdvisorCard advisor={advisor} />}
     </div>
   );
 }
 
+/**
+ * The only voice that gives advice in this game.
+ *
+ * Nothing in the interface tells the player what to think. A colleague does, by name,
+ * with a job title and a stake of their own — which is briefing rather than lecturing.
+ */
 export function AdvisorCard({ advisor }: { advisor: Advisor }) {
   const initials = advisor.name
     .split(" ")
@@ -305,30 +331,40 @@ export function AdvisorCard({ advisor }: { advisor: Advisor }) {
     .slice(0, 2);
 
   return (
-    <section
-      className="rounded-[14px] border p-4"
-      style={{ borderColor: "var(--color-line)", background: "var(--color-surface)" }}
-    >
+    <section className="border-t border-(--color-line) pt-3.5">
       <div className="flex items-center gap-2.5">
-        <span
-          aria-hidden="true"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[12px] font-bold text-white"
-          style={{
-            background: "linear-gradient(135deg, var(--color-win), var(--color-accent-deep))",
-          }}
-        >
-          {initials}
-        </span>
+        {advisor.photo ? (
+          <img
+            src={artUrl(advisor.photo)}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="h-10 w-10 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[12px] font-bold text-white"
+            style={{
+              background: "linear-gradient(135deg, var(--color-win), var(--color-accent-deep))",
+            }}
+          >
+            {initials}
+          </span>
+        )}
         <div className="min-w-0">
           <p className="truncate text-[13.5px] font-bold text-(--color-ink)">{advisor.name}</p>
           <p className="truncate text-[11.5px] font-medium text-(--color-accent)">{advisor.role}</p>
         </div>
       </div>
-      {/* Quote mark rather than a heading — a colleague's aside does not need a
-          label telling you it is a colleague's aside. */}
       <p className="mt-3 border-l-2 border-(--color-accent-ring) pl-3 text-[13px] italic leading-relaxed text-(--color-ink-soft)">
         “{advisor.quote}”
       </p>
+      {advisor.steer && (
+        <p className="mt-2.5 border-l-2 border-(--color-accent-ring) pl-3 text-[13px] italic leading-relaxed text-(--color-ink-soft)">
+          “{advisor.steer}”
+        </p>
+      )}
     </section>
   );
 }
@@ -369,7 +405,7 @@ export function FactorBars({
                     className="anim-pop rounded-full px-1.5 text-[11px] font-bold tabular-nums"
                     style={{
                       color: delta > 0 ? "var(--color-good)" : "var(--color-bad)",
-                      background: delta > 0 ? "#e4f5ef" : "#fbeaea",
+                      background: delta > 0 ? "var(--color-good-tint)" : "var(--color-bad-tint)",
                     }}
                   >
                     {delta > 0 ? "+" : ""}
@@ -436,7 +472,7 @@ export function FactorGrid({
                   className="anim-pop rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums"
                   style={{
                     color: delta > 0 ? "var(--color-good)" : "var(--color-bad)",
-                    background: delta > 0 ? "#e4f5ef" : "#fbeaea",
+                    background: delta > 0 ? "var(--color-good-tint)" : "var(--color-bad-tint)",
                   }}
                 >
                   {delta > 0 ? "+" : ""}
@@ -445,7 +481,10 @@ export function FactorGrid({
               )}
             </div>
             <div className="mb-1.5 flex items-baseline gap-1">
-              <span className="text-[26px] font-bold leading-none tabular-nums" style={{ color: colour }}>
+              <span
+                className="text-[26px] font-bold leading-none tabular-nums"
+                style={{ color: colour }}
+              >
                 {dims[d]}
               </span>
               <span className="text-[12px] text-(--color-faint)">/ 100</span>
@@ -472,26 +511,100 @@ export function FactorGrid({
   );
 }
 
-/** Right rail: the read-out, the open questions, and what you have banked. */
+/* ───────────────────────────── the ledger ───────────────────────────── */
+
+const LEDGER_TONE: Record<LedgerEntry["tone"], { icon: IconId; tone: Tone }> = {
+  good: { icon: "check", tone: "good" },
+  neutral: { icon: "layers", tone: "accent" },
+  bad: { icon: "warning", tone: "bad" },
+};
+
+/**
+ * Right rail: what you know, what you have promised, what you have spent.
+ *
+ * The three dimensions are an abstraction. This is the account behind them, in the
+ * language of the work — a score invites the player to optimise the grader, a ledger
+ * invites them to read their own position.
+ */
 export function InsightRail({
   dims,
+  entries,
   consider,
-  badges,
-  knownCount,
+  advisorName,
+  commits,
 }: {
   dims: Record<DimensionId, number>;
+  entries: LedgerEntry[];
   consider?: string[];
-  badges: BadgeId[];
-  knownCount: number;
+  advisorName?: string;
+  /** what the currently selected option would add to the ledger */
+  commits?: string;
 }) {
   return (
-    <div className="panel space-y-3.5 p-4">
+    <div className="space-y-3.5">
       <RailCard title="Key factors" icon="chart">
         <FactorBars dims={dims} />
       </RailCard>
 
+      {/* Sits above the ledger because that is what it is: the next line of it. Keeping
+          it out of the option card stops the whole card row growing on selection. */}
+      {commits && (
+        <section
+          className="anim-fade rounded-xl px-3.5 py-3"
+          style={{ background: "var(--color-accent-tint)" }}
+        >
+          <SectionTitle icon="scale" className="mb-1.5">
+            If you commit
+          </SectionTitle>
+          <p className="text-[12.5px] leading-snug text-(--color-ink-soft)">{commits}</p>
+        </section>
+      )}
+
+      <RailCard title="Where you stand" icon="layers">
+        {entries.length === 0 ? (
+          <p className="text-[12.5px] leading-relaxed text-(--color-muted)">
+            Nothing committed yet. Everything you learn and promise lands here.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {entries.map((e) => {
+              const t = LEDGER_TONE[e.tone];
+              return (
+                <li key={e.label} className="flex gap-2">
+                  <span
+                    className="mt-[3px] shrink-0"
+                    style={{
+                      color:
+                        e.tone === "good"
+                          ? "var(--color-good)"
+                          : e.tone === "bad"
+                            ? "var(--color-bad)"
+                            : "var(--color-accent)",
+                    }}
+                  >
+                    <Icon name={t.icon} size={13} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[12.5px] font-bold leading-snug text-(--color-ink)">
+                      {e.label}
+                    </span>
+                    <span className="block text-[12px] leading-snug text-(--color-muted)">
+                      {e.detail}
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </RailCard>
+
       {consider && consider.length > 0 && (
-        <RailCard title="Things to consider" icon="bulb" tone="warn">
+        <RailCard
+          title={advisorName ? `${advisorName.split(" ")[0]} is asking` : "Open questions"}
+          icon="talk"
+          tone="warn"
+        >
           <ul className="space-y-2.5">
             {consider.map((c) => (
               <li
@@ -508,115 +621,84 @@ export function InsightRail({
           </ul>
         </RailCard>
       )}
-
-      <RailCard title="Progress" icon="flag" tone="good">
-        <p className="text-[12.5px] leading-relaxed text-(--color-muted)">
-          {knownCount > 0 ? (
-            <>
-              <span className="font-bold text-(--color-ink)">{knownCount}</span> thing
-              {knownCount === 1 ? "" : "s"} you found out are still in play.
-            </>
-          ) : (
-            "What you learn early changes what happens later."
-          )}
-        </p>
-        {badges.length > 0 && (
-          <ul className="mt-3 flex flex-wrap gap-1.5 border-t border-(--color-line) pt-3">
-            {badges.map((b) => (
-              <li key={b}>
-                <Pill tone="accent">★ {BADGE_META[b].label}</Pill>
-              </li>
-            ))}
-          </ul>
-        )}
-      </RailCard>
     </div>
   );
 }
 
-/* ───────────────────────────── layout ───────────────────────────── */
+/* ───────────────────────────── action bar ───────────────────────────── */
 
-export function GameLayout({
-  left,
-  right,
-  bottom,
-  children,
+/**
+ * The prediction gate — the game's "before".
+ *
+ * You cannot commit until you have said which of the three this will cost most. It is
+ * one tap, and it is what turns the consequence screen from the game telling you what
+ * happened into the game answering a question you asked. See docs/ENGAGEMENT-MODEL.md.
+ */
+export function PredictionStrip({
+  prediction,
+  onPredict,
 }: {
-  left?: React.ReactNode;
-  right?: React.ReactNode;
-  /** Spans every column and stays pinned — the action bar belongs to the page. */
-  bottom?: React.ReactNode;
-  children: React.ReactNode;
+  prediction: DimensionId | null;
+  onPredict: (d: DimensionId) => void;
 }) {
-  /* On a phone the rails stack, and putting them first buries the headline
-     half a screen down. Explicit order puts the mission first there and
-     restores the source order once there are real columns.
-     The action bar sits OUTSIDE the grid: a sticky grid item is constrained to
-     its own grid area, which has no room to move, so it would never pin. */
   return (
-    <>
-      <div className="mx-auto grid max-w-[1500px] grid-cols-1 items-start gap-x-6 gap-y-6 px-4 pt-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-6 xl:grid-cols-[250px_minmax(0,1fr)_270px]">
-        {left && (
-          <aside className="anim-fade order-2 lg:sticky lg:top-[72px] lg:order-none">{left}</aside>
-        )}
-        <div className="order-1 min-w-0 lg:order-none">{children}</div>
-        {right && (
-          <aside className="anim-fade order-3 xl:sticky xl:top-[72px] lg:order-none">{right}</aside>
-        )}
+    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+      <span className="text-[12.5px] font-semibold text-(--color-ink-soft)">
+        Before you commit — what will this cost most?
+      </span>
+      <div className="flex gap-1.5">
+        {DIMENSIONS.map((d) => {
+          const meta = DIMENSION_META[d];
+          const on = prediction === d;
+          return (
+            <button
+              key={d}
+              onClick={() => onPredict(d)}
+              aria-pressed={on}
+              className="rounded-lg border px-2.5 py-1 text-[12px] font-bold transition-colors"
+              style={{
+                borderColor: on ? `var(${meta.varName})` : "var(--color-line-strong)",
+                background: on ? `var(${meta.varName})` : "var(--color-surface)",
+                color: on ? "#fff" : `var(${meta.varName})`,
+              }}
+            >
+              {meta.label}
+            </button>
+          );
+        })}
       </div>
-      {bottom}
-    </>
+    </div>
   );
 }
 
-/** Sticky action bar. The tip sits beside the button so it is read, not buried. */
 export function ActionBar({
-  tip,
-  hint,
   label,
   onAction,
   disabled,
+  children,
 }: {
-  tip?: string;
-  hint?: string;
   label: string;
   onAction: () => void;
   disabled?: boolean;
+  /** left-hand content — the prediction strip on a decide screen */
+  children?: React.ReactNode;
 }) {
   return (
-    <div
-      className="sticky bottom-0 z-20 mt-6 border-t border-(--color-line) backdrop-blur-xl"
-      style={{ background: "rgb(255 255 255 / 0.9)" }}
-    >
-      {/* Stacks on a phone. Side by side, the tip gets squeezed into a two-word
-          column and the hint lands on top of it. */}
-      <div className="mx-auto flex max-w-[1500px] flex-col gap-2.5 px-4 py-3 sm:flex-row sm:items-center sm:gap-5 lg:px-6">
-        {tip && (
-          <div
-            className="flex min-w-0 items-start gap-2.5 rounded-xl px-3 py-2 sm:flex-1"
-            style={{ background: "var(--color-accent-tint)" }}
-          >
-            <span className="mt-px shrink-0 text-(--color-accent)">
-              <Icon name="bulb" size={15} />
-            </span>
-            <p className="text-[12.5px] leading-snug text-(--color-ink-soft)">
-              <span className="font-bold text-(--color-accent-deep)">Tip. </span>
-              {tip}
-            </p>
-          </div>
-        )}
-        <div className="flex shrink-0 items-center justify-end gap-3 sm:ml-auto">
-          {hint && <span className="text-[12.5px] text-(--color-muted)">{hint}</span>}
-          <button
-            onClick={onAction}
-            disabled={disabled}
-            className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14.5px] font-semibold text-white shadow-[0_6px_18px_rgb(109_53_232/0.28)] transition-all duration-150 enabled:hover:-translate-y-0.5 enabled:hover:shadow-[0_10px_26px_rgb(109_53_232/0.34)] enabled:active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-35 disabled:shadow-none"
-            style={{ background: disabled ? "var(--color-faint)" : "var(--color-accent)" }}
-          >
-            {label}
-            <span aria-hidden="true">→</span>
-          </button>
-        </div>
+    <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-3 border-t border-(--color-line) bg-(--color-surface) px-5 py-3">
+      {children}
+      <div className="ml-auto shrink-0">
+        <button
+          onClick={onAction}
+          disabled={disabled}
+          className="rounded-xl px-6 py-2.5 text-[14.5px] font-semibold transition-all duration-150 enabled:text-white enabled:shadow-[0_6px_18px_rgb(109_53_232/0.28)] enabled:hover:-translate-y-0.5 enabled:active:translate-y-0 disabled:cursor-not-allowed"
+          style={
+            disabled
+              ? { background: "var(--color-accent-tint)", color: "var(--color-accent-ring)" }
+              : { background: "var(--color-accent)" }
+          }
+        >
+          {label}
+        </button>
       </div>
     </div>
   );
@@ -640,8 +722,12 @@ export function PrimaryButton({
       <button
         onClick={onClick}
         disabled={disabled}
-        className="flex items-center gap-2 rounded-xl px-6 py-3 text-[15px] font-semibold text-white shadow-[0_6px_18px_rgb(109_53_232/0.28)] transition-all duration-150 enabled:hover:-translate-y-0.5 enabled:hover:shadow-[0_10px_26px_rgb(109_53_232/0.34)] enabled:active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-35 disabled:shadow-none"
-        style={{ background: disabled ? "var(--color-faint)" : "var(--color-accent)" }}
+        className="rounded-xl px-6 py-3 text-[15px] font-semibold transition-all duration-150 enabled:text-white enabled:shadow-[0_6px_18px_rgb(109_53_232/0.28)] enabled:hover:-translate-y-0.5 enabled:active:translate-y-0 disabled:cursor-not-allowed"
+        style={
+          disabled
+            ? { background: "var(--color-accent-tint)", color: "var(--color-accent-ring)" }
+            : { background: "var(--color-accent)" }
+        }
       >
         {children}
       </button>
@@ -661,8 +747,8 @@ export function BadgeChip({ id, animate = false }: { id: BadgeId; animate?: bool
       className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${animate ? "anim-pop" : ""}`}
       style={{ borderColor: "var(--color-accent-ring)", background: "var(--color-accent-tint)" }}
     >
-      <span aria-hidden="true" className="mt-0.5 text-[15px]">
-        ★
+      <span aria-hidden="true" className="mt-0.5 shrink-0 text-(--color-accent)">
+        <Icon name="check" size={16} />
       </span>
       <div>
         <p className="text-[13px] font-bold text-(--color-accent-deep)">{meta.label}</p>

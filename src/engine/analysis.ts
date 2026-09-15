@@ -86,7 +86,10 @@ export function possibleSelections(mission: Mission, state: GameState): string[]
 
 /** Commit a selection and fast-forward to the next mission (or the ending). */
 export function playMission(state: GameState, content: Content, selection: string[]): GameState {
-  let s: GameState = { ...state, selection };
+  // A prediction is required to commit, but it is purely informational — it never gates
+  // an outcome, so the sweep fixes it rather than branching on it. Were it ever to affect
+  // a branch, this would silently stop covering the alternatives.
+  let s: GameState = { ...state, selection, prediction: "win" };
   s = commit(s, content);
   s = advance(s, content); // resolving -> consequence
   s = advance(s, content); // consequence -> lesson
