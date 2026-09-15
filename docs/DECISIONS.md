@@ -6,6 +6,28 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-019 · Pre-decision copy is on a word budget, enforced by the build
+Colour alone did not fix "too much text", because the problem was the text. Counting the
+mockups: an option card there is an icon, a three-word title and **one short sentence**.
+Ours were a two-line description, four bulleted clauses, a commitment sentence and a cost
+row — roughly 60 words each, ~240 on a four-option screen.
+
+`BUDGET` in `validate.ts` now caps every string the player reads *before* deciding:
+situation 55 words total, description 18, pros/cons 6 each and at most two of each,
+consider 13, tip 20, assessment note 11, concern 11, client blurb 20, commits 14.
+Over budget is a build error naming the field and the count, which turned the content
+rewrite into a worklist rather than a judgement call.
+
+Two matching UI changes: **pros and cons render as tinted chips**, not bulleted sentences —
+at six words they are tags, and a row of green-then-red chips is read in one pass. And
+`commits` now appears **only on the selected card**, which is a two-step commit and keeps
+three unread commitment lines off the screen.
+
+**Outcome prose is deliberately not budgeted.** The consequence screen has nothing else on
+it, and that text is the teaching.
+**Cost:** writing is harder, and some nuance went. That is the trade — the nuance was not
+being read.
+
 ## D-018 · Colour carries hierarchy, so the page can be scanned instead of read
 "It feels like I have to read everything" was the symptom. The cause was that every
 label on the page was the same faint grey uppercase `.eyebrow`, every card was white on

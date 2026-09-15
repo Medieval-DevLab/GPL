@@ -299,42 +299,32 @@ function OptionCard({
         </span>
       </div>
 
-      <p className="mt-2 text-[14px] leading-relaxed text-(--color-muted)">
+      <p className="mt-1.5 text-[13.5px] leading-snug text-(--color-muted)">
         {option.description}
       </p>
 
-      {/* Pros beside cons, not stacked. Stacked, a four-item list made every
-          card 60px taller than its description needed and left dead space. */}
+      {/* Trade-offs as tags, not sentences. Four bulleted clauses per card put
+          ~240 words on a four-option screen, and the only way through it was to
+          read all of it. Budgets in validate.ts keep them short. */}
       {hasTradeoffs && (
-        <div
-          className="mt-2.5 grid gap-x-4 gap-y-1.5 rounded-xl px-3.5 py-2.5 sm:grid-cols-2"
-          style={{ background: "var(--color-surface-sunk)" }}
-        >
-          <ul className="space-y-1.5">
-            {option.pros?.map((p) => (
-              <li key={p} className="flex items-start gap-2 text-[13px] leading-snug">
-                <span className="mt-[2px] shrink-0 text-(--color-good)">
-                  <Icon name="check" size={13} />
-                </span>
-                <span className="font-medium text-(--color-ink-soft)">{p}</span>
-              </li>
-            ))}
-          </ul>
-          <ul className="space-y-1.5">
-            {option.cons?.map((c) => (
-              <li key={c} className="flex items-start gap-2 text-[13px] leading-snug">
-                <span className="mt-[2px] shrink-0 text-(--color-bad)">
-                  <Icon name="cross" size={13} />
-                </span>
-                <span className="text-(--color-muted)">{c}</span>
-              </li>
-            ))}
-          </ul>
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          {option.pros?.map((p) => (
+            <Pill key={p} tone="good">
+              <Icon name="check" size={11} />
+              {p}
+            </Pill>
+          ))}
+          {option.cons?.map((c) => (
+            <Pill key={c} tone="bad">
+              <Icon name="cross" size={11} />
+              {c}
+            </Pill>
+          ))}
         </div>
       )}
 
       {/* footer: what it costs — never what it returns */}
-      <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-(--color-line) pt-3">
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-(--color-line) pt-2.5">
         {/* The game is keyboard playable; this is where you find that out. */}
         <kbd
           className="hidden h-[19px] min-w-[19px] shrink-0 items-center justify-center rounded-[5px] border border-(--color-line-strong) px-1 font-sans text-[10.5px] font-bold text-(--color-faint) sm:flex"
@@ -348,13 +338,6 @@ function OptionCard({
             <CostDots label="Investment" value={option.cost.investment} />
           </>
         )}
-        {/* Full width until there is room beside the dots — squeezed into the
-            leftover inches it wraps to two words a line. */}
-        {option.commits && (
-          <span className="w-full text-[12.5px] leading-snug text-(--color-muted) md:w-auto md:min-w-0 md:flex-1">
-            {option.commits}
-          </span>
-        )}
         <span
           className="ml-auto flex shrink-0 items-center gap-1.5 text-[12.5px] font-bold"
           style={{ color: selected ? "var(--color-accent-deep)" : "var(--color-accent)" }}
@@ -363,6 +346,18 @@ function OptionCard({
           <span aria-hidden="true">{selected ? "✓" : "→"}</span>
         </span>
       </div>
+
+      {/* What you are locking in. Only on the chosen card — a two-step commit,
+          and it keeps three unread commitment lines off the screen. */}
+      {selected && option.commits && (
+        <p
+          className="anim-fade mt-2.5 rounded-lg px-3 py-2 text-[12.5px] leading-snug"
+          style={{ background: "var(--color-surface)", color: "var(--color-ink-soft)" }}
+        >
+          <span className="font-bold text-(--color-accent-deep)">This commits you: </span>
+          {option.commits}
+        </p>
+      )}
     </button>
   );
 }

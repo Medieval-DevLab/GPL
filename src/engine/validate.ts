@@ -26,6 +26,34 @@ export interface Issue {
   message: string;
 }
 
+/**
+ * Word budgets for everything the player reads BEFORE deciding.
+ *
+ * The decide screen is a briefing, not an essay. Left unbounded it grew to the
+ * point where the only way to find anything was to read all of it — which is
+ * the opposite of a game. These are deliberately tight: pros and cons are tags,
+ * not sentences, and the situation is a setup, not a chapter.
+ *
+ * Outcome prose is NOT budgeted. The consequence screen has nothing else on it,
+ * and that text is the actual teaching.
+ */
+const BUDGET = {
+  situation: 55, // total across all paragraphs
+  objective: 16,
+  description: 18,
+  prosCons: 6, // per entry
+  consider: 13, // per entry
+  tip: 20,
+  note: 11, // per assessment factor
+  concern: 11, // per entry
+  blurb: 20,
+  commits: 14,
+} as const;
+
+function words(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
 /** Words that would leak a predicted outcome into pre-decision copy. */
 const OUTCOME_LEAK_TERMS = [
   "winability",
@@ -205,6 +233,24 @@ export function validateContent(content: Content): Issue[] {
     leakCheck(m.tip, m.id, "tip");
     leakCheck(m.objective, m.id, "objective");
 
+    /* Density. See BUDGET. */
+    const budget = (text: string | undefined, max: number, where: string, field: string) => {
+      if (!text) return;
+      const n = words(text);
+      if (n > max) err(where, `"${field}" is ${n} words, budget is ${max} — cut it`);
+    };
+
+    budget(m.situation.join(" "), BUDGET.situation, m.id, "situation");
+    for (const v of m.variants ?? []) {
+      budget(v.situation.join(" "), BUDGET.situation, `${m.id}/variant`, "situation");
+    }
+    budget(m.objective, BUDGET.objective, m.id, "objective");
+    budget(m.tip, BUDGET.tip, m.id, "tip");
+    for (const c of m.consider ?? []) budget(c, BUDGET.consider, m.id, "consider");
+    for (const c of m.concerns ?? []) budget(c, BUDGET.concern, m.id, "concerns");
+    for (const f of m.assessment ?? []) budget(f.note, BUDGET.note, m.id, `assessment/${f.label}`);
+    if (m.client) budget(m.client.blurb, BUDGET.blurb, m.id, "client.blurb");
+
     if (m.kind === "choice") {
       if (m.options.length < 2) err(m.id, "a choice needs at least two options");
       const optIds = new Set<string>();
@@ -235,6 +281,20 @@ export function validateContent(content: Content): Issue[] {
         optLeak(o.description, "description");
         for (const p of o.pros ?? []) optLeak(p, "pros");
         for (const c of o.cons ?? []) optLeak(c, "cons");
+
+        /* Density. A card is scanned, so pros and cons are tags, not sentences. */
+        const oWhere = `${m.id}/${o.id}`;
+        const oBudget = (text: string | undefined, max: number, field: string) => {
+          if (!text) return;
+          const n = words(text);
+          if (n > max) err(oWhere, `"${field}" is ${n} words, budget is ${max} — cut it`);
+        };
+        oBudget(o.description, BUDGET.description, "description");
+        oBudget(o.commits, BUDGET.commits, "commits");
+        for (const p of o.pros ?? []) oBudget(p, BUDGET.prosCons, "pros");
+        for (const c of o.cons ?? []) oBudget(c, BUDGET.prosCons, "cons");
+        if ((o.pros?.length ?? 0) > 2) err(oWhere, "more than two pros — a card is scanned, not read");
+        if ((o.cons?.length ?? 0) > 2) err(oWhere, "more than two cons — a card is scanned, not read");
 
         // Cards render pros above cons. One without the other reads as a verdict.
         const hasPros = (o.pros?.length ?? 0) > 0;

@@ -12,6 +12,12 @@
  *  · Every mission carries a lesson, so the objective lands on whichever branch is taken.
  *  · No dead ends. Every path reconverges on the next mission.
  *
+ * ON LENGTH. Everything the player reads BEFORE deciding is on a word budget (see
+ * BUDGET in validate.ts) and the build fails if it is exceeded. Pros and cons are
+ * tags, not sentences. A situation is a setup, not a chapter. The briefing is scanned.
+ * Outcome prose is deliberately NOT budgeted — the consequence screen has nothing else
+ * on it, and that text is the actual teaching.
+ *
  * THE SPINE OF COMPOUNDING — what the player learns early changes what happens late:
  *    knows:ops_constraint  → M6 credibility, M7 the workstream that saves delivery, M9, M10
  *    knows:real_pain       → M3 lands, M6 defensible rather than lucky
@@ -27,47 +33,41 @@ import type { Advisor, ClientProfile, Content, GameNode } from "../engine/types"
 const PRIYA: Advisor = {
   name: "Priya Sharma",
   role: "Client Growth Lead",
-  quote:
-    "We have three names on the table and one team. Let's choose carefully — we don't get to chase all of them.",
+  quote: "Three names on the table, one team. We don't get to chase all of them.",
 };
 
 const RAHUL: Advisor = {
   name: "Rahul Mehta",
   role: "Engagement Director",
-  quote:
-    "Not every lead is the right opportunity. The disciplined teams are the ones who decide early where their people go.",
+  quote: "Not every lead is the right opportunity. Decide early where your people go.",
 };
 
 const SOFIA: Advisor = {
   name: "Sofia Marchetti",
   role: "Solution Architect",
-  quote:
-    "Whatever we write down here, somebody has to build. I'd rather promise less and mean it.",
+  quote: "Whatever we write down, somebody has to build. I'd rather promise less and mean it.",
 };
 
 const TOM: Advisor = {
   name: "Tom Adeyemi",
   role: "Commercial Lead",
-  quote:
-    "Every concession you make on price is a concession you make on what we can do when something goes wrong.",
+  quote: "Every concession on price is a concession on what we can do when something breaks.",
 };
 
 const AISHA: Advisor = {
   name: "Aisha Khan",
   role: "Delivery Lead",
-  quote:
-    "My team inherits every sentence in that proposal. I'd like to know now which sentences you meant.",
+  quote: "My team inherits every sentence in that proposal. Which ones did you mean?",
 };
 
 const NORTHWIND: ClientProfile = {
   name: "Northwind Retail",
   monogram: "NR",
   tags: ["Retail", "210 stores", "National"],
-  blurb:
-    "A national retailer that wants to “improve the customer experience”. Nobody has yet said what that actually means.",
+  blurb: "Wants to “improve the customer experience”. Nobody has said what that means.",
   facts: [
     { icon: "chart", label: "Potential value", value: "High" },
-    { icon: "clock", label: "Expected timeline", value: "6–12 months" },
+    { icon: "clock", label: "Timeline", value: "6–12 months" },
     { icon: "people", label: "Decision makers", value: "Multiple, unmapped" },
   ],
 };
@@ -94,11 +94,11 @@ const nodes: GameNode[] = [
     stage: "client",
     title: "Three organisations, one team",
     eyebrow: "The situation",
-    objective: "Decide where your team spends its attention this quarter.",
+    objective: "Decide where your team spends this quarter.",
     minutes: 3,
     situation: [
-      "Three organisations are in the market for a partner. Your team can properly pursue exactly one — chasing all three means doing none of them well.",
-      "You know what each of them says they want. You do not yet know what any of them actually needs.",
+      "Three organisations want a partner. You can properly pursue one.",
+      "You know what each says it wants. You do not know what any of them needs.",
     ],
     context: [
       { label: "Your team", value: "6 people" },
@@ -106,22 +106,21 @@ const nodes: GameNode[] = [
     ],
     advisor: PRIYA,
     consider: [
-      "Which of these needs something we can already prove we do?",
-      "Where is the biggest number, and is that the same as the best opportunity?",
-      "What does it cost us to be wrong about this one?",
+      "Which needs something we can already prove?",
+      "Is the biggest number the best opportunity?",
+      "What does being wrong cost us?",
     ],
-    tip: "There is no perfect client. Weigh what they need against what you can actually demonstrate.",
+    tip: "There is no perfect client. Weigh what they need against what you can demonstrate.",
     question: "Who do you go after?",
     options: [
       {
         id: "o-northwind",
         title: "Northwind Retail",
         icon: "target",
-        description:
-          "210 stores. They want to “improve the customer experience”. Budget appears real, timeline is vague, and you have done work shaped like this before.",
-        commits: "A crowded field — at least two other firms are already talking to them.",
-        pros: ["Close to work you can evidence", "Budget appears to be real"],
-        cons: ["At least two competitors already engaged"],
+        description: "210 stores, real budget, vague timeline. You have done work shaped like this.",
+        commits: "A crowded field — two other firms are already talking.",
+        pros: ["Close to proven work", "Budget looks real"],
+        cons: ["Two rivals ahead of you"],
         cost: { time: 2, investment: 2 },
         outcomes: [
           {
@@ -140,10 +139,10 @@ const nodes: GameNode[] = [
         title: "Apex Industrial",
         icon: "layers",
         description:
-          "Modernising a forty-year-old manufacturing operation. Easily the largest number on the table. It needs deep industrial engineering that your team does not have today.",
-        commits: "Would stretch the team well past anything it has delivered before.",
-        pros: ["By far the largest opportunity", "Would build genuinely new capability"],
-        cons: ["No comparable references", "Six weeks you cannot spend elsewhere"],
+          "The biggest number on the table. Needs industrial engineering your team does not have.",
+        commits: "Stretches the team past anything it has delivered.",
+        pros: ["Largest opportunity", "Builds new capability"],
+        cons: ["No comparable references", "Six weeks committed"],
         cost: { time: 3, investment: 3 },
         outcomes: [
           {
@@ -175,11 +174,10 @@ const nodes: GameNode[] = [
         id: "o-meridian",
         title: "Meridian Health",
         icon: "shield",
-        description:
-          "Patient engagement. Smaller today, moving quickly, genuinely interesting work. Procurement in healthcare is its own discipline.",
+        description: "Patient engagement. Smaller, fast-moving, and healthcare procurement is slow.",
         commits: "Long and unpredictable approval cycles.",
-        pros: ["Fast-moving, ambitious client", "A sector you would like to be in"],
-        cons: ["Procurement may stall indefinitely", "Smallest of the three today"],
+        pros: ["Ambitious client", "A sector you want"],
+        cons: ["Procurement may stall", "Smallest today"],
         cost: { time: 2, investment: 1 },
         outcomes: [
           {
@@ -217,20 +215,20 @@ const nodes: GameNode[] = [
     stage: "client",
     title: "Before you say anything",
     eyebrow: "Understand the client",
-    objective: "Work out what you most need to know before you approach them.",
+    objective: "Work out what you need to know first.",
     minutes: 4,
     situation: [
-      "Northwind's brief is one line long: “improve the customer experience across our stores”.",
-      "You can dig into two things before the first real conversation. Not five. Choosing what to ignore is part of the job.",
+      "Northwind's brief is one line: “improve the customer experience across our stores”.",
+      "You can dig into two things. Not five. Choosing what to ignore is the job.",
     ],
     client: NORTHWIND,
     advisor: PRIYA,
     consider: [
-      "What could we learn that would change our mind?",
-      "Who has not been in the room so far, and why not?",
-      "Is the thing they asked for the same as the thing that is hurting them?",
+      "What could change our mind?",
+      "Who has not been in the room, and why?",
+      "Is the ask the same as the problem?",
     ],
-    tip: "Spend your questions on what could change your answer, not on what confirms it.",
+    tip: "Spend questions on what could change your answer, not what confirms it.",
     question: "What do you look into?",
     slots: 2,
     evidence: [
@@ -345,14 +343,14 @@ const nodes: GameNode[] = [
     objective: "Turn a name on a list into a conversation.",
     minutes: 3,
     situation: [
-      "Northwind is open to talking to partners. You get roughly one shot at making a first impression that is worth following up.",
+      "Northwind is open to talking to partners. You get roughly one shot at a first impression worth following up.",
     ],
     client: NORTHWIND,
     advisor: PRIYA,
     consider: [
-      "What do we actually need from the next conversation — attention, access, or credibility?",
-      "Who specifically are we trying to move?",
-      "Would this approach work if we knew nothing about them?",
+      "Do we need attention, access, or credibility?",
+      "Who exactly are we trying to move?",
+      "Would this work if we knew nothing about them?",
     ],
     tip: "Reach, access and credibility are three different goals. Pick the one you need first.",
     question: "How do you approach them?",
@@ -361,11 +359,10 @@ const nodes: GameNode[] = [
         id: "o-pov",
         title: "Publish a point of view",
         icon: "spark",
-        description:
-          "Write a short, specific piece on what is actually going wrong for retailers like them, and make sure it reaches the right desks.",
-        commits: "Takes real preparation time before anything happens.",
-        pros: ["Demonstrates you understand their world", "Reaches several stakeholders at once"],
-        cons: ["Only as good as what you actually know", "Slowest to land"],
+        description: "A short, specific piece on what is going wrong for retailers like them.",
+        commits: "Real preparation time before anything happens.",
+        pros: ["Shows you know their world", "Reaches several people"],
+        cons: ["Limited by what you know", "Slowest to land"],
         cost: { time: 3, investment: 1 },
         outcomes: [
           {
@@ -403,11 +400,10 @@ const nodes: GameNode[] = [
         id: "o-direct",
         title: "Go straight to the sponsor",
         icon: "talk",
-        description:
-          "Use a warm introduction to get thirty minutes with Elena Brandt, the CMO, and make the case in person.",
+        description: "A warm introduction, thirty minutes with the CMO, the case made in person.",
         commits: "Spends a relationship you cannot spend twice.",
-        pros: ["Fastest route to the person with the budget", "A real conversation, not a broadcast"],
-        cons: ["Burns an introduction you only have once", "One stakeholder's view of the problem"],
+        pros: ["Fastest to the budget holder", "A real conversation"],
+        cons: ["Burns your introduction", "One stakeholder's view"],
         cost: { time: 1, investment: 2 },
         outcomes: [
           {
@@ -441,11 +437,10 @@ const nodes: GameNode[] = [
         id: "o-campaign",
         title: "Run a broad campaign",
         icon: "megaphone",
-        description:
-          "Put a well-targeted retail transformation campaign into the market and let interest come to you. Cheap to run, and it does not consume your senior people.",
+        description: "Put a retail transformation campaign into the market and let interest come.",
         commits: "Reaches many people, few of whom decide anything.",
-        pros: ["Cheapest option by far", "Keeps senior people free for other work"],
-        cons: ["Impersonal", "Most responses will not be decision-makers"],
+        pros: ["Cheapest by far", "Senior people stay free"],
+        cons: ["Impersonal", "Few will be buyers"],
         cost: { time: 1, investment: 1 },
         outcomes: [
           {
@@ -501,56 +496,36 @@ const nodes: GameNode[] = [
     stage: "opportunity",
     title: "Is this real?",
     eyebrow: "Opportunity assessment",
-    objective: "Decide how much of your team to commit to a deal that is not yet certain.",
+    objective: "Decide how much of your team to commit.",
     minutes: 4,
     situation: [
-      "Northwind wants a proposal. Writing a serious one will occupy several of your people for weeks, and there is no guarantee at the end of it.",
-      "Everything about this is still their version of the problem.",
+      "Northwind wants a proposal. Writing a serious one occupies several people for weeks, with no guarantee at the end.",
+      "All of this is still their version of the problem.",
     ],
     client: NORTHWIND,
     assessment: [
-      {
-        icon: "flag",
-        label: "Client need",
-        level: "high",
-        note: "Something is genuinely wrong. They have said so publicly.",
-      },
-      {
-        icon: "target",
-        label: "Our fit",
-        level: "medium",
-        note: "Close to work you have done, but the brief is still undefined.",
-      },
-      {
-        icon: "people",
-        label: "Competitive pressure",
-        level: "medium",
-        note: "Two other firms are actively in the conversation.",
-      },
-      {
-        icon: "chart",
-        label: "Estimated value",
-        level: "high",
-        note: "Multi-year potential if the first phase works.",
-      },
+      { icon: "flag", label: "Client need", level: "high", note: "Something is wrong, and they have said so." },
+      { icon: "target", label: "Our fit", level: "medium", note: "Close to past work, but the brief is undefined." },
+      { icon: "people", label: "Competition", level: "medium", note: "Two firms actively in the conversation." },
+      { icon: "chart", label: "Value", level: "high", note: "Multi-year, if the first phase works." },
     ],
     advisor: RAHUL,
     consider: [
-      "What would it cost us to be wrong about this?",
-      "Do we know enough to price it responsibly?",
-      "Is there a smaller version of this we could commit to first?",
+      "What does being wrong cost us?",
+      "Do we know enough to price it?",
+      "Is there a smaller version to commit to?",
     ],
-    tip: "There is no single right answer. Weigh the value against what you would be risking to chase it.",
+    tip: "No single right answer. Weigh the value against what you would risk to chase it.",
     question: "How do you take this forward?",
     options: [
       {
         id: "o-pursue",
         title: "Commit and go for it",
         icon: "rocket",
-        description: "Put your best people on it and write a full proposal now.",
-        commits: "Your strongest team, unavailable for anything else, for several weeks.",
-        pros: ["Fastest to a real proposal", "Signals serious intent to the client"],
-        cons: ["Your best people are locked up", "You are pricing a brief nobody has defined"],
+        description: "Put your best people on it and write the full proposal now.",
+        commits: "Your strongest team, unavailable for weeks.",
+        pros: ["Fastest to a proposal", "Signals real intent"],
+        cons: ["Best people locked up", "Pricing an undefined brief"],
         cost: { time: 3, investment: 3 },
         outcomes: [
           {
@@ -581,11 +556,10 @@ const nodes: GameNode[] = [
         id: "o-workshop",
         title: "Propose a paid discovery",
         icon: "search",
-        description:
-          "Offer two weeks of structured work to define the problem properly, with the larger programme to follow.",
-        commits: "Slows things down, and a competitor may propose while you are still discovering.",
-        pros: ["Gets you inside the business", "Paid, so it costs you nothing to learn"],
-        cons: ["A much smaller first number", "Competitors can propose while you discover"],
+        description: "Two weeks of structured work to define the problem, programme to follow.",
+        commits: "Slower, and a rival may propose meanwhile.",
+        pros: ["Gets you inside", "Paid learning"],
+        cons: ["Much smaller first number", "Rivals can move"],
         cost: { time: 2, investment: 1 },
         outcomes: [
           {
@@ -611,11 +585,10 @@ const nodes: GameNode[] = [
         id: "o-decline",
         title: "Decline the full programme",
         icon: "block",
-        description:
-          "Tell them honestly that the brief is not yet well enough defined for anyone to price it responsibly.",
+        description: "Say honestly that nobody could price this brief responsibly yet.",
         commits: "You may be remembered as the firm that said no.",
-        pros: ["Protects your people and your margin", "Judgement the client will remember"],
-        cons: ["You lose momentum to whoever says yes", "May read as a lack of appetite"],
+        pros: ["Protects people and margin", "Judgement they remember"],
+        cons: ["Momentum goes elsewhere", "May read as reluctance"],
         cost: { time: 1, investment: 1 },
         outcomes: [
           {
@@ -656,38 +629,38 @@ const nodes: GameNode[] = [
     stage: "opportunity",
     title: "Someone else moves",
     eyebrow: "Market response",
-    objective: "React to a competitor changing the shape of the race.",
+    objective: "React to a competitor changing the race.",
     minutes: 4,
     situation: [
-      "A rival firm announces a partnership with a well-known retail technology vendor. There is a press release, a launch event, and a glossy demo of exactly the kind of storefront experience Northwind originally asked about.",
-      "Your sponsor forwards it to you with four words: “should we be worried?”",
+      "A rival announces a partnership with a well-known retail technology vendor. Press release, launch event, glossy storefront demo.",
+      "Your sponsor forwards it with four words: “should we be worried?”",
     ],
     saidQuote: {
       text: "We like your perspective, but this looks impressive and my board has already seen it. Help me understand how you are different.",
-      attribution: "Elena Brandt · Chief Marketing Officer, Northwind Retail",
+      attribution: "Elena Brandt · CMO, Northwind Retail",
     },
     concerns: [
-      "The competitor has a recognisable vendor name attached",
-      "The demo is visual and easy to show a board",
-      "Your differentiation has not been stated plainly yet",
+      "A recognisable vendor name attached",
+      "A demo that is easy to show a board",
+      "Your difference has not been stated plainly",
     ],
     advisor: RAHUL,
     consider: [
-      "What actually changed — the facts, or the noise?",
-      "Can we say what their offer does not cover?",
-      "What does silence cost us here?",
+      "What changed — the facts, or the noise?",
+      "Can we name what their offer misses?",
+      "What does silence cost us?",
     ],
-    tip: "Reacting to everything makes you look panicked. Reacting to nothing makes you look absent.",
+    tip: "React to everything and you look panicked. React to nothing and you look absent.",
     question: "What do you do?",
     options: [
       {
         id: "o-investigate-rival",
         title: "Find out what they offered",
         icon: "search",
-        description: "Before reacting, understand what is really on the table.",
-        commits: "Costs you several days while the client waits for an answer.",
-        pros: ["You respond to facts, not a press release", "Finds the gap in their offer"],
-        cons: ["The client is waiting for a view", "Days you cannot get back"],
+        description: "Understand what is really on the table before reacting.",
+        commits: "Several days while the client waits.",
+        pros: ["Respond to facts", "Finds the gap"],
+        cons: ["Client is waiting", "Days you cannot recover"],
         cost: { time: 2, investment: 1 },
         outcomes: [
           {
@@ -718,10 +691,10 @@ const nodes: GameNode[] = [
         id: "o-accelerate",
         title: "Get in front of them now",
         icon: "rocket",
-        description: "Do not let the story settle. Book the meeting and make your case immediately.",
-        commits: "You will be presenting before your thinking is finished.",
-        pros: ["Speed reads as confidence", "Keeps you in the conversation"],
-        cons: ["Arguing against something you have not examined"],
+        description: "Book the meeting and make your case before the story settles.",
+        commits: "Presenting before your thinking is finished.",
+        pros: ["Speed reads as confidence", "Keeps you in play"],
+        cons: ["Arguing against the unexamined"],
         cost: { time: 1, investment: 2 },
         outcomes: [
           {
@@ -739,11 +712,10 @@ const nodes: GameNode[] = [
         id: "o-reframe",
         title: "Change the question",
         icon: "scale",
-        description:
-          "Stop competing on the storefront. Make the conversation about the part of the experience the rival's offer cannot reach.",
-        commits: "Openly moves away from what the client originally asked for.",
-        pros: ["Moves the contest onto your ground", "Neutralises their strongest asset"],
-        cons: ["Contradicts the client's own brief", "Needs evidence to be credible"],
+        description: "Move the conversation to the part of the experience their offer cannot reach.",
+        commits: "Moves away from what the client asked for.",
+        pros: ["Contest on your ground", "Neutralises their asset"],
+        cons: ["Contradicts their brief", "Needs evidence"],
         cost: { time: 2, investment: 2 },
         outcomes: [
           {
@@ -774,10 +746,10 @@ const nodes: GameNode[] = [
         id: "o-hold",
         title: "Hold your plan",
         icon: "shield",
-        description: "One announcement is not a decision. Carry on with what you were doing.",
-        commits: "The client hears nothing from you while the story is live.",
-        pros: ["Costs nothing", "Steadiness can read as confidence"],
-        cons: ["Only works if you already have standing", "Their story goes unanswered"],
+        description: "One announcement is not a decision. Carry on.",
+        commits: "The client hears nothing while the story is live.",
+        pros: ["Costs nothing", "Steadiness can reassure"],
+        cons: ["Needs existing standing", "Their story goes unanswered"],
         cost: { time: 1, investment: 1 },
         outcomes: [
           {
@@ -838,31 +810,30 @@ const nodes: GameNode[] = [
     stage: "solution",
     title: "What are we actually solving?",
     eyebrow: "Define the problem",
-    objective: "Choose the problem your proposal will answer.",
+    objective: "Choose the problem your proposal answers.",
     minutes: 4,
     situation: [
       "The brief still says “improve the customer experience across our stores”.",
-      "Everything now follows from how you interpret that sentence. Get it wrong and every good decision after this one is in service of the wrong goal.",
+      "Everything follows from how you read that sentence. Get it wrong and every good decision after it serves the wrong goal.",
     ],
     client: NORTHWIND,
     advisor: SOFIA,
     consider: [
-      "Is the thing they asked for the thing that is costing them money?",
-      "What would we need in our hand to disagree with their brief?",
-      "If our competitor wrote this proposal, would it look the same?",
+      "Is the ask where the money is leaking?",
+      "What would let us disagree with their brief?",
+      "Would our rival's proposal look the same?",
     ],
-    tip: "A client's brief describes the symptom they can see. That is not always where the damage is.",
+    tip: "A brief describes the symptom they can see. That is not always where the damage is.",
     question: "What do you propose to fix?",
     options: [
       {
         id: "o-asked",
         title: "The thing they asked for",
         icon: "check",
-        description:
-          "A store and digital experience redesign. It is what is written in the brief, and it is what the competition is proposing.",
-        commits: "Puts you in a direct comparison against a firm with a vendor partnership.",
-        pros: ["Nobody can say you missed the brief", "Easy to approve internally"],
-        cons: ["Directly comparable to your competitor", "Decision moves to price"],
+        description: "A store and digital experience redesign. What the brief says.",
+        commits: "A direct comparison against a vendor partnership.",
+        pros: ["Nobody can say you missed", "Easy to approve"],
+        cons: ["Directly comparable", "Decision moves to price"],
         cost: { time: 1, investment: 2 },
         outcomes: [
           {
@@ -887,11 +858,10 @@ const nodes: GameNode[] = [
         id: "o-real",
         title: "The post-purchase experience",
         icon: "target",
-        description:
-          "Argue that the damage is happening after the sale — deliveries, returns, support — and propose to fix that instead.",
+        description: "Argue the damage happens after the sale — deliveries, returns, support.",
         commits: "Contradicts the client's own brief in writing.",
-        pros: ["Nobody else is proposing it", "Addresses what is actually hurting them"],
-        cons: ["You are contradicting their brief", "Needs evidence you may not have"],
+        pros: ["Nobody else proposing it", "Hits the real problem"],
+        cons: ["Contradicts their brief", "Needs evidence"],
         cost: { time: 2, investment: 2 },
         outcomes: [
           {
@@ -933,11 +903,10 @@ const nodes: GameNode[] = [
         id: "o-diagnostic",
         title: "Propose to find out first",
         icon: "search",
-        description:
-          "Tell them honestly that the brief covers two different problems, and offer a short diagnostic to establish which one is costing them money.",
+        description: "A short diagnostic to establish which of the two problems is costing them.",
         commits: "Delays the real decision by six weeks.",
-        pros: ["Low risk, defensible", "Buys you the evidence you lack"],
-        cons: ["Six weeks before anything substantial", "Can read as indecision"],
+        pros: ["Low risk", "Buys the evidence"],
+        cons: ["Six weeks of nothing", "Can read as indecision"],
         cost: { time: 3, investment: 1 },
         outcomes: [
           {
@@ -968,17 +937,16 @@ const nodes: GameNode[] = [
     stage: "solution",
     title: "What goes in the proposal",
     eyebrow: "Assemble the offer",
-    objective: "Assemble the offer. Three components — you cannot afford all six.",
+    objective: "Pick three components. You cannot afford six.",
     minutes: 5,
     situation: [
-      "You have a shape. Now it needs contents, and every element you add makes the proposal more attractive and harder to deliver at the same time.",
-      "Pick three.",
+      "You have a shape. Every element you add makes the proposal more attractive and harder to deliver at the same time.",
     ],
     advisor: SOFIA,
     consider: [
-      "For each thing we include, who actually delivers it?",
-      "Which of these exists to win the deal, and which exists to survive it?",
-      "What happens to this programme if Operations says no?",
+      "For each item, who actually delivers it?",
+      "Which wins the deal, and which survives it?",
+      "What happens if Operations says no?",
     ],
     tip: "Everything in a proposal is a promise somebody else has to keep.",
     question: "What do you put in?",
@@ -1003,8 +971,7 @@ const nodes: GameNode[] = [
       {
         id: "c-ops",
         title: "Operations integration workstream",
-        description:
-          "A dedicated stream to get changes into Operations' release schedule, with their people in it.",
+        description: "A stream to get changes into Operations' release schedule, with their people.",
         tag: "Unglamorous",
         dims: { deliver: 13, win: 1 },
         flags: ["has:ops_workstream"],
@@ -1012,8 +979,7 @@ const nodes: GameNode[] = [
       {
         id: "c-training",
         title: "Staff training and adoption",
-        description:
-          "Make sure the people who use it every day actually do. Cheap, unexciting, effective.",
+        description: "Make sure the people who use it every day actually do. Cheap and effective.",
         tag: "Adoption",
         dims: { deliver: 7, win: 2, profit: 1 },
         flags: ["has:training"],
@@ -1029,8 +995,7 @@ const nodes: GameNode[] = [
       {
         id: "c-data",
         title: "Data and measurement foundation",
-        description:
-          "Instrument everything so improvement can be proven. Nobody gets excited about this in a pitch.",
+        description: "Instrument everything so improvement can be proven. Nobody pitches this.",
         tag: "Foundation",
         dims: { profit: 6, deliver: 4, win: -3 },
         flags: ["has:data"],
@@ -1119,28 +1084,28 @@ const nodes: GameNode[] = [
     stage: "deal",
     title: "The number is too high",
     eyebrow: "Commercial pressure",
-    objective: "Respond to commercial pressure without giving away the deal or the margin.",
+    objective: "Answer the price without giving away the margin.",
     minutes: 4,
     situation: [
-      "Northwind comes back. Your proposal is roughly thirty percent above the alternative on the table, and procurement has said so in writing.",
+      "Northwind comes back. You are thirty percent above the alternative, and procurement has said so in writing.",
       "Elena still wants you. She needs something she can take to her board.",
     ],
     saidQuote: {
-      text: "I am not asking you to be the cheapest. I am asking you to give me something I can defend in a board meeting that has already seen a smaller number.",
-      attribution: "Elena Brandt · Chief Marketing Officer, Northwind Retail",
+      text: "I am not asking you to be the cheapest. I am asking for something I can defend in a board meeting that has already seen a smaller number.",
+      attribution: "Elena Brandt · CMO, Northwind Retail",
     },
     concerns: [
       "Procurement has the comparison in writing",
-      "The board has already seen the lower figure",
-      "The difference between the two proposals has not been made visible",
+      "The board has seen the lower figure",
+      "The difference between proposals is invisible",
     ],
     advisor: TOM,
     consider: [
-      "What specifically are they comparing us to?",
-      "If we discount, what are we giving up the ability to do later?",
-      "Is there a way to lower the commitment without lowering the rate?",
+      "What exactly are they comparing us to?",
+      "If we discount, what becomes impossible later?",
+      "Can we lower commitment without lowering rate?",
     ],
-    tip: "A discount is spent twice — once to win the work, and again when delivery needs the money.",
+    tip: "A discount is spent twice — once to win the work, and again when delivery needs it.",
     question: "How do you respond?",
     options: [
       {
@@ -1148,9 +1113,9 @@ const nodes: GameNode[] = [
         title: "Hold the price",
         icon: "shield",
         description: "Explain what the difference buys them, and do not move.",
-        commits: "If the argument does not land, you have nothing left to offer.",
-        pros: ["Protects the full margin", "Refuses a race to the bottom"],
-        cons: ["Only works if the difference is visible", "Nothing left to concede afterwards"],
+        commits: "Nothing left to offer if it does not land.",
+        pros: ["Full margin protected", "No race to the bottom"],
+        cons: ["Needs a visible difference", "Nothing left to concede"],
         cost: { time: 1, investment: 1 },
         outcomes: [
           {
@@ -1184,10 +1149,10 @@ const nodes: GameNode[] = [
         id: "o-discount",
         title: "Meet them on price",
         icon: "coins",
-        description: "Come down to close the gap and get the deal signed.",
+        description: "Come down, close the gap, get it signed.",
         commits: "The margin does not come back later.",
-        pros: ["Removes the objection immediately", "Highest chance of signature"],
-        cons: ["Spends the contingency you may need", "Sets the price expectation for phase two"],
+        pros: ["Objection gone", "Best chance of signature"],
+        cons: ["Spends your contingency", "Sets phase two expectation"],
         cost: { time: 1, investment: 3 },
         outcomes: [
           {
@@ -1212,9 +1177,9 @@ const nodes: GameNode[] = [
         title: "Take something out",
         icon: "cross",
         description: "Hold your rate and reduce what is included to reach their number.",
-        commits: "Something you thought was necessary stops being in the contract.",
-        pros: ["Price falls because the work does", "Rate and margin preserved"],
-        cons: ["What leaves is usually the least visible, most load-bearing part"],
+        commits: "Something you thought necessary leaves the contract.",
+        pros: ["Price falls honestly", "Rate preserved"],
+        cons: ["What leaves is load-bearing"],
         cost: { time: 2, investment: 1 },
         outcomes: [
           {
@@ -1235,11 +1200,10 @@ const nodes: GameNode[] = [
         id: "o-phase",
         title: "Restructure it into phases",
         icon: "layers",
-        description:
-          "Smaller committed first phase, the rest contingent on it working. Same total, different risk.",
-        commits: "More work to re-plan, and you have to earn the second phase.",
-        pros: ["Smaller decision for the board to make", "Rate and scope both intact"],
-        cons: ["Significant re-planning", "Phase two has to be won all over again"],
+        description: "Smaller first phase, rest contingent on it working. Same total, different risk.",
+        commits: "Re-planning, and phase two must be earned.",
+        pros: ["Smaller board decision", "Rate and scope intact"],
+        cons: ["Significant re-planning", "Phase two at risk"],
         cost: { time: 3, investment: 2 },
         outcomes: [
           {
@@ -1284,59 +1248,59 @@ const nodes: GameNode[] = [
     stage: "deal",
     title: "The review before signature",
     eyebrow: "Quality and risk review",
-    objective: "Handle the risk your own quality review has just raised.",
+    objective: "Handle the risk your own review just raised.",
     minutes: 4,
     situation: [
-      "Before anything gets signed it goes to an internal quality and risk review. Their job is to ask the questions the deal team has stopped asking.",
-      "They have found one: the programme changes systems that other parts of the business depend on, and the proposal does not say how those changes reach production.",
+      "Before signature it goes to internal quality and risk review, whose job is to ask what the deal team has stopped asking.",
+      "The finding: the programme changes systems other teams depend on, and the proposal never says how those changes reach production.",
     ],
     variants: [
       {
         when: { all: ["scope:heavy"], none: ["has:ops_workstream"] },
         situation: [
-          "Before anything gets signed it goes to an internal quality and risk review. Their job is to ask the questions the deal team has stopped asking.",
-          "The finding is blunt. You have committed to rebuilding the returns and support platform — the systems at the centre of Northwind's operation — and there is no workstream anywhere in the proposal that gets those changes through Operations. The reviewer has also found that the last programme here died for exactly that reason.",
+          "Before signature it goes to internal quality and risk review.",
+          "The finding is blunt. You committed to rebuilding the systems at the centre of Northwind's operation, and no workstream gets those changes through Operations. The reviewer also found that the last programme here died for exactly that reason.",
         ],
       },
       {
         when: { all: ["promised:fast"], none: ["has:data"] },
         situation: [
-          "Before anything gets signed it goes to an internal quality and risk review. Their job is to ask the questions the deal team has stopped asking.",
-          "The finding is about the eight-week pilot. It is the most attractive commitment in the document, and it assumes access to order and returns data that nobody has confirmed exists in a usable form. If that access takes four weeks to arrange, the pilot is already late on the day you sign.",
+          "Before signature it goes to internal quality and risk review.",
+          "The finding is about the eight-week pilot. It assumes order and returns data nobody has confirmed exists in usable form. If that takes four weeks to arrange, the pilot is late on the day you sign.",
         ],
       },
       {
         when: { all: ["descoped"] },
         situation: [
-          "Before anything gets signed it goes to an internal quality and risk review. Their job is to ask the questions the deal team has stopped asking.",
-          "The finding is about what is no longer in the proposal. What you took out to reach their number was load-bearing, and the reviewer wants to know what now delivers the outcome the contract still promises.",
+          "Before signature it goes to internal quality and risk review.",
+          "The finding is about what is no longer in the proposal. What you removed to reach their number was load-bearing, and the reviewer wants to know what now delivers the outcome the contract still promises.",
         ],
       },
       {
         when: { all: ["has:ops_workstream"] },
         situation: [
-          "Before anything gets signed it goes to an internal quality and risk review. Their job is to ask the questions the deal team has stopped asking.",
-          "The finding is a modest one. The integration workstream you included handles the hard part, so what remains is a dependency on two Northwind specialists whose time has not been formally committed.",
+          "Before signature it goes to internal quality and risk review.",
+          "The finding is modest. Your integration workstream handles the hard part, so what remains is a dependency on two Northwind specialists whose time has not been formally committed.",
         ],
       },
     ],
     advisor: AISHA,
     consider: [
-      "Are we solving this, or just writing it down?",
-      "What would this cost to fix now, versus in month five?",
+      "Are we solving this, or recording it?",
+      "What does this cost now versus month five?",
       "Do we still have the money to fix it?",
     ],
-    tip: "Risk is cheapest to deal with before you sign. Everything after that is more expensive.",
+    tip: "Risk is cheapest before you sign. Everything after that costs more.",
     question: "What do you do about it?",
     options: [
       {
         id: "o-accept-risk",
         title: "Accept the risk and sign",
         icon: "warning",
-        description: "Note it formally, carry on, and deal with it if it happens.",
-        commits: "If it lands, it lands in delivery with no plan behind it.",
+        description: "Note it formally, carry on, deal with it if it happens.",
+        commits: "It lands in delivery with no plan behind it.",
         pros: ["Keeps momentum", "Costs nothing today"],
-        cons: ["The problem arrives later, larger", "On the record that you knew"],
+        cons: ["Arrives later, larger", "On record that you knew"],
         cost: { time: 1, investment: 1 },
         outcomes: [
           {
@@ -1364,10 +1328,10 @@ const nodes: GameNode[] = [
         id: "o-mitigate",
         title: "Build in a mitigation",
         icon: "shield",
-        description: "Add the contingency, the extra people or the integration work needed to cover it.",
+        description: "Add the contingency, people or integration work needed to cover it.",
         commits: "Costs margin you may not have.",
-        pros: ["Deals with it while it is still cheap", "Delivery inherits a real plan"],
-        cons: ["Comes straight out of margin", "Needs money you may already have spent"],
+        pros: ["Cheap while it is early", "Delivery gets a plan"],
+        cons: ["Straight out of margin", "Needs money to exist"],
         cost: { time: 2, investment: 3 },
         outcomes: [
           {
@@ -1405,10 +1369,10 @@ const nodes: GameNode[] = [
         id: "o-rescope-risk",
         title: "Take the risky part out",
         icon: "cross",
-        description: "Remove the element that creates the exposure and deliver the rest well.",
-        commits: "The client loses something they were told they were getting.",
-        pros: ["Removes the exposure entirely", "A smaller programme you can run well"],
-        cons: ["Withdrawing a promise before you start", "The client will remember"],
+        description: "Remove what creates the exposure and deliver the rest well.",
+        commits: "The client loses something they were promised.",
+        pros: ["Exposure gone", "A programme you can run"],
+        cons: ["Withdrawing a promise", "They will remember"],
         cost: { time: 2, investment: 1 },
         outcomes: [
           {
@@ -1426,10 +1390,10 @@ const nodes: GameNode[] = [
         id: "o-repriceRisk",
         title: "Go back and re-price it",
         icon: "scale",
-        description: "Tell the client the risk is real and that covering it properly costs more.",
-        commits: "Reopens a commercial conversation you had already closed.",
-        pros: ["Funds the fix properly", "Honest, and they will know it"],
-        cons: ["Reopens a settled negotiation", "Can look like you under-quoted to get in"],
+        description: "Tell them the risk is real and covering it properly costs more.",
+        commits: "Reopens a conversation you had closed.",
+        pros: ["Funds the fix", "Honest, and they know it"],
+        cons: ["Reopens the negotiation", "Can look like under-quoting"],
         cost: { time: 2, investment: 2 },
         outcomes: [
           {
@@ -1484,49 +1448,47 @@ const nodes: GameNode[] = [
     stage: "delivery",
     title: "Month five",
     eyebrow: "Delivery reality",
-    objective: "Deal with the consequences of decisions you made months ago.",
+    objective: "Deal with a decision you made months ago.",
     minutes: 4,
     situation: [
-      "Delivery is underway and something has given. The delivery lead has asked for thirty minutes.",
-      "Two Northwind specialists the plan depends on have been pulled onto a different priority. The programme is roughly three weeks behind and the gap is widening.",
+      "Delivery is underway and something has given. The delivery lead wants thirty minutes.",
+      "Two Northwind specialists the plan depends on have been pulled onto another priority. You are three weeks behind and the gap is widening.",
     ],
     variants: [
       {
         when: { any: ["unanchored", "risk_accepted"], all: ["scope:heavy"] },
         situation: [
-          "Delivery is underway and something has given. The delivery lead has asked for thirty minutes.",
-          "The platform work is built and cannot go anywhere. Operations will not take it into a release without six weeks of testing that nobody scheduled, because nobody asked them. This is the risk the review flagged, arriving exactly as described.",
-          "Aisha is not angry. She just wants to know what you want her to do.",
+          "Delivery is underway and something has given. The delivery lead wants thirty minutes.",
+          "The platform work is built and cannot go anywhere. Operations will not take it into a release without six weeks of testing nobody scheduled, because nobody asked them. This is the risk the review flagged, arriving as described.",
         ],
       },
       {
         when: { any: ["fragile_timeline", "promised:fast"] },
         situation: [
-          "Delivery is underway and something has given. The delivery lead has asked for thirty minutes.",
-          "The eight-week pilot is in week six and the data is not ready. Getting usable order and returns data out of the existing systems is taking far longer than the plan assumed — because the plan assumed rather than checked.",
-          "The board demo is in the diary. The client has invited people to it.",
+          "Delivery is underway and something has given. The delivery lead wants thirty minutes.",
+          "The pilot is in week six and the data is not ready. Getting usable order data out of the existing systems is taking far longer than the plan assumed — because the plan assumed rather than checked it.",
         ],
       },
       {
         when: { all: ["descoped"] },
         situation: [
-          "Delivery is underway and something has given. The delivery lead has asked for thirty minutes.",
-          "What was cut to reach the price is now missing in the worst possible way. The team is being asked, daily, for the thing that is not in the contract, and saying no to it is making the whole programme feel smaller than what was sold.",
+          "Delivery is underway and something has given. The delivery lead wants thirty minutes.",
+          "What was cut to reach the price is now missing in the worst way. The team is asked daily for the thing that is not in the contract, and saying no is making the whole programme feel smaller than what was sold.",
         ],
       },
       {
         when: { all: ["ops_onside", "has:training"] },
         situation: [
-          "Delivery is underway and something has given. The delivery lead has asked for thirty minutes.",
-          "It is a good problem. Adoption in the pilot stores is well ahead of plan, and three regions have asked to be added early. Doing that would mean bringing the rollout forward by a quarter, and the plan does not have the people in it.",
+          "Delivery is underway, and it is a good problem. The delivery lead wants thirty minutes.",
+          "Adoption in the pilot stores is well ahead of plan and three regions want to be added early. That would pull the rollout forward by a quarter, and the plan does not have the people in it.",
         ],
       },
     ],
     advisor: AISHA,
     consider: [
-      "Which decision, months ago, created this?",
-      "What can we still afford to do about it?",
-      "What happens if the client finds out from someone other than us?",
+      "Which decision created this?",
+      "What can we still afford to do?",
+      "What if they hear it from someone else?",
     ],
     tip: "Whatever is on the table now was decided long before anyone started building.",
     question: "How do you respond?",
@@ -1535,10 +1497,10 @@ const nodes: GameNode[] = [
         id: "o-reset",
         title: "Reset expectations",
         icon: "talk",
-        description: "Go to the sponsor early, explain honestly, and re-plan together.",
-        commits: "You have to say out loud that something is not going to happen as promised.",
-        pros: ["Keeps the client inside the problem", "Cheapest fix if trust exists"],
-        cons: ["You have to admit it", "Invites closer scrutiny"],
+        description: "Go to the sponsor early, explain honestly, re-plan together.",
+        commits: "Saying out loud that a promise will not hold.",
+        pros: ["Client inside the problem", "Cheapest if trust exists"],
+        cons: ["You have to admit it", "Invites scrutiny"],
         cost: { time: 1, investment: 1 },
         outcomes: [
           {
@@ -1566,10 +1528,10 @@ const nodes: GameNode[] = [
         id: "o-absorb",
         title: "Put more people on it",
         icon: "people",
-        description: "Hold the promise by adding capacity and absorbing the cost yourselves.",
-        commits: "Comes directly out of the margin on this contract.",
-        pros: ["Client sees a programme that delivers", "Buys a reference and a relationship"],
-        cons: ["Straight out of margin", "Only possible if there is margin left"],
+        description: "Hold the promise by adding capacity and absorbing the cost.",
+        commits: "Straight out of the margin on this contract.",
+        pros: ["Client sees delivery", "Buys a reference"],
+        cons: ["Straight out of margin", "Needs margin to exist"],
         cost: { time: 1, investment: 3 },
         outcomes: [
           {
@@ -1605,8 +1567,8 @@ const nodes: GameNode[] = [
         icon: "clock",
         description: "The commitment was made. Hold everyone to it.",
         commits: "Whatever it costs the people doing the work.",
-        pros: ["The date is met", "No commercial concession"],
-        cons: ["Paid for by the delivery team", "Quality is the first thing to go"],
+        pros: ["Date is met", "No concession"],
+        cons: ["Paid by the team", "Quality goes first"],
         cost: { time: 1, investment: 1 },
         outcomes: [
           {
@@ -1639,9 +1601,9 @@ const nodes: GameNode[] = [
         title: "Quietly reduce what ships",
         icon: "block",
         description: "Trim the scope without making it a formal conversation.",
-        commits: "The client finds out eventually, on their own terms.",
-        pros: ["Immediate pressure disappears", "No difficult meeting today"],
-        cons: ["They will find out", "Turns a scope decision into a trust problem"],
+        commits: "The client finds out on their own terms.",
+        pros: ["Pressure disappears", "No hard meeting"],
+        cons: ["They will find out", "Becomes a trust problem"],
         cost: { time: 1, investment: 1 },
         outcomes: [
           {

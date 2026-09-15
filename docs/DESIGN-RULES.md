@@ -53,6 +53,14 @@ and `cost` (time and investment, 1–3). They may never see predicted effect. No
 An option that lists upsides and no costs presents itself as the answer. So does the reverse.
 → *Checked by* `validateContent()` — one without the other fails.
 
+**G3c — The briefing is scanned, not read.**
+Everything the player sees *before* deciding is on a word budget. Pros and cons are tags
+(≤6 words, max two each), a description is one line, a situation is a setup rather than a
+chapter. Outcome prose is deliberately unbudgeted — the consequence screen has nothing
+else on it and that text is the actual teaching.
+→ *Checked by* `validateContent()` — see `BUDGET` in `validate.ts`. Over budget fails the
+build, and the error names the field and the word count.
+
 **G3b — `consider` asks; it never answers.**
 The right rail poses the open questions a colleague would ask. If a line can be read as a
 recommendation, rewrite it as a question. Minimum two — one reads as an instruction.
