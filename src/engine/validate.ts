@@ -35,8 +35,14 @@ export interface Issue {
  * the opposite of a game. These are deliberately tight: pros and cons are tags,
  * not sentences, and the situation is a setup, not a chapter.
  *
- * Outcome prose is NOT budgeted. The consequence screen has nothing else on it,
- * and that text is the actual teaching.
+ * Outcome PROSE is NOT budgeted: `headline` and `detail` have the consequence
+ * screen to themselves and that text is the actual teaching. `changed` is the
+ * exception, because it is a scanned list sitting beside the meters rather than
+ * prose — the same argument that caps pros and cons at six words each.
+ *
+ * Every number below with a comment giving an observed maximum was calibrated
+ * against the content as it stood, not guessed. A budget nobody has measured
+ * either does nothing or fires on arrival, and both are worse than no budget.
  */
 const BUDGET = {
   situation: 55, // total across all paragraphs
@@ -49,13 +55,38 @@ const BUDGET = {
   concern: 11, // per entry
   blurb: 20,
   commits: 14,
+  /** one line under the question, so the same shape as `objective`. Observed max 13. */
+  prompt: 16,
+  /** the advisor's italic utterance — two lines in the rail card. Observed max 17. */
+  advisorLine: 24,
+  /** a client pull-quote, which gets its own block and may run longer. Observed max 28. */
+  saidQuote: 34,
+  /** per `changed` bullet. Observed max 12. */
+  changed: 18,
 } as const;
 
+/**
+ * Known limit: this counts whitespace-separated tokens, so an em-dashed clause
+ * — like this one — costs one word and forty characters. Every budget in this
+ * file is therefore a lower bound on rendered length, and the actual fit is
+ * measured in a browser by `verify.mjs` `checkFit`.
+ */
 function words(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-/** Words that would leak a predicted outcome into pre-decision copy. */
+/**
+ * Words that would leak a predicted outcome into pre-decision copy.
+ *
+ * Read the limit of this honestly: it is a nine-item deny-list against an
+ * unbounded space. "This is the one that gets you there" and "the safe bet"
+ * both predict an outcome and neither appears below. What the list does catch
+ * is the vocabulary a writer reaches for when they forget the rule — the
+ * dimension names and the four ways of saying "recommended" — and it now
+ * catches them on the WHOLE pre-decision surface rather than on six fields of
+ * thirteen, which was the actual defect. Widening the surface was worth more
+ * than lengthening the list; judging a sentence still needs a reviewer.
+ */
 const OUTCOME_LEAK_TERMS = [
   "winability",
   "profitability",
@@ -67,6 +98,60 @@ const OUTCOME_LEAK_TERMS = [
   "you should",
   "correct choice",
 ];
+
+/** Lowercased, punctuation stripped, whitespace collapsed. */
+function normalise(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/**
+ * The stop list used when asking whether two sentences say the same thing.
+ *
+ * Deliberately small and general: it exists so that "the" and "you" do not make
+ * every pair of maxims look alike. It is not a lexicon, and no check here
+ * depends on it being complete — a missing stop word can only make two
+ * sentences look MORE similar, which is the direction that fails safe.
+ */
+const STOP_WORDS = new Set(
+  "and are but for from had has have its not that the their them then there they this was were what when which who will with you your".split(
+    " ",
+  ),
+);
+
+/** Exported only so `validate.test.ts` can pin the calibration below against the
+    real content with the real function, rather than a second copy of it. */
+export function contentWords(text: string): Set<string> {
+  return new Set(
+    normalise(text)
+      .split(" ")
+      .filter((w) => w.length > 2 && !STOP_WORDS.has(w)),
+  );
+}
+
+/** Jaccard overlap of content words: 1 is the same sentence, 0 shares nothing. */
+export function overlap(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let shared = 0;
+  for (const w of a) if (b.has(w)) shared++;
+  return shared / (a.size + b.size - shared);
+}
+
+/**
+ * How much two lesson lines may overlap before they are the same lesson.
+ *
+ * Calibrated, not guessed: across today's sixteen missions the closest pair of
+ * `principle` lines overlaps at 0.17 and the closest pair of `because` lines at
+ * 0.18. See `validate.test.ts`, which pins the measurement so that a future
+ * author who legitimately narrows the gap finds out here rather than in a
+ * mystery build failure.
+ */
+export const LESSON_OVERLAP_LIMIT = 0.7;
+
+/** Below this many content words, overlap is noise and only exact matches count. */
+const LESSON_MIN_WORDS = 4;
 
 function conditionFlags(c: Condition | undefined): string[] {
   if (!c) return [];
@@ -82,12 +167,48 @@ function missionOutcomes(m: Mission): { outcome: Outcome; where: string }[] {
   return m.outcomes.map((outcome) => ({ outcome, where: m.id }));
 }
 
+/**
+ * Every node this one can lead to.
+ *
+ * `node.next` is the ordinary path. An outcome may also carry its own `next`,
+ * which diverts the whole game — that is how walking away from the deal skips
+ * delivery (`engine.ts`: `state.resolution?.outcome.next ?? node.next`). Both
+ * edges are real, so both have to be in the graph the validator walks;
+ * otherwise a node that only a walk-away branch reaches reads as an orphan.
+ */
+function successors(node: GameNode): string[] {
+  if (node.kind === "ending") return [];
+  const out = [(node as Exclude<GameNode, { kind: "ending" }>).next];
+  if (isMission(node)) {
+    for (const { outcome } of missionOutcomes(node)) if (outcome.next) out.push(outcome.next);
+  }
+  return out;
+}
+
 export function validateContent(content: Content): Issue[] {
   const issues: Issue[] = [];
   const err = (where: string, message: string) =>
     issues.push({ severity: "error", where, message });
   const warn = (where: string, message: string) =>
     issues.push({ severity: "warning", where, message });
+
+  /**
+   * G3: text shown BEFORE a decision may describe cost, never effect.
+   *
+   * One copy of this rule, called from every pre-decision field. There were two,
+   * one for mission-level prose and one for option cards, and they had already
+   * drifted apart in wording; two copies of a rule is two rules, and the second
+   * one is the one that stops being updated.
+   */
+  const leakCheck = (text: string | undefined, where: string, field: string) => {
+    if (!text) return;
+    const lower = text.toLowerCase();
+    for (const term of OUTCOME_LEAK_TERMS) {
+      if (lower.includes(term)) {
+        err(where, `"${field}" predicts the outcome ("${term}") — describe cost, never effect`);
+      }
+    }
+  };
 
   const nodes = Object.values(content.nodes);
   const ids = new Set(nodes.map((n) => n.id));
@@ -106,7 +227,24 @@ export function validateContent(content: Content): Issue[] {
     }
   }
 
-  // Reachability from the start node.
+  /* An outcome's own `next` is a graph edge too, and it was the only one not
+     checked. A typo there does not surface as a validator message naming the
+     field: it surfaces as `getNode: unknown node "en"` thrown from the middle
+     of the 20-second exhaustive sweep, on whichever run first happens to take
+     that branch. Same class of defect as a bad `node.next`, same severity. */
+  for (const node of nodes) {
+    if (!isMission(node)) continue;
+    for (const { outcome, where } of missionOutcomes(node)) {
+      if (outcome.next !== undefined && !ids.has(outcome.next)) {
+        err(
+          where,
+          `outcome "${outcome.id}" diverts to "${outcome.next}", which does not exist`,
+        );
+      }
+    }
+  }
+
+  // Reachability from the start node — along both kinds of edge. See `successors`.
   const reached = new Set<string>();
   const queue: string[] = [content.startNodeId];
   while (queue.length) {
@@ -114,9 +252,7 @@ export function validateContent(content: Content): Issue[] {
     if (reached.has(id) || !ids.has(id)) continue;
     reached.add(id);
     const node = content.nodes[id];
-    if (node && node.kind !== "ending") {
-      queue.push((node as Exclude<GameNode, { kind: "ending" }>).next);
-    }
+    if (node) queue.push(...successors(node));
   }
   for (const node of nodes) {
     if (!reached.has(node.id)) err(node.id, "orphan — unreachable from the start node");
@@ -230,19 +366,56 @@ export function validateContent(content: Content): Issue[] {
     }
 
     /* Every pre-decision surface is leak-checked, not just `commits`. Anything
-       the player reads BEFORE choosing may describe cost, never effect. */
-    const leakCheck = (text: string | undefined, where: string, field: string) => {
-      if (!text) return;
-      const lower = text.toLowerCase();
-      for (const term of OUTCOME_LEAK_TERMS) {
-        if (lower.includes(term)) {
-          err(where, `"${field}" predicts the outcome ("${term}") — describe cost, never effect`);
-        }
-      }
-    };
+       the player reads BEFORE choosing may describe cost, never effect.
+
+       "Every" used to mean six fields out of thirteen. The briefing screen also
+       carries a prompt, an advisor utterance, a client quote, the client's
+       concerns, the client blurb and the assessment notes — all of them read
+       before the decision, none of them checked. G3 is a property of the whole
+       pre-decision surface or it is nothing: a leak is just as damaging in the
+       advisor's mouth as in `commits`, and rather more persuasive there. */
     for (const c of m.consider ?? []) leakCheck(c, m.id, "consider");
     leakCheck(m.tip, m.id, "tip");
     leakCheck(m.objective, m.id, "objective");
+    leakCheck(m.prompt, m.id, "prompt");
+    leakCheck(m.advisorLine, m.id, "advisorLine");
+    /* `advisor.quote` is what renders when `advisorLine` is absent — the same
+       italic line in the same slot — so checking only the override would leave
+       the default open. `steer` is checked though nothing renders it today; the
+       check costs nothing and is live the moment someone wires it up. */
+    leakCheck(m.advisor?.quote, m.id, "advisor.quote");
+    leakCheck(m.advisor?.steer, m.id, "advisor.steer");
+    leakCheck(m.saidQuote?.text, m.id, "saidQuote");
+    for (const c of m.concerns ?? []) leakCheck(c, m.id, "concerns");
+    leakCheck(m.client?.blurb, m.id, "client.blurb");
+    for (const f of m.assessment ?? []) leakCheck(f.note, m.id, `assessment/${f.label}`);
+    /* And the rest of the briefing, so that "every pre-decision surface" is a
+       statement about the content rather than about a list of field names
+       somebody once wrote down. `situation` is the largest block of prose the
+       player reads before choosing and was budgeted but never leak-checked. */
+    leakCheck(m.question, m.id, "question");
+    for (const s of m.situation) leakCheck(s, m.id, "situation");
+    for (const v of m.variants ?? []) {
+      for (const s of v.situation) leakCheck(s, `${m.id}/variant`, "situation");
+    }
+    for (const ch of m.context ?? []) leakCheck(ch.value, m.id, `context/${ch.label}`);
+    /* Evidence cards and proposal components are options by another name — the
+       player picks from them, so they are pre-decision copy with the same rule.
+       `Evidence.reveals` is deliberately absent: that is what you learn AFTER
+       spending a slot, which makes it outcome prose. */
+    if (m.kind === "investigate") {
+      for (const e of m.evidence) {
+        leakCheck(e.label, `${m.id}/${e.id}`, "label");
+        leakCheck(e.question, `${m.id}/${e.id}`, "question");
+      }
+    }
+    if (m.kind === "build") {
+      for (const comp of m.components) {
+        leakCheck(comp.title, `${m.id}/${comp.id}`, "title");
+        leakCheck(comp.description, `${m.id}/${comp.id}`, "description");
+        leakCheck(comp.tag, `${m.id}/${comp.id}`, "tag");
+      }
+    }
 
     /* Density. See BUDGET. */
     const budget = (text: string | undefined, max: number, where: string, field: string) => {
@@ -261,6 +434,15 @@ export function validateContent(content: Content): Issue[] {
     for (const c of m.concerns ?? []) budget(c, BUDGET.concern, m.id, "concerns");
     for (const f of m.assessment ?? []) budget(f.note, BUDGET.note, m.id, `assessment/${f.label}`);
     if (m.client) budget(m.client.blurb, BUDGET.blurb, m.id, "client.blurb");
+    /* The four briefing fields that had no budget at all. Each of them renders
+       into a box of fixed size — one line under the question, two lines in the
+       advisor card, a pull-quote block — so an unbudgeted one does not read as
+       long, it reads as broken. */
+    budget(m.prompt, BUDGET.prompt, m.id, "prompt");
+    budget(m.advisorLine, BUDGET.advisorLine, m.id, "advisorLine");
+    budget(m.advisor?.quote, BUDGET.advisorLine, m.id, "advisor.quote");
+    budget(m.advisor?.steer, BUDGET.advisorLine, m.id, "advisor.steer");
+    budget(m.saidQuote?.text, BUDGET.saidQuote, m.id, "saidQuote");
 
     if (m.kind === "choice") {
       if (m.options.length < 2) err(m.id, "a choice needs at least two options");
@@ -276,22 +458,11 @@ export function validateContent(content: Content): Issue[] {
             "last outcome is conditional — every option needs an unconditional fallback",
           );
         }
-        const optLeak = (text: string | undefined, field: string) => {
-          if (!text) return;
-          const lower = text.toLowerCase();
-          for (const term of OUTCOME_LEAK_TERMS) {
-            if (lower.includes(term)) {
-              err(
-                `${m.id}/${o.id}`,
-                `"${field}" predicts the outcome ("${term}") — it may describe cost, never effect`,
-              );
-            }
-          }
-        };
-        optLeak(o.commits, "commits");
-        optLeak(o.description, "description");
-        for (const p of o.pros ?? []) optLeak(p, "pros");
-        for (const c of o.cons ?? []) optLeak(c, "cons");
+        leakCheck(o.commits, `${m.id}/${o.id}`, "commits");
+        leakCheck(o.description, `${m.id}/${o.id}`, "description");
+        leakCheck(o.title, `${m.id}/${o.id}`, "title");
+        for (const p of o.pros ?? []) leakCheck(p, `${m.id}/${o.id}`, "pros");
+        for (const c of o.cons ?? []) leakCheck(c, `${m.id}/${o.id}`, "cons");
 
         /* Density. A card is scanned, so pros and cons are tags, not sentences. */
         const oWhere = `${m.id}/${o.id}`;
@@ -307,14 +478,33 @@ export function validateContent(content: Content): Issue[] {
         if ((o.pros?.length ?? 0) > 2) err(oWhere, "more than two pros — a card is scanned, not read");
         if ((o.cons?.length ?? 0) > 2) err(oWhere, "more than two cons — a card is scanned, not read");
 
-        // Cards render pros above cons. One without the other reads as a verdict.
-        const hasPros = (o.pros?.length ?? 0) > 0;
-        const hasCons = (o.cons?.length ?? 0) > 0;
-        if (hasPros !== hasCons) {
-          err(
-            `${m.id}/${o.id}`,
-            "an option lists pros without cons (or the reverse) — that presents it as the right answer",
-          );
+        /* Cards render pros above cons. One without the other reads as a verdict.
+           The pairing was tested as `hasPros !== hasCons`, which is true only
+           when exactly one side is present — so an option with NEITHER passed,
+           and passed silently. That is the cheapest way to evade G3a entirely:
+           delete both lists and the rule has nothing to compare. It is also a
+           card with a title, a sentence and no grounds for choosing it, sitting
+           beside siblings that show their costs, which is how the player learns
+           to read the blank one as the safe one. Require both. */
+        /* Counted on entries that actually say something. `pros: [""]` has
+           length 1, so it satisfied every length test here while rendering a
+           bullet with nothing beside it — the same evasion `changed` allowed
+           until this pass, and the reason emptiness is now checked per entry
+           rather than per list. */
+        for (const [i, p] of (o.pros ?? []).entries()) {
+          if (!p.trim()) err(oWhere, `"pros[${i}]" is empty — it renders as a bullet with no tag`);
+        }
+        for (const [i, cc] of (o.cons ?? []).entries()) {
+          if (!cc.trim()) err(oWhere, `"cons[${i}]" is empty — it renders as a bullet with no tag`);
+        }
+        const hasPros = (o.pros ?? []).some((p) => p.trim().length > 0);
+        const hasCons = (o.cons ?? []).some((c2) => c2.trim().length > 0);
+        if (!hasPros && !hasCons) {
+          err(oWhere, "an option lists neither pros nor cons — the player is choosing blind");
+        } else if (!hasCons) {
+          err(oWhere, "an option lists pros without cons — that presents it as the right answer");
+        } else if (!hasPros) {
+          err(oWhere, "an option lists cons without pros — that presents it as the wrong answer");
         }
       }
     }
@@ -340,8 +530,125 @@ export function validateContent(content: Content): Issue[] {
     for (const { outcome, where } of missionOutcomes(m)) {
       if (!outcome.headline) err(where, `outcome "${outcome.id}" has no headline (what happened)`);
       if (!outcome.detail) err(where, `outcome "${outcome.id}" has no detail (why it happened)`);
+
+      /* `changed` answers "what is now different" — the last of G5's four parts,
+         and the only one rendered as a list. Emptiness was the only thing
+         checked, so `changed: ["", ""]` satisfied it: two bullet glyphs with no
+         text beside them. Everything below is a property of that list rather
+         than of its prose, which is why the consequence screen's deliberate
+         exemption from word budgets does not cover it. */
       if (outcome.changed.length === 0) {
         err(where, `outcome "${outcome.id}" lists nothing that changed`);
+      }
+      if (outcome.changed.length > 4) {
+        err(
+          where,
+          `outcome "${outcome.id}" lists ${outcome.changed.length} things that changed — more than four is a wall, not a list`,
+        );
+      }
+      const seenChanged = new Set<string>();
+      for (const [i, entry] of outcome.changed.entries()) {
+        const cWhere = `${where}/${outcome.id}`;
+        if (!entry.trim()) {
+          err(cWhere, `"changed[${i}]" is empty — it renders as a bullet with nothing after it`);
+          continue;
+        }
+        budget(entry, BUDGET.changed, cWhere, `changed[${i}]`);
+
+        /* A duplicate is a copy-paste that was never finished: the same line
+           twice under "What is now different", which reads as a stutter and
+           costs the player one of the few slots that carry consequence. */
+        const key = normalise(entry);
+        if (seenChanged.has(key)) {
+          err(cWhere, `"changed[${i}]" repeats an earlier entry — ${JSON.stringify(entry)}`);
+        }
+        seenChanged.add(key);
+
+        /* E5, never invent a number — and here the engine is producing the real
+           one six inches away. These bullets sit directly beneath the animated
+           meter deltas, so a hand-written "+8 winability" is a second, rival
+           source for a figure the engine owns. The moment anyone retunes
+           `effect.dims` the prose becomes a lie, and nothing will ever correct
+           it, because no test compares prose to arithmetic. State the change in
+           the world; let the meters state their own. */
+        if (/(?:^|\s)[+\-−–]\d/.test(entry)) {
+          err(cWhere, `"changed[${i}]" states a signed number — the meters own the deltas`);
+        }
+        if (/\d+\s*(?:%|points?\b|pts?\b)/i.test(entry)) {
+          err(cWhere, `"changed[${i}]" states a score movement — the meters own the deltas`);
+        }
+        if (/\d[^.]{0,24}(winability|profitability|deliverability)/i.test(entry) ||
+            /(winability|profitability|deliverability)[^.]{0,24}\d/i.test(entry)) {
+          err(cWhere, `"changed[${i}]" puts a number next to a dimension name — the meters own that`);
+        }
+      }
+    }
+  }
+
+  /* ── lesson distinctness ──────────────────────────────────────
+   * G2a requires every mission to declare a lesson, and that was the whole of
+   * the check: sixteen missions could have carried the SAME sentence and the
+   * validator, the pedagogy tests and the exhaustive sweep would all have
+   * stayed green. A curriculum is a set of distinct objectives. A game that
+   * teaches one thing sixteen times is one mission and fifteen reprises, and
+   * the failure is invisible from inside any single mission — which is exactly
+   * the kind of defect a whole-content pass exists to find.
+   *
+   * Compared three ways, because each is the cheapest evasion of the one
+   * before it: identical text, then normalised text (an exact-string check is
+   * defeated by adding a full stop), then content-word overlap (normalising is
+   * defeated by changing one word). If a reprise is ever deliberate, the two
+   * missions should share one lesson object rather than paraphrase it. */
+
+  const missionsInOrder = nodes.filter(isMission);
+
+  for (const field of ["principle", "because"] as const) {
+    const lines = missionsInOrder.map((m) => ({
+      id: m.id,
+      text: m.lesson?.[field] ?? "",
+      key: normalise(m.lesson?.[field] ?? ""),
+      bag: contentWords(m.lesson?.[field] ?? ""),
+    }));
+    for (let i = 0; i < lines.length; i++) {
+      for (let j = i + 1; j < lines.length; j++) {
+        const a = lines[i];
+        const b = lines[j];
+        if (!a.key || !b.key) continue; // absent lessons are already an error above
+        if (a.key === b.key) {
+          err(
+            a.id,
+            `lesson.${field} is the same as "${b.id}" — two missions cannot teach one sentence`,
+          );
+          continue;
+        }
+        if (a.bag.size < LESSON_MIN_WORDS || b.bag.size < LESSON_MIN_WORDS) continue;
+        const o = overlap(a.bag, b.bag);
+        if (o >= LESSON_OVERLAP_LIMIT) {
+          err(
+            a.id,
+            `lesson.${field} is a paraphrase of "${b.id}" (${o.toFixed(2)} word overlap against a ${LESSON_OVERLAP_LIMIT} limit) — make it a different lesson or share one`,
+          );
+        }
+      }
+    }
+  }
+
+  /* An outcome `lesson` exists to say something the mission's own lesson cannot
+     say on that branch. One that is byte-identical to the mission lesson is an
+     override that overrides nothing — invariably a paste that was going to be
+     edited. It is silent, because the player sees exactly the right words; what
+     is lost is the branch-specific teaching somebody meant to write. */
+  for (const m of missionsInOrder) {
+    for (const { outcome, where } of missionOutcomes(m)) {
+      if (!outcome.lesson || !m.lesson) continue;
+      if (
+        normalise(outcome.lesson.principle) === normalise(m.lesson.principle) &&
+        normalise(outcome.lesson.because) === normalise(m.lesson.because)
+      ) {
+        err(
+          where,
+          `outcome "${outcome.id}" overrides the lesson with the mission's own lesson — delete it or write the branch's lesson`,
+        );
       }
     }
   }
@@ -408,6 +715,11 @@ export function validateContent(content: Content): Issue[] {
   for (const node of nodes) {
     if (node.kind !== "setup") continue;
     if (node.options.length < 2) err(node.id, "a starting advantage needs at least two options");
+    /* Chapter 0 is the one screen that is entirely pre-decision, and it was the
+       one screen with no leak check on it. "The recommended starting position"
+       on a character-creation card is G3 broken before the game begins. */
+    for (const b of node.body) leakCheck(b, node.id, "body");
+    leakCheck(node.question, node.id, "question");
     for (const o of node.options) {
       if (o.flags.length === 0) {
         err(`${node.id}/${o.id}`, "a starting advantage that sets no flags is not an advantage");
@@ -416,6 +728,10 @@ export function validateContent(content: Content): Issue[] {
       if (!o.tradeoff) {
         err(`${node.id}/${o.id}`, "missing tradeoff — every advantage costs something");
       }
+      leakCheck(o.title, `${node.id}/${o.id}`, "title");
+      leakCheck(o.description, `${node.id}/${o.id}`, "description");
+      leakCheck(o.tradeoff, `${node.id}/${o.id}`, "tradeoff");
+      for (const s of o.strengths) leakCheck(s, `${node.id}/${o.id}`, "strengths");
       const n = words(o.description);
       if (n > BUDGET.description) {
         err(`${node.id}/${o.id}`, `"description" is ${n} words, budget is ${BUDGET.description}`);

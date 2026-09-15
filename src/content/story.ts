@@ -1358,7 +1358,13 @@ const nodes: GameNode[] = [
               "Price matched without losing margin",
               "Less in the programme than you thought it needed",
             ],
-            effect: { dims: { profit: 4, win: 4, deliver: -6 }, flags: ["descoped"] },
+            /* Was `profit +4, win +4, deliver -6`, which said that cutting scope pleases
+               the client and makes the work harder to deliver. Both are backwards: they
+               got less than they were promised, and there is less to build. The real cost
+               is that what left was load-bearing — which is what `descoped` carries into
+               month five, not a penalty invented here. Phasing beat this on all three in
+               93% of reachable states while the numbers pointed the wrong way. */
+            effect: { dims: { profit: 6, win: -2, deliver: 4 }, flags: ["descoped"] },
           },
         ],
       },
@@ -1550,7 +1556,13 @@ const nodes: GameNode[] = [
             detail:
               "Removing the exposure removes the problem. It also removes the most exciting thing you promised, and you have to go back and explain why. They accept it, and they remember it.",
             changed: ["Exposure removed", "A visible promise withdrawn before you even started"],
-            effect: { dims: { deliver: 9, win: -6, profit: 3 }, flags: ["descoped"] },
+            /* Deliverability above re-pricing's +9, deliberately: re-pricing FUNDS the
+               exposure and removing it ELIMINATES it, so the safer programme has to read
+               as safer. It did not, and `o-repriceRisk` therefore beat this option on all
+               three dimensions in 93% of reachable states — a fake choice the authored
+               best-versus-worst detector could not see. The cost is unchanged and real:
+               a promise withdrawn, and `descoped`, which month five reads. */
+            effect: { dims: { deliver: 14, win: -6, profit: 3 }, flags: ["descoped"] },
           },
         ],
       },
@@ -1592,7 +1604,7 @@ const nodes: GameNode[] = [
         "Every option here cost something — margin, scope, or goodwill. All of them cost less now than the same problem will cost in month five of delivery.",
       watchFor: "When a review flags something, notice whether you are solving it or just recording it.",
     },
-    next: "m9b",
+    next: "m9a",
   },
 
   /* ══════════════════════════ CHAPTER 5 ══════════════════════════ */
@@ -2275,6 +2287,280 @@ const nodes: GameNode[] = [
   },
 
   /**
+   * The beat the game did not have: the client decides.
+   *
+   * `docs/STRATEGY.md` already said it — "we have no 'did we win it?' beat at all; the
+   * contract is signed inside m9's outcome prose". m9b is the SELLER's gate, do we take
+   * it. Nothing anywhere adjudicated whether they wanted us, which is why Winability was
+   * a one-way ratchet: it entered m9 at 83–100 and m10c at 97–100, and "You did not win
+   * the work" fired on 0.15% of runs. A game in which a competently run pursuit always
+   * wins teaches that competence converts. It does not, and losing well is most of the
+   * job — which is the entire reason qualification discipline exists.
+   *
+   * So this is the award decision, and it can be lost. The loss is CAUSED, never rolled:
+   * `m9a-lost` fires when the player never built a reason to be preferred — no evidence
+   * of their own, Operations not brought inside, the problem never reframed, the rival's
+   * gap never found — and their Winability is not high enough to carry them anyway. It
+   * carries `next: "end"`, so the run stops here, as walking away does.
+   *
+   * The gate is on flags alone, deliberately. A first draft added `max: { win: 92 }` to
+   * tune the rate down, which would have made this the first condition in the game to
+   * read a meter — and `validate.ts` immediately warned that the sweep's dedup drops
+   * dimensions, so coverage would have silently stopped being exhaustive. `analysis.ts`
+   * can now bucket a gated dimension into the key, so the option is there; it is not
+   * taken, because the flag clause alone fires on 18.6% of random runs and the target was
+   * ~20%. The ceiling would have tuned it DOWN to 10.7%. Flag-only is both closer to the
+   * mark and cheaper to reason about.
+   *
+   * `finalVerdict` does need a `lost` branch ahead of `walked_away`: a pursuit lost at the
+   * award can end with Winability at 85 and everything else healthy, which the old
+   * `win < 40` branch could never carry.
+   *
+   * It also pays two domain debts. Procurement existed only as weather — six mentions,
+   * always acting from off-stage, never a person you could engage — so Declan Foyle has
+   * a name and a mandate. And the price defence was always qualitative; `o-value` is the
+   * first time the game lets the player argue from the client's own arithmetic, which is
+   * how a premium is actually defended.
+   */
+  {
+    kind: "choice",
+    id: "m9a",
+    chapter: 4,
+    stage: "deal",
+    title: "Their decision, not yours",
+    eyebrow: "The award",
+    objective: "Give them a reason to prefer you that survives a scorecard.",
+    minutes: 4,
+    hero: "hero-boardroom",
+    situation: [
+      "Declan Foyle in procurement has a scorecard, a savings target and two other proposals.",
+      "Sarah wants you. Sarah does not score the submissions.",
+    ],
+    variants: [
+      {
+        when: { none: ["evidenced", "ops_onside", "reframed", "knows:rival_gap"] },
+        situation: [
+          "Declan Foyle in procurement has a scorecard, a savings target and two other proposals.",
+          "Read your own submission as he will: a capable firm proposing sensible work. Nothing in it says why it has to be you.",
+        ],
+      },
+      {
+        when: { all: ["ops_onside", "evidenced"] },
+        situation: [
+          "Declan Foyle in procurement has a scorecard, a savings target and two other proposals.",
+          "You are the only bidder whose proposal names the systems that have to change and the people who own them. That is hard to score down.",
+        ],
+      },
+    ],
+    advisorLine: "Foyle is not the obstacle. He has a number to hit and nobody has helped him hit it.",
+    advisor: RIYA_DEAL,
+    consider: [
+      "What is he actually comparing us against?",
+      "Whose numbers is our case built from?",
+      "Who loses if he picks us?",
+    ],
+    tip: "I have lost two of these to firms with a worse answer and a better-scored submission.",
+    prompt: "Four ways to be chosen.",
+    question: "How do you win the decision?",
+    options: [
+      {
+        id: "o-value",
+        title: "Build the case in their numbers",
+        icon: "chart",
+        description: "Returns cost Orion a known amount. Show what half of it is worth.",
+        commits: "You are held to an arithmetic you wrote down.",
+        pros: ["Scores on value", "Hard to argue with"],
+        cons: ["Needs their data", "A number you must hit later"],
+        cost: { time: 3, investment: 1 },
+        outcomes: [
+          {
+            id: "m9a-lost-value",
+            when: { none: ["evidenced", "ops_onside", "reframed", "knows:rival_gap"] },
+            tone: "hard",
+            headline: "Your arithmetic, their scepticism.",
+            detail:
+              "You have built a payback case out of numbers you assumed rather than numbers they gave you. Foyle marks it unevidenced and scores the cheaper bid higher. The award goes elsewhere.",
+            changed: ["Not selected", "A quarter of pursuit cost written off"],
+            effect: { dims: { win: -30, profit: -8 }, flags: ["lost"] },
+            next: "end",
+            lesson: {
+              principle: "A value case built from your assumptions is a brochure. Built from theirs, it is an argument.",
+              because:
+                "You never had their complaint data, so every figure in the case was yours to defend and theirs to doubt. The cheaper bid did not have to be better, only harder to fault.",
+              watchFor: "Before promising a payback, ask whose number the baseline is.",
+            },
+          },
+          {
+            id: "m9a-value-strong",
+            when: { any: ["evidenced", "knows:real_pain"] },
+            tone: "strong",
+            headline: "You are the only bid with a number attached.",
+            detail:
+              "You show Foyle what the current failure costs from his own complaint data, and what removing half of it is worth. He does not have to like you. He has to justify a choice, and you have just written his justification for him.",
+            changed: ["Selected", "A payback number now in the contract"],
+            effect: { dims: { win: 12, profit: 4 }, flags: ["won", "outcome_based"], badge: "connected_dots" },
+          },
+          {
+            id: "m9a-value-thin",
+            tone: "mixed",
+            headline: "A good case, lightly evidenced.",
+            detail:
+              "The structure is right and the baseline is soft. Foyle scores it above the cheapest bid and below where it could have been, and asks you to stand behind the number in writing.",
+            changed: ["Selected", "Committed to a payback you estimated"],
+            effect: { dims: { win: 6, profit: -2 }, flags: ["won", "outcome_based"] },
+          },
+        ],
+      },
+      {
+        id: "o-criteria",
+        title: "Ask for the criteria and re-cut",
+        icon: "search",
+        description: "Find out how it is being scored, then answer that.",
+        commits: "A week spent answering their form rather than your pitch.",
+        pros: ["Answers the real test", "Cheap to do"],
+        cons: ["A week gone", "Reads as tactical"],
+        cost: { time: 2, investment: 1 },
+        outcomes: [
+          {
+            id: "m9a-lost-criteria",
+            when: { none: ["evidenced", "ops_onside", "reframed", "knows:rival_gap"] },
+            tone: "hard",
+            headline: "You learn exactly how you lost.",
+            detail:
+              "Foyle sends the weightings, and they are unkind: forty percent on demonstrated delivery of comparable systems. You cannot manufacture that in a week, and the firm that can is already ahead of you.",
+            changed: ["Not selected", "You know precisely why"],
+            effect: { dims: { win: -28, profit: -4 }, flags: ["lost", "knows:criteria"] },
+            next: "end",
+            lesson: {
+              principle: "Evaluation criteria are public if you ask. They are decisive whether you ask or not.",
+              because:
+                "Asking in the last week told you what asking in the first week would have changed. Nothing about the weightings was secret; you simply bid against an imagined test.",
+              watchFor: "Ask how it will be scored before you decide what to write.",
+            },
+          },
+          {
+            id: "m9a-criteria-good",
+            tone: "strong",
+            headline: "You answer the test they are actually setting.",
+            detail:
+              "The weightings put more on operational continuity than on price. You already have Operations in the proposal, so the re-cut is a reordering rather than a rewrite. Foyle scores you first on two of four criteria.",
+            changed: ["Selected", "You know how you were scored"],
+            effect: { dims: { win: 10, profit: 1 }, flags: ["won", "knows:criteria"], badge: "good_question" },
+          },
+        ],
+      },
+      {
+        id: "o-deliverer",
+        title: "Put the delivery lead in the room",
+        icon: "people",
+        description: "Aisha answers their questions instead of you.",
+        commits: "She will say what she actually thinks.",
+        pros: ["Credible on delivery", "Nothing oversold"],
+        cons: ["You lose control of the room", "She will not embellish"],
+        cost: { time: 1, investment: 2 },
+        outcomes: [
+          {
+            id: "m9a-lost-deliverer",
+            when: { none: ["evidenced", "ops_onside", "reframed", "knows:rival_gap"] },
+            tone: "hard",
+            headline: "She is honest, and it costs you the deal.",
+            detail:
+              "Asked how the changes reach production, Aisha says truthfully that it depends on teams nobody has spoken to yet. It is the correct answer and it is the one Foyle scores down. The award goes to the bid that claimed certainty.",
+            changed: ["Not selected", "Nothing was oversold"],
+            effect: { dims: { win: -26, deliver: 4 }, flags: ["lost"] },
+            next: "end",
+            lesson: {
+              principle: "Honesty in the room is only an asset if the homework behind it is done.",
+              because:
+                "Aisha could only describe the position you had actually built. Putting your most truthful person in front of the client is a strength when there is something to be truthful about, and an admission when there is not.",
+              watchFor: "Before bringing delivery in, ask what they will have to admit.",
+            },
+          },
+          {
+            id: "m9a-deliverer-good",
+            when: { any: ["ops_onside", "has:ops_workstream"] },
+            tone: "strong",
+            headline: "She names the three teams by name, and the room relaxes.",
+            detail:
+              "Aisha walks through how the changes reach production, which teams sign them off, and what she has already agreed with Marcus. Foyle stops asking about risk. It is the shortest scoring session of the three.",
+            changed: ["Selected", "Delivery credibility established before signature"],
+            effect: { dims: { win: 9, deliver: 6 }, flags: ["won"], badge: "held_nerve" },
+          },
+          {
+            id: "m9a-deliverer-plain",
+            tone: "mixed",
+            headline: "Believable, and short of decisive.",
+            detail:
+              "She is straight about what is agreed and what is not. Foyle believes her, which is worth more than it looks, and still scores the incumbent higher on price.",
+            changed: ["Selected", "Credible but not preferred on price"],
+            effect: { dims: { win: 4, deliver: 3 }, flags: ["won"] },
+          },
+        ],
+      },
+      {
+        id: "o-submit",
+        title: "Submit it and let it be scored",
+        icon: "clock",
+        description: "The proposal is good. Stop selling and let procurement work.",
+        commits: "Whatever is in the document is your whole case.",
+        pros: ["No new commitments", "Respects their process"],
+        cons: ["You find out with everyone else", "No reason to prefer you"],
+        cost: { time: 1, investment: 1 },
+        outcomes: [
+          {
+            id: "m9a-lost-submit",
+            when: { none: ["evidenced", "ops_onside", "reframed", "knows:rival_gap"] },
+            tone: "hard",
+            headline: "Three capable proposals, and yours is the dearest.",
+            detail:
+              "With nothing to separate the bids on substance, Foyle separates them on price, which is what a scorecard does when every column is level. You are told on a Thursday, by email.",
+            changed: ["Not selected", "Nothing in the submission said why it had to be you"],
+            effect: { dims: { win: -32, profit: -6 }, flags: ["lost"] },
+            next: "end",
+            lesson: {
+              principle: "If nothing distinguishes the bids, price decides. Price always decides by default.",
+              because:
+                "Every week of this pursuit was a chance to build a reason to be preferred, and the submission records how many of them you took. Respecting the process is not a substitute for giving it something to score.",
+              watchFor: "Ask what is in the proposal that a competitor could not write.",
+            },
+          },
+          {
+            id: "m9a-submit-good",
+            when: { all: ["evidenced", "ops_onside"] },
+            tone: "strong",
+            headline: "It scores well without you in the room.",
+            detail:
+              "The proposal argues from their data and names the people who have to change, so it does not need you present to be persuasive. That is the test of a document, and it passes it.",
+            changed: ["Selected", "Won on the document alone", "Nothing promised beyond the proposal"],
+            /* Deliverability, because submitting creates no obligation the other three do:
+               `o-value` commits to a payback figure, `o-criteria` to a re-cut, `o-deliverer`
+               to whatever Aisha said in the room. Delivery starts from a clean sheet. That
+               is the honest upside of not selling harder, and without it this option lost
+               to the other three on all three dimensions in 76–85% of reachable states. */
+            effect: { dims: { win: 8, profit: 3, deliver: 4 }, flags: ["won"] },
+          },
+          {
+            id: "m9a-submit-plain",
+            tone: "mixed",
+            headline: "You win it, narrowly, on Sarah's preference.",
+            detail:
+              "Foyle scores the bids close to level and Sarah's recommendation carries it. You have the work and you have learned nothing about why, which is a poor position to be in next time.",
+            changed: ["Selected", "Won on the sponsor's preference, not the scorecard"],
+            effect: { dims: { win: 3, deliver: 4 }, flags: ["won"] },
+          },
+        ],
+      },
+    ],
+    lesson: {
+      principle: "A client does not choose the best proposal. They choose the one they can defend choosing.",
+      because:
+        "Somebody has to justify this in writing to people who were never in the room. Everything that makes that easy for them — their own numbers, a named owner for every change, a criterion you score first on — is worth more than another page about your capability.",
+      watchFor: "Ask who has to defend this decision internally, and what you have given them.",
+    },
+    next: "m9b",
+  },
+
+  /**
    * PRD M17 — the deal decision, and the reason it has to exist:
    *
    *   "Walking away must sometimes be a good decision. Otherwise the game teaches:
@@ -2785,6 +3071,7 @@ export const story: Content = {
     "m7b",
     "m8",
     "m9",
+    "m9a",
     "m9b",
     "m10",
     "m10b",
@@ -2816,8 +3103,13 @@ export const story: Content = {
       number: 4,
       label: "Deal",
       title: "Make the deal work",
-      missionIds: ["m8", "m9", "m9b"],
-      steps: ["Handle the price", "Face the risk review", "Take it or leave it"],
+      missionIds: ["m8", "m9", "m9a", "m9b"],
+      steps: [
+        "Handle the price",
+        "Face the risk review",
+        "Win the decision",
+        "Take it or leave it",
+      ],
     },
     {
       number: 5,

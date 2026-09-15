@@ -505,6 +505,27 @@ const LEDGER_RULES: LedgerRule[] = [
     tone: "neutral",
     icon: "scale",
   },
+  /* The award, and what it was won on.
+     `won` and `knows:criteria` could have been listed as narrative-only flags — the
+     cheap option, and the wrong one. What you were chosen for is exactly the sort of
+     thing a pursuit lead should be able to read off their own position, and knowing the
+     evaluation criteria is an asset you carry into the next bid. Putting them here also
+     means `ENGINE_READ_FLAGS` picks them up for free, since it is derived from these
+     tables rather than hand-listed. */
+  {
+    when: { all: ["won"] },
+    label: "They chose you",
+    detail: "The award is yours. Everything after this is about keeping what you said.",
+    tone: "good",
+    icon: "check",
+  },
+  {
+    when: { all: ["knows:criteria"] },
+    label: "How you were scored",
+    detail: "You have their evaluation criteria and the weightings. Most bidders never ask.",
+    tone: "good",
+    icon: "scale",
+  },
   // What you know
   {
     when: { all: ["knows:real_pain"] },
@@ -714,8 +735,9 @@ export function causalThreads(state: GameState): CausalThread[] {
  * suppresses a real check the moment a ledger rule is deleted and its entry left behind.
  */
 export const ENGINE_READ_FLAGS: ReadonlySet<string> = new Set([
-  // the final verdict's one branch
+  // the final verdict's two branches
   "walked_away",
+  "lost",
   ...LEDGER_RULES.flatMap((r) => [
     ...(r.when.all ?? []),
     ...(r.when.any ?? []),
@@ -730,6 +752,23 @@ export function finalVerdict(
   flags: readonly string[] = [],
 ): { title: string; summary: string } {
   const { win, profit, deliver } = dims;
+
+  /**
+   * Losing comes first, because it is the one ending whose cause is not in the numbers.
+   *
+   * A pursuit lost at the award can end with Winability at 85 and every other meter
+   * healthy — the old `win < 40` branch below could never carry it, which is why it fired
+   * on 0.15% of runs while the game had no losing beat at all. This reads the flag the
+   * award decision sets, so the verdict matches what happened rather than inferring it
+   * from three numbers that stopped moving.
+   */
+  if (flags.includes("lost")) {
+    return {
+      title: "They chose someone else",
+      summary:
+        "Somebody had to justify this choice in writing, and you did not give them the argument. That is the whole job of a pursuit: not to be the best firm in the room, but to be the one they can defend picking. The work you did was real. It was not, in the end, distinguishable.",
+    };
+  }
 
   if (flags.includes("walked_away")) {
     return {

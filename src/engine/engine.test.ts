@@ -12,6 +12,7 @@ import {
 } from "./engine";
 import {
   findDominantOptions,
+  findRealisedDominance,
   pastSetup,
   reachableExtremes,
   playMission,
@@ -70,8 +71,8 @@ describe("content validity", () => {
     expect(other).toEqual([]);
   });
 
-  it("has sixteen missions", () => {
-    expect(content.missionOrder).toHaveLength(16);
+  it("has seventeen missions", () => {
+    expect(content.missionOrder).toHaveLength(17);
   });
 
   /**
@@ -229,6 +230,7 @@ describe("the game teaches what it claims to teach", () => {
     ["o-defend"],
     ["o-discount"],
     ["o-accept-risk"],
+    ["o-submit"],
     ["o-proceed"],
     ["o-push"],
     ["o-contractors"],
@@ -249,6 +251,7 @@ describe("the game teaches what it claims to teach", () => {
     ["o-shore-deliver"],
     ["o-phase"],
     ["o-mitigate"],
+    ["o-value"],
     ["o-modify"],
     ["o-reset"],
     ["o-slip"],
@@ -269,6 +272,7 @@ describe("the game teaches what it claims to teach", () => {
     ["o-sharpen-win"],
     ["o-discount"],
     ["o-mitigate"],
+    ["o-criteria"],
     ["o-proceed"],
     ["o-absorb"],
     ["o-contractors"],
@@ -282,7 +286,7 @@ describe("the game teaches what it claims to teach", () => {
   it("all three reach the ending", () => {
     for (const s of [reckless, considered, discounter]) {
       expect(s.phase).toBe("ending");
-      expect(s.history).toHaveLength(16);
+      expect(s.history).toHaveLength(17);
     }
   });
 
@@ -334,6 +338,7 @@ describe("the game teaches what it claims to teach", () => {
       ["o-shore-deliver"],
       ["o-phase"],
       ["o-mitigate"],
+      ["o-value"],
       ["o-modify"],
       ["o-reset"],
       ["o-slip"],
@@ -375,6 +380,60 @@ describe("the game teaches what it claims to teach", () => {
    * So the SAME action has to resolve two ways, decided entirely by the position the
    * player built. Both of these walk away at m9b; one is praised and one is not.
    */
+  /**
+   * Losing the work, which for most of this game's life was not possible.
+   *
+   * "You did not win the work" fired on 0.15% of random runs and `win` never fell below
+   * 55 across every reachable ending, because nothing anywhere adjudicated whether the
+   * client wanted you — the contract was signed inside an outcome's prose. A game in
+   * which a competently run pursuit always wins teaches that competence converts.
+   *
+   * The loss is CAUSED, not rolled: this run never evidenced its argument, never brought
+   * Operations inside, never reframed the problem and never found the rival's gap, so
+   * there is nothing in its submission that another firm could not have written. Every
+   * option at the award beat loses for such a run, which is the point — by then it is too
+   * late to be chosen, and the lesson is about the eleven beats before it.
+   */
+  describe("losing the work", () => {
+    const UNDIFFERENTIATED: string[][] = [
+      ["o-apex"],
+      ["ev-rivals", "ev-budget"],
+      ["o-campaign"],
+      ["o-pursue"],
+      ["o-hold"],
+      ["c-reference", "c-stakeholders"],
+      ["o-asked"],
+      ["o-conventional"],
+      ["c-journey", "c-platform", "c-pilot"],
+      ["o-defend"],
+      ["o-discount"],
+      ["o-accept-risk"],
+      ["o-submit"],
+    ];
+    const lost = playScript(content, UNDIFFERENTIATED, "s-builder");
+
+    it("ends the run at the award, skipping the whole delivery chapter", () => {
+      expect(lost.phase).toBe("ending");
+      expect(lost.history).toHaveLength(13);
+      expect(lost.flags).toContain("lost");
+    });
+
+    it("gives the loss its own verdict rather than inferring one from the meters", () => {
+      // Winability is 57 here, so the old `win < 40` branch could never have carried it.
+      expect(lost.dims.win).toBeGreaterThan(40);
+      expect(finalVerdict(lost.dims, lost.flags).title).toBe("They chose someone else");
+    });
+
+    it("is caused: the same run with one differentiator is not lost", () => {
+      // c-benchmark at m5b sets `knows:rival_gap`, and that alone is enough.
+      const withOne = [...UNDIFFERENTIATED];
+      withOne[5] = ["c-benchmark", "c-reference"];
+      const survived = playScript(content, withOne, "s-builder");
+      expect(survived.flags).not.toContain("lost");
+      expect(survived.nodeId).not.toBe("end");
+    });
+  });
+
   describe("walking away", () => {
     const walkFromBadDeal = playScript(content, [
       ["o-northwind"],
@@ -389,6 +448,7 @@ describe("the game teaches what it claims to teach", () => {
       ["o-defend"],
       ["o-discount"],
       ["o-accept-risk"],
+      ["o-criteria"],
       ["o-walk"],
     ]);
 
@@ -405,13 +465,14 @@ describe("the game teaches what it claims to teach", () => {
       ["o-shore-deliver"],
       ["o-phase"],
       ["o-mitigate"],
+      ["o-value"],
       ["o-walk"],
     ]);
 
     it("ends the game there, skipping delivery entirely", () => {
       for (const s of [walkFromBadDeal, walkFromGoodDeal]) {
         expect(s.phase).toBe("ending");
-        expect(s.history).toHaveLength(13);
+        expect(s.history).toHaveLength(14);
         expect(s.flags).toContain("walked_away");
       }
     });
@@ -448,6 +509,52 @@ describe("the game teaches what it claims to teach", () => {
     );
     expect(verdicts.size).toBeGreaterThanOrEqual(4);
   });
+});
+
+/**
+ * The fake-choice test that means something.
+ *
+ * `findDominantOptions` asks whether an option's worst AUTHORED result beats a sibling's
+ * best AUTHORED result — a composite belonging to no reachable state, because an option's
+ * worst `win` and worst `deliver` usually come from different branches. It returned zero
+ * findings while three options beat their siblings on all three dimensions in over 90% of
+ * the states players can actually be in.
+ *
+ * `findRealisedDominance` prices every option in every reachable state and compares what
+ * really happens. What it found was not a balance problem but two domain errors and a
+ * clamp artefact:
+ *
+ *   · m8 `o-rescope` read `profit +4, win +4, deliver -6` — cutting scope pleasing the
+ *     client and making the work harder to deliver. Both backwards.
+ *   · m9 `o-rescope-risk` removed an exposure and scored LOWER on Deliverability than
+ *     re-pricing, which merely funds it.
+ *   · m8 `o-phase` beat `o-discount` on all three in 90% of states purely because
+ *     Winability was pinned near 100 by then, so the discount's one advantage was eaten
+ *     by the clamp. Adding the losable award beat fixed that without touching a number.
+ */
+describe("no fake choices, in the states that occur", () => {
+  it("has no option that dominates a sibling in 90% of reachable states", () => {
+    const findings = findRealisedDominance(content, 0.9);
+    expect(findings.map((f) => `${f.mission}: ${f.note}`)).toEqual([]);
+  }, 180_000);
+
+  /**
+   * Reported, not enforced. A relation in the 75–90% band is usually a legitimately
+   * strong option rather than a fake choice, and the threshold is a judgement — but an
+   * unwatched list is how these got to 90% in the first place.
+   */
+  it("reports weaker dominance relations for review", () => {
+    const findings = findRealisedDominance(content, 0.75);
+    if (findings.length) {
+      const lines = findings.map(
+        (f) =>
+          `  ${f.mission}  ${f.dominant} > ${f.dominated}  ` +
+          `${Math.round(f.share * 100)}% of ${f.comparedIn}`,
+      );
+      console.log(["", "dominance relations in the 75-90% band:", ...lines, ""].join("\n"));
+    }
+    expect(findings.length).toBeLessThanOrEqual(6);
+  }, 180_000);
 });
 
 describe("no fake choices", () => {
@@ -573,7 +680,7 @@ describe("engine mechanics", () => {
       if (!selection) break;
       s = playMission(s, content, selection);
     }
-    expect(s.history).toHaveLength(16);
+    expect(s.history).toHaveLength(17);
     expect(s.phase).toBe("ending");
   });
 });

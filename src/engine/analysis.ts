@@ -102,8 +102,10 @@ function suffixReadFlags(content: Content): Map<string, Set<string>> {
  *
  * Three deliberate exclusions, each of which keeps this exact rather than approximate:
  *
- *  1. DIMENSIONS. No branching condition reads a dimension value — `validate.ts` warns
- *     if that ever changes. Including them produced ~4.1M states and exhausted the heap.
+ *  1. DIMENSIONS NOTHING GATES ON. Including all three unbucketed produced ~4.1M states
+ *     and exhausted the heap; an unpruned walk over full dimension state still dies at
+ *     2 GB. So only dimensions some condition actually reads enter the key, bucketed —
+ *     see `gatedDimensions`. While no condition reads one, this behaves as it always did.
  *  2. FLAGS NOTHING READS. Purely narrative flags (`signed`, `conventional`…) cannot
  *     affect any branch.
  *  3. FLAGS NOTHING READS *FROM HERE ON*. `knows:real_pain` matters up to the solution
@@ -116,13 +118,67 @@ function suffixReadFlags(content: Content): Map<string, Set<string>> {
  * walking away from the deal skips delivery — so the frontier holds states at different
  * nodes at the same time.
  */
-function stateKey(s: GameState, read: Set<string> | undefined): string {
+function stateKey(
+  s: GameState,
+  read: Set<string> | undefined,
+  gatedDims: readonly DimensionId[] = [],
+): string {
   const flags = read ? s.flags.filter((f) => read.has(f)) : [...s.flags];
-  return `${s.nodeId}|${flags.sort().join(",")}`;
+  const dims = gatedDims.map((d) => `${d}${Math.floor(s.dims[d] / DIM_BUCKET)}`).join("");
+  return `${s.nodeId}|${flags.sort().join(",")}|${dims}`;
 }
 
-/** Hard ceiling, so a future content change cannot silently OOM the test run. */
-const MAX_FRONTIER = 200_000;
+/**
+ * Bucket width for a dimension that some condition reads.
+ *
+ * A dimension in the key un-collapses the state space: two states differing by one point
+ * of Winability become different states, and the frontier multiplies. Ten-point buckets
+ * keep it tractable while staying sound for a threshold on a bucket boundary, which is
+ * where thresholds should be set for exactly this reason. Unbucketed is not an option —
+ * an exhaustive walk over full dimension state exhausts 2 GB and dies.
+ */
+const DIM_BUCKET = 10;
+
+/**
+ * Which dimensions any condition in the content actually gates on.
+ *
+ * Today: none, so `stateKey` behaves exactly as it always has and the sweep stays exact
+ * for free. The moment a condition carries `min` or `max` — which the losable-pursuit beat
+ * needs — that dimension has to enter the key, or two states that branch differently
+ * collapse into one and the sweep silently stops being exhaustive while still reporting
+ * complete coverage. `validate.ts` warns when this set becomes non-empty; this makes the
+ * sweep survive it rather than merely complain.
+ */
+function gatedDimensions(content: Content): DimensionId[] {
+  const gated = new Set<DimensionId>();
+  const note = (c: Condition | undefined) => {
+    if (!c) return;
+    for (const d of DIMENSIONS) {
+      if (c.min?.[d] !== undefined || c.max?.[d] !== undefined) gated.add(d);
+    }
+  };
+  for (const node of Object.values(content.nodes)) {
+    if (!isMission(node)) continue;
+    for (const v of node.variants ?? []) note(v.when);
+    if (node.kind === "choice") {
+      for (const o of node.options) {
+        note(o.requires);
+        for (const oc of o.outcomes) note(oc.when);
+      }
+    } else {
+      for (const oc of node.outcomes) note(oc.when);
+    }
+  }
+  return DIMENSIONS.filter((d) => gated.has(d));
+}
+
+/**
+ * Hard ceiling, so a future content change cannot silently OOM the test run.
+ *
+ * Raised from 200k when dimension bucketing arrived: a gated dimension multiplies the
+ * frontier by roughly the number of occupied buckets, and m8 already holds ~42k states.
+ */
+const MAX_FRONTIER = 600_000;
 
 /** Every selection a player could legally make at this mission from this state. */
 export function possibleSelections(mission: Mission, state: GameState): string[][] {
@@ -245,6 +301,7 @@ function widen(range: Record<DimensionId, DimRange>, dims: Record<DimensionId, n
 }
 
 export function sweep(content: Content): SweepResult {
+  const gatedDims = gatedDimensions(content);
   const result: SweepResult = {
     statesAtMission: {},
     firedOutcomes: new Set(),
@@ -258,7 +315,7 @@ export function sweep(content: Content): SweepResult {
 
   const suffix = suffixReadFlags(content);
   const start = openingState(content);
-  let frontier = new Map<string, GameState>([[stateKey(start, suffix.get(start.nodeId)), start]]);
+  let frontier = new Map<string, GameState>([[stateKey(start, suffix.get(start.nodeId), gatedDims), start]]);
   let truncated = false;
 
   /* The frontier can hold states sitting at DIFFERENT nodes, because an outcome may
@@ -288,7 +345,7 @@ export function sweep(content: Content): SweepResult {
               after = advance(after, content);
             }
             for (const f of after.flags) result.reachableFlags.add(f);
-            const key = stateKey(after, suffix.get(after.nodeId));
+            const key = stateKey(after, suffix.get(after.nodeId), gatedDims);
             if (!next.has(key)) next.set(key, after);
           }
         }
@@ -326,7 +383,7 @@ export function sweep(content: Content): SweepResult {
           if (fired) result.firedOutcomes.add(fired.outcomeId);
           for (const f of after.flags) result.reachableFlags.add(f);
 
-          const key = stateKey(after, suffix.get(after.nodeId));
+          const key = stateKey(after, suffix.get(after.nodeId), gatedDims);
           if (next.has(key)) continue;
           if (next.size >= MAX_FRONTIER) {
             truncated = true;
@@ -437,6 +494,14 @@ export interface DominanceFinding {
  * option's best possible result on all three dimensions at once. There is then
  * no context in which picking the other one is defensible, which is exactly
  * the "A is timid, B is correct" pattern the design forbids.
+ *
+ * **This test is much weaker than it looks, and `findRealisedDominance` below is the one
+ * to trust.** It builds each option's per-dimension *worst* across its whole outcome list
+ * and compares against a sibling's per-dimension *best* — a composite profile that no
+ * single game state can produce, because the worst `win` and the worst `deliver` typically
+ * come from different branches. It therefore returns zero findings on content where three
+ * options dominate their siblings in over 90% of the states that actually occur. Kept
+ * because it is cheap and a positive result is still conclusive.
  */
 export function findDominantOptions(content: Content): DominanceFinding[] {
   const findings: DominanceFinding[] = [];
@@ -475,4 +540,139 @@ export function findDominantOptions(content: Content): DominanceFinding[] {
   }
 
   return findings;
+}
+
+/* ──────────────── realised dominance, over states that occur ──────────────── */
+
+export interface RealisedDominance extends DominanceFinding {
+  /** states where A weakly beat B on all three dimensions */
+  dominatedIn: number;
+  /** states where both options were legal and could be compared */
+  comparedIn: number;
+  share: number;
+}
+
+/**
+ * The dominance test that means something: resolve every option in every state that
+ * actually occurs, and compare what really happened.
+ *
+ * `findDominantOptions` asks whether an option's worst *authored* result beats a sibling's
+ * best *authored* result. That composite never occurs — an option's worst `win` and worst
+ * `deliver` usually come from different branches, so the profile it compares belongs to no
+ * reachable state. It returns zero findings on content where three options beat their
+ * siblings on all three dimensions in over 90% of real states.
+ *
+ * This walks the same frontier the sweep walks, and at each choice mission prices every
+ * option for real from each reachable entry state. `share` is the fraction of comparable
+ * states in which A weakly dominated B and strictly beat it somewhere — so a finding says
+ * "in 90% of the situations a player can actually be in, this option is free money".
+ *
+ * `CLAUDE.md`: fix a fake choice by giving the weaker option a genuine compensating
+ * upside, never by nerfing the stronger one.
+ */
+export function findRealisedDominance(content: Content, threshold = 0.9): RealisedDominance[] {
+  const gatedDims = gatedDimensions(content);
+  const suffix = suffixReadFlags(content);
+  const start = openingState(content);
+  let frontier = new Map<string, GameState>([[stateKey(start, suffix.get(start.nodeId), gatedDims), start]]);
+
+  /** mission → "a>b" → [dominated, compared] */
+  const tally = new Map<string, Map<string, [number, number]>>();
+
+  let guard = 0;
+  while (frontier.size > 0 && guard++ < 200) {
+    const next = new Map<string, GameState>();
+    const byNode = new Map<string, GameState[]>();
+    for (const state of frontier.values()) {
+      const list = byNode.get(state.nodeId);
+      if (list) list.push(state);
+      else byNode.set(state.nodeId, [state]);
+    }
+
+    for (const [nodeId, states] of byNode) {
+      const node = getNode(content, nodeId);
+
+      if (node.kind === "setup") {
+        for (const state of states) {
+          for (const option of node.options) {
+            let after = chooseSetup(state, content, option.id);
+            let g = 0;
+            while ((after.phase === "interlude" || after.phase === "brief") && g++ < 20) {
+              after = advance(after, content);
+            }
+            const key = stateKey(after, suffix.get(after.nodeId), gatedDims);
+            if (!next.has(key)) next.set(key, after);
+          }
+        }
+        continue;
+      }
+      if (!isMission(node)) continue;
+
+      const mission = node;
+      const pairs = tally.get(mission.id) ?? new Map<string, [number, number]>();
+      tally.set(mission.id, pairs);
+
+      for (const state of states) {
+        /* Price every legal selection once from this state, then compare the results.
+           The frontier must advance for EVERY mission kind — skipping `investigate` and
+           `build` here killed the walk at m2 and made the whole detector report nothing
+           in 13ms. Only the pairwise comparison is choice-only, because "this option
+           dominates that option" is not a question a multi-pick mission asks. */
+        const priced = new Map<string, Record<DimensionId, number>>();
+        for (const selection of possibleSelections(mission, state)) {
+          const after = playMission(state, content, selection);
+          const id = selection[0];
+          if (mission.kind === "choice" && id) {
+            priced.set(id, {
+              win: after.dims.win - state.dims.win,
+              profit: after.dims.profit - state.dims.profit,
+              deliver: after.dims.deliver - state.dims.deliver,
+            });
+          }
+          const key = stateKey(after, suffix.get(after.nodeId), gatedDims);
+          if (!next.has(key)) next.set(key, after);
+        }
+
+        for (const [aId, a] of priced) {
+          for (const [bId, b] of priced) {
+            if (aId === bId) continue;
+            const k = `${aId}>${bId}`;
+            const cur = pairs.get(k) ?? [0, 0];
+            cur[1] += 1;
+            const weak = DIMENSIONS.every((d) => a[d] >= b[d]);
+            const strict = DIMENSIONS.some((d) => a[d] > b[d]);
+            if (weak && strict) cur[0] += 1;
+            pairs.set(k, cur);
+          }
+        }
+      }
+    }
+    frontier = next;
+  }
+
+  const findings: RealisedDominance[] = [];
+  for (const [missionId, pairs] of tally) {
+    const node = content.nodes[missionId];
+    if (!node || !isMission(node) || node.kind !== "choice") continue;
+    const title = (id: string) => node.options.find((o) => o.id === id)?.title ?? id;
+    for (const [k, [dominated, compared]] of pairs) {
+      if (compared === 0) continue;
+      const share = dominated / compared;
+      if (share < threshold) continue;
+      const [aId, bId] = k.split(">") as [string, string];
+      findings.push({
+        mission: missionId,
+        dominant: aId,
+        dominated: bId,
+        dominatedIn: dominated,
+        comparedIn: compared,
+        share: Math.round(share * 1000) / 1000,
+        note:
+          `"${title(aId)}" beats "${title(bId)}" on all three dimensions in ` +
+          `${Math.round(share * 100)}% of ${compared} reachable states — a fake choice in ` +
+          `the situations that actually occur`,
+      });
+    }
+  }
+  return findings.sort((a, b) => b.share - a.share);
 }
