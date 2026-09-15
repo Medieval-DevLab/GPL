@@ -14,6 +14,7 @@ import {
   type Interlude,
   type Setup,
 } from "../engine/types";
+import { Facsimile } from "./facsimile";
 import { Icon, Pill, SectionTitle } from "./icons";
 import {
   BEAT_TITLE_ID,
@@ -64,7 +65,9 @@ export function TitleScreen({
        */}
       <div className="m-enter">
         <p className="eyebrow">A short game about winning work</p>
-        <h1 className="mt-3 text-[56px] font-bold leading-[0.95] tracking-[-0.04em] text-(--color-ink) sm:text-[56px]">
+        {/* The brand, in the brand colour. This was ink — the largest element on the
+            first screen anyone sees, and the only achromatic thing left on it. */}
+        <h1 className="mt-3 text-[56px] font-bold leading-[0.95] tracking-[-0.04em] text-(--color-accent) sm:text-[56px]">
           GPL
         </h1>
         <p className="mt-1 text-[13px] font-bold uppercase tracking-[0.2em] text-(--color-accent)">
@@ -273,14 +276,18 @@ export function SetupScreen({
               onClick={() => onChoose(o.id)}
             >
               <div>
-                {o.image && (
-                  <img
-                    src={artUrl(o.image)}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    className="h-[96px] w-full object-cover"
-                  />
+                {o.facsimile ? (
+                  <Facsimile kind={o.facsimile} className="h-[96px] w-full" />
+                ) : (
+                  o.image && (
+                    <img
+                      src={artUrl(o.image)}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      className="h-[96px] w-full object-cover"
+                    />
+                  )
                 )}
                 <div className="-mt-6 flex justify-center">
                   <span

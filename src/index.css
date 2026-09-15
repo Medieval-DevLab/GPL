@@ -406,76 +406,73 @@
   }
 }
 
-@keyframes gpl-sweep {
-  from {
-    transform: translateX(-120%);
-  }
-  to {
-    transform: translateX(320%);
-  }
-}
+/* `@keyframes gpl-sweep` and `gpl-pulse-ring` were deleted here along with the
+   `.anim-*`, `.stagger` and `.shimmer` utilities below. Nothing referenced any of them
+   once `src/motion.css` took over, and two — `.anim-pulse` and `.shimmer::after` — were
+   `infinite` with no pause, stop or hide mechanism, which is a WCAG 2.2.2 failure at
+   Level A whether or not a component happens to use them. `gpl-pulse-ring` also still
+   hard-coded a violet from the accent that D-034 deleted. */
 
-/* The ring was already a violet — `rgb(109 53 232)` — left behind when the accent
-   was made ink, which is a fair sign of where the system wanted to be. */
-@keyframes gpl-pulse-ring {
-  0% {
-    box-shadow: 0 0 0 0 rgb(161 0 255 / 0.32);
-  }
-  70% {
-    box-shadow: 0 0 0 14px rgb(161 0 255 / 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgb(161 0 255 / 0);
-  }
-}
-
-@layer utilities {
-  .anim-rise {
-    animation: gpl-rise 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  .anim-fade {
-    animation: gpl-fade 0.5s ease both;
-  }
-  .anim-pop {
-    animation: gpl-pop 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  .anim-pulse {
-    animation: gpl-pulse-ring 2.2s ease-out infinite;
-  }
-
-  /* Deliberately tight. A six-item grid with 60ms steps takes 0.34s to finish
-     arriving, which reads as the page being slow rather than as polish. */
-  .stagger > * {
-    animation: gpl-rise 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  .stagger > *:nth-child(1) {
-    animation-delay: 0.02s;
-  }
-  .stagger > *:nth-child(2) {
-    animation-delay: 0.05s;
-  }
-  .stagger > *:nth-child(3) {
-    animation-delay: 0.08s;
-  }
-  .stagger > *:nth-child(4) {
-    animation-delay: 0.11s;
-  }
-  .stagger > *:nth-child(5) {
-    animation-delay: 0.14s;
-  }
-  .stagger > *:nth-child(6) {
-    animation-delay: 0.17s;
-  }
-}
-
+/**
+ * Reduced motion: REPLACEMENT, not removal.
+ *
+ * This used to blanket `*` with `animation-duration: 0.001ms !important`, which deletes
+ * every animation including the ones that carry meaning. Current guidance is unanimous
+ * that the answer is to substitute gentler motion instead: WCAG 2.3.3's Intent states
+ * that "changes of colour, blurring, or opacity which do not change the perceived size,
+ * shape, or position" are **not motion animation at all**, and Apple's Reduced Motion
+ * criteria say explicitly not to remove the animation entirely but to provide one that
+ * avoids motion — a dissolve or a fade.
+ *
+ * So transforms go and opacity stays. A cross-fade still tells the player a beat changed,
+ * which is the one thing they would otherwise have to infer from the content alone.
+ *
+ * **Delays are zeroed too, and that matters more than it looks.** The old block zeroed
+ * durations but not delays, which was cosmetic while nothing staggered. It stopped being
+ * cosmetic the moment `motion.css` introduced staggers: a stagger whose durations are
+ * 0.001ms and whose delays survive does not collapse — it becomes content popping into
+ * existence one piece at a time over 280ms with no movement left to explain why, which
+ * for somebody who asked for less motion is worse than the animation was.
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.001ms !important;
+    /* No travel, no scale, no overshoot. */
+    transform: none !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+    animation-delay: 0s !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
+  }
+
+  /* Anything whose movement was the point becomes instant rather than slow. */
+  .m-deal > *,
+  .m-seq > *,
+  .m-land,
+  .m-gate,
+  .m-settle,
+  .m-draw {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  /* A dissolve is not motion animation, and it is the one cue worth keeping. */
+  .m-enter,
+  .m-enter-slow,
+  .m-swap,
+  .m-arrive {
+    animation-duration: 120ms !important;
+    animation-name: gpl-fade-in !important;
+  }
+}
+
+@keyframes gpl-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -607,18 +604,6 @@
 }
 
 /* Shimmer used on the "resolving" beat */
-.shimmer {
-  position: relative;
-  overflow: hidden;
-}
-.shimmer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  width: 40%;
-  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.65), transparent);
-  animation: gpl-sweep 1.15s ease-in-out infinite;
-}
 
 }
 

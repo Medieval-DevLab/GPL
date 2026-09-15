@@ -39,7 +39,20 @@ const TONE: Record<
   { colour: string; tint: string; icon: Parameters<typeof Icon>[0]["name"] }
 > = {
   strong: { colour: "var(--color-good)", tint: "var(--color-good-tint)", icon: "check" },
-  mixed: { colour: "var(--color-warn)", tint: "var(--color-warn-tint)", icon: "scale" },
+  /**
+   * `mixed` is deliberately NOT a hue.
+   *
+   * It resolved to `--color-warn` (#8e1212) against `hard`'s `--color-bad` (#a31515):
+   * ΔE2000 **4.2 in normal vision and 3.1 under protanopia**, which is not a distinction
+   * at all. Since `mixed` is 41 of 99 outcomes and `hard` is 21, that meant **62 of 99
+   * consequence screens rendered the same alarm medallion** — the game could not
+   * visually tell "you traded something" from "that went badly".
+   *
+   * Ink separates it from both: ΔE 19.3 from `strong` and far more from `hard`, while
+   * staying inside the rule that valence is not a hue. A trade-off is a fact, which is
+   * ink; only a genuine reverse gets the alarm colour.
+   */
+  mixed: { colour: "var(--color-text-muted)", tint: "var(--color-panel)", icon: "scale" },
   hard: { colour: "var(--color-bad)", tint: "var(--color-bad-tint)", icon: "warning" },
 };
 

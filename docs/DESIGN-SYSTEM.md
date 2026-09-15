@@ -599,9 +599,37 @@ The palette: `PPT Template.potx` → `ppt/theme/theme1.xml`, `clrScheme name="Ac
 
 Colour science: Machado, Oliveira & Fernandes 2009 (CVD simulation matrices) · CIEDE2000 ·
 Okabe & Ito palette construction · APCA 0.1.9 (Myndex) · W3C Understanding 1.4.3 and 1.4.11
-· Radix Colors scale semantics and its tinted grey families · Atlassian token anatomy ·
-Carbon type sets · Colour Blind Awareness prevalence figures · Baymard and UXPin on line
-length · Tinker 1955 on all-caps.
+· Colour Blind Awareness prevalence figures · Baymard and UXPin on line length · Tinker
+1955 on all-caps · Atlassian token anatomy · Carbon type sets.
+
+Cross-industry comparison, with the caveat that the numbers attributed to shipped products
+below were measured off their shipped CSS and screenshots rather than taken from their
+documentation:
+
+- IBM Carbon data-visualization colour palettes —
+  <https://carbondesignsystem.com/data-visualization/color-palettes/> (brand blue absent
+  from the categorical sequence; lightness stagger as the CVD safeguard)
+- Radix Colors, understanding the 12-step scale —
+  <https://www.radix-ui.com/colors/docs/palette-composition/understanding-the-scale>
+- Radix Colors, composing a palette (pair the grey to the accent hue) —
+  <https://www.radix-ui.com/colors/docs/palette-composition/composing-a-palette>
+- Radix Themes colour (one accent per theme) —
+  <https://www.radix-ui.com/themes/docs/theme/color>
+- Refactoring UI, building your colour palette —
+  <https://www.refactoringui.com/previews/building-your-color-palette>
+- Linear, how we redesigned the Linear UI ("limiting how much chrome… was used in the
+  calculations applied to our color system") — <https://linear.app/now/how-we-redesigned-the-linear-ui>
+- Material 2 dark theme (primary colour "limited to one or two branded elements") and
+  Material 3's surface-tint opacity table · Apple HIG Dark Mode base/elevated surfaces —
+  both read via secondary sources, as the primary pages are JavaScript-rendered
+- Measured off shipped CSS: Tailwind v4 `theme.css` OKLCh grey ramps · Vercel Geist
+  `--ds-gray-*` and `--ds-blue-*` · Linear `--color-bg-level-*` and `--color-accent-tint` ·
+  Stripe `--…-hue-gray*` and `--…-shadow-base` · Notion collection backgrounds · Monzo
+  `--calc-chart-*`
+
+Not useful, recorded so the time is not spent twice: `aiuxplayground.com` (process
+language, no numeric rules) · `21st.dev` (a component registry, deliberately
+theme-agnostic) · `mobbin.com` and `refero.design` (login-walled).
 
 The arithmetic in this document was computed from the hex values, not copied. The
 implementation is checked against reference values before use: WCAG reproduces

@@ -829,6 +829,7 @@ function MeterTrack({
   value,
   from,
   fill,
+  track,
   delay,
   height,
 }: {
@@ -836,6 +837,16 @@ function MeterTrack({
   value: number;
   from?: number;
   fill: string;
+  /**
+   * The unfilled part of the track, in this dimension's own tint.
+   *
+   * All three tracks used to share one neutral, which meant the three hues the palette
+   * works hardest to keep separable held almost no surface area — they were a 6px sliver
+   * of fill and nothing else. A tinted track gives each dimension a readable band whether
+   * its value is 8 or 80, and it is a surface rather than a mark, so it costs nothing
+   * against the rule that colour never carries meaning alone.
+   */
+  track: string;
   delay: number;
   height: string;
 }) {
@@ -844,7 +855,7 @@ function MeterTrack({
   return (
     <div
       className={`${height} w-full overflow-hidden rounded-full`}
-      style={{ background: "var(--color-canvas-deep)" }}
+      style={{ background: track }}
       role="meter"
       aria-valuenow={value}
       aria-valuemin={0}
@@ -944,6 +955,7 @@ export function FactorBars({
               value={dims[d]}
               from={from?.[d]}
               fill={`var(${meta.fillVar})`}
+              track={`var(--color-${d}-tint)`}
               delay={delay}
               height="h-1.5"
             />
@@ -1009,6 +1021,7 @@ export function FactorGrid({
               value={dims[d]}
               from={from?.[d]}
               fill={`var(${meta.fillVar})`}
+              track={`var(--color-${d}-tint)`}
               delay={delay}
               height="h-2"
             />

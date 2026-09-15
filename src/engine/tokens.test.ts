@@ -229,10 +229,62 @@ describe("the tokens themselves", () => {
     expect(css).toContain("--color-risk-solid:");
   });
 
-  /** Amber was deleted: red and amber measure ΔE 4.1 under deuteranopia. */
-  it("has no amber and no violet accent left in the reference ramps", () => {
-    expect(css).not.toMatch(/--ref-amber/);
-    expect(css).not.toMatch(/--ref-violet/);
+  /**
+   * The brand must not sit on a data hue's axis.
+   *
+   * This used to assert `css` did not contain the strings `--ref-amber` or `--ref-violet`,
+   * which is a test of SPELLING. It passed throughout the period when the brand was ink at
+   * CIELAB h 284.4° and `deliver-solid` was at h 284.4° — the exact collision the rule
+   * exists to prevent, one hue family, invisible to a name check. It went on passing when
+   * the ramp came back as purple, because it had been renamed `--ref-purple-*`.
+   *
+   * So measure the hue. Nobody cares what a token is called; they care whether the brand
+   * and a dimension are separable, and that is an angle.
+   */
+  it("keeps the brand off every data hue's axis", () => {
+    const hueOf = (hex: string): number => {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255) as [
+        number,
+        number,
+        number,
+      ];
+      const lin = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+      const [R, G, B] = [lin(r), lin(g), lin(b)];
+      // sRGB → XYZ (D65) → Lab, then the hue angle.
+      const X = 0.4124 * R + 0.3576 * G + 0.1805 * B;
+      const Y = 0.2126 * R + 0.7152 * G + 0.0722 * B;
+      const Z = 0.0193 * R + 0.1192 * G + 0.9505 * B;
+      const f = (t: number) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+      const [fx, fy, fz] = [f(X / 0.95047), f(Y), f(Z / 1.08883)];
+      const a = 500 * (fx - fy);
+      const bb = 200 * (fy - fz);
+      return ((Math.atan2(bb, a) * 180) / Math.PI + 360) % 360;
+    };
+
+    /** Resolve one `var()` hop, which is all the ramp needs. */
+    const literal = (token: string): string | null => {
+      const direct = new RegExp(`${token}:\\s*(#[0-9a-fA-F]{6})`).exec(css);
+      if (direct?.[1]) return direct[1];
+      const ref = new RegExp(`${token}:\\s*var\\((--[\\w-]+)\\)`).exec(css);
+      if (!ref?.[1]) return null;
+      return new RegExp(`${ref[1]}:\\s*(#[0-9a-fA-F]{6})`).exec(css)?.[1] ?? null;
+    };
+
+    const brand = literal("--color-brand-solid");
+    expect(brand, "no --color-brand-solid to measure").toBeTruthy();
+
+    const separations: string[] = [];
+    for (const d of ["win", "profit", "deliver"]) {
+      const hex = literal(`--color-${d}-solid`);
+      expect(hex, `no --color-${d}-solid to measure`).toBeTruthy();
+      const apart = Math.abs(hueOf(brand as string) - hueOf(hex as string));
+      const delta = Math.min(apart, 360 - apart);
+      separations.push(`${d} ${Math.round(delta)}°`);
+      // 12° is the floor. The shipped collision was 0.0°.
+      expect(delta, `brand is ${Math.round(delta)}° from ${d} — one hue family`).toBeGreaterThan(12);
+    }
+    // Printed so the margin is visible rather than merely asserted.
+    expect(separations.length).toBe(3);
   });
 
   it("keeps a border token that is legal on controls", () => {
