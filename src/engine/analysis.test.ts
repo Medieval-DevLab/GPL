@@ -26,6 +26,22 @@ import { DIMENSIONS, isMission, type GameState } from "./types";
 
 const content = story;
 
+/**
+ * One sweep, shared.
+ *
+ * A sweep is ~18s of unbroken synchronous CPU. This file was running three of them — one
+ * per determinism test and a third in the `every path is playable` hook — which put a
+ * single test at 80s, past the 60s worker RPC timeout hardcoded in birpc, and failed the
+ * run with `Timeout calling "onTaskUpdate"` while every test passed. Only the determinism
+ * check genuinely needs a second, independent sweep; everything else is asking the same
+ * question of the same answer.
+ */
+let memo: ReturnType<typeof sweep> | null = null;
+function sharedSweep(): ReturnType<typeof sweep> {
+  if (!memo) memo = sweep(content);
+  return memo;
+}
+
 /** Deterministic PRNG (mulberry32), so a sampled failure replays from its seed. */
 function seededRng(seed: number): () => number {
   let a = seed >>> 0;
@@ -60,16 +76,33 @@ describe("determinism", () => {
   // Two exhaustive sweeps of the whole state space. Legitimately slow, and the
   // single most important guarantee in the game — if this ever fails, a result
   // stopped being attributable to the player's decisions.
-  it(
-    "uses no randomness — repeated sweeps match exactly",
-    () => {
-      const one = sweep(content);
-      const two = sweep(content);
-      expect([...one.firedOutcomes].sort()).toEqual([...two.firedOutcomes].sort());
-      expect(one.finalRange).toEqual(two.finalRange);
-    },
-    60_000,
-  );
+  /**
+   * Two independent sweeps must agree exactly.
+   *
+   * Split across two tests on purpose. One sweep is ~21s of unbroken synchronous CPU, and
+   * Vitest's worker RPC timeout is hardcoded at 60s (`DEFAULT_TIMEOUT` in birpc) — so two
+   * back to back inside one test blocked the worker past it and the run failed with
+   * `Timeout calling "onTaskUpdate"` while all 138 tests passed. A green suite with a
+   * non-zero exit code is the most confusing failure available. Vitest yields between
+   * tests, so two tests give the reporter a guaranteed window. The guarantee is unchanged:
+   * the point is that two independent sweeps agree, not that they are adjacent.
+   */
+  let first: ReturnType<typeof sweep> | null = null;
+
+  it("sweeps the whole state space once", () => {
+    first = sharedSweep();
+    expect(first.endings).toBeGreaterThan(0);
+  }, 180_000);
+
+  it("uses no randomness — a second sweep matches exactly", () => {
+    const second = sweep(content);
+    expect(first).not.toBeNull();
+    expect([...(first as NonNullable<typeof first>).firedOutcomes].sort()).toEqual(
+      [...second.firedOutcomes].sort(),
+    );
+    expect((first as NonNullable<typeof first>).finalRange).toEqual(second.finalRange);
+    expect((first as NonNullable<typeof first>).statesAtMission).toEqual(second.statesAtMission);
+  }, 180_000);
 });
 
 describe("every path is playable", () => {
@@ -79,7 +112,7 @@ describe("every path is playable", () => {
      worker's collect. */
   let result: ReturnType<typeof sweep>;
   beforeAll(() => {
-    result = sweep(content);
+    result = sharedSweep();
   }, 180_000);
 
   it("reaches an ending from every branch", () => {

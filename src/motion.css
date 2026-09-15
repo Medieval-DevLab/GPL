@@ -4,12 +4,430 @@
  * Its own file so it has a single owner and a single place to be audited. `index.css`
  * holds the tokens; this holds everything that moves.
  *
- * Two standing rules, both learned the hard way in this project:
+ * Three standing rules. The first two were learned the hard way in this project; the third
+ * is `docs/UI-AUDIT.md` Z15, and it is the one that decides what is allowed in here at all.
  *
  *  1. Committing a decision fired a 1,150ms SKELETON SHIMMER — the visual idiom of a
  *     pending network request, in a deterministic game with no network. Motion here must
  *     represent something that actually happened, never fake latency.
- *  2. Every animation must collapse under `prefers-reduced-motion: reduce`. The harness
- *     asserts it, and a beat whose meaning depends on movement is a beat some players
- *     cannot read.
+ *  2. Every animation must collapse under `prefers-reduced-motion: reduce`, and nothing the
+ *     game says in movement may be said ONLY in movement.
+ *  3. **Motion answers an action, or shows a value changing. It never decorates a
+ *     section.** Fade-and-slide-up on every panel plus a lift on every card is the generic
+ *     default and reads as machine-generated. So a beat arrives as ONE gesture, not as six
+ *     sections rising in turn, and there are exactly three staggers in the whole game: the
+ *     option cards being dealt, the three meters moving, and the result reveal — each a set
+ *     the player is meant to take in as a set.
+ *
+ * ── the vocabulary ───────────────────────────────────────────────────────────────────
+ *
+ *   m-swap      a band replacing another band in the same place.  opacity only.
+ *   m-enter     a whole beat arriving as one gesture.             opacity only.
+ *   m-deal      a row of option cards arriving.                   staggered, 10px rise.
+ *   m-seq       the result reveal.                                staggered, 6px rise.
+ *   m-land      one object arriving with weight.                  scale, slight overshoot.
+ *   m-arrive    the same, for a NEGATIVE value. no scale. see below — this asymmetry is
+ *               the most deliberate thing in this file.
+ *   m-draw      an arc drawing itself.                            stroke-dashoffset.
+ *   m-settle    a meter travelling to a new value.                scaleX.
+ *   m-press     a control acknowledging a press.                  scale.
+ *   m-gate      the primary action becoming available.            scale.
  */
+
+:root {
+  /* ── durations ───────────────────────────────────────────────────────────────────
+     Named for what they do, so retuning "a control changing state" is one edit rather
+     than a search for `130ms`. The ceilings these sit under, from the research:
+     Kowalski's standards put UI animation under 300ms and button feedback at 100–160ms;
+     Freiberg's interface guidelines say 200ms for an interaction to feel immediate;
+     Material's own desktop figure is 150–200ms, *half* the mobile 300ms everyone copies.
+     The previous values in this project (0.42s / 0.5s / 0.38s) were above all three.   */
+
+  /* Direct manipulation. Below ~100ms a press reads as instant. */
+  --gpl-press: 90ms;
+  /* A control changing state under the pointer. */
+  --gpl-state: 130ms;
+  /* One band replacing another in the same position. Short, because the two are the same
+     object at two moments, and a slow cross-fade turns that into two objects. */
+  --gpl-swap: 160ms;
+  /* A whole beat arriving. */
+  --gpl-enter: 220ms;
+  /* One card or row arriving as part of a set. */
+  --gpl-reveal: 260ms;
+  /* The interlude — the one beat with nothing to do on it, and the only place where the
+     motion IS the content ("months pass"). Measured at ~20% ink and 0.13% chroma, so it
+     is also the only screen with the room to spend this. */
+  --gpl-interlude: 420ms;
+  /**
+   * A meter travelling to a new value. The one long duration in the interface, and the
+   * only one with a citation behind it: Heer & Robertson, *Animated Transitions in
+   * Statistical Data Graphics* (InfoVis 2007) put a value transition at "around one
+   * second", and found staged transitions were preferred. This is also the value the
+   * factor bars already used before this file existed, so nothing had to be retuned.
+   */
+  --gpl-settle: 900ms;
+  /* An arc drawing itself on the closing debrief. The longest thing in the game, and the
+     only screen that can afford it: the run is over and there is nothing to do but read. */
+  --gpl-draw: 1100ms;
+
+  /* Steps between members of a set. 80ms across the three meters — inside Kowalski's
+     30–80ms band, at the top of it, because these are three consequences rather than
+     three rows of a list. */
+  --gpl-step: 80ms;
+  /* Tighter for a row of option cards, which are compared ACROSS rather than read in
+     order (UI-AUDIT F2): the stagger must assemble the row without implying a sequence. */
+  --gpl-step-deal: 45ms;
+
+  /* ── easing ──────────────────────────────────────────────────────────────────────── */
+
+  /**
+   * ARRIVALS decelerate. The project's existing curve, an easeOutQuint — the same family
+   * as Stripe's `--ease-out-quint` and the curve React's own view-transition documentation
+   * uses in its example. It was already right; new motion matches it rather than
+   * introducing a second entrance curve.
+   */
+  --gpl-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /** A state change that is not an arrival. Material 3 `standard`. */
+  --gpl-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /**
+   * A VALUE BEING TRACKED, which is a different job from an arrival and takes a different
+   * curve. Two independent sources say slow-in-slow-out here rather than ease-out:
+   * Heer & Robertson measured pacing strategies against an object-tracking task and
+   * slow-in-slow-out won it; and Material assigns `decelerate` to things that ENTER,
+   * while something that "begins and ends on screen" — which is exactly a meter — takes
+   * the standard curve. A meter is not arriving. It is going somewhere, and the player's
+   * task is to follow it.
+   *
+   * `cubic-bezier(0.645, 0.045, 0.355, 1)` is the canonical bezier for easeInOutCubic,
+   * whose closed form is what `useCountUp` in `ui/shell.tsx` computes in JavaScript. That
+   * matters: the meter's BAR is a CSS transition and its NUMBER is a rAF loop, and they
+   * are one fact. Desynchronising them invents a discrepancy the player will try to read
+   * meaning into.
+   *
+   * The cost of a slow start is paid for separately — the delta chip lands at 0ms on its
+   * own stagger step, so the click is acknowledged inside 100ms and the travel is then
+   * free to be legible rather than merely quick.
+   */
+  --gpl-ease-track: cubic-bezier(0.645, 0.045, 0.355, 1);
+
+  /**
+   * A small overshoot, peaking around 1.03. A settle, not a bounce — Kowalski's rule is
+   * bounce 0.1–0.3 and "avoid bounce in most UI", and Material 3 Expressive's structural
+   * rule is that spatial changes may overshoot while opacity and colour changes may not.
+   *
+   * Used by exactly two objects, and one of them is conditional: see `m-arrive`.
+   */
+  --gpl-ease-land: cubic-bezier(0.34, 1.32, 0.64, 1);
+}
+
+/* ─────────────────────────────── keyframes ─────────────────────────────── */
+
+@keyframes gpl-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 10px, not 24px. Far enough to read as arriving, near enough that the card is legible
+   for most of its own entrance. Nijman's rule from The Art of Screenshake applies to
+   interfaces too: a pixel or two goes a long way. */
+@keyframes gpl-deal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes gpl-rise-6 {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Never `scale(0)`. 0.9 and an opacity fade, per Freiberg: a thing that grows from
+   nothing did not arrive, it was created, which is a different claim. */
+@keyframes gpl-land {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes gpl-draw {
+  from {
+    stroke-dashoffset: var(--gpl-arc, 0);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ─────────────────────────────── utilities ───────────────────────────────
+   In `utilities` because that is the last layer Tailwind declares, so these win against
+   `index.css`'s `@layer components` despite this file being `@import`ed at the TOP of it.
+   Layer order decides here, not source order — which is D-010's lesson, applied on
+   purpose rather than tripped over.                                                    */
+
+@layer utilities {
+  /* A band replacing another band. No transform: the band has not moved, its contents
+     have changed, and translating it would claim a move that did not happen. */
+  .m-swap {
+    animation: gpl-in var(--gpl-swap) var(--gpl-ease-standard) both;
+  }
+
+  /* A whole beat arriving — one gesture for the entire work area, opacity only. */
+  .m-enter {
+    animation: gpl-in var(--gpl-enter) var(--gpl-ease-standard) both;
+  }
+
+  /* The interlude: the same gesture, taken slower, because here it is the content. */
+  .m-enter-slow {
+    animation: gpl-in var(--gpl-interlude) var(--gpl-ease-out) both;
+  }
+
+  /**
+   * An object arriving with weight, and its counterpart for a loss.
+   *
+   * These two differ on purpose, and the reason is the most substantive thing in this
+   * file. Dixon et al. (*Addiction*, 2010) on "losses disguised as wins": when a machine
+   * celebrates an outcome that was in fact a net loss, "a majority of participants
+   * (mis)categorized LDWs as wins, and significantly overestimated the number of times
+   * they actually won" — and in the condition where the FEEDBACK matched the sign, "this
+   * pattern was reversed; most participants correctly categorized LDWs as losses, and
+   * they gave high-fidelity win estimates."
+   *
+   * This game's whole claim is that a player can afterwards say why something happened.
+   * Giving a −7 the same satisfying little landing as a +7 would be the interface
+   * congratulating them for it, and the evidence is that they would remember the run as
+   * having gone better than it did. So: a gain lands. A loss simply appears.
+   *
+   * There is no audio in GPL, which is how the cited studies carried sign — so the
+   * asymmetry has to live in the motion, on top of the colour and the ▲/▼ that already
+   * carry it for anyone who cannot see either.
+   */
+  .m-land {
+    animation: gpl-land var(--gpl-reveal) var(--gpl-ease-land) both;
+  }
+  .m-arrive {
+    animation: gpl-in var(--gpl-reveal) var(--gpl-ease-standard) both;
+  }
+
+  .m-draw {
+    animation: gpl-draw var(--gpl-draw) var(--gpl-ease-out) both;
+  }
+
+  /**
+   * The hand being dealt — the one stagger on the decision beat.
+   *
+   * 45ms apart, which at five cards is 180ms of sequence: enough that the row assembles
+   * rather than blinking into existence, not enough to be waited for. Deliberately at the
+   * bottom of the 30–80ms band rather than the top, because these cards are read across.
+   */
+  .m-deal > * {
+    animation: gpl-deal var(--gpl-reveal) var(--gpl-ease-out) both;
+  }
+  .m-deal > *:nth-child(2) {
+    animation-delay: calc(1 * var(--gpl-step-deal));
+  }
+  .m-deal > *:nth-child(3) {
+    animation-delay: calc(2 * var(--gpl-step-deal));
+  }
+  .m-deal > *:nth-child(4) {
+    animation-delay: calc(3 * var(--gpl-step-deal));
+  }
+  .m-deal > *:nth-child(5) {
+    animation-delay: calc(4 * var(--gpl-step-deal));
+  }
+  .m-deal > *:nth-child(n + 6) {
+    animation-delay: calc(5 * var(--gpl-step-deal));
+  }
+
+  /**
+   * The result reveal — the only sequenced entrance in the game.
+   *
+   * Permitted where a per-section entrance is not (Z15) because on this one beat the
+   * order IS the content: what you chose, whether you called it, what it cost, what is
+   * now different, what a colleague makes of it. 70ms steps and a 6px rise, so it reads
+   * as one cascade rather than five animations. Nothing waits for it — the primary action
+   * lives in the action bar, which is outside the work area and never animates.
+   */
+  .m-seq > * {
+    animation: gpl-rise-6 var(--gpl-reveal) var(--gpl-ease-out) both;
+  }
+  .m-seq > *:nth-child(2) {
+    animation-delay: 70ms;
+  }
+  .m-seq > *:nth-child(3) {
+    animation-delay: 140ms;
+  }
+  .m-seq > *:nth-child(4) {
+    animation-delay: 210ms;
+  }
+  .m-seq > *:nth-child(n + 5) {
+    animation-delay: 280ms;
+  }
+
+  /**
+   * A meter travelling.
+   *
+   * `transform`, not `width`. A width transition runs layout on every frame of a 900ms
+   * animation; `scaleX` from a left origin is composited and never touches the main
+   * thread. This is the one thing Linear's engineering write-up is absolute about —
+   * of width, height, margin and padding, "never animate those. I mean never." The
+   * delay is set per dimension by the component, because the stagger belongs to the set
+   * and not to the rule.
+   */
+  .m-settle {
+    transform-origin: left center;
+    transition: transform var(--gpl-settle) var(--gpl-ease-track);
+  }
+
+  /* ── the option card ──────────────────────────────────────────────────────────────
+     `index.css` owns this component's colour. Here is its behaviour — plus one fix that
+     is a layout bug wearing a motion bug's clothes.                                  */
+
+  /**
+   * Selecting a card must not move the row it is in.
+   *
+   * The selected rule grew the border from 1.5px to 2px. Padding is unchanged, so the
+   * content box shrank by half a pixel on every side — which reflows the card's own text
+   * and, in a `subgrid` row whose entire purpose is that every card's checklist sits on
+   * its neighbours' baseline, shifts the whole row. The rim is now drawn with
+   * `box-shadow`, which is outside layout altogether: the same 3px of ink, zero reflow.
+   *
+   * `box-shadow` rather than `outline`, deliberately. `:focus-visible` in `@layer base`
+   * draws an `outline`, and this rule is in `utilities` — a selected `outline` here would
+   * outrank it, and a keyboard player would lose their focus ring on the one card they
+   * had just chosen.
+   */
+  .choice[data-selected="true"]:not(:disabled) {
+    border-width: 1.5px;
+    box-shadow: 0 0 0 1.5px var(--color-brand-solid);
+  }
+
+  .choice {
+    transition:
+      border-color var(--gpl-state) var(--gpl-ease-standard),
+      background-color var(--gpl-state) var(--gpl-ease-standard),
+      box-shadow var(--gpl-state) var(--gpl-ease-standard),
+      transform var(--gpl-press) var(--gpl-ease-standard);
+  }
+
+  /**
+   * Selection appears instantly; de-selection fades.
+   *
+   * Straight from Linear, whose shipped tokens are `--speed-highlightFadeIn: 0s` against
+   * `--speed-highlightFadeOut: .15s`: "hover highlights, popovers and the agent panel
+   * appear instantly when you summon them, then fade out over 150ms when you dismiss
+   * them." It inverts the usual advice and it is right, because the appearance is a
+   * report of something the player just did and any delay on it is the interface being
+   * slower than their own hand. The disappearance is not news, so it can take its time.
+   *
+   * It also finally closes the defect this card has had all along: `data-selected` lost
+   * on specificity to `:hover`, so the selected state was invisible until the mouse left
+   * the card — the game misreporting the player's own input at the moment of commitment.
+   * `index.css` fixed the specificity. This makes the report immediate.
+   */
+  .choice[data-selected="true"] {
+    transition-duration: 0s, 0s, 0s, var(--gpl-press);
+  }
+
+  /**
+   * The press.
+   *
+   * The only place this game puts a transform on a card, and the distinction from a hover
+   * lift is the whole point. A lift is the interface volunteering that a thing is
+   * clickable — ambient, generic, and already deleted here for that reason. This exists
+   * only while a finger is down on it, so it is not decoration; it is contact. 1.2% on a
+   * ~500px card is about 3px at the edges: felt rather than seen.
+   */
+  .choice:active:not(:disabled) {
+    transform: scale(0.988);
+  }
+
+  /* The same acknowledgement on the buttons that commit and on the prediction chips.
+     `aria-disabled` is excluded as well as `disabled`, because the primary action is
+     deliberately the former — see `ActionBar` — and a gated button must not report a
+     press it is not going to honour. */
+  .m-press {
+    transition:
+      background-color var(--gpl-state) var(--gpl-ease-standard),
+      color var(--gpl-state) var(--gpl-ease-standard),
+      border-color var(--gpl-state) var(--gpl-ease-standard),
+      transform var(--gpl-press) var(--gpl-ease-standard);
+  }
+  .m-press:active:not(:disabled):not([aria-disabled="true"]) {
+    transform: scale(0.97);
+  }
+
+  /**
+   * The gate opening.
+   *
+   * The primary action goes from tinted-and-unavailable to solid-and-live the instant the
+   * prediction lands — and that colour change was the only signal, on 280px of button at
+   * the far right of a 1,440px bar, which is precisely where the player is not looking,
+   * because they are looking at the chip they just clicked. One 240ms scale answers the
+   * click at the other end of the bar.
+   *
+   * Keyed on the attribute appearing rather than on a React key, so it cannot re-fire on
+   * a re-render that did not change the gate.
+   */
+  .m-gate[data-ready="true"] {
+    animation: gpl-land 240ms var(--gpl-ease-land) both;
+  }
+}
+
+/* ───────────────────────────── reduced motion ─────────────────────────────
+   `index.css` already zeroes `animation-duration`, `animation-iteration-count` and
+   `transition-duration` on `*`. It does NOT zero the DELAYS — and this file introduces
+   delays, which turns that omission from cosmetic into a real defect: a staggered reveal
+   whose durations are 0.001ms but whose delays survive does not collapse. It becomes
+   content appearing one piece at a time over 280ms with no movement left to explain why,
+   which for a player who asked the system for less motion is worse than the animation.
+
+   Nothing is lost by zeroing them. Everything this file says in movement is also said in
+   a number, a word or an icon: the meters show their new values and their signed deltas,
+   the consequence renders every section, the delta chips keep ▲/▼ and their colour, and
+   `ResolvingScreen` cuts its own timer from 1,000ms to 120ms in JavaScript so the beat
+   becomes short rather than becoming a blank pause. `useReducedMotion` and `useCountUp`
+   in `ui/shell.tsx` are the JavaScript half — a `requestAnimationFrame` loop is not
+   reachable from a media query.
+
+   ONE THING HERE IS KNOWN TO BE WRONG, and it is not mine to fix: a blanket
+   `animation-duration: 0.001ms` is *removal*, and current guidance is unanimous that the
+   correct response is *replacement*. WCAG 2.3.3's Intent states that "changes of colour,
+   blurring, or opacity which do not change the perceived size, shape, or position" are
+   not motion animation at all; Apple's own Reduced Motion criteria say "don't remove the
+   animation entirely… consider providing a new animation that avoids motion, such as a
+   dissolve, highlight fade, or colour shift"; WebKit, MDN and Chrome's view-transitions
+   guidance all say the same. So the opacity-only members of the vocabulary above —
+   `m-swap`, `m-enter`, `m-arrive` — should survive `reduce` and only the transforms
+   should go. That rule lives in `index.css`, which this worker does not own, and the
+   browser harness asserts the blanket collapse. Changing it is one rule and one
+   assertion; it is written up in the report rather than done here.                    */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-delay: 0s !important;
+    transition-delay: 0s !important;
+  }
+}

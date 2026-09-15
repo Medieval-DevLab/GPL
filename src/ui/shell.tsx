@@ -62,6 +62,121 @@ export function Hidden({ children }: { children: React.ReactNode }) {
   return <span className="sr-only">{children}</span>;
 }
 
+/* ───────────────────────────── motion, in JavaScript ─────────────────────────────
+   `src/motion.css` is the whole motion system apart from these two hooks. They exist
+   because a `requestAnimationFrame` loop is not reachable from a media query, and a
+   counting number is the one thing in this interface that CSS cannot do.              */
+
+/**
+ * Has the player asked the operating system for less movement?
+ *
+ * Live rather than read once, because the setting can be changed mid-run — on macOS it is
+ * a checkbox in System Settings, and a 70-minute game is long enough for someone to go
+ * and tick it precisely because the motion is bothering them.
+ */
+export function useReducedMotion(): boolean {
+  const query = "(prefers-reduced-motion: reduce)";
+  const [reduced, setReduced] = useState(() =>
+    typeof window === "undefined" ? false : window.matchMedia(query).matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener("change", onChange);
+    setReduced(mq.matches);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return reduced;
+}
+
+/**
+ * Count a number from one value to another.
+ *
+ * A meter is the only quantitative feedback in this game, and a number that jumps from 58
+ * to 64 does not report a change — it reports a different number, and the player has to
+ * remember the old one to know what happened. Counting makes the size of the movement the
+ * thing you see, which is the whole point of the beat.
+ *
+ * `easeInOutCubic`, which is the closed form of `--gpl-ease-track`, because the bar beside
+ * the number is a CSS `transform` transition on that curve and the two are one fact. The
+ * curve is slow-in-slow-out rather than the ease-out used for arrivals, for the reason
+ * given on the token: a meter is not arriving anywhere, it is travelling, and the player's
+ * job is to follow it.
+ *
+ * The returned value is for the eye only. Every caller keeps the true value on the
+ * `role="meter"` that wraps it, so nothing an assistive technology reads ever passes
+ * through an intermediate number — see `FactorMeter`.
+ */
+export function useCountUp(to: number, from?: number, delay = 0, duration = 900): number {
+  const reduced = useReducedMotion();
+  const start = from ?? to;
+  const skip = reduced || start === to;
+  const [value, setValue] = useState(skip ? to : start);
+
+  useEffect(() => {
+    if (skip) {
+      setValue(to);
+      return;
+    }
+    let frame = 0;
+    let t0 = 0;
+    const tick = (now: number) => {
+      if (!t0) t0 = now;
+      const elapsed = now - t0 - delay;
+      if (elapsed < 0) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      const p = Math.min(1, elapsed / duration);
+      /* easeInOutCubic — the closed form of cubic-bezier(0.645, 0.045, 0.355, 1). */
+      const eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+      setValue(Math.round(start + (to - start) * eased));
+      if (p < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    /* Cancelled on unmount and on any change of target, so a beat that ends early — the
+       player clicking through a consequence before the meters settle — never leaves a
+       loop running against a component that is gone. */
+    return () => cancelAnimationFrame(frame);
+  }, [skip, start, to, delay, duration]);
+
+  return value;
+}
+
+/**
+ * The stagger across the three dimensions: 0, 80, 160ms, in reading order.
+ *
+ * One place, because it is used by the rail's bars, the resolving beat's meters and the
+ * consequence's delta chips, and three copies of `i * 80` would drift the moment one of
+ * them was tuned. 80ms is the step at which three things read as a sequence rather than
+ * as one thing that is late.
+ */
+export const METER_STEP_MS = 80;
+export const meterDelay = (i: number) => i * METER_STEP_MS;
+
+/**
+ * True from the frame after mount.
+ *
+ * A CSS transition needs two computed values to interpolate between, and an element that
+ * mounts already showing its final value has only one — so a meter rendered fresh on the
+ * resolving beat would simply appear at its new length. Painting the old value for exactly
+ * one frame and then setting the new one gives the transition something to do, and costs a
+ * single extra render per beat.
+ *
+ * This is why the bar is a CSS transition at all rather than being driven from the same
+ * `requestAnimationFrame` loop as the number: `transform` on the compositor is free, and
+ * of `width`, `height`, `margin` and `padding` Linear's engineering write-up says "never
+ * animate those. I mean never."
+ */
+function useSettled(): boolean {
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setSettled(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return settled;
+}
+
 /**
  * The `id` of whatever names the beat on screen — normally its `h1`, and on the one
  * beat with no heading (`resolving`) the line that stands in for one.
@@ -220,12 +335,21 @@ export function ChapterStepper({
         className="absolute top-[11px] h-[2px] rounded-full"
         style={{ left: `${edge}%`, right: `${edge}%`, background: "var(--color-line-strong)" }}
       />
+      {/* The one piece of motion in the persistent chrome, and the only one the player
+          sees twice in a row: the track fills in behind them as a chapter closes.
+
+          Delayed 260ms so it moves just after the interlude has arrived rather than
+          underneath it — the interlude's whole subject is that time has passed, and this
+          is the interface agreeing. `scaleX` rather than `width` so a 900ms animation in
+          the top bar does not run layout on every frame of it. */}
       <span
         aria-hidden="true"
-        className="absolute top-[11px] h-[2px] rounded-full transition-[width] duration-500"
+        className="m-settle absolute top-[11px] h-[2px] rounded-full"
         style={{
           left: `${edge}%`,
-          width: `${(span * doneCount) / (chapters.length - 1 || 1)}%`,
+          width: `${span}%`,
+          transform: `scaleX(${doneCount / (chapters.length - 1 || 1)})`,
+          transitionDelay: "260ms",
           background: "var(--color-good)",
         }}
       />
@@ -659,25 +783,142 @@ export function AdvisorCard({ advisor }: { advisor: Advisor }) {
   );
 }
 
-/* ───────────────────────── factor read-out ───────────────────────── */
+/* ───────────────────────── factor read-out ─────────────────────────
+   The three dimensions, at two scales: `FactorBars` for the rail, `FactorGrid` for the
+   middle of the screen. Both take an optional `from`, and that one prop is what turns a
+   meter from a number that has changed into a number the player watched change.          */
+
+/**
+ * The size of the change.
+ *
+ * Deliberately the FIRST thing to appear, ahead of the number it describes: it lands at
+ * its dimension's stagger step, inside 100ms of the commit, so the click is acknowledged
+ * immediately and the 900ms travel that follows is free to be legible rather than merely
+ * quick. The chip is the claim; the counting number is the evidence for it.
+ *
+ * A gain lands with a slight overshoot. A loss does not — see `m-arrive` in `motion.css`
+ * for why that asymmetry is not a stylistic preference.
+ */
+function DeltaChip({ delta, delay }: { delta: number; delay: number }) {
+  const up = delta > 0;
+  return (
+    <span
+      className={`${up ? "m-land" : "m-arrive"} rounded-full px-1.5 text-[12px] font-bold tabular-nums`}
+      style={{
+        animationDelay: `${delay}ms`,
+        color: up ? "var(--color-good)" : "var(--color-bad)",
+        background: up ? "var(--color-good-tint)" : "var(--color-bad-tint)",
+      }}
+    >
+      {up ? "+" : ""}
+      {delta}
+    </span>
+  );
+}
+
+/**
+ * The bar, and the only thing in the interface that carries a value spatially.
+ *
+ * `role="meter"` stays on the track and keeps the TRUE value, never the counted one:
+ * `role="meter"` does not report `aria-valuenow` changes anyway, so animating it would
+ * buy nothing and risk an assistive technology reading a number that is on its way
+ * somewhere. The announcement of the change is the resolution live region's job.
+ */
+function MeterTrack({
+  label,
+  value,
+  from,
+  fill,
+  delay,
+  height,
+}: {
+  label: string;
+  value: number;
+  from?: number;
+  fill: string;
+  delay: number;
+  height: string;
+}) {
+  const settled = useSettled();
+  const shown = settled ? value : (from ?? value);
+  return (
+    <div
+      className={`${height} w-full overflow-hidden rounded-full`}
+      style={{ background: "var(--color-canvas-deep)" }}
+      role="meter"
+      aria-valuenow={value}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`${label}: ${value} ${UI_LABEL.outOf} 100`}
+    >
+      <div
+        className="m-settle h-full w-full rounded-full"
+        style={{
+          transform: `scaleX(${Math.max(0, Math.min(100, shown)) / 100})`,
+          transitionDelay: `${delay}ms`,
+          background: fill,
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * The counted number.
+ *
+ * `aria-hidden`, and this is the one place where motion is allowed to change what is in
+ * the accessibility tree — because leaving it exposed would put TWO numbers for the same
+ * quantity in the tree that disagree with each other for 900ms: this one, mid-count, and
+ * the authoritative one on the `role="meter"` beside it. The meter's `aria-label` already
+ * reads "Winability: 64 out of 100", so the bare duplicate was adding a second reading of
+ * the same fact even before it could animate.
+ *
+ * `tabular-nums` is load-bearing, not typographic: without it every digit change reflows
+ * the row for the whole count.
+ */
+function CountedValue({
+  value,
+  from,
+  delay,
+  className,
+  style,
+  children,
+}: {
+  value: number;
+  from?: number;
+  delay: number;
+  className: string;
+  style?: React.CSSProperties;
+  children?: React.ReactNode;
+}) {
+  const shown = useCountUp(value, from, delay);
+  return (
+    <span aria-hidden="true" className={className} style={style}>
+      {shown}
+      {children}
+    </span>
+  );
+}
 
 export function FactorBars({
   dims,
+  from,
   deltas,
   showDeltas = false,
 }: {
   dims: Record<DimensionId, number>;
+  /** where each meter is coming FROM. Present only on the beats where one moved. */
+  from?: Record<DimensionId, number>;
   deltas?: Record<DimensionId, number>;
   showDeltas?: boolean;
 }) {
   return (
     <div className="space-y-3">
-      {DIMENSIONS.map((d) => {
+      {DIMENSIONS.map((d, i) => {
         const meta = DIMENSION_META[d];
         const ink = `var(${meta.textVar})`;
-        const fill = `var(${meta.fillVar})`;
         const delta = deltas?.[d] ?? 0;
-        const moved = showDeltas && delta !== 0;
+        const delay = meterDelay(i);
         return (
           <div key={d}>
             <div className="mb-1 flex items-baseline justify-between gap-2">
@@ -689,37 +930,23 @@ export function FactorBars({
                 {meta.label}
               </span>
               <span className="flex items-baseline gap-1.5">
-                {moved && (
-                  <span
-                    className="anim-pop rounded-full px-1.5 text-[12px] font-bold tabular-nums"
-                    style={{
-                      color: delta > 0 ? "var(--color-good)" : "var(--color-bad)",
-                      background: delta > 0 ? "var(--color-good-tint)" : "var(--color-bad-tint)",
-                    }}
-                  >
-                    {delta > 0 ? "+" : ""}
-                    {delta}
-                  </span>
-                )}
-                <span className="text-[12px] font-bold tabular-nums text-(--color-muted)">
-                  {dims[d]}
-                </span>
+                {showDeltas && delta !== 0 && <DeltaChip delta={delta} delay={delay} />}
+                <CountedValue
+                  value={dims[d]}
+                  from={from?.[d]}
+                  delay={delay}
+                  className="text-[12px] font-bold tabular-nums text-(--color-muted)"
+                />
               </span>
             </div>
-            <div
-              className="h-1.5 w-full overflow-hidden rounded-full"
-              style={{ background: "var(--color-canvas-deep)" }}
-              role="meter"
-              aria-valuenow={dims[d]}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label={`${meta.label}: ${dims[d]} out of 100`}
-            >
-              <div
-                className="h-full rounded-full transition-[width] duration-[900ms] ease-out"
-                style={{ width: `${dims[d]}%`, background: fill }}
-              />
-            </div>
+            <MeterTrack
+              label={meta.label}
+              value={dims[d]}
+              from={from?.[d]}
+              fill={`var(${meta.fillVar})`}
+              delay={delay}
+              height="h-1.5"
+            />
           </div>
         );
       })}
@@ -730,24 +957,25 @@ export function FactorBars({
 /** The same three factors, given room to breathe. Used after a decision and at the end. */
 export function FactorGrid({
   dims,
+  from,
   deltas,
   showDeltas = false,
 }: {
   dims: Record<DimensionId, number>;
+  from?: Record<DimensionId, number>;
   deltas?: Record<DimensionId, number>;
   showDeltas?: boolean;
 }) {
   return (
     <div className="grid gap-5 sm:grid-cols-3">
-      {DIMENSIONS.map((d) => {
+      {DIMENSIONS.map((d, i) => {
         const meta = DIMENSION_META[d];
         const ink = `var(${meta.textVar})`;
-        const fill = `var(${meta.fillVar})`;
         const delta = deltas?.[d] ?? 0;
-        const moved = showDeltas && delta !== 0;
+        const delay = meterDelay(i);
         return (
           <div key={d}>
-            <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="mb-2 flex items-center gap-2">
               <span
                 className="flex items-center gap-1.5 text-[13px] font-bold"
                 style={{ color: ink }}
@@ -757,42 +985,33 @@ export function FactorGrid({
                 </span>
                 {meta.label}
               </span>
-              {moved && (
-                <span
-                  className="anim-pop rounded-full px-1.5 py-0.5 text-[12px] font-bold tabular-nums"
-                  style={{
-                    color: delta > 0 ? "var(--color-good)" : "var(--color-bad)",
-                    background: delta > 0 ? "var(--color-good-tint)" : "var(--color-bad-tint)",
-                  }}
-                >
-                  {delta > 0 ? "+" : ""}
-                  {delta}
-                </span>
-              )}
             </div>
-            <div className="mb-1.5 flex items-baseline gap-1">
-              <span
+            {/* The delta chip sits BESIDE the number, not out at the right-hand edge of
+                the header row where it was — 180px away from the only number it makes a
+                claim about, measured on the resolving beat. `showDeltas` is true on that
+                beat and nowhere else, so this arrangement costs the closing debrief, which
+                shows no deltas, exactly nothing. */}
+            <div className="mb-1.5 flex items-baseline gap-2">
+              <CountedValue
+                value={dims[d]}
+                from={from?.[d]}
+                delay={delay}
                 className="text-[24px] font-bold leading-none tabular-nums"
                 style={{ color: ink }}
-              >
-                {dims[d]}
-              </span>
-              <span className="text-[12px] text-(--color-faint)">/ 100</span>
-            </div>
-            <div
-              className="h-2 w-full overflow-hidden rounded-full"
-              style={{ background: "var(--color-canvas-deep)" }}
-              role="meter"
-              aria-valuenow={dims[d]}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label={`${meta.label}: ${dims[d]} out of 100`}
-            >
-              <div
-                className="h-full rounded-full transition-[width] duration-[900ms] ease-out"
-                style={{ width: `${dims[d]}%`, background: fill }}
               />
+              <span aria-hidden="true" className="text-[12px] text-(--color-faint)">
+                / 100
+              </span>
+              {showDeltas && delta !== 0 && <DeltaChip delta={delta} delay={delay} />}
             </div>
+            <MeterTrack
+              label={meta.label}
+              value={dims[d]}
+              from={from?.[d]}
+              fill={`var(${meta.fillVar})`}
+              delay={delay}
+              height="h-2"
+            />
             <p className="mt-2 text-[13px] text-(--color-muted)">{meta.question}</p>
           </div>
         );
@@ -818,11 +1037,22 @@ const LEDGER_TONE: Record<LedgerEntry["tone"], { icon: IconId; tone: Tone }> = {
  */
 export function InsightRail({
   dims,
+  from,
   entries,
   commits,
   collapsed = false,
 }: {
   dims: Record<DimensionId, number>;
+  /**
+   * Where the meters are coming from, on the two beats where they have just moved.
+   *
+   * This rail stays mounted from the decision beat through resolving and into the
+   * consequence — which is the whole reason the movement is visible at all. It used to
+   * unmount on commit and remount on the consequence, so the meters did not travel, they
+   * were replaced: the player watched three bars disappear and three different bars come
+   * back, which is a cut dressed as feedback.
+   */
+  from?: Record<DimensionId, number>;
   entries: LedgerEntry[];
   /** what the currently selected option would add to the ledger */
   commits?: string;
@@ -836,14 +1066,16 @@ export function InsightRail({
   return (
     <div className="space-y-3.5">
       <RailCard title="Key factors" icon="chart" region="factors">
-        <FactorBars dims={dims} />
+        <FactorBars dims={dims} from={from} />
       </RailCard>
 
       {/* Sits above the ledger because that is what it is: the next line of it. Keeping
           it out of the option card stops the whole card row growing on selection. */}
       {commits && (
         <section
-          className="anim-fade rounded-xl px-3.5 py-3"
+          /* 160ms, down from 500. This panel answers a click the player has just made,
+             so anything slower is the rail catching up with them. */
+          className="m-swap rounded-xl px-3.5 py-3"
           style={{ background: "var(--color-accent-tint)" }}
         >
           <SectionTitle icon="scale" className="mb-1.5">
@@ -930,7 +1162,9 @@ export function PredictionStrip({
   onPredict: (d: DimensionId) => void;
 }) {
   return (
-    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
+    /* Appears the moment a selection completes, so it fades in at the speed of the click
+       that summoned it rather than at the speed of a page transition. */
+    <div className="m-swap flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
       <span
         id={PREDICTION_QUESTION_ID}
         className="text-[13px] font-semibold text-(--color-ink-soft)"
@@ -946,7 +1180,7 @@ export function PredictionStrip({
               key={d}
               onClick={() => onPredict(d)}
               aria-pressed={on}
-              className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-bold transition-colors"
+              className="m-press flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-bold"
               style={{
                 /* Selected is a tint fill with the dark text token, never white on the
                    solid: win and profit solids are 3.63:1 and 3.90:1 on white, which is
@@ -984,6 +1218,17 @@ const ACTION_HINT_ID = "gpl-action-hint";
  * speaks the requirement instead of the game doing nothing. Sighted keyboard users get
  * the same discoverability for free.
  */
+/**
+ * `label` and `onAction` are optional, and that is a motion decision rather than an API
+ * one.
+ *
+ * The resolving beat had no action bar, so committing a decision took the whole bottom
+ * 66px of the console away for one second and then put it back — the frame flickering
+ * around the one moment that is supposed to feel like a consequence. The bar now stays
+ * up through resolving carrying only the colleague's steer, which is honest (it is still
+ * their advice about the decision just made) and holds every edge of the console still
+ * from the decision beat through to the result.
+ */
 export function ActionBar({
   label,
   onAction,
@@ -994,8 +1239,8 @@ export function ActionBar({
   aside,
   children,
 }: {
-  label: string;
-  onAction: () => void;
+  label?: string;
+  onAction?: () => void;
   disabled?: boolean;
   /** activated while gated — say what is missing rather than swallowing the press */
   onBlocked?: () => void;
@@ -1047,22 +1292,29 @@ export function ActionBar({
           {hint}
         </span>
       )}
-      <div className="ml-auto shrink-0">
-        <button
-          onClick={() => (gated ? onBlocked?.() : onAction())}
-          aria-disabled={gated || undefined}
-          aria-describedby={describedBy}
-          className="flex h-[48px] min-w-[280px] items-center justify-center gap-2.5 rounded-[12px] px-8 text-[15px] font-bold transition-colors duration-150 aria-disabled:cursor-not-allowed"
-          style={
-            gated
-              ? { background: "var(--color-accent-tint)", color: "var(--color-accent-deep)" }
-              : { background: "var(--color-accent)", color: "#fff" }
-          }
-        >
-          {label}
-          <span aria-hidden="true">→</span>
-        </button>
-      </div>
+      {label && (
+        <div className="ml-auto shrink-0">
+          <button
+            onClick={() => (gated ? onBlocked?.() : onAction?.())}
+            aria-disabled={gated || undefined}
+            aria-describedby={describedBy}
+            /* `data-ready` is what fires the gate-opening scale: the attribute appearing
+               starts the animation, so it cannot re-fire on a re-render that left the
+               gate where it was. Only set on a bar that HAS a gate, or every action bar
+               in the game would pop on arrival. */
+            data-ready={disabled === undefined ? undefined : !gated}
+            className="m-gate m-press flex h-[48px] min-w-[280px] items-center justify-center gap-2.5 rounded-[12px] px-8 text-[15px] font-bold aria-disabled:cursor-not-allowed"
+            style={
+              gated
+                ? { background: "var(--color-accent-tint)", color: "var(--color-accent-deep)" }
+                : { background: "var(--color-accent)", color: "#fff" }
+            }
+          >
+            {label}
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1085,7 +1337,7 @@ export function PrimaryButton({
       <button
         onClick={onClick}
         disabled={disabled}
-        className="rounded-[12px] px-6 py-3 text-[15px] font-bold transition-colors duration-150 enabled:text-white disabled:cursor-not-allowed"
+        className="m-press rounded-[12px] px-6 py-3 text-[15px] font-bold enabled:text-white disabled:cursor-not-allowed"
         style={
           disabled
             ? { background: "var(--color-accent-tint)", color: "var(--color-accent-deep)" }
@@ -1103,11 +1355,20 @@ export function Eyebrow({ children }: { children: React.ReactNode }) {
   return <p className="eyebrow">{children}</p>;
 }
 
+/**
+ * `animate` is still here and still defaults to false, and it must stay that way.
+ *
+ * Badges are earned mid-run and shown only at the debrief on purpose — recognition
+ * mid-run is a narrator patting the player on the head, and the same information at the
+ * end is an account of how they played. A badge landing is therefore never a celebration
+ * of an event; at the debrief it is one row of a list arriving with the rest of its
+ * section, which is what `m-seq` on the ending gives it.
+ */
 export function BadgeChip({ id, animate = false }: { id: BadgeId; animate?: boolean }) {
   const meta = BADGE_META[id];
   return (
     <div
-      className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${animate ? "anim-pop" : ""}`}
+      className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${animate ? "m-land" : ""}`}
       style={{ borderColor: "var(--color-accent-ring)", background: "var(--color-accent-tint)" }}
     >
       <span aria-hidden="true" className="mt-0.5 shrink-0 text-(--color-accent)">

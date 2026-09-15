@@ -2,7 +2,7 @@
  * Browser verification.
  *
  * Typecheck and unit tests cannot tell you whether a screen renders, whether a button is
- * reachable, or whether a human can finish the game. This plays a complete run in a real
+ * reachable, or whether a human can finish the game. This plays complete runs in a real
  * browser, screenshots every beat, and fails on any console error.
  *
  * It also enforces the console rule: at desktop width the working area must not overflow.
@@ -12,14 +12,27 @@
  *   node tools/verify.mjs                 # against http://localhost:5173
  *   node tools/verify.mjs http://host     # against anything else
  *   GPL_VIEWPORT=390x844 node tools/...   # phone pass
+ *   node tools/verify.mjs --all-paths     # three policies, not one (see below)
+ *   GPL_PATHS=all node tools/verify.mjs   # same, for CI
  */
 
 import { chromium } from "playwright";
 import { mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 
-const BASE = process.argv[2] ?? "http://localhost:5173";
-const MAX_STEPS = 90;
+const BASE = process.argv.find((a) => a.startsWith("http")) ?? "http://localhost:5173";
+/**
+ * A deadlock stop, not an expectation of run length.
+ *
+ * At 90 it was quietly asserting "no more than about sixteen missions": a run needs four
+ * or five steps per mission, so the seventeenth (m9a) walked the whole game, reached the
+ * last consequence, and then ran out of budget one click from the ending — reported as
+ * "the run never reached the ending", which is a true statement about the harness and a
+ * false one about the game. Generous, because the only thing it protects against is an
+ * unrecognised screen, and the loop already reports that case itself.
+ */
+const MAX_STEPS = 240;
+const ALL_PATHS = process.argv.includes("--all-paths") || process.env.GPL_PATHS === "all";
 
 const [vw, vh] = (process.env.GPL_VIEWPORT ?? "1440x900").split("x").map(Number);
 const VIEWPORT = { width: vw || 1440, height: vh || 900 };
@@ -33,15 +46,72 @@ const DESKTOP = VIEWPORT.width >= 1024;
  * >=1000px tall, and below that the working area is allowed to scroll inside the console
  * — the chrome still never moves. See docs/DECISIONS.md D-024.
  */
-const ENFORCE_FIT = DESKTOP && VIEWPORT.height >= 1000;
+const FIT_MIN_HEIGHT = 1000;
+const ENFORCE_FIT = DESKTOP && VIEWPORT.height >= FIT_MIN_HEIGHT;
 const SHOTS = path.resolve(
   VIEWPORT.width === 1440 ? "docs/screenshots" : `docs/screenshots-${VIEWPORT.width}`,
 );
+
+/**
+ * THE PATHS — one run is not a verification of a branching game.
+ *
+ * D-040 closed by naming this as the outstanding gap: the harness played exactly one
+ * path, so 15 of 16 missions' alternative branches had never been rendered in a browser
+ * at all, and path-dependent overflow was invisible. A reviewer measured the ending
+ * overflowing by 1,867px on their run while the harness measured it at 739-in-739 on its
+ * own. Both numbers were right. Only one was being looked at.
+ *
+ * So there are three policies. They are deliberately crude — first, last, and middle
+ * option — because the purpose is not to play well, it is to render different outcomes,
+ * and an option-index policy is deterministic, needs no knowledge of content, and cannot
+ * drift when content changes. Each also predicts a different meter, which is the only way
+ * the other two prediction chips have ever been clicked in a browser.
+ *
+ * `first` stays the default and stays fully screenshotted, so `npm run verify` costs
+ * exactly what it did before. The other two run on `--all-paths` and screenshot only what
+ * fails or what they are the first to render — a shot of an identical screen proves
+ * nothing and costs a second.
+ */
+const POLICIES = [
+  {
+    id: "first",
+    label: "first option",
+    predict: "Deliverability",
+    /** Click order over n options: the harness's original behaviour. */
+    order: (n) => [...Array(n).keys()],
+    shotAll: true,
+  },
+  {
+    id: "last",
+    label: "last option",
+    predict: "Winability",
+    order: (n) => [...Array(n).keys()].reverse(),
+    shotAll: false,
+  },
+  {
+    id: "middle",
+    label: "middle option",
+    predict: "Profitability",
+    /** Outward from the middle, so multi-select missions still reach their slot count. */
+    order: (n) => {
+      const out = [];
+      const m = Math.floor((n - 1) / 2);
+      for (let d = 0; d < n; d++) {
+        if (m + d < n) out.push(m + d);
+        if (d > 0 && m - d >= 0) out.push(m - d);
+      }
+      return out;
+    },
+    shotAll: false,
+  },
+];
 
 const problems = [];
 /* Fit overruns measured below the enforcement height: reported, not fatal. */
 const overflows = [];
 let shotIndex = 0;
+/** Mission headings any path has already rendered, so later paths only shoot new ground. */
+const seenHeadings = new Set();
 
 async function shot(page, name) {
   shotIndex += 1;
@@ -72,8 +142,9 @@ async function shot(page, name) {
  * every run of the documented workflow this function returned on its first line. The
  * fits-one-screen rule — which the docstring at the top of this file calls what separates
  * the console from a form — has not been checked by the mandatory gate at all, and screens
- * do overflow at 1440×900: a decide screen by 26px, a consequence by 70px, the ending by
- * 1,867px. A gate that skips itself is worse than no gate, because it reports green.
+ * do overflow at 1440×900: a decide screen by 26px, a consequence by 64–113px depending on
+ * the path, and the ending by 1,967–2,782px depending on the path. A gate that skips itself
+ * is worse than no gate, because it reports green.
  *
  * So the measurement now always runs. Below the enforcement height it reports rather than
  * fails, because the rule is authored for a taller screen and turning the default run red
@@ -107,29 +178,79 @@ async function button(page, name) {
   return (await first.isVisible()) ? first : null;
 }
 
-async function main() {
-  await rm(SHOTS, { recursive: true, force: true });
-  await mkdir(SHOTS, { recursive: true });
+/**
+ * What the game says about its own shape, read off the mission rail.
+ *
+ * The counts used to be literals — 16 missions, 16 briefs, 16 consequences, 5 interludes
+ * — and a single content change (m9a, backlog 1.1) turned the mandatory gate red with
+ * three false problems, which is the fastest way to teach a team to ignore it. Reading
+ * "Mission 3 of 17" and "Chapter 2" out of the rail costs one evaluate and makes the
+ * expectation the content's own.
+ *
+ * It is also a stronger check than importing `missionOrder` would be, and the reason is
+ * worth stating: this compares the total the PLAYER is shown against the number of beats
+ * the game actually delivers. An import would take both numbers from the same place and
+ * could never disagree with itself.
+ */
+async function readRail(page) {
+  return page.evaluate(() => {
+    const text = document.body.innerText ?? "";
+    const m = /Mission\s+(\d+)\s+of\s+(\d+)/.exec(text);
+    const c = /Chapter\s+(\d+)/.exec(text);
+    return {
+      mission: m ? +m[1] : null,
+      total: m ? +m[2] : null,
+      chapter: c ? +c[1] : null,
+    };
+  });
+}
 
-  const browser = await chromium.launch();
+/**
+ * Play one complete run under one policy.
+ *
+ * Each path gets a fresh context, because the game persists to `localStorage`
+ * (`gpl.save.v3`) and a second run in the same context would resume the first.
+ */
+async function runPath(browser, policy) {
+  const tag = (s) => (policy.id === "first" ? s : `[${policy.id}] ${s}`);
   const context = await browser.newContext({ viewport: VIEWPORT });
   const page = await context.newPage();
 
   page.on("console", (m) => {
-    if (m.type() === "error") problems.push(`console error: ${m.text()}`);
+    if (m.type() === "error") problems.push(tag(`console error: ${m.text()}`));
   });
-  page.on("pageerror", (e) => problems.push(`page error: ${e.message}`));
+  page.on("pageerror", (e) => problems.push(tag(`page error: ${e.message}`)));
   page.on("requestfailed", (r) => {
-    if (r.url().startsWith(BASE)) problems.push(`request failed: ${r.url()}`);
+    if (r.url().startsWith(BASE)) problems.push(tag(`request failed: ${r.url()}`));
   });
 
-  console.log(`\n▶ verifying ${BASE} at ${VIEWPORT.width}×${VIEWPORT.height}\n`);
+  const run = {
+    missions: 0,
+    briefs: 0,
+    consequences: 0,
+    interludes: 0,
+    total: null,
+    chapters: new Set(),
+    routedToEnding: false,
+    reachedEnding: false,
+  };
+  /**
+   * Screenshot rule for the alternative paths: only what failed, or what this path is the
+   * first to render. A second picture of an identical screen proves nothing and costs a
+   * second — and at three paths × 40 beats, pictures are most of the runtime.
+   */
+  const marker = () => problems.length + overflows.length;
+  const shotIf = async (name, since, isNew) => {
+    if (marker() !== since || isNew) await shot(page, name);
+  };
+
+  console.log(`\n▶ ${BASE} at ${VIEWPORT.width}×${VIEWPORT.height} — path: ${policy.label}\n`);
   await page.goto(BASE, { waitUntil: "networkidle" });
 
   await page.waitForSelector("h1");
   const title = (await page.locator("h1").first().innerText()).trim();
-  if (title !== "GPL") problems.push(`title screen h1 was "${title}", expected "GPL"`);
-  await shot(page, "title");
+  if (title !== "GPL") problems.push(tag(`title screen h1 was "${title}", expected "GPL"`));
+  if (policy.shotAll) await shot(page, "title");
 
   const begin = (await button(page, "Take the brief")) ?? (await button(page, "Start again"));
   if (!begin) throw new Error("no start button on the title screen");
@@ -139,34 +260,40 @@ async function main() {
   await page.waitForTimeout(250);
   const start = await button(page, "Start the pursuit");
   if (!start) {
-    problems.push("no chapter 0 starting-advantage screen after the title");
+    problems.push(tag("no chapter 0 starting-advantage screen after the title"));
   } else {
     if (await start.isEnabled()) {
-      problems.push("chapter 0: the pursuit could start before a team was picked");
+      problems.push(tag("chapter 0: the pursuit could start before a team was picked"));
     }
     const teams = page.locator("button.choice");
-    if ((await teams.count()) < 2) problems.push("chapter 0: fewer than two starting advantages");
-    await checkFit(page, "chapter 0");
-    await shot(page, "setup");
-    await teams.first().click();
+    const teamCount = await teams.count();
+    if (teamCount < 2) problems.push(tag("chapter 0: fewer than two starting advantages"));
+    const since = marker();
+    await checkFit(page, tag("chapter 0"));
+    if (policy.shotAll) await shot(page, "setup");
+    else await shotIf(`${policy.id}-setup`, since, false);
+    // The starting advantage is itself a branch: each path takes a different team.
+    await teams.nth(policy.order(teamCount)[0]).click();
     await page.waitForTimeout(80);
-    await shot(page, "setup-selected");
-    if (!(await start.isEnabled())) problems.push("chapter 0: still blocked after picking a team");
+    if (policy.shotAll) await shot(page, "setup-selected");
+    if (!(await start.isEnabled())) {
+      problems.push(tag("chapter 0: still blocked after picking a team"));
+    }
     await start.click();
   }
 
-  let missions = 0;
-  let briefs = 0;
-  let consequences = 0;
-  let interludes = 0;
-
+  /** Consecutive polls with nothing recognised on screen — see the stuck branch below. */
+  let misses = 0;
   for (let step = 0; step < MAX_STEPS; step++) {
     await page.waitForTimeout(150);
 
     if ((await page.getByText("How it ended", { exact: true }).count()) > 0) {
       await page.waitForTimeout(450);
-      await checkFit(page, "the ending");
-      await shot(page, "ending");
+      run.reachedEnding = true;
+      const since = marker();
+      await checkFit(page, tag("the ending"));
+      if (policy.shotAll) await shot(page, "ending");
+      else await shotIf(`${policy.id}-ending`, since, false);
       console.log("\n✓ reached the ending");
       break;
     }
@@ -174,27 +301,38 @@ async function main() {
     // ── brief ──────────────────────────────────────────────
     const toOptions = await button(page, "See your options");
     if (toOptions) {
-      briefs += 1;
+      misses = 0;
+      run.briefs += 1;
       const heading = (await page.locator("h1").first().innerText()).trim();
-      console.log(`\n── mission ${briefs}: ${heading}`);
+      const rail = await readRail(page);
+      if (rail.total) run.total = rail.total;
+      if (rail.chapter) run.chapters.add(rail.chapter);
+      console.log(`\n── mission ${run.briefs}: ${heading}`);
 
       // The game shell must be present on every briefing, not just the first.
       for (const required of ["Chapter", "Key factors", "Where you stand"]) {
         if ((await page.getByText(required, { exact: false }).count()) === 0) {
-          problems.push(`brief ${briefs}: shell is missing "${required}"`);
+          problems.push(tag(`brief ${run.briefs}: shell is missing "${required}"`));
         }
       }
       // Advice must be attributed to a person, never spoken by the interface.
       if ((await page.getByText("Tip.", { exact: false }).count()) > 0) {
-        problems.push(`brief ${briefs}: an unattributed "Tip." is on screen`);
+        problems.push(tag(`brief ${run.briefs}: an unattributed "Tip." is on screen`));
       }
       // Reading and choosing are separate beats — the brief must not carry the options.
       if ((await page.locator("button.choice").count()) > 0) {
-        problems.push(`brief ${briefs}: options are on the brief, which is the beat before`);
+        problems.push(tag(`brief ${run.briefs}: options are on the brief, which is the beat before`));
       }
 
-      await checkFit(page, `brief ${briefs} (${heading})`);
-      if (briefs <= 3 || briefs === 11) await shot(page, `brief-${briefs}`);
+      const since = marker();
+      await checkFit(page, tag(`brief ${run.briefs} (${heading})`));
+      const isNew = !seenHeadings.has(`brief:${heading}`);
+      seenHeadings.add(`brief:${heading}`);
+      if (policy.shotAll) {
+        if (run.briefs <= 3 || run.briefs === 11) await shot(page, `brief-${run.briefs}`);
+      } else {
+        await shotIf(`${policy.id}-brief-${run.briefs}`, since, isNew);
+      }
       await toOptions.click();
       continue;
     }
@@ -202,19 +340,25 @@ async function main() {
     // ── decide ─────────────────────────────────────────────
     const commit = await button(page, "Commit to this");
     if (commit) {
-      missions += 1;
+      misses = 0;
+      run.missions += 1;
       const heading = (await page.locator("h1").first().innerText()).trim();
 
-      await checkFit(page, `mission ${missions} (${heading})`);
-      await shot(page, `mission-${missions}-decide`);
+      const since = marker();
+      await checkFit(page, tag(`mission ${run.missions} (${heading})`));
+      const isNew = !seenHeadings.has(`decide:${heading}`);
+      seenHeadings.add(`decide:${heading}`);
+      if (policy.shotAll) await shot(page, `mission-${run.missions}-decide`);
+      else await shotIf(`${policy.id}-mission-${run.missions}-decide`, since, isNew);
 
       const choices = page.locator("button.choice");
       const count = await choices.count();
-      if (count < 2) problems.push(`${heading}: only ${count} choices rendered`);
+      if (count < 2) problems.push(tag(`${heading}: only ${count} choices rendered`));
 
-      // Select until the prediction gate becomes available.
+      // Select in this path's order until the prediction gate becomes available.
       let clicked = 0;
-      for (let i = 0; i < count && clicked < 4; i++) {
+      for (const i of policy.order(count)) {
+        if (clicked >= 4) break;
         if ((await page.getByText("will move least?", { exact: false }).count()) > 0) break;
         await choices.nth(i).click();
         clicked += 1;
@@ -223,31 +367,51 @@ async function main() {
 
       // The prediction is the game's "before" — commit must be gated on it.
       if (await commit.isEnabled()) {
-        problems.push(`${heading}: Commit was enabled before a prediction was made`);
+        problems.push(tag(`${heading}: Commit was enabled before a prediction was made`));
       }
-      const predict = await button(page, "Deliverability");
+      // Each path predicts a different meter; fall back so a missing chip is reported as
+      // a missing control rather than silently skipping the gate.
+      let predict = await button(page, policy.predict);
       if (!predict) {
-        problems.push(`${heading}: no prediction control after selecting`);
-        await shot(page, `stuck-predict-${missions}`);
+        for (const alt of ["Deliverability", "Winability", "Profitability"]) {
+          predict = predict ?? (await button(page, alt));
+        }
+      }
+      if (!predict) {
+        problems.push(tag(`${heading}: no prediction control after selecting`));
+        await shot(page, `${policy.id}-stuck-predict-${run.missions}`);
         break;
       }
       await predict.click();
       await page.waitForTimeout(70);
 
       if (!(await commit.isEnabled())) {
-        problems.push(`${heading}: Commit never enabled after ${clicked} selections + prediction`);
+        problems.push(
+          tag(`${heading}: Commit never enabled after ${clicked} selections + prediction`),
+        );
         break;
       }
-      await checkFit(page, `mission ${missions} selected (${heading})`);
-      await shot(page, `mission-${missions}-selected`);
+      const since2 = marker();
+      await checkFit(page, tag(`mission ${run.missions} selected (${heading})`));
+      if (policy.shotAll) await shot(page, `mission-${run.missions}-selected`);
+      else await shotIf(`${policy.id}-mission-${run.missions}-selected`, since2, false);
       await commit.click();
       continue;
     }
 
     // ── consequence ────────────────────────────────────────
-    const next = (await button(page, "Next mission")) ?? (await button(page, "See how it went"));
+    // "See how it went" instead of "Next mission" means the game itself has routed to the
+    // ending: this consequence is the last beat of the run. That is how a legitimately
+    // short path — `m9a`'s losing outcomes end the game at mission 13 — is told apart
+    // from a harness that lost its way, and it is also how the last consequence is
+    // identified for a screenshot now that "the sixteenth" no longer means the last one.
+    const nextMission = await button(page, "Next mission");
+    const toEnding = nextMission ? null : await button(page, "See how it went");
+    const next = nextMission ?? toEnding;
+    if (toEnding) run.routedToEnding = true;
     if (next) {
-      consequences += 1;
+      misses = 0;
+      run.consequences += 1;
       await page.waitForTimeout(650); // let the meters animate
 
       // The teaching must come from a named person, not from the interface. There used
@@ -257,14 +421,27 @@ async function main() {
         const el = document.querySelector("[data-work-area]");
         return el ? /[A-Z][a-z]+ [A-Z][a-z]+/.test(el.textContent ?? "") : false;
       });
-      if (!named) problems.push(`consequence ${consequences}: no attributed read on the outcome`);
+      if (!named) {
+        problems.push(tag(`consequence ${run.consequences}: no attributed read on the outcome`));
+      }
       if ((await page.getByText("Next time.", { exact: false }).count()) > 0) {
-        problems.push(`consequence ${consequences}: the unattributed "Next time." caption is back`);
+        problems.push(
+          tag(`consequence ${run.consequences}: the unattributed "Next time." caption is back`),
+        );
       }
 
-      if (consequences <= 2 || consequences === 16) {
-        await checkFit(page, `consequence ${consequences}`);
-        await shot(page, `consequence-${consequences}`);
+      /* Fit is measured on EVERY consequence. It used to be measured on the first two and
+         on the sixteenth, which is how a 113px overflow on consequence 2's alternative
+         outcomes went unseen — and when content grew to 17 missions, "=== 16" stopped
+         being the last one anyway. Measuring is an evaluate; only the screenshot is slow. */
+      const since = marker();
+      await checkFit(page, tag(`consequence ${run.consequences}`));
+      if (policy.shotAll) {
+        if (run.consequences <= 2 || run.routedToEnding) {
+          await shot(page, `consequence-${run.consequences}`);
+        }
+      } else {
+        await shotIf(`${policy.id}-consequence-${run.consequences}`, since, false);
       }
       await next.click();
       continue;
@@ -273,34 +450,107 @@ async function main() {
     // ── interlude ──────────────────────────────────────────
     const begins = await button(page, "Begin the chapter");
     if (begins) {
-      interludes += 1;
-      if (interludes <= 2) await shot(page, `interlude-${interludes}`);
+      misses = 0;
+      run.interludes += 1;
+      if (policy.shotAll && run.interludes <= 2) await shot(page, `interlude-${run.interludes}`);
       await begins.click();
       continue;
     }
 
     // ── resolving ──────────────────────────────────────────
     if ((await page.getByText("Seeing what happens…").count()) > 0) {
-      if (shotIndex < 6) await shot(page, "resolving");
+      if (policy.shotAll && shotIndex < 6) await shot(page, "resolving");
       await page.waitForTimeout(450);
+      misses = 0;
       continue;
     }
 
-    problems.push(`stuck at step ${step}: no recognised control on screen`);
-    await shot(page, `stuck-${step}`);
+    /**
+     * A frame with nothing recognisable on it is not the same thing as being stuck.
+     *
+     * Beats mount in stages — the shimmer text goes before the consequence's primary
+     * button arrives — so there is a window of a few hundred milliseconds where every
+     * branch above misses. The original single path never landed in that window because
+     * it stopped for a 400ms screenshot at almost every beat; the alternative paths
+     * screenshot almost nothing, poll faster, and hit it. The first sweep duly reported a
+     * "stuck" screen whose screenshot showed a perfectly rendered consequence with its
+     * "Next mission" button in plain view, and four cascading assertion failures behind it.
+     *
+     * So the gate now waits for the screen to settle before calling it stuck: ~3s of
+     * nothing, not one unlucky frame. A genuinely dead screen still fails, and a false
+     * positive here would be worse than a slow run — it is the kind of noise that gets a
+     * mandatory gate switched off.
+     */
+    misses += 1;
+    if (misses < 8) {
+      await page.waitForTimeout(350);
+      continue;
+    }
+    problems.push(
+      tag(`stuck at step ${step}: no recognised control on screen after ${misses} polls`),
+    );
+    await shot(page, `${policy.id}-stuck-${step}`);
     break;
   }
 
   /* ── assertions ─────────────────────────────────────────── */
-  const expected = 16;
-  if (missions !== expected) problems.push(`played ${missions} missions, expected ${expected}`);
-  if (briefs !== expected) problems.push(`saw ${briefs} briefs, expected ${expected}`);
-  if (consequences !== expected) problems.push(`saw ${consequences} consequences, expected ${expected}`);
-  if (interludes !== 5) problems.push(`saw ${interludes} interludes, expected 5`);
+
+  /**
+   * Every mission renders all three of its beats. This is the invariant that holds on
+   * every path regardless of branching, and it is the one worth failing on.
+   */
+  if (run.briefs !== run.missions || run.consequences !== run.missions) {
+    problems.push(
+      tag(
+        `beats do not line up: ${run.briefs} briefs, ${run.missions} decides, ` +
+          `${run.consequences} consequences — every mission needs all three`,
+      ),
+    );
+  }
+  if (!run.reachedEnding) problems.push(tag("the run never reached the ending"));
+
+  /**
+   * How long the run should be is now the content's business, not this file's. A path may
+   * legitimately stop early — `m9a`'s losing outcomes carry `next: "end"`, so a player who
+   * arrives at the award decision with nothing to show loses it and never sees delivery.
+   * That is the game working. What must not happen is stopping early *without* the game
+   * having said so, which is why `routedToEnding` is tracked from the button's own label.
+   */
+  if (run.total && run.missions > run.total) {
+    problems.push(tag(`played ${run.missions} missions but the rail advertises ${run.total}`));
+  }
+  /**
+   * A short run is legitimate exactly when the GAME ended it, and the mechanical proof of
+   * that is the ending screen rendering: a harness that has lost its way never gets there.
+   *
+   * The first version of this looked for the last consequence's button to read "See how it
+   * went" instead of "Next mission" — and the last-option path proved that wrong on its
+   * first sweep. It loses the award at `m9a`, whose losing outcomes carry `next: "end"`,
+   * and the button still says "Next mission" because nothing in the outcome tells the
+   * button it is the last one. The run was correct, reached the ending at mission 13 of
+   * 17, and was reported as a failure. Hence: `reachedEnding` is the assertion, the
+   * button label is only used to pick the final consequence's screenshot, and the short
+   * run is printed in the summary so it is visible rather than silently accepted.
+   */
+  if (run.total && run.missions < run.total && !run.reachedEnding) {
+    problems.push(
+      tag(`stopped after ${run.missions} of ${run.total} missions without reaching the ending`),
+    );
+  }
+  /* One interlude opens each chapter the run visits. Derived, so adding a chapter does
+     not make this file wrong. */
+  if (run.chapters.size && run.interludes !== run.chapters.size) {
+    problems.push(
+      tag(
+        `saw ${run.interludes} interludes for ${run.chapters.size} chapters ` +
+          `(${[...run.chapters].join(", ")}) — one opens each chapter`,
+      ),
+    );
+  }
 
   const body = (await page.locator("body").innerText()).toLowerCase();
   for (const t of ["your decisions", "the account", "how it ended"]) {
-    if (!body.includes(t)) problems.push(`ending is missing "${t}"`);
+    if (!body.includes(t)) problems.push(tag(`ending is missing "${t}"`));
   }
 
   // Every interactive control must have an accessible name.
@@ -312,19 +562,64 @@ async function main() {
     }
     return out;
   });
-  for (const u of unnamed) problems.push(`control without an accessible name: ${u}`);
+  for (const u of unnamed) problems.push(tag(`control without an accessible name: ${u}`));
 
   // Photography must actually load — a broken <img> is invisible in a screenshot.
   const brokenImages = await page.evaluate(() =>
     [...document.images].filter((i) => i.complete && i.naturalWidth === 0).map((i) => i.src),
   );
-  for (const src of brokenImages) problems.push(`image failed to decode: ${src}`);
+  for (const src of brokenImages) problems.push(tag(`image failed to decode: ${src}`));
 
+  await context.close();
+  return run;
+}
+
+async function main() {
+  await rm(SHOTS, { recursive: true, force: true });
+  await mkdir(SHOTS, { recursive: true });
+
+  const browser = await chromium.launch();
+  const paths = ALL_PATHS ? POLICIES : POLICIES.slice(0, 1);
+  const runs = [];
+  for (const policy of paths) {
+    const t0 = Date.now();
+    const run = await runPath(browser, policy);
+    runs.push({ policy, run, seconds: Math.round((Date.now() - t0) / 1000) });
+  }
   await browser.close();
 
-  console.log(
-    `\nmissions ${missions} · consequences ${consequences} · interludes ${interludes}`,
-  );
+  console.log("");
+  for (const { policy, run, seconds } of runs) {
+    /* A short run is legitimate only when the game reached its own ending. Saying "ended
+       early on a terminal outcome" for a run that simply stopped would be the harness
+       explaining away its own failure. */
+    const early =
+      run.total && run.missions < run.total
+        ? run.reachedEnding
+          ? " ← ended early on a terminal outcome"
+          : " (STOPPED EARLY — see problems)"
+        : "";
+    console.log(
+      `${policy.label.padEnd(14)} missions ${run.missions}/${run.total ?? "?"}${early} · ` +
+        `consequences ${run.consequences} · interludes ${run.interludes} · ${seconds}s`,
+    );
+  }
+  if (!ALL_PATHS) {
+    console.log(
+      `\nonly the ${POLICIES[0].label} path ran. --all-paths (or GPL_PATHS=all) also plays ` +
+        `${POLICIES.slice(1).map((p) => p.label).join(" and ")}.`,
+    );
+  }
+
+  /* Overruns below the enforcement height are reported, not fatal — D-040. Printed after
+     the summary so they are visible on a green run, which is the only reason they were
+     ever found. */
+  if (overflows.length) {
+    console.log(
+      `\n⚠ ${overflows.length} fit overrun(s) below the ${FIT_MIN_HEIGHT}px enforcement height:\n`,
+    );
+    for (const o of overflows) console.log(`  · ${o}`);
+  }
 
   if (problems.length) {
     console.error(`\n✗ ${problems.length} problem(s):\n`);
@@ -332,7 +627,8 @@ async function main() {
     process.exit(1);
   }
   console.log(
-    `\n✓ clean playthrough at ${VIEWPORT.width}×${VIEWPORT.height} — ${shotIndex} screenshots in ${path.relative(process.cwd(), SHOTS)}\n`,
+    `\n✓ clean ${runs.length === 1 ? "playthrough" : `playthroughs (${runs.length} paths)`} at ` +
+      `${VIEWPORT.width}×${VIEWPORT.height} — ${shotIndex} screenshots in ${path.relative(process.cwd(), SHOTS)}\n`,
   );
 }
 

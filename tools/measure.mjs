@@ -3,187 +3,27 @@
  *
  * "Too densely packed" is a judgement until it has numbers attached. This walks a real
  * playthrough and, on each decide screen, counts what is actually on it: words, panels,
- * distinct type sizes, distinct colours, interactive targets, and how much of the desk
- * is ink versus air.
+ * distinct type sizes, distinct colours, interactive targets, how much is hidden behind a
+ * disclosure, and how much of the desk is ink versus air.
  *
  * It exists so that a density target can be a build gate rather than an opinion — see
  * docs/DENSITY-FRAMEWORK.md for the target ranges.
  *
+ * The probe itself lives in tools/lib/probe.mjs, shared with tools/air-debug.mjs, which
+ * draws the air verdict onto the page. If you doubt a number here, look at it there.
+ *
  *   node tools/measure.mjs                      # against http://localhost:5173
  *   node tools/measure.mjs --json               # machine-readable
+ *   node tools/measure.mjs --legacy-air         # score the pre-fix air rule, for contrast
  */
 
 import { chromium } from "playwright";
+import { PROBE } from "./lib/probe.mjs";
 
 const BASE = process.argv.find((a) => a.startsWith("http")) ?? "http://localhost:5173";
 const AS_JSON = process.argv.includes("--json");
+const LEGACY_AIR = process.argv.includes("--legacy-air");
 const [vw, vh] = (process.env.GPL_VIEWPORT ?? "1440x1024").split("x").map(Number);
-
-/** Everything measurable about one rendered screen. */
-const PROBE = () => {
-  const rootRectOf = (el) => el.getBoundingClientRect();
-  const root = document.querySelector("[data-work-area]") ?? document.body;
-  const all = [...root.querySelectorAll("*")];
-  const visible = all.filter((el) => {
-    const r = el.getBoundingClientRect();
-    if (r.width < 1 || r.height < 1) return false;
-    const cs = getComputedStyle(el);
-    return cs.visibility !== "hidden" && cs.display !== "none" && cs.opacity !== "0";
-  });
-
-  /** Text nodes only, so a wrapper's text is not counted twice. */
-  const ownText = (el) =>
-    [...el.childNodes]
-      .filter((n) => n.nodeType === 3)
-      .map((n) => n.textContent.trim())
-      .join(" ")
-      .trim();
-
-  const words = visible.reduce((n, el) => {
-    const t = ownText(el);
-    return n + (t ? t.split(/\s+/).filter(Boolean).length : 0);
-  }, 0);
-
-  const sizes = new Set();
-  const weights = new Set();
-  const colours = new Set();
-  const fills = new Set();
-  let inkArea = 0;
-
-  for (const el of visible) {
-    const cs = getComputedStyle(el);
-    if (ownText(el)) {
-      sizes.add(Math.round(parseFloat(cs.fontSize) * 10) / 10);
-      weights.add(cs.fontWeight);
-      colours.add(cs.color);
-    }
-    const bg = cs.backgroundColor;
-    if (bg && bg !== "rgba(0, 0, 0, 0)" && bg !== "transparent") {
-      fills.add(bg);
-      const r = el.getBoundingClientRect();
-      inkArea += r.width * r.height;
-    }
-  }
-
-  /**
-   * A REGION is what a player perceives as one box: a bordered or filled area ≥80×40
-   * with no bordered-or-filled ancestor. The nested count (which an earlier version of
-   * this tool reported) overstates badly — it counted every chip inside every card.
-   */
-  const boxy = (el) => {
-    const cs = getComputedStyle(el);
-    const bordered = parseFloat(cs.borderTopWidth) > 0 || parseFloat(cs.borderLeftWidth) > 0;
-    const filled = cs.backgroundColor !== "rgba(0, 0, 0, 0)";
-    const r = el.getBoundingClientRect();
-    return (bordered || filled) && r.width > 80 && r.height > 40;
-  };
-  const nestedPanels = visible.filter(boxy).length;
-  const topLevel = visible.filter((el) => {
-    if (!boxy(el)) return false;
-    for (let a = el.parentElement; a && a !== root; a = a.parentElement) if (boxy(a)) return false;
-    return true;
-  });
-  // Declared regions win when content opts in; otherwise fall back to the DOM heuristic.
-  const declared = [...document.querySelectorAll("[data-region]")].filter(
-    (el) => el.getBoundingClientRect().height > 1,
-  );
-  const regionNames = declared.map((el) => el.getAttribute("data-region"));
-  const regions = declared.length || topLevel.length;
-
-  /** Air, by sampling rather than by summing overlapping rectangles. */
-  let sampled = 0;
-  let airPoints = 0;
-  for (let y = rootRectOf(root).top + 12; y < rootRectOf(root).bottom; y += 24) {
-    for (let x = rootRectOf(root).left + 12; x < rootRectOf(root).right; x += 24) {
-      const el = document.elementFromPoint(x, y);
-      if (!el) continue;
-      sampled += 1;
-      const cs = getComputedStyle(el);
-      const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
-      const bg = cs.backgroundColor;
-      const transparent = !bg || bg === "rgba(0, 0, 0, 0)" || bg === "transparent";
-      if (!own && transparent) airPoints += 1;
-    }
-  }
-  const air = sampled ? Math.round((airPoints / sampled) * 100) / 100 : 0;
-
-  /** Words inside the decision object — the question and the option cards. */
-  const decisionWords = [...document.querySelectorAll("[data-decision]")].reduce((n, el) => {
-    const t = el.innerText?.trim();
-    return n + (t ? t.split(/\s+/).filter(Boolean).length : 0);
-  }, 0);
-
-  /**
-   * A station is a deliberate stop the layout forces. Counted as the number of distinct
-   * PROMINENCE TIERS present, not the number of elements — three option titles are one
-   * station, not three.
-   *
-   * Counted across the whole console, because the commit button is a station and it
-   * lives in the action bar rather than on the desk. The fill test accepts either a
-   * saturated hue or a dark solid: the brand used to be a saturated violet and is now
-   * ink, and a probe that only recognises saturation was measuring the old design.
-   */
-  const consoleEls = [...document.querySelectorAll("body *")].filter((el) => {
-    const r = el.getBoundingClientRect();
-    if (r.width < 1 || r.height < 1) return false;
-    const cs = getComputedStyle(el);
-    return cs.visibility !== "hidden" && cs.display !== "none";
-  });
-
-  const tiers = new Set();
-  for (const el of consoleEls) {
-    const cs = getComputedStyle(el);
-    const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
-    if (hasText) {
-      const px = parseFloat(cs.fontSize);
-      if (px >= 30) tiers.add("display");
-      else if (px >= 22) tiers.add("title");
-      else if (px >= 17) tiers.add("subtitle");
-    }
-    const r = el.getBoundingClientRect();
-    const m = /^rgba?\((\d+), (\d+), (\d+)/.exec(cs.backgroundColor || "");
-    if (!m || r.width * r.height < 2000) continue;
-    const [rr, gg, bb] = [+m[1], +m[2], +m[3]];
-    const mx = Math.max(rr, gg, bb);
-    const mn = Math.min(rr, gg, bb);
-    const lum = (0.2126 * rr + 0.7152 * gg + 0.0722 * bb) / 255;
-    const saturated = mx > 40 && (mx - mn) / mx > 0.45;
-    if (saturated || lum < 0.3) tiers.add("fill");
-  }
-  const stations = tiers.size;
-
-  const targets = [...root.querySelectorAll("button, a[href], summary, [role='button']")].filter(
-    (el) => el.getBoundingClientRect().width > 1,
-  ).length;
-
-  // Whole-console counts, for the numbers that are about the screen not the desk.
-  const chromeWords = [...document.querySelectorAll("aside, header")].reduce((n, el) => {
-    const t = el.innerText?.trim();
-    return n + (t ? t.split(/\s+/).filter(Boolean).length : 0);
-  }, 0);
-
-  const rootRect = rootRectOf(root);
-  const totalWords = words + chromeWords;
-
-  return {
-    words,
-    chromeWords,
-    totalWords,
-    regions,
-    regionNames,
-    nestedPanels,
-    stations,
-    targets,
-    air,
-    decisionShare: totalWords ? Math.round((decisionWords / totalWords) * 100) / 100 : 0,
-    typeSizes: [...sizes].sort((a, b) => a - b),
-    fontWeights: [...weights].sort(),
-    textColours: colours.size,
-    fillColours: fills.size,
-    inkRatio: Math.round((inkArea / (rootRect.width * rootRect.height)) * 100) / 100,
-    workArea: { w: Math.round(rootRect.width), h: Math.round(rootRect.height) },
-  };
-};
 
 async function btn(page, name) {
   const b = page.getByRole("button", { name, exact: true });
@@ -211,9 +51,18 @@ async function main() {
     await start.click();
   }
 
-  for (let step = 0; step < 90; step++) {
+  /* Same deadlock stop as tools/verify.mjs, and the same lesson: at 90 this was an
+     unstated assumption of about sixteen missions, and with seventeen it ran out one click
+     short of the ending — which does not change the rubric (only decide screens are
+     scored) but silently dropped the densest screen in the game from the table. */
+  for (let step = 0; step < 240; step++) {
     await page.waitForTimeout(140);
     if ((await page.getByText("How it ended", { exact: true }).count()) > 0) {
+      /* The ending grows after it mounts — the ledger and the rings arrive late — and
+         probing on the first frame measured a screen a third of its final height, which
+         showed up as the air sample claiming full coverage of a screen it had seen a
+         quarter of. Same settle as tools/verify.mjs, so the two tools' numbers line up. */
+      await page.waitForTimeout(450);
       rows.push({ screen: "ending", ...(await page.evaluate(PROBE)) });
       break;
     }
@@ -277,6 +126,24 @@ async function main() {
   const briefs = rows.filter((r) => r.screen.startsWith("brief"));
 
   /**
+   * Refuse to score nothing.
+   *
+   * A run that never reached a decide screen — the dev server reloading under the walk is
+   * enough to do it — used to print the full rubric with `undefined` in every cell and a
+   * cheerful "SCORE 0/100", which is a measurement claim about a screen this tool never
+   * saw. The whole point of this exercise is instruments that do not report numbers they
+   * have not earned (D-038), so this one says what happened and exits non-zero.
+   */
+  if (decides.length === 0) {
+    console.error(
+      `\nmeasured ${rows.length} screens but none of them was a decide screen — nothing to` +
+        ` score.\nThe walk did not reach a decision beat (a dev-server reload mid-run will` +
+        ` do this).\n`,
+    );
+    process.exit(1);
+  }
+
+  /**
    * The rubric from docs/DENSITY-FRAMEWORK.md §C. 100 points, pass ≥80, and any factor
    * scoring zero is a failure regardless of the total.
    *
@@ -286,13 +153,20 @@ async function main() {
   const FACTORS = [
     { id: "regions", wt: 18, get: (r) => r.regions, lo: 4, hi: 6 },
     { id: "words", wt: 16, get: (r) => r.totalWords, lo: 160, hi: 220 },
-    { id: "air", wt: 12, get: (r) => r.air, lo: 0.35, hi: 0.65 },
+    { id: "air", wt: 12, get: (r) => (LEGACY_AIR ? r.airLegacy : r.air), lo: 0.35, hi: 0.65 },
     { id: "decisionShare", wt: 12, get: (r) => r.decisionShare, lo: 0.55, hi: 1 },
     { id: "typeSizes", wt: 6, get: (r) => r.typeSizes.length, lo: 3, hi: 5 },
     { id: "weights", wt: 4, get: (r) => r.fontWeights.length, lo: 2, hi: 3 },
     { id: "stations", wt: 10, get: (r) => r.stations, lo: 3, hi: 4 },
     { id: "fills", wt: 8, get: (r) => r.fillColours, lo: 1, hi: 5 },
-    { id: "options", wt: 6, get: (r) => r.targets - 1, lo: 3, hi: 5 },
+    /* §C factor 8's measure is "`button.choice` count", not "targets − 1". The old proxy
+       happened to land near the option count on this build and is not the same number. */
+    { id: "options", wt: 6, get: (r) => r.choices, lo: 3, hi: 5 },
+    /* Factor 9 — progressive disclosure share. Specified, marked "✅ Auto", and never
+       built: first left out of the denominator (which is how this printed "92/92"), then
+       counted as a flat zero. A zero is not a measurement either. Now measured in
+       lib/probe.mjs from the affordances actually on screen. */
+    { id: "disclosure", wt: 5, get: (r) => r.disclosureShare, lo: 0.25, hi: 0.4 },
     { id: "targets", wt: 0, get: (r) => r.targets, lo: 3, hi: 9 },
   ];
 
@@ -310,14 +184,42 @@ async function main() {
     beatPairs.push({ pair: b.screen, jaccard: Math.round((shared / union) * 100) / 100 });
   }
 
-  const worst = (f) => {
-    const vals = decides.map(f.get);
-    // Score the median screen, and report the range so outliers are visible.
+  /**
+   * WHICH SCREEN THE SCORE IS ABOUT — the median is the report, the worst screen is the gate.
+   *
+   * This used to score the median decide screen and print the range beside it, which let
+   * words run to 225 against a 220 cap and air to 0.67 against a 0.65 one while the two
+   * factors showed 16/16 and 12/12. Nobody reads a median screen. The game is linear and
+   * sixteen beats long, so every screen in that range is on every single playthrough, and
+   * a density failure is a property of the beat it happens on. Averaging it away is
+   * D-038's mistake approached from the other side: there the band moved to fit the build,
+   * here the statistic did, and both produce an instrument that agrees with whatever it
+   * measures.
+   *
+   * So the worst screen decides the score. The median is still printed, because it is the
+   * honest summary of where the design sits, and so is the number of screens outside the
+   * band — "one screen five words over" and "nine screens forty words over" earn the same
+   * points and deserve different responses.
+   *
+   * "Worst" is the value furthest outside the band, normalised by band width, so a
+   * two-sided factor cannot be scored on whichever end flatters it. §C's half-credit rule
+   * ("half weight within 25% of the band edge") is unchanged; it now applies to that
+   * distance rather than to the median's.
+   */
+  const assess = (vals, lo, hi) => {
+    const span = hi - lo || 1;
+    const away = (v) => Math.max(lo - v, v - hi, 0) / span;
     const sorted = [...vals].sort((a, b) => a - b);
+    const worst = vals.reduce((w, v) => (away(v) > away(w) ? v : w), vals[0]);
+    const d = away(worst);
     return {
+      worst,
       median: sorted[Math.floor(sorted.length / 2)],
       min: sorted[0],
       max: sorted[sorted.length - 1],
+      outside: vals.filter((v) => away(v) > 0).length,
+      of: vals.length,
+      verdict: d === 0 ? "in" : d <= 0.25 ? "near" : "out",
     };
   };
 
@@ -332,37 +234,42 @@ async function main() {
     pad("stn", 4),
     pad("sizes", 6),
     pad("fills", 5),
+    pad("opts", 5),
+    pad("hidden", 6),
   );
   for (const r of rows) {
     console.log(
       pad(r.screen.slice(0, 43), 44),
       pad(r.totalWords, 6),
       pad(r.regions, 5),
-      pad(r.air, 5),
+      pad(LEGACY_AIR ? r.airLegacy : r.air, 5),
       pad(r.decisionShare, 5),
       pad(r.stations, 4),
       pad(r.typeSizes.length, 6),
       pad(r.fillColours, 5),
+      pad(r.choices, 5),
+      pad(r.hiddenWords, 6),
     );
   }
 
   let score = 0;
   let maxScore = 0;
   const fails = [];
-  console.log(`\nRUBRIC — ${decides.length} decide screens (median, with range)\n`);
+  console.log(
+    `\nRUBRIC — ${decides.length} decide screens, scored on the WORST screen per factor\n`,
+  );
+  console.log(
+    ` ${pad("", 2)}${pad("factor", 15)} ${pad("worst", 7)} ${pad("median", 7)} ${pad("target", 11)} ${pad("range", 12)} ${pad("off-band", 9)} score`,
+  );
   for (const f of FACTORS) {
-    const { median, min, max } = worst(f);
-    const span = f.hi - f.lo;
-    const inBand = median >= f.lo && median <= f.hi;
-    const near =
-      !inBand && median >= f.lo - span * 0.25 && median <= f.hi + span * 0.25;
-    const got = inBand ? f.wt : near ? f.wt / 2 : 0;
+    const a = assess(decides.map(f.get), f.lo, f.hi);
+    const got = a.verdict === "in" ? f.wt : a.verdict === "near" ? f.wt / 2 : 0;
     score += got;
     maxScore += f.wt;
     if (f.wt > 0 && got === 0) fails.push(f.id);
-    const mark = inBand ? "✓" : near ? "~" : "✗";
+    const mark = a.verdict === "in" ? "✓" : a.verdict === "near" ? "~" : "✗";
     console.log(
-      ` ${mark} ${pad(f.id, 16)} ${pad(median, 7)} target ${pad(`${f.lo}–${f.hi}`, 10)} range ${pad(`${min}–${max}`, 12)} ${got}/${f.wt}`,
+      ` ${mark} ${pad(f.id, 15)} ${pad(a.worst, 7)} ${pad(a.median, 7)} ${pad(`${f.lo}–${f.hi}`, 11)} ${pad(`${a.min}–${a.max}`, 12)} ${pad(`${a.outside}/${a.of}`, 9)} ${got}/${f.wt}`,
     );
   }
 
@@ -373,27 +280,98 @@ async function main() {
    * It is the only factor measuring continuity BETWEEN screens, which makes it the one
    * that speaks directly to "there is no system to read the flow" — and it is the one
    * that fails. Jaccard on the `data-region` names across each brief→decide pair.
+   *
+   * Scored on the worst pair for the same reason as everything above.
    */
   if (beatPairs.length) {
-    const js = beatPairs.map((p) => p.jaccard).sort((a, b) => a - b);
-    const median = js[Math.floor(js.length / 2)];
-    const inBand = median >= 0.85;
-    const got = inBand ? 3 : 0;
+    const a = assess(
+      beatPairs.map((p) => p.jaccard),
+      0.85,
+      1,
+    );
+    const got = a.verdict === "in" ? 3 : a.verdict === "near" ? 1.5 : 0;
     score += got;
     maxScore += 3;
-    if (!inBand) fails.push("overlap");
+    if (got === 0) fails.push("overlap");
+    const mark = a.verdict === "in" ? "✓" : a.verdict === "near" ? "~" : "✗";
     console.log(
-      ` ${inBand ? "✓" : "✗"} ${pad("overlap", 16)} ${pad(median, 7)} target ${pad("0.85–1", 10)} range ${pad(`${js[0]}–${js[js.length - 1]}`, 12)} ${got}/3`,
+      ` ${mark} ${pad("overlap", 15)} ${pad(a.worst, 7)} ${pad(a.median, 7)} ${pad("0.85–1", 11)} ${pad(`${a.min}–${a.max}`, 12)} ${pad(`${a.outside}/${a.of}`, 9)} ${got}/3`,
     );
   }
 
-  /* Factor 9 — disclosure share. Also specified, also never built. Counted as unearned
-     rather than quietly omitted from the denominator, which is what produced "92/92". */
-  maxScore += 5;
-  fails.push("disclosure (not implemented)");
+  /**
+   * The two clauses of factor 9 that are not a share: "at most two disclosure controls on
+   * the screen" and "0% of decision-critical content hidden". They are pass/fail rather
+   * than banded, so they are reported as violations rather than scored twice — the share
+   * above already carries the five points.
+   *
+   * The critical-content clause is the one worth having. The framework's own test for
+   * whether a disclosure is honest is that a player who ignores it should not be
+   * *surprised* by the outcome; hiding an option attribute behind a toggle fails that, and
+   * it is the kind of thing that arrives later, in a hurry, to win back layout space.
+   */
+  const tooManyControls = decides.filter((r) => r.disclosureControls > 2);
+  const hidesCritical = decides.filter((r) => r.disclosureCritical);
+  const controlCounts = [...new Set(decides.map((r) => r.disclosureControls))].sort();
+  const hid = decides.map((r) => r.hiddenWords).sort((a, b) => a - b);
   console.log(
-    ` ✗ ${pad("disclosure", 16)} ${pad("—", 7)} target ${pad("0.25–0.40", 10)} ${pad("NOT IMPLEMENTED", 12)} 0/5`,
+    `\n disclosure controls per decide screen: ${controlCounts.join(", ")} (§9 allows at most 2)`,
   );
+  /* What the band asks for in words, since "0.25–0.40" is not a brief anybody can act on.
+     Solved at the word target rather than at today's count, because a screen that hits the
+     band by growing its visible text has not made anything easier to read. */
+  const implied = (share) => Math.round((220 * share) / (1 - share));
+  console.log(
+    `   hidden words per decide screen: ${hid[0]}–${hid[hid.length - 1]}. At the 220-word` +
+      ` cap of factor 2,\n   the 0.25–0.40 band implies ${implied(0.25)}–${implied(0.4)} words behind the affordance.`,
+  );
+  if (tooManyControls.length) {
+    fails.push("disclosure controls");
+    console.log(` ✗ ${tooManyControls.length} screen(s) carry more than two disclosure controls`);
+  }
+  if (hidesCritical.length) {
+    fails.push("disclosure hides decision-critical content");
+    console.log(
+      ` ✗ ${hidesCritical.length} screen(s) hide content inside [data-decision] — §9 forbids this outright`,
+    );
+  }
+
+  /* Where the air number comes from, summed across the decide screens. Printed because a
+     single ratio is exactly as believable when it is wrong (QA F7: photography and icons
+     counted as emptiness), and a reader who can see the composition can check it. */
+  const totals = {};
+  let sampled = 0;
+  for (const r of decides) {
+    sampled += r.airSampled;
+    for (const [k, n] of Object.entries(r.airBreakdown ?? {})) totals[k] = (totals[k] ?? 0) + n;
+  }
+  const share = (n) => `${Math.round((n / sampled) * 100)}%`;
+  console.log(
+    `\n air sample composition, ${sampled} points across ${decides.length} decide screens:`,
+  );
+  console.log(
+    `   paper ${share(totals.paper ?? 0)} · text ${share(totals.text ?? 0)} · image ${share(totals.image ?? 0)}` +
+      ` · svg ${share(totals.svg ?? 0)} · gradient ${share(totals.gradient ?? 0)} · fill ${share(totals.fill ?? 0)}`,
+  );
+  const inkPhotos = (totals.image ?? 0) + (totals.svg ?? 0) + (totals.gradient ?? 0);
+  console.log(
+    `   ${inkPhotos} of those points are photography, SVG or gradient — counted as EMPTY by the pre-fix probe`,
+  );
+  const legacyMedian = assess(decides.map((r) => r.airLegacy), 0.35, 0.65);
+  const fixedMedian = assess(decides.map((r) => r.air), 0.35, 0.65);
+  console.log(
+    `   air median: ${fixedMedian.median} measured, ${legacyMedian.median} under the old rule` +
+      `${LEGACY_AIR ? " (scoring the OLD rule: --legacy-air)" : ""}`,
+  );
+  const partial = rows.filter((r) => (r.airCoverage ?? 1) < 0.99);
+  if (partial.length) {
+    console.log(
+      `   partial samples (content taller than the work area, so air is the first screenful only):`,
+    );
+    for (const r of partial) {
+      console.log(`     ${r.screen.slice(0, 43)} — ${Math.round(r.airCoverage * 100)}% sampled`);
+    }
+  }
 
   const allSizes = [...new Set(decides.flatMap((r) => r.typeSizes))].sort((a, b) => a - b);
   const halfPixel = allSizes.filter((n) => n % 1 !== 0);

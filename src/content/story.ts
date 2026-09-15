@@ -120,6 +120,7 @@ const nodes: GameNode[] = [
         title: "Connectors",
         icon: "talk",
         image: "approach-networking",
+        facsimile: "org",
         description: "You know people, and people take your call.",
         strengths: ["Trusted early", "Doors open"],
         tradeoff: "You are better at getting in the room than at proving what you can build.",
@@ -131,6 +132,7 @@ const nodes: GameNode[] = [
         title: "Builders",
         icon: "layers",
         image: "solution-in-store-tech",
+        facsimile: "proposal",
         description: "You have delivered this kind of work, and it shows.",
         strengths: ["Evidence to hand", "Delivery is real"],
         tradeoff: "You are better at showing the work than at selling it.",
@@ -142,6 +144,7 @@ const nodes: GameNode[] = [
         title: "Challengers",
         icon: "scale",
         image: "hero-boardroom",
+        facsimile: "market",
         description: "You read the market, and you say the awkward thing.",
         strengths: ["Know the field", "Say the hard thing"],
         tradeoff: "You are better at reading the field than at being trusted inside it.",
@@ -199,6 +202,7 @@ const nodes: GameNode[] = [
         title: "Orion Retail",
         icon: "target",
         image: "client-retail-store",
+        facsimile: "complaints",
         description: "210 stores, real budget, vague timeline. You have done work shaped like this.",
         commits: "A crowded field — two other firms are already talking.",
         pros: ["Close to proven work", "Budget looks real"],
@@ -221,6 +225,7 @@ const nodes: GameNode[] = [
         title: "Apex Industrial",
         icon: "layers",
         image: "client-energy-turbines",
+        facsimile: "timeline",
         description:
           "The biggest number on the table. Needs industrial engineering your team does not have.",
         commits: "Stretches the team past anything it has delivered.",
@@ -275,6 +280,7 @@ const nodes: GameNode[] = [
         title: "Meridian Health",
         icon: "shield",
         image: "client-health-campus",
+        facsimile: "clause",
         description: "Patient engagement. Smaller, fast-moving, and healthcare procurement is slow.",
         commits: "Long and unpredictable approval cycles.",
         pros: ["Ambitious client", "A sector you want"],
@@ -467,6 +473,7 @@ const nodes: GameNode[] = [
         title: "Publish a point of view",
         icon: "spark",
         image: "approach-networking",
+        facsimile: "proposal",
         description: "A short, specific piece on what is going wrong for retailers like them.",
         commits: "Real preparation time before anything happens.",
         pros: ["Shows you know their world", "Reaches several people"],
@@ -509,6 +516,7 @@ const nodes: GameNode[] = [
         title: "Go straight to the sponsor",
         icon: "talk",
         image: "approach-one-to-one",
+        facsimile: "org",
         description: "A warm introduction, thirty minutes with the sponsor, the case made in person.",
         commits: "Spends a relationship you cannot spend twice.",
         pros: ["Fastest to the budget holder", "A real conversation"],
@@ -547,6 +555,7 @@ const nodes: GameNode[] = [
         title: "Run a broad campaign",
         icon: "megaphone",
         image: "approach-billboard",
+        facsimile: "market",
         description: "Put a retail transformation campaign into the market and let interest come.",
         commits: "Reaches many people, few of whom decide anything.",
         pros: ["Cheapest by far", "Senior people stay free"],
@@ -989,6 +998,7 @@ const nodes: GameNode[] = [
         title: "The thing they asked for",
         icon: "check",
         image: "solution-screen",
+        facsimile: "proposal",
         description: "A store and digital experience redesign. What the brief says.",
         commits: "A direct comparison against a vendor partnership.",
         pros: ["Nobody can say you missed", "Easy to approve"],
@@ -1018,6 +1028,7 @@ const nodes: GameNode[] = [
         title: "The post-purchase experience",
         icon: "target",
         image: "solution-in-store-tech",
+        facsimile: "complaints",
         description: "Argue the damage happens after the sale — deliveries, returns, support.",
         commits: "Contradicts the client's own brief in writing.",
         pros: ["Nobody else proposing it", "Hits the real problem"],
@@ -1064,6 +1075,7 @@ const nodes: GameNode[] = [
         title: "Propose to find out first",
         icon: "search",
         image: "solution-workshop",
+        facsimile: "timeline",
         description: "A short diagnostic to establish which of the two problems is costing them.",
         commits: "Delays the real decision by six weeks.",
         pros: ["Low risk", "Buys the evidence"],
@@ -2169,6 +2181,9 @@ const nodes: GameNode[] = [
       {
         id: "o-shore-deliver",
         title: "Shore up the delivery case",
+        /* "Add the integration detail, the named people, the testing plan" — none of
+           which you can add if you never found out who owns the systems. */
+        requires: { any: ["knows:ops_constraint", "ops_onside", "has:ops_workstream"] },
         icon: "shield",
         description: "Add the integration detail, the named people, the testing plan.",
         commits: "A longer, less exciting document.",
@@ -2367,6 +2382,12 @@ const nodes: GameNode[] = [
         id: "o-value",
         title: "Build the case in their numbers",
         icon: "chart",
+        /* The first `requires` gate in the game. 0 of 45 options had one, so knowledge
+           changed the prose and the numbers and never once changed what the player could
+           DO — the whole run was a corridor with reactive text. This one is not a
+           preference, it is arithmetic: a payback case needs their complaint data, and a
+           player who never got it cannot write one. */
+        requires: { any: ["knows:real_pain", "evidenced", "ops_onside"] },
         description: "Returns cost Orion a known amount. Show what half of it is worth.",
         commits: "You are held to an arithmetic you wrote down.",
         pros: ["Scores on value", "Hard to argue with"],
@@ -3015,6 +3036,9 @@ const nodes: GameNode[] = [
       {
         id: "o-handover",
         title: "Write the handover she needs",
+        /* A document that makes the case without Sarah in the room needs a case that
+           stands on its own. Without evidence there is nothing to write down. */
+        requires: { any: ["evidenced", "outcome_based", "knows:criteria"] },
         icon: "layers",
         description: "Give Sarah the document that makes the case without her in the room.",
         commits: "It works only if somebody reads it.",

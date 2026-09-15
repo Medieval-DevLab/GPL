@@ -3,82 +3,166 @@
 
 /* ───────────────────────────────────────────────────────────────
    GPL design tokens
-   Editorial, bright, calm. One accent. Depth from space and
-   type, not from ink. Three outcome dimensions are colour-coded
-   AND icon-coded — colour never carries meaning alone.
+
+   Warm paper, purple brand, three data hues. Depth from layered
+   temperature rather than from ink. Hue means one of two things and
+   they are never the same hue: BRAND purple identifies the product
+   and carries no data; the three DIMENSION hues carry magnitude the
+   player reads. Colour never carries meaning alone.
    ─────────────────────────────────────────────────────────────── */
 @theme {
   /* ═══════════════════════════════════════════════════════════════════════════
      L1 · REFERENCE — raw ramps. Never referenced from a component.
 
-     Warm paper against cool ink. The previous palette was lavender-grey with a
-     violet accent, which put the brand in the middle of the same hue channel the
-     three dimensions use: `win #5b4de8` and `accent #7c3aed` measured ΔE2000 5.9
-     in normal vision and **1.2 under deuteranopia** — the same colour to roughly
-     6% of men. See docs/DESIGN-SYSTEM.md.
+     Four families: warm `paper`, purple-cast `ink`, the brand `purple`, and four
+     data hues where `-6` is a tint, `-7` a hairline, `-9` a solid fill, `-11` text.
+
+     Two separate collisions have been fixed here, and they are the same mistake
+     made twice — putting a colour that carries NO data onto a hue axis that
+     carries data:
+
+       1. The original violet accent `#7c3aed` sat on Winability's axis:
+          `win #5b4de8` vs accent measured ΔE2000 5.9 normal and **1.2 under
+          deuteranopia**. Same colour to ~6% of men.
+       2. The fix — "the brand becomes ink" — moved the brand onto
+          *Deliverability's* axis instead. `ink-12` measured CIELAB h 284.4° and
+          `deliver-solid #054e9e` measures h 284.4°: identical to a decimal place.
+          The ink ramp and the Deliverability blue were one hue family, and the
+          real floor of that system was **ΔE 13.4** (`deliver-solid` vs
+          `text-muted`, tritanopia) — not the 18.9 the document claimed, which
+          only ever considered the three dimensions against each other.
+
+     So the ink ramp now sits at OkLCh h ~318°, off every data axis, and the brand
+     sits at h ~304°. Both are chromatic and neither carries data. See
+     docs/DESIGN-SYSTEM.md for the measured matrix.
      ═══════════════════════════════════════════════════════════════════════════ */
+
+  /* Warm paper. OkLCh h 85°, chroma climbing with depth so that a surface coming
+     forward is both lighter AND cooler — elevation by temperature, not by shadow. */
   --ref-paper-0: #ffffff;
-  --ref-paper-1: #fbfaf8;
-  --ref-paper-2: #f5f3ef;
-  --ref-paper-3: #efebe4;
-  --ref-paper-4: #e7e2d9;
-  --ref-paper-5: #ddd7cc;
-  --ref-paper-6: #d4cdc1;
+  --ref-paper-1: #fdfbf7;
+  --ref-paper-2: #f6f2ea;
+  --ref-paper-3: #efe9de;
+  --ref-paper-4: #e6dfd1;
+  --ref-paper-5: #ddd5c5;
+  --ref-paper-6: #d5ccba;
   --ref-paper-7: #7b7565;
   --ref-paper-8: #6b6659;
 
-  --ref-ink-9: #5e6273;
-  --ref-ink-10: #54586b;
-  --ref-ink-11: #33374a;
-  --ref-ink-12: #1b1d26;
+  /* Ink, with a few points of the brand's chroma in it — a tinted neutral, not a
+     grey. OkLCh h 318°: 62° off Deliverability (h 256°) and 14° off the brand
+     (h 304°), which is the right way round. Being near the brand costs nothing
+     because neither the brand nor the type encodes a value; being near
+     Deliverability cost 13.4. Lifting the ink off the blue axis raises that pair
+     to 16.6. */
+  --ref-ink-9: #695f6c;
+  --ref-ink-10: #5e5462;
+  --ref-ink-11: #403443;
+  --ref-ink-12: #221925;
 
-  /* Hue ramps: -6 tint, -7 hairline, -9 solid fill, -11 text. */
+  /* ── the brand ───────────────────────────────────────────────────────────────
+     Steps 3, 4, 6 and 11 are the Accenture theme verbatim — `ppt/theme/theme1.xml`,
+     `clrScheme name="Accenture"`: accent3 `#e6dcff`, accent2 `#c2a3ff`,
+     dk2/hlink `#a100ff`, lt2 `#460073`.
+
+     accent1 `#7500c0` is deliberately ABSENT, and it is the interesting number in
+     this whole system. Purple and blue differ almost entirely by LIGHTNESS under
+     deuteranopia, not by hue, so the usable purples are not a hue band — they are
+     two shores either side of Deliverability's lightness (OkLCh L 0.43):
+
+       OkLCh L    purple        ΔE2000 vs deliver-solid, deuteranopia
+       0.32       #460073       10.5      ← the dark shore, and lt2 sits on it
+       0.40       #6200a0        3.7      ← the valley
+       0.46       #7500c0        4.6      ← accent1. Unusable as a mark.
+       0.57       #a100ff       15.6      ← the bright shore
+
+     So the brand deck's mid purple is the one purple this interface cannot put
+     next to a Deliverability meter, and the deck's own deep purple and core
+     purple are both safe. Nothing needed inventing; it needed measuring. */
+  --ref-purple-1: #f5eeff;
+  --ref-purple-2: #f1e8ff;
+  --ref-purple-3: #e6dcff;
+  --ref-purple-4: #c2a3ff;
+  --ref-purple-6: #a100ff;
+  --ref-purple-11: #460073;
+  --ref-purple-12: #2f064f;
+
+  /* Data hues. Unchanged: this part of the previous system is correct and the
+     arithmetic says leave it alone. Every attempt to open the purple gap by
+     moving the blue toward Okabe–Ito's own `#0072b2` cost more in
+     Profitability/Deliverability than it bought — that pair falls from 19.0 to
+     8.3 — so the blue stays exactly where it is and the brand moves instead. */
   --ref-gold-6: #fbebdc;
   --ref-gold-7: #b8803c;
   --ref-gold-9: #cd6d0a;
   --ref-gold-11: #8a4708;
-  --ref-green-6: #dcf0e9;
+  --ref-green-6: #d7f5e8;
   --ref-green-7: #37957a;
   --ref-green-9: #339075;
   --ref-green-11: #0f6249;
-  --ref-blue-6: #dfe8f6;
+  --ref-blue-6: #dae9ff;
   --ref-blue-7: #4d7fbb;
   --ref-blue-9: #054e9e;
   --ref-blue-11: #0a4c90;
-  --ref-red-6: #fbe7e4;
+  --ref-red-6: #ffe3df;
   --ref-red-7: #c2574c;
   --ref-red-9: #a31515;
   --ref-red-11: #8e1212;
 
   /* ═══════════════════════════════════════════════════════════════════════════
      L2 · SEMANTIC — what a thing IS. Components use these.
-     Every text token clears 4.5:1 on every surface. There is no "faint" tier:
-     the old `#948fa6` measured 2.78:1 on panel, a live 1.4.3 failure on every
-     screen of the game.
+
+     Every text token clears 4.5:1 on every surface it renders on; the lowest in
+     the system is 5.22:1. There is no "faint" tier: the old `#948fa6` measured
+     2.78:1 on panel, a live 1.4.3 failure on every screen of the game.
      ═══════════════════════════════════════════════════════════════════════════ */
-  --color-surface-page: var(--ref-paper-2);
+
+  /* Four grounds, three temperatures. The page is the brand's; the desk and the
+     panels are paper; the card is white. On a console screen the page shows only
+     as the 12px mat around the shell, so the reading surfaces stay warm — and on
+     the title screen, which has no shell, the page IS the screen and the game
+     opens on its own colour instead of on off-white. */
+  --color-surface-page: var(--ref-purple-1);
   --color-surface-desk: var(--ref-paper-1);
   --color-surface-card: var(--ref-paper-0);
   --color-surface-panel: var(--ref-paper-3);
+  /* Hover is PAPER, not lavender, and the reason is worth keeping. A lavender hover
+     measured C* 9.1 against a lavender selected fill at C* 12.3 — close enough that
+     hovering an unchosen card made it look chosen, which is the same class of defect as
+     the specificity bug below, arrived at from the other direction. So the brand wash
+     means "you chose this" and nothing else; hover just sinks. */
   --color-surface-hover: var(--ref-paper-2);
-  --color-surface-selected: var(--ref-paper-4);
+  --color-surface-selected: var(--ref-purple-2);
   --color-surface-track: var(--ref-paper-2);
   --color-surface-disabled: var(--ref-paper-4);
 
-  --color-text-strong: var(--ref-ink-12); /* 16.8:1 on card */
-  --color-text-default: var(--ref-ink-11); /* 11.8:1 */
-  --color-text-muted: var(--ref-ink-10); /* 7.0:1 */
-  --color-text-subtle: var(--ref-ink-9); /* 6.1:1 — the lowest legal */
-  --color-text-disabled: #5a5e6b; /* 5.0:1 on surface-disabled */
+  --color-text-strong: var(--ref-ink-12); /* 17.02:1 on card */
+  --color-text-default: var(--ref-ink-11); /* 11.73:1 */
+  --color-text-muted: var(--ref-ink-10); /* 7.19:1 */
+  --color-text-subtle: var(--ref-ink-9); /* 6.08:1 */
+  --color-text-disabled: #5e585f; /* 5.22:1 on surface-disabled */
 
-  --color-border-subtle: var(--ref-paper-6); /* 1.58:1 — DECORATIVE ONLY */
-  --color-border-control: var(--ref-paper-7); /* 4.59:1 — anything operable */
+  --color-border-subtle: var(--ref-paper-6); /* 1.55:1 — DECORATIVE ONLY */
+  --color-border-control: var(--ref-paper-7); /* 4.59:1 on card, 3.80:1 on panel */
   --color-border-strong: var(--ref-paper-8);
 
-  /* The brand recedes so the dimensions can own the chroma. */
-  --color-brand-solid: var(--ref-ink-12);
-  --color-brand-hover: #2e3341;
-  --color-brand-tint: #edecf0;
+  /* ── the brand ───────────────────────────────────────────────────────────────
+     Two registers, two jobs. `-solid` is the workhorse: it is the only purple in
+     the system that is legal both as small text on every surface (worst 10.64:1,
+     on its own tint) and as a fill under white text (13.93:1), so a component
+     naming it cannot get it wrong. `-bright` is the saturated moment, and because
+     it is only ever a fill or a border it only has to clear 3:1 — which it does
+     on every surface, by at least 35%.
+
+     The split is semantic as well as arithmetic: bright violet means "you chose
+     this", deep violet means "the keyboard is here". Two different questions
+     deserve two different answers, and before this they were the same colour. */
+  --color-brand-solid: var(--ref-purple-11);
+  --color-brand-deep: var(--ref-purple-12);
+  --color-brand-bright: var(--ref-purple-6);
+  --color-brand-hover: var(--ref-purple-12);
+  --color-brand-tint: var(--ref-purple-3);
+  --color-brand-line: var(--ref-purple-4);
 
   --color-risk-solid: var(--ref-red-9);
   --color-risk-text: var(--ref-red-11);
@@ -89,10 +173,15 @@
      Okabe–Ito construction: orange / bluish-green / blue, avoiding the
      yellow-green band where colour-vision confusion is worst, with a deliberate
      lightness split (L* 56 / 54 / 34) so the pair that converges under
-     deuteranopia stays separated by brightness. Worst-case pairwise ΔE2000
-     across normal, protan, deutan and tritan vision: 18.9 — about 8× the
-     just-noticeable difference, against 1.2 before.
-     NOTE: win and profit solids are 3.6:1 and 3.9:1 on white — they pass
+     deuteranopia stays separated by brightness.
+
+     Worst pairwise ΔE2000 among the three, across normal, protan, deutan and
+     tritan vision: 18.9. Worst against the ink ramp: 16.6. Worst against the
+     brand: 10.5, which is the system's floor and is the price of having a brand
+     colour at all — it is paid by a 280×48 button with a word on it, never by a
+     meter, and it is ~4.5× the just-noticeable difference.
+
+     NOTE: win and profit solids are 3.63:1 and 3.90:1 on white — they pass
      1.4.11 for fills but must NEVER carry white text.                       */
   --color-win-solid: var(--ref-gold-9);
   --color-win-text: var(--ref-gold-11);
@@ -119,7 +208,7 @@
   --color-canvas: var(--color-surface-desk);
   --color-canvas-deep: var(--color-surface-track);
   --color-surface: var(--color-surface-card);
-  --color-surface-sunk: var(--color-surface-hover);
+  --color-surface-sunk: var(--color-surface-hover); /* was warm grey — now a brand wash */
   --color-panel: var(--color-surface-panel);
 
   --color-ink: var(--color-text-strong);
@@ -130,14 +219,16 @@
   --color-line: var(--color-border-subtle);
   --color-line-strong: var(--color-border-control); /* was 1.52:1 on controls */
 
-  /* The accent was violet and did three jobs at once: brand, emphasis, and
-     dimension identity. It is now ink — hue means identity, and only the three
-     dimensions and risk get a hue. */
+  /* `--color-accent` is named by 37 sites and is both a fill under white text and
+     small text on six surfaces, so it gets the register that is legal in both.
+     This alias is the single reason the brand can be restored without touching a
+     component: repointing it moves the wordmark, the stepper, the primary action,
+     the medallions, the rail, the section icons and the selection in one line. */
   --color-accent: var(--color-brand-solid);
   --color-accent-hover: var(--color-brand-hover);
-  --color-accent-deep: var(--color-brand-solid);
+  --color-accent-deep: var(--color-brand-deep);
   --color-accent-tint: var(--color-brand-tint);
-  --color-accent-ring: var(--color-border-control); /* was 1.86:1 — invisible */
+  --color-accent-ring: var(--color-brand-bright); /* was a warm grey — now visible AND purple */
 
   /* The `-tint` aliases used to be listed here as `--color-win-tint: var(--color-win-tint)`.
      A custom property that references itself is invalid at computed-value time, so the
@@ -148,17 +239,24 @@
   --color-profit: var(--color-profit-solid);
   --color-deliver: var(--color-deliver-solid);
 
-  /* Valence is NOT a hue.
-     Green belongs to Profitability and gold to Winability, so a green tick beside a
-     green meter on the same screen would claim a relationship that is not there. A
-     positive is therefore just a fact — ink, with a tick. A negative genuinely IS a
-     risk, so it gets the one alarm hue. Amber is deleted outright: red and amber
-     measure ΔE 4.1 under deuteranopia, which is not a distinction.
-     This leaves exactly five hues on screen — ink, three dimensions, one risk. */
+  /* Valence is NOT a hue, and this part of the previous system stands.
+     Green belongs to Profitability and gold to Winability, and the positive delta
+     chip renders 8px from the meter it is not about — a green "+6" beside a green
+     Profitability bar would claim a relationship that is not there. So a positive
+     stays a fact: ink, with a tick. A negative genuinely IS a risk and keeps the
+     one alarm hue. Amber stays deleted — red and amber measure ΔE 4.1 under
+     deuteranopia, which is not a distinction.
+
+     What changed is the GROUND under all of it. `-good-tint` was a warm grey, so
+     37 of the game's 99 outcomes resolved onto a grey medallion while the 21 hard
+     ones got a rose panel: the interface was more colourful about failing than
+     about succeeding. It is now the brand wash. And `-warn-tint` was the same rose
+     as `-bad-tint`, so `mixed` — the modal outcome, 41 of 99 — was indistinguishable
+     from `hard`. Caution now reads as a note on paper; only a real risk gets rose. */
   --color-good: var(--color-text-strong);
-  --color-good-tint: var(--color-surface-panel);
+  --color-good-tint: var(--ref-purple-2); /* was a warm grey */
   --color-warn: var(--color-risk-text);
-  --color-warn-tint: var(--color-risk-tint);
+  --color-warn-tint: var(--color-surface-panel); /* was rose — identical to bad-tint */
   --color-bad: var(--color-risk-solid);
   --color-bad-tint: var(--color-risk-tint);
 
@@ -180,8 +278,11 @@
   --radius-lg: 18px;
   --radius-xl: 26px;
 
-  --shadow-card: 0 1px 2px rgb(27 29 38 / 0.04), 0 4px 16px rgb(27 29 38 / 0.05);
-  --shadow-lift: 0 2px 4px rgb(27 29 38 / 0.05), 0 14px 38px rgb(27 29 38 / 0.11);
+  /* Shadows are cast by the ink, which now carries the brand's hue, so the
+     shadow under a card is a purple shadow rather than a grey one. That is most
+     of what stops a white card on warm paper reading as a photocopy. */
+  --shadow-card: 0 1px 2px rgb(34 25 37 / 0.04), 0 4px 16px rgb(34 25 37 / 0.06);
+  --shadow-lift: 0 2px 4px rgb(34 25 37 / 0.05), 0 14px 38px rgb(34 25 37 / 0.12);
 }
 
 /* ─── base ───────────────────────────────────────────────────
@@ -209,9 +310,26 @@
     }
   }
 
+  /* Two soft washes over the page colour: brand lavender from the top-left, paper
+     warmth from the bottom-right. Behind the console this is a 12px mat and does
+     almost nothing. On the title screen — which renders outside the console, on
+     the body — it is the whole field, and it is the difference between a game
+     opening on a lit ground and a game opening on a sheet of A4.
+
+     Alphas rather than separate hexes so the two stops stay tied to
+     `--ref-purple-4` and `--ref-paper-5`, and `fixed` so the wash does not slide
+     when the one scrolling screen scrolls.
+
+     The lavender is capped at 0.30 and not a point higher, and the number is not
+     a taste judgement: composited over the page it lands on `#e6d8ff`, where
+     `text-subtle` measures 4.53:1. At 0.42 it is 4.21 and the title screen has an
+     illegal ground. The warm stop can go to 0.55 because it barely darkens. */
   body {
     margin: 0;
-    background: var(--color-page);
+    background:
+      radial-gradient(85% 70% at 10% 4%, rgb(194 163 255 / 0.30) 0%, rgb(194 163 255 / 0) 70%),
+      radial-gradient(75% 68% at 96% 100%, rgb(221 213 197 / 0.55) 0%, rgb(221 213 197 / 0) 66%),
+      var(--color-page);
     background-attachment: fixed;
     color: var(--color-ink);
     font-family: var(--font-sans);
@@ -220,6 +338,9 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* Focus is the DEEP purple, selection is the BRIGHT one — see the brand block.
+     13.93:1 on card, and it keeps the ring legible against the bright violet rim
+     of the card it is usually sitting on. */
   :focus-visible {
     outline: 2px solid var(--color-brand-solid);
     outline-offset: 2px;
@@ -245,8 +366,8 @@
   }
 
   ::selection {
-    background: var(--color-accent-tint);
-    color: var(--color-accent-deep);
+    background: var(--color-brand-tint);
+    color: var(--color-brand-deep);
   }
 }
 
@@ -294,15 +415,17 @@
   }
 }
 
+/* The ring was already a violet — `rgb(109 53 232)` — left behind when the accent
+   was made ink, which is a fair sign of where the system wanted to be. */
 @keyframes gpl-pulse-ring {
   0% {
-    box-shadow: 0 0 0 0 rgb(109 53 232 / 0.35);
+    box-shadow: 0 0 0 0 rgb(161 0 255 / 0.32);
   }
   70% {
-    box-shadow: 0 0 0 14px rgb(109 53 232 / 0);
+    box-shadow: 0 0 0 14px rgb(161 0 255 / 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgb(109 53 232 / 0);
+    box-shadow: 0 0 0 0 rgb(161 0 255 / 0);
   }
 }
 
@@ -362,7 +485,7 @@
   background: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
-  box-shadow: 0 1px 2px rgb(20 18 31 / 0.03);
+  box-shadow: 0 1px 2px rgb(34 25 37 / 0.04);
 }
 
 /* A region, not a card. Rails and fact strips sit on this so the eye can tell
@@ -378,13 +501,19 @@
    grey and had to be read rather than scanned. */
 /* The only tracked-out style in the system. All-caps costs 10–20% reading speed
    (Tinker 1955), so it is confined to three words or fewer, where the label is
-   recognised as a shape rather than read. */
+   recognised as a shape rather than read.
+
+   Brand purple rather than grey, at 12.56:1 on the page. Three of the five
+   screens that render an eyebrow already overrode the colour to the accent
+   inline, so this makes the default what the game was reaching for anyway — and
+   it is the one thing that gives the title screen and the interludes, which have
+   no meters and no cards, a mark in the brand's own colour. */
 .eyebrow {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--color-accent);
 }
 
 /* Section heading: dark, bold, with a coloured icon beside it. This is the
@@ -402,7 +531,7 @@
 /* Filled status chip. Colour carries the level, text repeats it — never colour
    alone (E6). */
 /* A tint fill with ink text, never a solid fill with white text: win and profit
-   solids are 3.6:1 and 3.9:1, which passes for a fill and fails for type. */
+   solids are 3.63:1 and 3.90:1, which passes for a fill and fails for type. */
 .chip {
   display: inline-flex;
   align-items: center;
@@ -431,7 +560,8 @@
      AI-generated; the border and fill are enough to show it is live. */
   transition:
     border-color 0.15s ease,
-    background-color 0.15s ease;
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .choice:hover:not(:disabled) {
@@ -439,7 +569,15 @@
   background: var(--color-surface-hover);
 }
 
-/* Selected must be unmistakable at a glance: ink rim and a tinted fill.
+/* Selected must be unmistakable at a glance: a bright violet rim, a lavender
+   fill and a soft ring holding it away from its neighbours. This is the game's
+   one saturated moment on a decide screen and it is spent on the object the
+   whole screen exists for.
+
+   `--color-brand-bright` here rather than `-solid` because a 2px border is a
+   graphical object and needs 3:1, which it clears on both the card and the
+   lavender fill (5.30:1 and 4.48:1) — and because the deep purple is reserved
+   for the focus ring, so "chosen" and "focused" can never look like each other.
 
    `:not(:disabled)` is not decoration — it raises this to the same specificity as
    `.choice:hover:not(:disabled)` above, and being declared later it now wins. Without it
@@ -449,9 +587,10 @@
    one object repeated 45 times — and the screenshot suite could not see it, because the
    harness never puts the mouse where a player's mouse is. */
 .choice[data-selected="true"]:not(:disabled) {
-  border-color: var(--color-brand-solid);
+  border-color: var(--color-brand-bright);
   border-width: 2px;
   background: var(--color-surface-selected);
+  box-shadow: 0 0 0 3px rgb(161 0 255 / 0.13);
 }
 
 .choice:disabled {
@@ -495,7 +634,7 @@
     background-clip: content-box;
   }
   *::-webkit-scrollbar-thumb:hover {
-    background: var(--color-faint);
+    background: var(--color-accent);
     background-clip: content-box;
   }
 }

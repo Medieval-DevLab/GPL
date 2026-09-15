@@ -182,6 +182,31 @@ export interface Outcome {
   next?: string;
 }
 
+/**
+ * The document facsimiles, each standing for a real artefact of the work.
+ *
+ * Deliberately a small closed set. Eight drawings that mean something beat twenty that
+ * are merely different, and a union means a typo is a build error rather than a blank
+ * card.
+ */
+export type FacsimileId =
+  /** post-purchase complaint volumes — the finding the whole story turns on */
+  | "complaints"
+  /** weighted evaluation criteria, and the column you are winning */
+  | "scorecard"
+  /** who owns what, and the person who can stop you */
+  | "org"
+  /** a contract clause, with the sentence somebody will have to keep */
+  | "clause"
+  /** a plan where one bar has already crossed the line */
+  | "timeline"
+  /** a price broken into phases — same total, smaller first decision */
+  | "phases"
+  /** a proposal's contents, including the workstream nobody asked for */
+  | "proposal"
+  /** three competitors and a gap none of them covers */
+  | "market";
+
 export interface Option {
   id: string;
   title: string;
@@ -200,6 +225,19 @@ export interface Option {
   cost?: { time: 1 | 2 | 3; investment: 1 | 2 | 3 };
   /** card photograph, filename in public/art/ without extension */
   image?: string;
+  /**
+   * A drawn document facsimile, preferred over `image`.
+   *
+   * The card used to carry a photograph: 21 crops lifted from the mockups, each upscaled
+   * about ×1.43 into its frame and losing ~45% of its detail energy, together taking 9.2%
+   * of a decision screen's pixels. A 132px photograph of a generic office cannot carry a
+   * fact, and behind a heading it is the visual grammar of a slide deck.
+   *
+   * A facsimile carries the fact instead — the complaint data, the scorecard, the clause,
+   * the plan that has slipped — drawn from geometry so it is sharp at any size and
+   * recolours with the palette. See `src/ui/facsimile.tsx`.
+   */
+  facsimile?: FacsimileId;
   /** option is hidden unless this passes */
   requires?: Condition;
   outcomes: Outcome[];
@@ -388,6 +426,8 @@ export interface SetupOption {
   description: string;
   icon: IconId;
   image?: string;
+  /** a drawn artefact, preferred over `image` — see `Option.facsimile` */
+  facsimile?: FacsimileId;
   /** what this advantage means in play, as short tags */
   strengths: string[];
   /** and what it costs you */

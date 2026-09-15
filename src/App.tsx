@@ -292,7 +292,27 @@ export default function App() {
   /* On a consequence beat the node has not moved yet, so `mission` is still the one just
      played — which is exactly whose rail, advisor and hero photo belong on screen. */
   const onResult = state.phase === "consequence" && mission !== null;
-  const framed = onBrief || onDecide || onResult;
+  /**
+   * The resolving beat is now inside the frame, and that one change is what makes the
+   * meters move rather than merely differ.
+   *
+   * It used to be outside it: `framed` excluded `resolving`, so committing a decision
+   * unmounted both rails and the action bar for one second and then mounted them again.
+   * The three meters the player had been looking at for the whole decision therefore did
+   * not travel from 58 to 64 — they were destroyed at 58 and recreated at 64, with a
+   * full-width shimmer screen in between. There was no animation to get wrong, because
+   * there were no persistent elements left to animate. A CSS transition needs the same
+   * DOM node at both values.
+   *
+   * Keeping the frame up also holds every edge of the console still from the decision
+   * through to the result, which is the other half of the "static screen changes"
+   * complaint: the rails and the bottom bar were flickering in and out around the one
+   * beat that is supposed to feel continuous.
+   */
+  const onResolving = state.phase === "resolving" && mission !== null;
+  const framed = onBrief || onDecide || onResolving || onResult;
+  /** The meters have just moved on exactly these two beats, and only they pass `from`. */
+  const moved = (onResolving || onResult) && state.resolution ? state.resolution : null;
   const need = mission ? requiredCount(mission) : 0;
   const ready = canCommit(state, content);
   const selected = selectionComplete(state, content);
@@ -362,6 +382,20 @@ export default function App() {
         ) : null}
       </ActionBar>
     );
+  } else if (state.phase === "resolving") {
+    /* No button — there is nothing to do for this one second, and offering a control that
+       does nothing would be worse than offering none. But the bar stays up carrying the
+       colleague's steer, which is still their advice about the decision just taken, so
+       the console's bottom edge does not drop 66px and come back. */
+    bottom = (
+      <ActionBar
+        aside={
+          mission?.tip && mission.advisor
+            ? { from: mission.advisor.name, text: mission.tip, photo: mission.advisor.photo }
+            : undefined
+        }
+      />
+    );
   } else if (state.phase === "consequence") {
     bottom = (
       <ActionBar
@@ -407,7 +441,11 @@ export default function App() {
                nothing the player has to read while comparing options. */
             objective={onBrief ? mission.objective : undefined}
             minutes={onBrief ? mission.minutes : undefined}
-            file={onBrief || onResult ? discoveredFile(state) : undefined}
+            /* From the resolving beat, not the consequence: the evidence was discovered
+               at the moment of commit, so this is when it honestly appears — and it lands
+               on the beat whose subject is what the decision did, rather than arriving as
+               an extra insertion underneath the result while the result is being read. */
+            file={onBrief || onResolving || onResult ? discoveredFile(state) : undefined}
           />
         ) : undefined
       }
@@ -415,11 +453,20 @@ export default function App() {
         framed && mission ? (
           <InsightRail
             dims={state.dims}
+            /* `state.dims` is ALREADY the new values by the time the phase is
+               `resolving` — `commit` applies them and then sets the phase — so the rail
+               needs telling where they came from before it can show them arriving. */
+            from={moved?.dimsBefore}
             entries={ledger(state)}
             /* The colleague's questions live on the brief now. Beside the options they
                were station-2 content sitting in a rail, which is exactly the
                mis-placement the framework warns about. */
-            collapsed={onDecide}
+            /* Stays collapsed through resolving on purpose. Opening the ledger is a
+               ~120px change of shape in this rail, and if it happened on commit it would
+               be the loudest thing on screen at the exact moment the three meters are
+               supposed to be the only thing moving. It opens one beat later, with the
+               result, where it is the quietest change on a screen that is all change. */
+            collapsed={onDecide || onResolving}
             commits={onDecide ? selectedCommits(mission, state) : undefined}
           />
         ) : undefined
@@ -446,7 +493,9 @@ export default function App() {
         />
       )}
 
-      {state.phase === "resolving" && <ResolvingScreen onDone={doAdvance} />}
+      {state.phase === "resolving" && (
+        <ResolvingScreen resolution={state.resolution} onDone={doAdvance} />
+      )}
 
       {state.phase === "consequence" && state.resolution && (
         <ConsequenceScreen

@@ -18,6 +18,7 @@ import type {
   Mission,
   Option,
 } from "../engine/types";
+import { Facsimile } from "./facsimile";
 import { Icon, IconTile, Pill, SectionTitle } from "./icons";
 import {
   BEAT_TITLE_ID,
@@ -308,18 +309,31 @@ function OptionCard({
       aria-labelledby={titleId(option.id)}
       aria-describedby={bodyIds(option.id)}
     >
-      {/* 1 · media + medallion */}
+      {/* 1 · media + medallion
+          A drawn artefact where there is one, a photograph only as a fallback. The cards
+          carried 21 mockup crops, every one upscaled about ×1.43 into this frame and
+          losing ~45% of its detail energy, together taking 9.2% of the screen — and a
+          132px photograph of a generic office cannot carry a fact. Behind a heading it is
+          also, exactly, the visual grammar of a slide deck. The facsimile carries the
+          option's own point instead: the complaint volumes, the scorecard, the man who
+          can stop you. See `src/ui/facsimile.tsx`. */}
       <div className="relative">
-        {option.image && (
-          <img
-            src={artUrl(option.image)}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            className="h-[132px] w-full object-cover"
-          />
+        {option.facsimile ? (
+          <Facsimile kind={option.facsimile} className="h-[132px] w-full" />
+        ) : (
+          option.image && (
+            <img
+              src={artUrl(option.image)}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-[132px] w-full object-cover"
+            />
+          )
         )}
-        <div className={`flex justify-center px-3 ${option.image ? "-mt-8" : "pt-4"}`}>
+        <div
+          className={`flex justify-center px-3 ${option.facsimile || option.image ? "-mt-8" : "pt-4"}`}
+        >
           <span
             aria-hidden="true"
             className="flex h-[60px] w-[60px] items-center justify-center rounded-full border-[3px] border-(--color-surface)"
@@ -455,7 +469,10 @@ function ChoiceList({
   return (
     <RadioGroup
       label={mission.question}
-      className={`grid items-stretch gap-3 ${columns(options.length)}`}
+      /* `m-deal`: 45ms apart, left to right. The cards are compared ACROSS (F2), so the
+         stagger has to assemble the row without implying an order to read it in — which
+         is why it is at the bottom of the 30–80ms band and not the top. */
+      className={`m-deal grid items-stretch gap-3 ${columns(options.length)}`}
       style={{ gridTemplateRows: `repeat(${CARD_ROWS}, auto)` }}
     >
       {options.map((o, i) => (
@@ -490,7 +507,7 @@ function EvidenceList({
     <div
       role="group"
       aria-label={mission.question}
-      className={`grid items-stretch gap-3 ${columns(mission.evidence.length)}`}
+      className={`m-deal grid items-stretch gap-3 ${columns(mission.evidence.length)}`}
     >
       {mission.evidence.map((e) => {
         const selected = state.selection.includes(e.id);
@@ -542,7 +559,7 @@ function ComponentList({
     <div
       role="group"
       aria-label={mission.question}
-      className={`grid items-stretch gap-3 ${columns(mission.components.length)}`}
+      className={`m-deal grid items-stretch gap-3 ${columns(mission.components.length)}`}
     >
       {mission.components.map((c) => {
         const selected = state.selection.includes(c.id);
@@ -598,7 +615,21 @@ export function BriefBody({ mission, state }: { mission: Mission; state: GameSta
   const situation = resolveSituation(mission, state);
 
   return (
-    <div key={mission.id} className="anim-fade flex min-h-full flex-col">
+    /**
+     * A new mission arrives as ONE gesture — 220ms, opacity only, on the whole work area.
+     *
+     * Not a stagger, and not a rise. Six sections fading and sliding up in turn is the
+     * pattern `docs/UI-AUDIT.md` Z15 names as the generic machine-generated default, and
+     * this screen has seven: header, client strip, assessment, concerns, colleague,
+     * questions, hero. The brief is a situation to read, not a set of things arriving, so
+     * the whole desk resolves at once and then holds still while it is read.
+     *
+     * The shell does the work of continuity here. Top bar, stepper, both rails and the
+     * action bar are all the same DOM across every beat of a mission, so only the centre
+     * changes — which is what actually happened, and is why a fade of the centre reads as
+     * a panel updating rather than as a page load.
+     */
+    <div key={mission.id} className="m-enter flex min-h-full flex-col">
       <div data-region="situation" className="bg-(--color-surface)">
         <Header mission={mission} situation={situation} />
         {mission.client && (
@@ -677,9 +708,22 @@ export function DecideBody({
   const ready = have === need;
 
   return (
-    <div key={mission.id} className="anim-fade flex min-h-full flex-col">
+    /**
+     * brief → decide is the same beat narrowing to a question, so it is deliberately NOT
+     * a transition of the whole screen.
+     *
+     * The wrapper does not animate at all. The question band cross-fades in 160ms, in the
+     * same position and on the same white surface the brief's header band occupied, so it
+     * reads as that band updating rather than as one screen replacing another. Then the
+     * options deal in underneath it. Two parts, in that order, because that is the shape
+     * of the event: the situation collapsed to one question, and a hand of cards arrived.
+     *
+     * A single fade over both parts — which is what was here — makes the narrowing and
+     * the arrival the same thing, and the arrival is the half the player is waiting for.
+     */
+    <div key={mission.id} className="flex min-h-full flex-col">
       {/* Station 3 — the question, under a rule. Uniform connectedness beats a gap. */}
-      <div data-region="question" className="border-b border-(--color-line) bg-(--color-surface) px-6 py-4">
+      <div data-region="question" className="m-swap border-b border-(--color-line) bg-(--color-surface) px-6 py-4">
         <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
           {mission.eyebrow}
         </p>

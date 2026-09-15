@@ -49,7 +49,20 @@ export function TitleScreen({
 }) {
   return (
     <div className="mx-auto flex min-h-screen max-w-4xl flex-col justify-center px-5 py-14">
-      <div className="anim-fade">
+      {/**
+       * The title screen arrives as ONE gesture, and this is a reversal worth recording.
+       *
+       * It had four blocks fading in at 0 / 80 / 140 / 220ms, and the first draft of this
+       * work kept the staging and merely tightened it — on the grounds that a screen seen
+       * once per run is the one place a frequency gate allows some delight.
+       *
+       * It is not, and the reason is specific: "animating on first paint when stillness
+       * is clearer" is a named tell of a machine-built interface, and this is literally
+       * the application's first paint. A staged entrance on the first screen is the single
+       * most recognisable thing a generated UI does. Stillness is clearer here, so the
+       * page resolves at once and then stops.
+       */}
+      <div className="m-enter">
         <p className="eyebrow">A short game about winning work</p>
         <h1 className="mt-3 text-[56px] font-bold leading-[0.95] tracking-[-0.04em] text-(--color-ink) sm:text-[56px]">
           GPL
@@ -64,8 +77,7 @@ export function TitleScreen({
       </div>
 
       <div
-        className="anim-fade mt-9 flex flex-wrap items-center gap-1.5"
-        style={{ animationDelay: "0.08s" }}
+        className="m-enter mt-9 flex flex-wrap items-center gap-1.5"
       >
         {chapters.map((c, i) => (
           <span key={c.number} className="flex items-center gap-1.5">
@@ -90,7 +102,7 @@ export function TitleScreen({
         ))}
       </div>
 
-      <div className="anim-fade mt-8 grid gap-4 sm:grid-cols-3" style={{ animationDelay: "0.14s" }}>
+      <div className="m-enter mt-8 grid gap-4 sm:grid-cols-3">
         {[
           {
             icon: "scale" as const,
@@ -121,8 +133,7 @@ export function TitleScreen({
       </div>
 
       <div
-        className="anim-fade mt-9 flex flex-wrap items-center gap-4"
-        style={{ animationDelay: "0.22s" }}
+        className="m-enter mt-9 flex flex-wrap items-center gap-4"
       >
         <PrimaryButton onClick={onBegin}>{hasSave ? "Start again" : "Take the brief"}</PrimaryButton>
         {hasSave && (
@@ -161,7 +172,7 @@ function StaleSave({
 
   return (
     <div
-      className="anim-fade mt-8 max-w-xl rounded-[14px] border px-5 py-4"
+      className="m-swap mt-8 max-w-xl rounded-[14px] border px-5 py-4"
       role="note"
       style={{ borderColor: "var(--color-border-control)", background: "var(--color-panel)" }}
     >
@@ -211,7 +222,7 @@ export function SetupScreen({
 }) {
   return (
     <div className="mx-auto flex min-h-full max-w-5xl flex-col justify-center px-5 py-8">
-      <div className="anim-fade">
+      <div className="m-enter">
         <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
           {node.eyebrow}
         </p>
@@ -243,7 +254,7 @@ export function SetupScreen({
           anyone meets. */}
       <RadioGroup
         label={node.question}
-        className="mt-3 grid items-stretch gap-3 sm:grid-cols-3"
+        className="m-deal mt-3 grid items-stretch gap-3 sm:grid-cols-3"
         style={{ gridTemplateRows: "repeat(5, auto)" }}
       >
         {node.options.map((o, i) => {
@@ -373,10 +384,24 @@ export function InterludeScreen({
       key={node.id}
       className="mx-auto flex min-h-full max-w-2xl flex-col justify-center px-5 py-10"
     >
-      <div className="anim-fade">
+      {/**
+       * The interlude is time passing, and it is the slowest beat in the game: 420ms
+       * against 220ms everywhere else.
+       *
+       * It can afford to be. This is the only screen with nothing to decide, nothing to
+       * compare and nothing to read across — measured at ~20% ink and 0.13% chroma, it is
+       * the emptiest surface in the product, so a slower arrival reads as a pause in the
+       * work rather than as the interface being sluggish. It is also the one beat where
+       * the motion IS the content: nothing on this screen says "months have passed"
+       * except the pacing and the chapter track filling in behind you in the top bar,
+       * which starts 260ms after this arrives.
+       */}
+      <div className="m-enter-slow">
+        {/* The chapter number lands. It is the only thing on screen that marks the
+            boundary this beat exists to mark. */}
         <span
           aria-hidden="true"
-          className="flex h-11 w-11 items-center justify-center rounded-[14px] text-[15px] font-bold text-white"
+          className="m-land flex h-11 w-11 items-center justify-center rounded-[14px] text-[15px] font-bold text-white"
           style={{
             background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-deep))",
           }}
@@ -453,6 +478,7 @@ function BalanceRing({ dims }: { dims: Record<DimensionId, number> }) {
   const c = size / 2;
   const rings = DIMENSIONS.map((d, i) => ({
     d,
+    i,
     r: 62 - i * 15,
     colour: `var(${DIMENSION_META[d].fillVar})`,
     value: dims[d],
@@ -463,8 +489,9 @@ function BalanceRing({ dims }: { dims: Record<DimensionId, number> }) {
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
         <g transform={`rotate(-90 ${c} ${c})`}>
-          {rings.map(({ d, r, colour, value }) => {
+          {rings.map(({ d, i, r, colour, value }) => {
             const circ = 2 * Math.PI * r;
+            const arc = (circ * value) / 100;
             return (
               <g key={d}>
                 <circle
@@ -475,7 +502,28 @@ function BalanceRing({ dims }: { dims: Record<DimensionId, number> }) {
                   stroke="var(--color-canvas-deep)"
                   strokeWidth={9}
                 />
+                {/**
+                 * The three arcs draw themselves, 1,100ms, 120ms apart.
+                 *
+                 * The longest animation in the game and the only screen that can afford
+                 * it: the run is over, there is nothing to do but read, and this is the
+                 * summing-up. It is `stroke-dashoffset`, so the arc is revealed along its
+                 * own path rather than scaled or wiped.
+                 *
+                 * The numbers beside it deliberately do NOT count up from zero, and the
+                 * distinction matters: an arc being drawn reads as the interface drawing a
+                 * summary, whereas a number ticking 0 → 64 reads as a claim that the value
+                 * used to be 0. It never was — every dimension starts the run near 50. A
+                 * count-up here would be a 1.1-second lie about the player's own data.
+                 */}
                 <circle
+                  className="m-draw"
+                  style={
+                    {
+                      "--gpl-arc": arc,
+                      animationDelay: `${i * 120}ms`,
+                    } as React.CSSProperties
+                  }
                   cx={c}
                   cy={c}
                   r={r}
@@ -483,7 +531,7 @@ function BalanceRing({ dims }: { dims: Record<DimensionId, number> }) {
                   stroke={colour}
                   strokeWidth={9}
                   strokeLinecap="round"
-                  strokeDasharray={`${(circ * value) / 100} ${circ}`}
+                  strokeDasharray={`${arc} ${circ}`}
                 />
               </g>
             );
@@ -506,7 +554,14 @@ export function EndingScreen({ state }: { state: GameState }) {
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-8">
-      <div className="anim-fade">
+      {/* One gesture for the verdict, and then the page holds still.
+
+          No cascade down the rest of this screen, deliberately. It is ~3,000px long, so
+          most of a mount-time stagger would play where nobody is looking, and a
+          scroll-triggered reveal would leave every section below the fold at opacity 0 —
+          invisible in a full-page screenshot and, worse, in a print. The summing-up motion
+          on this screen is the ring drawing itself, once, at the top. */}
+      <div className="m-enter">
         <Eyebrow>How it ended</Eyebrow>
         <h1
           id={BEAT_TITLE_ID}

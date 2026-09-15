@@ -27,7 +27,7 @@ import {
   type Resolution,
 } from "../engine/types";
 import { Icon, SectionTitle } from "./icons";
-import { BEAT_TITLE_ID, UI_LABEL, artUrl } from "./shell";
+import { BEAT_TITLE_ID, FactorGrid, UI_LABEL, artUrl, meterDelay } from "./shell";
 
 /**
  * Tone is carried by the medallion's colour AND its icon — never colour alone (E6).
@@ -45,7 +45,44 @@ const TONE: Record<
 
 /* ─────────────────────────── resolving ─────────────────────────── */
 
-export function ResolvingScreen({ onDone }: { onDone: () => void }) {
+/**
+ * The beat that used to be a lie.
+ *
+ * It was one second of `gpl-fade` plus a 1,150ms **skeleton shimmer** — a white gradient
+ * sweeping a grey bar, which is the visual idiom of a pending network request, on the one
+ * beat of a deterministic offline game where the answer is already computed and sitting in
+ * `state.resolution`. A visual reviewer located the "feels like a form" complaint exactly
+ * here: *"the one moment of consequence is rendered in the idiom of a pending XHR."*
+ *
+ * It is now the three meters moving. Same second, and the player spends it watching the
+ * thing their decision actually did — which is the only quantitative feedback in the game
+ * and was previously delivered as a number that had silently become a different number
+ * while a fake progress bar held their attention somewhere else.
+ *
+ * Two consequences of doing it here rather than on the next screen, both deliberate:
+ *
+ *  · The meters in the right-hand rail move at the same moment, on the same stagger and
+ *    the same curve, because `App` now keeps the rails mounted through this beat. The
+ *    player sees one event in two places rather than two events.
+ *  · By the time the second is up, every number has arrived. easeInOutCubic is 99.97%
+ *    complete at 93% of its duration, so the last of the three — delayed 160ms into a
+ *    900ms travel — has visually settled at 1,000ms. The consequence screen therefore
+ *    opens showing exactly the numbers the player just watched land, rather than catching
+ *    them mid-flight.
+ *
+ * The 1,000ms is unchanged, and the labour-illusion literature is why that is defensible
+ * now when it was not before: a pause earns its keep only if it shows work rather than
+ * waiting. A second of fake latency is above the Doherty threshold and buys nothing. A
+ * second of watching a value travel is the transition Heer & Robertson measured at "around
+ * one second" for statistical data graphics.
+ */
+export function ResolvingScreen({
+  resolution,
+  onDone,
+}: {
+  resolution: Resolution | null;
+  onDone: () => void;
+}) {
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const t = window.setTimeout(onDone, reduced ? 120 : 1000);
@@ -53,18 +90,28 @@ export function ResolvingScreen({ onDone }: { onDone: () => void }) {
   }, [onDone]);
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center px-5">
-      <div className="anim-fade w-full max-w-sm">
+    <div className="flex min-h-full flex-col items-center justify-center px-5 py-6">
+      <div className="w-full max-w-2xl">
         {/* Carries the beat-title id even though it is not a heading: the work area takes
             focus on every phase change, and for this one second it would otherwise be an
-            unnamed region — "main", and nothing else, while the player waits. */}
+            unnamed region — "main", and nothing else, while the player waits.
+
+            Not animated beyond a short fade. Under `reduce` this beat is 120ms long, so
+            anything whose meaning lived in this line's entrance would be unreadable. */}
         <p
           id={BEAT_TITLE_ID}
-          className="mb-5 text-center text-[13px] font-medium text-(--color-muted)"
+          className="m-swap mb-7 text-center text-[13px] font-medium text-(--color-muted)"
         >
           Seeing what happens…
         </p>
-        <div className="shimmer h-1.5 w-full overflow-hidden rounded-full bg-(--color-canvas-deep)" />
+        {resolution && (
+          <FactorGrid
+            dims={resolution.dimsAfter}
+            from={resolution.dimsBefore}
+            deltas={resolution.deltas}
+            showDeltas
+          />
+        )}
       </div>
     </div>
   );
@@ -134,11 +181,12 @@ function YourCall({ resolution }: { resolution: Resolution }) {
   const tint = right ? "var(--color-good-tint)" : "var(--color-warn-tint)";
 
   return (
-    <div
-      className="anim-pop flex items-center gap-2.5 rounded-xl px-4 py-2.5"
-      style={{ background: tint }}
-    >
-      <span className="shrink-0" style={{ color: colour }}>
+    /* The strip itself rides the reveal sequence — it is the first thing in it, because
+       it answers the question the PLAYER asked rather than telling them something. The
+       landing is on the icon instead, and only when the call was right: a wrong call is
+       not a thing to give a satisfying little bounce to. See `m-arrive` in motion.css. */
+    <div className="flex items-center gap-2.5 rounded-xl px-4 py-2.5" style={{ background: tint }}>
+      <span className={`${right ? "m-land" : "m-arrive"} shrink-0`} style={{ color: colour }}>
         <Icon name={right ? "check" : "scale"} size={16} />
       </span>
       <p className="text-[13px] font-semibold" style={{ color: colour }}>
@@ -163,7 +211,7 @@ function Impact({
 }) {
   return (
     <div className="card grid gap-px overflow-hidden sm:grid-cols-3" style={{ background: "var(--color-line)" }}>
-      {(Object.keys(DIMENSION_META) as DimensionId[]).map((d) => {
+      {(Object.keys(DIMENSION_META) as DimensionId[]).map((d, i) => {
         const meta = DIMENSION_META[d];
         const colour = `var(${meta.textVar})`;
         const delta = deltas[d];
@@ -185,9 +233,15 @@ function Impact({
                 {dims[d]}
               </span>
               {delta !== 0 && (
+                /* The number beside this one does NOT count here — the player watched it
+                   count, one beat ago, and re-running it would make the restatement look
+                   like a second event. What repeats is the RHYTHM: the three chips arrive
+                   on the same 0 / 80 / 160ms stagger the meters just moved on, so the two
+                   beats read as one consequence rather than as a result and a summary. */
                 <span
-                  className="anim-pop rounded-full px-1.5 py-0.5 text-[12px] font-bold tabular-nums"
+                  className={`${delta > 0 ? "m-land" : "m-arrive"} rounded-full px-1.5 py-0.5 text-[12px] font-bold tabular-nums`}
                   style={{
+                    animationDelay: `${meterDelay(i)}ms`,
                     color: delta > 0 ? "var(--color-good)" : "var(--color-bad)",
                     background: delta > 0 ? "var(--color-good-tint)" : "var(--color-bad-tint)",
                   }}
@@ -264,14 +318,18 @@ export function ConsequenceScreen({
   const tone = TONE[resolution.outcome.tone];
 
   return (
-    <div className="anim-fade flex min-h-full flex-col">
-      {/* Header, matching the briefing's shape so the console does not change register. */}
-      <div className="flex items-stretch gap-5 bg-(--color-surface)">
+    <div className="flex min-h-full flex-col">
+      {/* Header, matching the briefing's shape so the console does not change register.
+          `m-swap`, not a rise: this band occupies the same place as the band that was
+          here a moment ago, and translating it would claim a move that did not happen. */}
+      <div className="m-swap flex items-stretch gap-5 bg-(--color-surface)">
         <div className="min-w-0 flex-1 px-5 pt-5">
           <div className="flex items-start gap-3.5">
+            {/* The one object on this screen that is allowed to land. It is the verdict
+                on the decision, and it is the first thing the eye goes to. */}
             <span
               aria-hidden="true"
-              className="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-full text-white"
+              className="m-land flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-full text-white"
               style={{ background: tone.colour }}
             >
               <Icon name={tone.icon} size={25} />
@@ -308,7 +366,22 @@ export function ConsequenceScreen({
         )}
       </div>
 
-      <div className="flex-1 space-y-4 px-5 py-4">
+      {/**
+       * The reveal, and the only sequenced entrance in the game.
+       *
+       * Its order is the argument the beat is making: whether you called it → what it
+       * cost → what you found out → what is now different → what a colleague makes of it.
+       * 70ms apart and a 6px rise, so it reads as one cascade settling rather than five
+       * separate animations, and it is over in 540ms. Nothing waits for it: the primary
+       * action is in the action bar, which is outside this element and never animates, so
+       * a player who wants the next mission can have it immediately.
+       *
+       * `m-seq` indexes on `:nth-child`, and every section below is conditional — which
+       * is fine and is worth stating, because a falsy branch in JSX renders no node at
+       * all, so the stagger stays contiguous rather than leaving a gap where a mission
+       * with no revealed evidence would have been.
+       */}
+      <div className="m-seq flex-1 space-y-4 px-5 py-4">
         <YourCall resolution={resolution} />
 
         <Impact dims={resolution.dimsAfter} deltas={resolution.deltas} />
