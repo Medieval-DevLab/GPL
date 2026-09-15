@@ -6,6 +6,139 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-039 · Nine perspectives audited the finished game; the diagnosis was none of the four things previously fixed
+Four rounds of feedback — "feels like a form", "too much text" ×3, "too densely packed, no
+system to read the flow" — had produced four fixes: colour, copy length, the brief/decide
+split, and the density rubric. The complaint did not move. So nine reviewers audited the
+build independently, each from one named perspective (learning science, game systems,
+narrative, UX architecture, visual design, accessibility, domain authenticity, adversarial
+QA, product adoption), each required to cite a file, a line or a reproduction.
+
+They converged from nine directions on one thing nobody had measured: **the game does not
+respond to the player, and its read-outs cannot distinguish a thinking player from a
+coin-flipper.** The evidence, all independently reproduced before being accepted:
+
+- **0 of 45 options** sit behind a `requires` gate. Knowledge changes the prose and the
+  numbers; it never changes what the player may *do*.
+- **0 conditions read a dimension.** The three meters are write-only — a scoreboard
+  attached to the side of a questionnaire, which `validate.ts` warns about only if it
+  *stops* being true.
+- **`win` never falls below 55** across all reachable endings, so `finalVerdict`'s
+  `win < 40` branch — the failure ending for the game's first four chapters — is
+  unreachable. It is unit-tested with synthetic dimensions, which is why it looked alive.
+- **Five separate non-reader policies** (always-index-*n*, cheapest cost pips, dearest cost
+  pips, meter-greedy) all reach the best verdict in the game. The engagement premium — the
+  gap between the best reader and the best non-reader — is *negative*.
+- **77% of runs render zero causal threads**, the section the code calls "the payoff of the
+  whole design".
+- The first **situation variant appears at mission 10 of 16**; the first nine beats read
+  identically no matter what the player knows, promised or spent.
+
+**Cost:** the density work was not wasted but it was not the fix, and three rounds of
+effort went into the wrong layer. **Reversible:** the findings are recorded; acting on them
+is the next decision, not this one.
+
+## D-038 · The density rubric was scored out of 92, and its reading-flow factor was never built
+`tools/measure.mjs` reported **92/92 PASS** and that number was reported upward three
+times. The weights sum to **92**, not the 100 its own docstring claims. Two factors from
+`DENSITY-FRAMEWORK.md` §C were specified, marked "✅ Auto", and never implemented:
+disclosure share (weight 5) and **between-beat overlap** (weight 3) — the single factor in
+the whole framework that measures continuity *between* screens. Measured by hand it scores
+**0.50 against its own 0.85 threshold**: it is the one factor that would have failed, and
+the one that speaks directly to "no system to read the flow".
+
+The `stations` band also moved from the documented **5 (max 6)** to an implemented **3–4**,
+which is what lets three stations score 10/10. D-033 closed with "the numbers should not
+move to accommodate a screen that fails them", and then they did.
+
+**The lesson is about instruments, not about density:** a rubric whose bands are tuned
+after seeing the build measures the build's opinion of itself. **Cost:** the 92/92 claim
+was worthless and has to be re-earned. **Reversible:** yes — implement both factors, restore
+the documented bands, and re-score.
+
+## D-037 · Gates must be structural, because three written for a specific bug could not see it
+Three colour failures shipped past the test written to catch them, and the reasons
+generalise:
+
+- **A regex cannot follow a template literal.** The white-on-solid test matched
+  `color: "#fff"` near `background: "var(--color-win…"` as literal source text. All three
+  real offenders built the value as `` `var(${meta.fillVar})` ``. Fixed by making the rule
+  structural instead: components may no longer name a role-ambiguous token at all.
+- **Declaration is not resolution.** The triad test asserted `--color-win-tint:` appeared in
+  the CSS. It appeared **twice** — the second as `var(--color-win-tint)`, a self-reference,
+  which is invalid at computed-value time and destroyed the first. All three dimension
+  tints resolved to the empty string while the test passed. Now checked for self-reference
+  and duplicate declaration, and the computed values are read in a real browser.
+- **A glob is a scope decision.** The sweep globbed `../ui/*.tsx`, so `App.tsx` was never
+  swept and carried `text-[12.5px]` at two sites. Now `../**/*.tsx`.
+
+A fourth, from the same family: `ENFORCE_FIT = DESKTOP && VIEWPORT.height >= 1000` in
+`tools/verify.mjs`, whose default viewport is 900. The fits-one-screen rule — which the
+tool's docstring calls "what separates this from a form" — does not run in the mandatory
+workflow, and screens do overflow at 1440×900.
+
+**Cost:** four gates rewritten, and a standing suspicion of the rest. **Note:** the new
+tests initially failed on their own rationale, because each rule is documented at the site
+it governs and the banned spelling appears in the explanation. Comments are stripped before
+every sweep; the alternative was deleting the explanations.
+
+## D-036 · Two colour tokens per dimension, because one cannot be legal in both places
+`DIMENSION_META` carried a single `varName` per dimension pointing at `--color-win`, the
+migration alias for `--color-win-solid`. Components used it for the bar fill *and* the 13px
+label, so the label was painted in the fill colour: **#cd6d0a on white at 3.63:1** and
+**#339075 at 3.90:1**, on 42 of 45 screens, while `DESIGN-SYSTEM.md` stated the rule being
+broken. White text on the Winability solid appeared in two more places.
+
+Split into `fillVar` (bars, strokes, chip backgrounds — 3:1 under 1.4.11) and `textVar`
+(labels, numbers — 4.5:1 under 1.4.3). **The alias layer was the mechanism**: `--color-win`
+reads as "the Winability colour", which is not a thing. There is a fill colour and a text
+colour and they are different values.
+
+**Cost:** one field became two at every call site. **Reversible:** no, and it should not be.
+
+## D-035 · The prediction gate answers the question it prints
+The gate asks "which of the three will move least?" and the consequence screen says "X
+barely moved". The key compared **signed** deltas — which answers the question it used to
+ask, "which will this hurt?" — and so returned whichever dimension *fell furthest*. Across
+the 88 authored outcomes it named a falling dimension **61 times (69%)** and contradicted
+the printed question **52 times (59%)**. The screen said "Profitability barely moved" beside
+a tile reading **−14**.
+
+The first fix compared magnitude and left a subtler bug of the same shape: returning a
+single winner made the **tie-break** carry meaning. `reduce` keeps the earlier element and
+`DIMENSIONS` begins with `win`, so 6 of the 12 tied outcomes keyed to Winability and
+"always answer Winability" beat chance. At the meter ceiling — reachable by mission 14 — all
+three deltas are zero and the screen claimed Winability held.
+
+So `leastMovedSet` returns every tied dimension, the **engine** decides
+`predictionCorrect` (a component comparing two ids cannot know a tie has several right
+answers, and a component deciding a verdict is a rule in the UI), and `nothingMoved` gets
+its own honest sentence. **Cost:** one field became four. **Why it mattered most:** this is
+the only place in the game where the player commits a claim and is marked on it, so it is
+the only thing here that can be *wrong* rather than merely unclear — and feedback that
+contradicts the numbers beside it teaches the player to stop reading that channel.
+
+## D-034 · The palette and type scale are derived, not chosen — `docs/DESIGN-SYSTEM.md`
+Winability `#5b4de8` and the brand accent `#7c3aed` measured **ΔE2000 1.2 apart under
+deuteranopia** — roughly half a just-noticeable difference, i.e. the same colour to about
+6% of men, with the brand sitting in the middle of the channel that was supposed to carry
+dimension identity. So the brand recedes to ink, the three dimensions own the chroma on an
+Okabe–Ito triad (orange / bluish-green / blue, with a deliberate 56/54/34 lightness split),
+and the worst pairwise separation across normal, protan, deutan and tritan vision becomes
+**18.9**. Surfaces moved from lavender-grey to warm paper against cool ink.
+
+Four live WCAG failures fixed at the same time: a **1.60:1** disabled button, a **2.78:1**
+eyebrow, a **1.86:1** focus ring and a **1.52:1** border on controls. Type went from 27
+sizes — including 9px and a run of half-pixels — to **seven integer steps**, because 1.25
+from 12px gives 15/18.75/23.4/29.3 and non-integers are how half-pixels get born.
+
+Three more failures were found later by audit and are recorded in D-036. **Cost:** dark mode
+is deferred, because lightening the triad for a dark ground collapses its separation to
+ΔE 3.5 — it needs a second independently optimised triad, not a token swap.
+**Sources:** Okabe & Ito palette construction · Radix Colors scale semantics · Atlassian
+token anatomy · Carbon type sets · W3C Understanding 1.4.11 · APCA 0.1.9 · Machado et al.
+2009 CVD matrices · Bringhurst and Baymard on measure · Tinker 1955 on all-caps.
+
 ## D-033 · Density is a measured band, not a judgement — `docs/DENSITY-FRAMEWORK.md`
 "Screens are too densely packed" was unfalsifiable, so `tools/measure.mjs` was pointed at a
 real playthrough and the framework it referenced was written against the output. The
