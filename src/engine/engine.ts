@@ -154,7 +154,8 @@ function enterNode(state: GameState, content: Content, id: string): GameState {
   if (node.kind === "setup") return { ...base, phase: "setup" };
   if (node.kind === "interlude") return { ...base, phase: "interlude" };
   if (node.kind === "ending") return { ...base, phase: "ending" };
-  return { ...base, phase: "decide" };
+  // A mission opens on its brief; the options come after it.
+  return { ...base, phase: "brief" };
 }
 
 /**
@@ -405,6 +406,9 @@ export function advance(state: GameState, content: Content): GameState {
     case "interlude":
       return node.kind === "interlude" ? enterNode(state, content, node.next) : state;
 
+    case "brief":
+      return isMission(node) ? { ...state, phase: "decide" } : state;
+
     case "resolving":
       return { ...state, phase: "consequence" };
 
@@ -449,6 +453,32 @@ interface LedgerRule extends LedgerEntry {
 }
 
 const LEDGER_RULES: LedgerRule[] = [
+  /* How you got in. Exactly one of these always matches, so the opening choice stays
+     on screen for the whole engagement instead of being a screen the player passes
+     through. It is kept separate from the capability it grants, because `knows:rivals`
+     can also be earned later in mission 1 — "started as the challenger" and "found out
+     afterwards" are different positions and the ledger should not merge them. */
+  {
+    when: { all: ["start:connector"] },
+    label: "You got in on trust",
+    detail: "They took your call. Nobody has yet asked you to prove you can build it.",
+    tone: "neutral",
+    icon: "talk",
+  },
+  {
+    when: { all: ["start:builder"] },
+    label: "You got in on evidence",
+    detail: "You have done this work before. Selling it is the part you are worse at.",
+    tone: "neutral",
+    icon: "layers",
+  },
+  {
+    when: { all: ["start:challenger"] },
+    label: "You got in on the argument",
+    detail: "You read the field and said the awkward thing. You are not yet trusted inside it.",
+    tone: "neutral",
+    icon: "scale",
+  },
   // What you know
   {
     when: { all: ["knows:real_pain"] },
@@ -645,6 +675,28 @@ export function causalThreads(state: GameState): CausalThread[] {
   }
   return out.slice(0, 3);
 }
+
+/**
+ * Flags the ENGINE branches on, as opposed to content conditions.
+ *
+ * `validate.ts` finds dead flags by collecting everything content writes and subtracting
+ * everything content reads. A flag only the engine reads therefore looks dead — and a
+ * warning known to be false is a warning nobody reads, which is how fifteen of these hid
+ * the two that were genuinely dead.
+ *
+ * Derived from the rule tables rather than hand-listed, because a hand-listed allowlist
+ * suppresses a real check the moment a ledger rule is deleted and its entry left behind.
+ */
+export const ENGINE_READ_FLAGS: ReadonlySet<string> = new Set([
+  // the final verdict's one branch
+  "walked_away",
+  ...LEDGER_RULES.flatMap((r) => [
+    ...(r.when.all ?? []),
+    ...(r.when.any ?? []),
+    ...(r.when.none ?? []),
+  ]),
+  ...THREAD_RULES.flatMap((r) => r.needsFlags ?? []),
+]);
 
 /** Overall read on the engagement, from the final dimensions and how it ended. */
 export function finalVerdict(

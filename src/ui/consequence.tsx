@@ -54,7 +54,7 @@ export function ResolvingScreen({ onDone }: { onDone: () => void }) {
   return (
     <div className="flex min-h-full flex-col items-center justify-center px-5">
       <div className="anim-fade w-full max-w-sm">
-        <p className="mb-5 text-center text-[14px] font-medium text-(--color-muted)">
+        <p className="mb-5 text-center text-[13px] font-medium text-(--color-muted)">
           Seeing what happens…
         </p>
         <div className="shimmer h-1.5 w-full overflow-hidden rounded-full bg-(--color-canvas-deep)" />
@@ -89,7 +89,7 @@ function YourCall({
       <span className="shrink-0" style={{ color: colour }}>
         <Icon name={right ? "check" : "scale"} size={16} />
       </span>
-      <p className="text-[13.5px] font-semibold" style={{ color: colour }}>
+      <p className="text-[13px] font-semibold" style={{ color: colour }}>
         {text}
       </p>
     </div>
@@ -127,14 +127,14 @@ function Impact({
             </div>
             <div className="mt-1 flex items-baseline gap-2">
               <span
-                className="text-[27px] font-bold leading-none tabular-nums"
+                className="text-[24px] font-bold leading-none tabular-nums"
                 style={{ color: colour }}
               >
                 {dims[d]}
               </span>
               {delta !== 0 && (
                 <span
-                  className="anim-pop rounded-full px-1.5 py-0.5 text-[11.5px] font-bold tabular-nums"
+                  className="anim-pop rounded-full px-1.5 py-0.5 text-[12px] font-bold tabular-nums"
                   style={{
                     color: delta > 0 ? "var(--color-good)" : "var(--color-bad)",
                     background: delta > 0 ? "var(--color-good-tint)" : "var(--color-bad-tint)",
@@ -145,7 +145,7 @@ function Impact({
                 </span>
               )}
             </div>
-            <p className="mt-1 text-[11.5px] text-(--color-muted)">{meta.question}</p>
+            <p className="mt-1 text-[12px] text-(--color-muted)">{meta.question}</p>
           </div>
         );
       })}
@@ -186,10 +186,10 @@ function TheRead({ advisor, resolution }: { advisor?: Advisor; resolution: Resol
             {advisor.name}
             <span className="ml-2 font-medium text-(--color-accent)">{advisor.role}</span>
           </p>
-          <p className="mt-1.5 text-[16px] font-semibold leading-snug text-(--color-ink)">
+          <p className="mt-1.5 text-[15px] font-semibold leading-snug text-(--color-ink)">
             “{lesson.principle}”
           </p>
-          <p className="mt-2 text-[14.5px] leading-relaxed text-(--color-ink-soft)">
+          <p className="mt-2 text-[15px] leading-relaxed text-(--color-ink-soft)">
             “{lesson.because}”
           </p>
         </div>
@@ -225,11 +225,11 @@ export function ConsequenceScreen({
               <Icon name={tone.icon} size={25} />
             </span>
             <div className="min-w-0">
-              <p className="text-[12.5px] text-(--color-muted)">
+              <p className="text-[13px] text-(--color-muted)">
                 You chose:{" "}
                 <span className="font-bold text-(--color-ink-soft)">{resolution.chosenLabel}</span>
               </p>
-              <h1 className="mt-1 text-[27px] font-bold leading-[1.12] tracking-[-0.015em] text-(--color-ink)">
+              <h1 className="mt-1 text-[24px] font-bold leading-[1.12] tracking-[-0.015em] text-(--color-ink)">
                 {resolution.outcome.headline}
               </h1>
             </div>
@@ -265,7 +265,7 @@ export function ConsequenceScreen({
                 <SectionTitle icon="search" className="mb-1">
                   {e.label}
                 </SectionTitle>
-                <p className="text-[13.5px] leading-relaxed text-(--color-ink-soft)">{e.reveals}</p>
+                <p className="text-[13px] leading-relaxed text-(--color-ink-soft)">{e.reveals}</p>
               </div>
             ))}
           </div>
@@ -279,7 +279,7 @@ export function ConsequenceScreen({
             {resolution.outcome.changed.map((c, i) => (
               <li
                 key={i}
-                className="flex items-start gap-2.5 text-[14px] leading-relaxed text-(--color-ink-soft)"
+                className="flex items-start gap-2.5 text-[13px] leading-relaxed text-(--color-ink-soft)"
               >
                 <span className="mt-[3px] shrink-0 text-(--color-accent)">
                   <Icon name="layers" size={13} />

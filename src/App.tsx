@@ -25,7 +25,7 @@ import {
   type Setup,
 } from "./engine/types";
 import { ConsequenceScreen, ResolvingScreen } from "./ui/consequence";
-import { MissionBody } from "./ui/mission";
+import { BriefBody, DecideBody } from "./ui/mission";
 import { EndingScreen, InterludeScreen, SetupScreen, TitleScreen } from "./ui/screens";
 import {
   ActionBar,
@@ -180,12 +180,13 @@ export default function App() {
     );
   }
 
+  const onBrief = state.phase === "brief" && isMission(node);
   const onDecide = state.phase === "decide" && isMission(node);
   const mission = isMission(node) ? node : null;
   /* On a consequence beat the node has not moved yet, so `mission` is still the one just
      played — which is exactly whose rail, advisor and hero photo belong on screen. */
   const onResult = state.phase === "consequence" && mission !== null;
-  const framed = onDecide || onResult;
+  const framed = onBrief || onDecide || onResult;
   const need = mission ? requiredCount(mission) : 0;
   const ready = canCommit(state, content);
   const selected = selectionComplete(state, content);
@@ -203,7 +204,9 @@ export default function App() {
   /* The action bar is part of the console, so it never scrolls away. Its label names
      exactly what happens, and on a decide screen the prediction gate sits beside it. */
   let bottom: React.ReactNode = null;
-  if (onDecide) {
+  if (onBrief) {
+    bottom = <ActionBar label="See your options" onAction={doAdvance} />;
+  } else if (onDecide) {
     bottom = (
       <ActionBar
         label="Commit to this"
@@ -263,14 +266,11 @@ export default function App() {
             missionNumber={missionNumber ?? 1}
             totalMissions={content.missionOrder.length}
             completed={state.completed}
-            advisor={
-              mission.advisor && mission.advisorLine
-                ? { ...mission.advisor, quote: mission.advisorLine }
-                : mission.advisor
-            }
-            objective={mission.objective}
-            minutes={mission.minutes}
-            file={discoveredFile(state)}
+            /* Orientation only on the decision beat: greyscale, unchanged between beats,
+               nothing the player has to read while comparing options. */
+            objective={onBrief ? mission.objective : undefined}
+            minutes={onBrief ? mission.minutes : undefined}
+            file={onBrief || onResult ? discoveredFile(state) : undefined}
           />
         ) : undefined
       }
@@ -279,15 +279,19 @@ export default function App() {
           <InsightRail
             dims={state.dims}
             entries={ledger(state)}
-            consider={mission.consider}
-            advisorName={mission.advisor?.name}
+            /* The colleague's questions live on the brief now. Beside the options they
+               were station-2 content sitting in a rail, which is exactly the
+               mis-placement the framework warns about. */
+            collapsed={onDecide}
             commits={onDecide ? selectedCommits(mission, state) : undefined}
           />
         ) : undefined
       }
     >
+      {onBrief && mission && <BriefBody mission={mission} state={state} />}
+
       {onDecide && mission && (
-        <MissionBody mission={mission} state={state} onToggle={doToggle} />
+        <DecideBody mission={mission} state={state} onToggle={doToggle} />
       )}
 
       {state.phase === "setup" && node.kind === "setup" && (

@@ -412,6 +412,16 @@ export function isMission(node: GameNode): node is Mission {
 export type Phase =
   | "title"
   | "setup"
+  /**
+   * Read the situation. Separate from "decide" on purpose.
+   *
+   * Nine comparable games were torn down for docs/DENSITY-FRAMEWORK.md — Reigns, Papers
+   * Please, CK3, Slay the Spire, Into the Breach, Citizen Sleeper, Frostpunk, Disco
+   * Elysium, XCOM 2 — and not one of them shows a full briefing alongside its options.
+   * They all occlude, pause or collapse the world at the moment of choice. We showed
+   * both, which put 419 words and up to 16 panels on a single screen.
+   */
+  | "brief"
   | "interlude"
   | "decide"
   | "resolving"

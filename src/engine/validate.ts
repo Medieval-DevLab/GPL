@@ -11,6 +11,7 @@
  * cross-checking of every flag read against every flag written catches that.
  */
 
+import { ENGINE_READ_FLAGS } from "./engine";
 import {
   isMission,
   type Condition,
@@ -128,6 +129,11 @@ export function validateContent(content: Content): Issue[] {
 
   const written = new Set<string>();
   const read = new Map<string, string>(); // flag -> first place it is read
+
+  // Some flags are read by the engine rather than by a content condition — the final
+  // verdict branches on `walked_away`. Seed them, or the dead-state check below reports
+  // a flag that very much is read. See ENGINE_READ_FLAGS in engine.ts.
+  for (const f of ENGINE_READ_FLAGS) read.set(f, "engine");
 
   // Chapter 0 writes flags too, and it is not a mission.
   for (const node of nodes) {

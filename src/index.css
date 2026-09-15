@@ -7,59 +7,178 @@
    AND icon-coded — colour never carries meaning alone.
    ─────────────────────────────────────────────────────────────── */
 @theme {
-  --color-page: #eeecf6;
-  --color-canvas: #f7f7fb;
-  --color-canvas-deep: #eceaf4;
-  --color-surface: #ffffff;
-  --color-surface-sunk: #f9f8fd;
-  /* Rails and fact strips. Distinct enough from both canvas and card that a
-     region boundary is visible without drawing a border around everything. */
-  --color-panel: #f2f1f8;
+  /* ═══════════════════════════════════════════════════════════════════════════
+     L1 · REFERENCE — raw ramps. Never referenced from a component.
 
-  --color-ink: #14121f;
-  --color-ink-soft: #3d3a52;
-  --color-muted: #6b6782;
-  --color-faint: #948fa6;
+     Warm paper against cool ink. The previous palette was lavender-grey with a
+     violet accent, which put the brand in the middle of the same hue channel the
+     three dimensions use: `win #5b4de8` and `accent #7c3aed` measured ΔE2000 5.9
+     in normal vision and **1.2 under deuteranopia** — the same colour to roughly
+     6% of men. See docs/DESIGN-SYSTEM.md.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --ref-paper-0: #ffffff;
+  --ref-paper-1: #fbfaf8;
+  --ref-paper-2: #f5f3ef;
+  --ref-paper-3: #efebe4;
+  --ref-paper-4: #e7e2d9;
+  --ref-paper-5: #ddd7cc;
+  --ref-paper-6: #d4cdc1;
+  --ref-paper-7: #7b7565;
+  --ref-paper-8: #6b6659;
 
-  --color-line: #e6e3f0;
-  --color-line-strong: #d3cfe2;
+  --ref-ink-9: #5e6273;
+  --ref-ink-10: #54586b;
+  --ref-ink-11: #33374a;
+  --ref-ink-12: #1b1d26;
 
-  --color-accent: #7c3aed;
-  --color-accent-hover: #6d28d9;
-  --color-accent-deep: #5b21b6;
-  --color-accent-tint: #f2ecff;
-  --color-accent-ring: #c9b2ff;
+  /* Hue ramps: -6 tint, -7 hairline, -9 solid fill, -11 text. */
+  --ref-gold-6: #fbebdc;
+  --ref-gold-7: #b8803c;
+  --ref-gold-9: #cd6d0a;
+  --ref-gold-11: #8a4708;
+  --ref-green-6: #dcf0e9;
+  --ref-green-7: #37957a;
+  --ref-green-9: #339075;
+  --ref-green-11: #0f6249;
+  --ref-blue-6: #dfe8f6;
+  --ref-blue-7: #4d7fbb;
+  --ref-blue-9: #054e9e;
+  --ref-blue-11: #0a4c90;
+  --ref-red-6: #fbe7e4;
+  --ref-red-7: #c2574c;
+  --ref-red-9: #a31515;
+  --ref-red-11: #8e1212;
 
-  /* Outcome dimensions */
-  --color-win: #5b4de8;
-  --color-win-tint: #ebe9fd;
-  --color-profit: #12916c;
-  --color-profit-tint: #e4f5ef;
-  --color-deliver: #2e7bd6;
-  --color-deliver-tint: #e6f0fc;
+  /* ═══════════════════════════════════════════════════════════════════════════
+     L2 · SEMANTIC — what a thing IS. Components use these.
+     Every text token clears 4.5:1 on every surface. There is no "faint" tier:
+     the old `#948fa6` measured 2.78:1 on panel, a live 1.4.3 failure on every
+     screen of the game.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --color-surface-page: var(--ref-paper-2);
+  --color-surface-desk: var(--ref-paper-1);
+  --color-surface-card: var(--ref-paper-0);
+  --color-surface-panel: var(--ref-paper-3);
+  --color-surface-hover: var(--ref-paper-2);
+  --color-surface-selected: var(--ref-paper-4);
+  --color-surface-track: var(--ref-paper-2);
+  --color-surface-disabled: var(--ref-paper-4);
 
-  /* Semantics. Each has a tint, so status can be a filled chip rather than
-     coloured text — a chip is scannable, coloured text is still reading. */
-  --color-good: #10b981;
-  --color-good-tint: #e4f5ef;
-  --color-warn: #f59e0b;
-  --color-warn-tint: #fdf2e0;
-  --color-bad: #ef4444;
-  --color-bad-tint: #fceaea;
+  --color-text-strong: var(--ref-ink-12); /* 16.8:1 on card */
+  --color-text-default: var(--ref-ink-11); /* 11.8:1 */
+  --color-text-muted: var(--ref-ink-10); /* 7.0:1 */
+  --color-text-subtle: var(--ref-ink-9); /* 6.1:1 — the lowest legal */
+  --color-text-disabled: #5a5e6b; /* 5.0:1 on surface-disabled */
 
-  /* One family. Every mockup is sans throughout; a serif display face was a
-     divergence that made the screens look unlike the brief even when the layout
-     matched. See docs/UI-AUDIT.md Z16. */
+  --color-border-subtle: var(--ref-paper-6); /* 1.58:1 — DECORATIVE ONLY */
+  --color-border-control: var(--ref-paper-7); /* 4.59:1 — anything operable */
+  --color-border-strong: var(--ref-paper-8);
+
+  /* The brand recedes so the dimensions can own the chroma. */
+  --color-brand-solid: var(--ref-ink-12);
+  --color-brand-hover: #2e3341;
+  --color-brand-tint: #edecf0;
+
+  --color-risk-solid: var(--ref-red-9);
+  --color-risk-text: var(--ref-red-11);
+  --color-risk-tint: var(--ref-red-6);
+  --color-risk-line: var(--ref-red-7);
+
+  /* ── the three dimensions ────────────────────────────────────────────────
+     Okabe–Ito construction: orange / bluish-green / blue, avoiding the
+     yellow-green band where colour-vision confusion is worst, with a deliberate
+     lightness split (L* 56 / 54 / 34) so the pair that converges under
+     deuteranopia stays separated by brightness. Worst-case pairwise ΔE2000
+     across normal, protan, deutan and tritan vision: 18.9 — about 8× the
+     just-noticeable difference, against 1.2 before.
+     NOTE: win and profit solids are 3.6:1 and 3.9:1 on white — they pass
+     1.4.11 for fills but must NEVER carry white text.                       */
+  --color-win-solid: var(--ref-gold-9);
+  --color-win-text: var(--ref-gold-11);
+  --color-win-tint: var(--ref-gold-6);
+  --color-win-line: var(--ref-gold-7);
+  --color-profit-solid: var(--ref-green-9);
+  --color-profit-text: var(--ref-green-11);
+  --color-profit-tint: var(--ref-green-6);
+  --color-profit-line: var(--ref-green-7);
+  --color-deliver-solid: var(--ref-blue-9);
+  --color-deliver-text: var(--ref-blue-11);
+  --color-deliver-tint: var(--ref-blue-6);
+  --color-deliver-line: var(--ref-blue-7);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     MIGRATION ALIASES — the old names, repointed.
+
+     Kept so the repoint is one reviewable diff rather than several hundred
+     className edits. New code uses the semantic names above; these should empty
+     out over time. Anything here that changed MEANING rather than value is
+     commented.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --color-page: var(--color-surface-page);
+  --color-canvas: var(--color-surface-desk);
+  --color-canvas-deep: var(--color-surface-track);
+  --color-surface: var(--color-surface-card);
+  --color-surface-sunk: var(--color-surface-hover);
+  --color-panel: var(--color-surface-panel);
+
+  --color-ink: var(--color-text-strong);
+  --color-ink-soft: var(--color-text-default);
+  --color-muted: var(--color-text-muted);
+  --color-faint: var(--color-text-muted); /* was 2.78:1 — repointed, not kept */
+
+  --color-line: var(--color-border-subtle);
+  --color-line-strong: var(--color-border-control); /* was 1.52:1 on controls */
+
+  /* The accent was violet and did three jobs at once: brand, emphasis, and
+     dimension identity. It is now ink — hue means identity, and only the three
+     dimensions and risk get a hue. */
+  --color-accent: var(--color-brand-solid);
+  --color-accent-hover: var(--color-brand-hover);
+  --color-accent-deep: var(--color-brand-solid);
+  --color-accent-tint: var(--color-brand-tint);
+  --color-accent-ring: var(--color-border-control); /* was 1.86:1 — invisible */
+
+  --color-win: var(--color-win-solid);
+  --color-win-tint: var(--color-win-tint);
+  --color-profit: var(--color-profit-solid);
+  --color-profit-tint: var(--color-profit-tint);
+  --color-deliver: var(--color-deliver-solid);
+  --color-deliver-tint: var(--color-deliver-tint);
+
+  /* Valence is NOT a hue.
+     Green belongs to Profitability and gold to Winability, so a green tick beside a
+     green meter on the same screen would claim a relationship that is not there. A
+     positive is therefore just a fact — ink, with a tick. A negative genuinely IS a
+     risk, so it gets the one alarm hue. Amber is deleted outright: red and amber
+     measure ΔE 4.1 under deuteranopia, which is not a distinction.
+     This leaves exactly five hues on screen — ink, three dimensions, one risk. */
+  --color-good: var(--color-text-strong);
+  --color-good-tint: var(--color-surface-panel);
+  --color-warn: var(--color-risk-text);
+  --color-warn-tint: var(--color-risk-tint);
+  --color-bad: var(--color-risk-solid);
+  --color-bad-tint: var(--color-risk-tint);
+
+  /* One family, seven integer steps. The previous 27 sizes included 9px,
+     10.5px and a run of half-pixels, which is not a hierarchy — it is the
+     residue of shaving pixels to satisfy a fits-one-screen gate. */
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-md: 18px;
+  --text-lg: 24px;
+  --text-xl: 32px;
+  --text-display: 56px;
 
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 18px;
   --radius-xl: 26px;
 
-  --shadow-card: 0 1px 2px rgb(20 18 31 / 0.04), 0 4px 16px rgb(20 18 31 / 0.05);
-  --shadow-lift: 0 2px 4px rgb(20 18 31 / 0.05), 0 14px 38px rgb(20 18 31 / 0.11);
-  --shadow-glow: 0 0 0 4px var(--color-accent-ring);
+  --shadow-card: 0 1px 2px rgb(27 29 38 / 0.04), 0 4px 16px rgb(27 29 38 / 0.05);
+  --shadow-lift: 0 2px 4px rgb(27 29 38 / 0.05), 0 14px 38px rgb(27 29 38 / 0.11);
 }
 
 /* ─── base ───────────────────────────────────────────────────
@@ -89,10 +208,7 @@
 
   body {
     margin: 0;
-    background:
-      radial-gradient(1100px 620px at 12% -8%, #ffffff 0%, rgb(255 255 255 / 0) 62%),
-      radial-gradient(900px 560px at 92% 0%, #f0eaff 0%, rgb(240 234 255 / 0) 58%),
-      var(--color-page);
+    background: var(--color-page);
     background-attachment: fixed;
     color: var(--color-ink);
     font-family: var(--font-sans);
@@ -102,8 +218,9 @@
   }
 
   :focus-visible {
-    outline: 3px solid var(--color-accent);
-    outline-offset: 3px;
+    outline: 2px solid var(--color-brand-solid);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--color-surface-card);
     border-radius: 6px;
   }
 
@@ -243,12 +360,15 @@
 /* Reserved for the small kicker above a headline. NOT for section headings —
    faint uppercase everywhere was most of why the page read as undifferentiated
    grey and had to be read rather than scanned. */
+/* The only tracked-out style in the system. All-caps costs 10–20% reading speed
+   (Tinker 1955), so it is confined to three words or fewer, where the label is
+   recognised as a shape rather than read. */
 .eyebrow {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.13em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--color-faint);
+  color: var(--color-text-muted);
 }
 
 /* Section heading: dark, bold, with a coloured icon beside it. This is the
@@ -259,21 +379,23 @@
   gap: 8px;
   font-size: 15px;
   font-weight: 700;
-  letter-spacing: -0.005em;
-  color: var(--color-ink);
+  letter-spacing: 0;
+  color: var(--color-text-strong);
 }
 
 /* Filled status chip. Colour carries the level, text repeats it — never colour
    alone (E6). */
+/* A tint fill with ink text, never a solid fill with white text: win and profit
+   solids are 3.6:1 and 3.9:1, which passes for a fill and fails for type. */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   border-radius: 99px;
   padding: 2px 9px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   white-space: nowrap;
 }
 
@@ -283,8 +405,8 @@
   position: relative;
   width: 100%;
   text-align: left;
-  background: var(--color-surface);
-  border: 1.5px solid var(--color-line);
+  background: var(--color-surface-card);
+  border: 1.5px solid var(--color-border-control);
   border-radius: var(--radius-md);
   padding: 14px;
   cursor: pointer;
@@ -297,26 +419,29 @@
 }
 
 .choice:hover:not(:disabled) {
-  border-color: var(--color-accent-ring);
-  background: var(--color-surface-sunk);
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-hover);
 }
 
 /* Selected must be unmistakable at a glance: purple rim, tinted fill, and a
    solid bar down the leading edge. */
 .choice[data-selected="true"] {
-  border-color: var(--color-accent);
+  border-color: var(--color-brand-solid);
   border-width: 2px;
-  background: var(--color-accent-tint);
+  background: var(--color-surface-selected);
 }
 
 .choice:disabled {
   cursor: default;
-  opacity: 0.45;
+  background: var(--color-surface-disabled);
+  border-color: var(--color-border-subtle);
+  color: var(--color-text-disabled);
 }
 
+/* Dimmed, not faded: opacity would take the text below 4.5:1. */
 .choice[data-dimmed="true"] {
-  opacity: 0.38;
-  filter: saturate(0.5);
+  background: var(--color-surface-panel);
+  border-color: var(--color-border-subtle);
 }
 
 /* Shimmer used on the "resolving" beat */

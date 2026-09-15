@@ -23,10 +23,42 @@ describe("content validity", () => {
     expect(formatIssues(errors)).toBe("content is valid");
   });
 
-  it("reports its warnings for review", () => {
+  /**
+   * A flag written by an outcome and read by nothing is usually a bug — a condition that
+   * was meant to gate on it, or a rename that only got done on one side. But some are
+   * deliberately narrative: the consequence text says the contract was signed, and
+   * nothing later needs to branch on it.
+   *
+   * So the set is pinned rather than merely printed. Twelve warnings scrolling past every
+   * run is indistinguishable from thirteen, which is how `walked_away` sat in this list
+   * while being read by `finalVerdict` the whole time. Adding a flag nothing reads now
+   * fails here, and the fix is either to read it or to add it below with a reason.
+   */
+  const NARRATIVE_ONLY_FLAGS = [
+    "client:northwind", // which client you chased; the pursuit itself carries the difference
+    "conventional", // took the safe proposal shape
+    "has:journey", // proposal components — the build mission scores through dims, not flags
+    "has:partner",
+    "knows:budget", // the number, which the pricing missions dramatise rather than gate on
+    "late_start", // came to it late
+    "learned_late",
+    "reused_asset",
+    "scope:diagnostic", // which scope you sold; delivery reads the promises, not the shape
+    "scope:postpurchase",
+    "signed", // the contract exists; walking away is the branch, signing is the default
+    "spent_effort",
+  ];
+
+  it("has no dead flags beyond the narrative ones", () => {
     const warnings = issues.filter((i) => i.severity === "warning");
-    if (warnings.length) console.log("\ncontent warnings:\n" + formatIssues(warnings) + "\n");
-    expect(Array.isArray(warnings)).toBe(true);
+    const dead = warnings
+      .map((w) => /flag "([^"]+)" is set but never read/.exec(w.message)?.[1])
+      .filter((f): f is string => Boolean(f));
+    expect(dead.sort()).toEqual([...NARRATIVE_ONLY_FLAGS].sort());
+
+    const other = warnings.filter((w) => !/is set but never read/.test(w.message));
+    if (other.length) console.log("\ncontent warnings:\n" + formatIssues(other) + "\n");
+    expect(other).toEqual([]);
   });
 
   it("has sixteen missions", () => {

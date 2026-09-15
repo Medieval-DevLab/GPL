@@ -6,6 +6,30 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-033 · Density is a measured band, not a judgement — `docs/DENSITY-FRAMEWORK.md`
+"Screens are too densely packed" was unfalsifiable, so `tools/measure.mjs` was pointed at a
+real playthrough and the framework it referenced was written against the output. The
+baseline, at 1440×1024: **419 words** average on a decide screen (max 499), **12 panels**
+(max 16), **8–11 distinct type sizes** per screen and 12 across the game, **4 weights**, up
+to **12 fill colours**, fill-coverage index **0.84**. Targets set at ≤220 words, 4–6
+top-level regions, 4–5 type sizes, 3 weights, ≤5 fills, ≥35% air, ≥55% of words inside the
+decision object, 5 reading stations.
+
+Two findings changed the direction of the fix. **The option count is not the problem** —
+Scheibehenne's meta-analysis puts the pooled choice-overload effect at ~0 and Chernev's
+moderators (time pressure, hard-to-compare options, preference uncertainty, no commitment)
+are all absent here, so 3–5 side-by-side options are defensible and cutting them would
+breach G1 and G4 for nothing. And **not one of nine comparable games shows a full briefing
+alongside its options**: Reigns, CK3, Frostpunk, Slay the Spire and the rest all occlude,
+pause or collapse the world at the moment of choice. Fitting the briefing and the decision
+on one screen simultaneously is the structural cause, and E7a is what made it look solved.
+
+Where the research gives no number — words per screen, panels per view, type-size count —
+the document says so and labels the target a defensible default derived from reading rate
+(238 wpm, Brysbaert 2019) and chunk limits (≈4, Cowan 2001) rather than a finding.
+**Cost:** nothing yet; it is a standard, not a change. Every band is reversible by editing
+one table, but the numbers should not move to accommodate a screen that fails them.
+
 ## D-032 · The lesson screen is deleted; the colleague says it instead
 Two independent critics landed on the same thing. Sixteen full screens carrying a moral
 in 26px bold under the caption **"Next time."** — no speaker, no artefact, no interaction,

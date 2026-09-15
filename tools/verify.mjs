@@ -141,6 +141,7 @@ async function main() {
   }
 
   let missions = 0;
+  let briefs = 0;
   let consequences = 0;
   let interludes = 0;
 
@@ -154,23 +155,39 @@ async function main() {
       break;
     }
 
+    // ── brief ──────────────────────────────────────────────
+    const toOptions = await button(page, "See your options");
+    if (toOptions) {
+      briefs += 1;
+      const heading = (await page.locator("h1").first().innerText()).trim();
+      console.log(`\n── mission ${briefs}: ${heading}`);
+
+      // The game shell must be present on every briefing, not just the first.
+      for (const required of ["Chapter", "Key factors", "Where you stand"]) {
+        if ((await page.getByText(required, { exact: false }).count()) === 0) {
+          problems.push(`brief ${briefs}: shell is missing "${required}"`);
+        }
+      }
+      // Advice must be attributed to a person, never spoken by the interface.
+      if ((await page.getByText("Tip.", { exact: false }).count()) > 0) {
+        problems.push(`brief ${briefs}: an unattributed "Tip." is on screen`);
+      }
+      // Reading and choosing are separate beats — the brief must not carry the options.
+      if ((await page.locator("button.choice").count()) > 0) {
+        problems.push(`brief ${briefs}: options are on the brief, which is the beat before`);
+      }
+
+      await checkFit(page, `brief ${briefs} (${heading})`);
+      if (briefs <= 3 || briefs === 11) await shot(page, `brief-${briefs}`);
+      await toOptions.click();
+      continue;
+    }
+
     // ── decide ─────────────────────────────────────────────
     const commit = await button(page, "Commit to this");
     if (commit) {
       missions += 1;
       const heading = (await page.locator("h1").first().innerText()).trim();
-      console.log(`\n── mission ${missions}: ${heading}`);
-
-      // The game shell must be present on every briefing, not just the first.
-      for (const required of ["Chapter", "Key factors", "Where you stand"]) {
-        if ((await page.getByText(required, { exact: false }).count()) === 0) {
-          problems.push(`${heading}: shell is missing "${required}"`);
-        }
-      }
-      // Advice must be attributed to a person, never spoken by the interface.
-      if ((await page.getByText("Tip.", { exact: false }).count()) > 0) {
-        problems.push(`${heading}: an unattributed "Tip." is on screen`);
-      }
 
       await checkFit(page, `mission ${missions} (${heading})`);
       await shot(page, `mission-${missions}-decide`);
@@ -260,6 +277,7 @@ async function main() {
   /* ── assertions ─────────────────────────────────────────── */
   const expected = 16;
   if (missions !== expected) problems.push(`played ${missions} missions, expected ${expected}`);
+  if (briefs !== expected) problems.push(`saw ${briefs} briefs, expected ${expected}`);
   if (consequences !== expected) problems.push(`saw ${consequences} consequences, expected ${expected}`);
   if (interludes !== 5) problems.push(`saw ${interludes} interludes, expected 5`);
 

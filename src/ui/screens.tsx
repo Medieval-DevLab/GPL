@@ -31,13 +31,13 @@ export function TitleScreen({
     <div className="mx-auto flex min-h-screen max-w-4xl flex-col justify-center px-5 py-14">
       <div className="anim-fade">
         <p className="eyebrow">A short game about winning work</p>
-        <h1 className="mt-3 text-[74px] font-bold leading-[0.95] tracking-[-0.04em] text-(--color-ink) sm:text-[104px]">
+        <h1 className="mt-3 text-[56px] font-bold leading-[0.95] tracking-[-0.04em] text-(--color-ink) sm:text-[56px]">
           GPL
         </h1>
-        <p className="mt-1 text-[14px] font-bold uppercase tracking-[0.2em] text-(--color-accent)">
+        <p className="mt-1 text-[13px] font-bold uppercase tracking-[0.2em] text-(--color-accent)">
           Global Pursuit League
         </p>
-        <p className="mt-7 max-w-xl text-[19px] leading-[1.55] text-(--color-ink-soft)">
+        <p className="mt-7 max-w-xl text-[18px] leading-[1.55] text-(--color-ink-soft)">
           You have just been handed your first client to win. A company you have never met is
           about to become a promise someone has to keep.
         </p>
@@ -52,12 +52,12 @@ export function TitleScreen({
             <span className="flex items-center gap-2 rounded-full border border-(--color-line) bg-(--color-surface) py-1 pl-1 pr-3">
               <span
                 aria-hidden="true"
-                className="flex h-[20px] w-[20px] items-center justify-center rounded-full text-[10px] font-bold text-(--color-accent-deep)"
+                className="flex h-[20px] w-[20px] items-center justify-center rounded-full text-[12px] font-bold text-(--color-accent-deep)"
                 style={{ background: "var(--color-accent-tint)" }}
               >
                 {c.number}
               </span>
-              <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-(--color-muted)">
+              <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-(--color-muted)">
                 {c.label}
               </span>
             </span>
@@ -92,8 +92,8 @@ export function TitleScreen({
             <span className="text-(--color-accent)">
               <Icon name={c.icon} size={18} />
             </span>
-            <p className="mt-2.5 text-[14.5px] font-bold text-(--color-ink)">{c.t}</p>
-            <p className="mt-1.5 text-[13.5px] leading-relaxed text-(--color-muted)">{c.d}</p>
+            <p className="mt-2.5 text-[15px] font-bold text-(--color-ink)">{c.t}</p>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-(--color-muted)">{c.d}</p>
           </div>
         ))}
       </div>
@@ -140,7 +140,7 @@ export function SetupScreen({
         <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
           {node.eyebrow}
         </p>
-        <h1 className="mt-2 text-[34px] font-bold leading-[1.1] tracking-[-0.025em] text-(--color-ink)">
+        <h1 className="mt-2 text-[32px] font-bold leading-[1.1] tracking-[-0.025em] text-(--color-ink)">
           {node.title}
         </h1>
         <div className="mt-3 max-w-2xl space-y-1.5">
@@ -153,8 +153,8 @@ export function SetupScreen({
       </div>
 
       <div className="mt-7">
-        <h2 className="text-[22px] font-bold text-(--color-ink)">{node.question}</h2>
-        <p className="mt-0.5 text-[13.5px] text-(--color-muted)">
+        <h2 className="text-[18px] font-bold text-(--color-ink)">{node.question}</h2>
+        <p className="mt-0.5 text-[13px] text-(--color-muted)">
           Three teams. None of them is good at everything.
         </p>
       </div>
@@ -199,7 +199,7 @@ export function SetupScreen({
               </div>
 
               <p
-                className="px-4 pt-2 text-center text-[17px] font-bold"
+                className="px-4 pt-2 text-center text-[15px] font-bold"
                 style={{ color: on ? "var(--color-accent-deep)" : "var(--color-ink)" }}
               >
                 {o.title}
@@ -233,7 +233,7 @@ export function SetupScreen({
 
               <div className="self-end p-4">
                 <span
-                  className="flex w-full items-center justify-center gap-1.5 rounded-[10px] border px-2 py-[7px] text-[12.5px] font-bold"
+                  className="flex w-full items-center justify-center gap-1.5 rounded-[10px] border px-2 py-[7px] text-[13px] font-bold"
                   style={
                     on
                       ? {
@@ -277,7 +277,7 @@ export function InterludeScreen({
       <div className="anim-fade">
         <span
           aria-hidden="true"
-          className="flex h-11 w-11 items-center justify-center rounded-[14px] text-[17px] font-bold text-white"
+          className="flex h-11 w-11 items-center justify-center rounded-[14px] text-[15px] font-bold text-white"
           style={{
             background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-deep))",
           }}
@@ -293,12 +293,12 @@ export function InterludeScreen({
           </p>
         )}
         <p className={`eyebrow ${node.milestone ? "mt-3" : "mt-5"}`}>{node.eyebrow}</p>
-        <h1 className="mt-2.5 text-[40px] font-bold leading-[1.08] tracking-[-0.025em] text-(--color-ink)">
+        <h1 className="mt-2.5 text-[32px] font-bold leading-[1.08] tracking-[-0.025em] text-(--color-ink)">
           {node.title}
         </h1>
         <div className="mt-6 space-y-3.5">
           {node.body.map((p, i) => (
-            <p key={i} className="text-[17px] leading-[1.6] text-(--color-ink-soft)">
+            <p key={i} className="text-[15px] leading-[1.6] text-(--color-ink-soft)">
               {p}
             </p>
           ))}
@@ -311,7 +311,7 @@ export function InterludeScreen({
                 key={s}
                 className="flex items-center gap-2 rounded-lg border border-(--color-line) bg-(--color-surface) px-3 py-1.5 text-[13px] text-(--color-ink-soft)"
               >
-                <span className="text-[11px] font-bold text-(--color-faint) tabular-nums">
+                <span className="text-[12px] font-bold text-(--color-faint) tabular-nums">
                   {i + 1}
                 </span>
                 {s}
@@ -406,10 +406,10 @@ export function EndingScreen({ state }: { state: GameState }) {
     <div className="mx-auto max-w-3xl px-5 py-8">
       <div className="anim-fade">
         <Eyebrow>How it ended</Eyebrow>
-        <h1 className="mt-2.5 text-[36px] font-bold leading-[1.1] tracking-[-0.025em] text-(--color-ink)">
+        <h1 className="mt-2.5 text-[32px] font-bold leading-[1.1] tracking-[-0.025em] text-(--color-ink)">
           {verdict.title}
         </h1>
-        <p className="mt-4 text-[17px] leading-[1.6] text-(--color-ink-soft)">{verdict.summary}</p>
+        <p className="mt-4 text-[15px] leading-[1.6] text-(--color-ink-soft)">{verdict.summary}</p>
       </div>
 
       <div className="card mt-7 p-6">
@@ -419,7 +419,7 @@ export function EndingScreen({ state }: { state: GameState }) {
             <FactorGrid dims={state.dims} />
           </div>
         </div>
-        <p className="mt-5 border-t border-(--color-line) pt-4 text-[13.5px] leading-relaxed text-(--color-muted)">
+        <p className="mt-5 border-t border-(--color-line) pt-4 text-[13px] leading-relaxed text-(--color-muted)">
           No engagement finishes level on all three. The one that gave is the one you decided
           could.
         </p>
@@ -428,7 +428,7 @@ export function EndingScreen({ state }: { state: GameState }) {
       {account.length > 0 && (
         <div className="mt-7">
           <SectionTitle icon="layers">The account</SectionTitle>
-          <p className="mt-1.5 text-[13.5px] text-(--color-muted)">
+          <p className="mt-1.5 text-[13px] text-(--color-muted)">
             What you learned, what you promised, and what you spent to get here.
           </p>
           <div className="card mt-3 overflow-hidden">
@@ -444,7 +444,7 @@ export function EndingScreen({ state }: { state: GameState }) {
                   />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[14px] font-bold text-(--color-ink)">{e.label}</p>
+                  <p className="text-[13px] font-bold text-(--color-ink)">{e.label}</p>
                   <p className="text-[13px] leading-snug text-(--color-muted)">{e.detail}</p>
                 </div>
               </div>
@@ -456,15 +456,15 @@ export function EndingScreen({ state }: { state: GameState }) {
       {threads.length > 0 && (
         <div className="mt-8">
           <SectionTitle icon="target">What led to what</SectionTitle>
-          <p className="mt-1.5 text-[13.5px] text-(--color-muted)">
+          <p className="mt-1.5 text-[13px] text-(--color-muted)">
             Each of these starts with something you chose.
           </p>
           <div className="mt-3 space-y-3">
             {threads.map((t, i) => (
               <div key={i} className="card overflow-hidden">
                 <div className="border-l-[3px] border-(--color-accent) px-5 py-3.5">
-                  <p className="text-[14.5px] leading-relaxed text-(--color-ink)">{t.because}</p>
-                  <p className="mt-1.5 flex items-start gap-2 text-[14.5px] leading-relaxed text-(--color-ink-soft)">
+                  <p className="text-[15px] leading-relaxed text-(--color-ink)">{t.because}</p>
+                  <p className="mt-1.5 flex items-start gap-2 text-[15px] leading-relaxed text-(--color-ink-soft)">
                     <span
                       aria-hidden="true"
                       className="mt-0.5 shrink-0 font-bold text-(--color-accent)"
@@ -519,7 +519,7 @@ export function EndingScreen({ state }: { state: GameState }) {
                     </span>
                   </div>
                   <p className="mt-1 text-[15px] font-bold text-(--color-ink)">{h.chosenLabel}</p>
-                  <p className="text-[14px] leading-relaxed text-(--color-ink-soft)">
+                  <p className="text-[13px] leading-relaxed text-(--color-ink-soft)">
                     {h.headline}
                   </p>
                 </div>
@@ -536,7 +536,7 @@ export function EndingScreen({ state }: { state: GameState }) {
           borderColor: "var(--color-accent-ring)",
         }}
       >
-        <p className="text-[20px] font-bold text-(--color-accent-deep)">Run it differently</p>
+        <p className="text-[18px] font-bold text-(--color-accent-deep)">Run it differently</p>
         <p className="mt-2 text-[15px] leading-relaxed text-(--color-ink-soft)">
           Ask different questions at the start and the same decisions later on produce a different
           engagement. The most interesting version of this is the second one.

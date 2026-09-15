@@ -78,7 +78,7 @@ export function ChapterStepper({
           >
             <span
               aria-hidden="true"
-              className="flex h-[24px] w-[24px] items-center justify-center rounded-full text-[11px] font-bold ring-4 ring-(--color-surface) transition-colors duration-300"
+              className="flex h-[24px] w-[24px] items-center justify-center rounded-full text-[12px] font-bold ring-4 ring-(--color-surface) transition-colors duration-300"
               style={{
                 background: isDone
                   ? "var(--color-good)"
@@ -91,7 +91,7 @@ export function ChapterStepper({
               {isDone ? <Icon name="check" size={13} /> : c.number}
             </span>
             <span
-              className={`whitespace-nowrap text-[10.5px] font-bold uppercase tracking-[0.08em] ${compact && !active ? "sr-only" : ""}`}
+              className={`whitespace-nowrap text-[12px] font-bold uppercase tracking-[0.08em] ${compact && !active ? "sr-only" : ""}`}
               style={{
                 color: active
                   ? "var(--color-accent-deep)"
@@ -137,7 +137,7 @@ export function TopBar({
           >
             GPL
           </span>
-          <span className="hidden whitespace-nowrap text-[14px] font-semibold text-(--color-ink) sm:block">
+          <span className="hidden whitespace-nowrap text-[13px] font-semibold text-(--color-ink) sm:block">
             Global Pursuit League
           </span>
         </div>
@@ -153,7 +153,7 @@ export function TopBar({
                 <Icon name="trophy" size={17} />
               </span>
               <span className="text-[15px] font-medium text-(--color-ink-soft)">Score</span>
-              <span className="text-[19px] font-bold tabular-nums text-(--color-accent-deep)">
+              <span className="text-[18px] font-bold tabular-nums text-(--color-accent-deep)">
                 {score}
               </span>
             </div>
@@ -231,15 +231,21 @@ export function RailCard({
   title,
   icon,
   tone = "accent",
+  region,
   children,
 }: {
   title?: string;
   icon?: IconId;
   tone?: Tone;
+  /** Names this as a perceived region, for the density rubric. */
+  region?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-t border-(--color-line) pt-3.5 first:border-t-0 first:pt-0">
+    <section
+      data-region={region}
+      className="border-t border-(--color-line) pt-3.5 first:border-t-0 first:pt-0"
+    >
       {title && (
         <SectionTitle icon={icon} tone={tone} className="mb-2.5">
           {title}
@@ -282,10 +288,10 @@ export function MissionRail({
   file?: { id: string; label: string; reveals: string }[];
 }) {
   return (
-    <div className="space-y-3.5">
+    <div data-region="orientation" className="space-y-3.5">
       <div>
         <p className="text-[12px] font-bold text-(--color-accent)">Chapter {chapter.number}</p>
-        <h2 className="mt-0.5 text-[19px] font-bold leading-tight text-(--color-ink)">
+        <h2 className="mt-0.5 text-[18px] font-bold leading-tight text-(--color-ink)">
           {chapter.title}
         </h2>
         <p className="mt-1 text-[12px] font-medium text-(--color-muted) tabular-nums">
@@ -306,7 +312,7 @@ export function MissionRail({
             >
               <span
                 aria-hidden="true"
-                className="flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+                className="flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-full text-[12px] font-bold"
                 style={{
                   background: done
                     ? "var(--color-good)"
@@ -341,7 +347,7 @@ export function MissionRail({
           <SectionTitle icon="target" className="mb-2">
             The brief
           </SectionTitle>
-          <p className="text-[13.5px] leading-relaxed text-(--color-ink-soft)">{objective}</p>
+          <p className="text-[13px] leading-relaxed text-(--color-ink-soft)">{objective}</p>
           {minutes !== undefined && (
             <p className="mt-2.5 flex items-center gap-2 text-[12px] text-(--color-muted)">
               <Icon name="clock" size={14} />
@@ -408,8 +414,8 @@ export function AdvisorCard({ advisor }: { advisor: Advisor }) {
           </span>
         )}
         <div className="min-w-0">
-          <p className="truncate text-[13.5px] font-bold text-(--color-ink)">{advisor.name}</p>
-          <p className="truncate text-[11.5px] font-medium text-(--color-accent)">{advisor.role}</p>
+          <p className="truncate text-[13px] font-bold text-(--color-ink)">{advisor.name}</p>
+          <p className="truncate text-[12px] font-medium text-(--color-accent)">{advisor.role}</p>
         </div>
       </div>
       <p className="mt-3 border-l-2 border-(--color-accent-ring) pl-3 text-[13px] italic leading-relaxed text-(--color-ink-soft)">
@@ -441,7 +447,7 @@ export function FactorBars({
           <div key={d}>
             <div className="mb-1 flex items-baseline justify-between gap-2">
               <span
-                className="flex items-center gap-2 text-[12.5px] font-bold"
+                className="flex items-center gap-2 text-[13px] font-bold"
                 style={{ color: colour }}
               >
                 <Icon name={meta.icon} size={15} />
@@ -450,7 +456,7 @@ export function FactorBars({
               <span className="flex items-baseline gap-1.5">
                 {moved && (
                   <span
-                    className="anim-pop rounded-full px-1.5 text-[11px] font-bold tabular-nums"
+                    className="anim-pop rounded-full px-1.5 text-[12px] font-bold tabular-nums"
                     style={{
                       color: delta > 0 ? "var(--color-good)" : "var(--color-bad)",
                       background: delta > 0 ? "var(--color-good-tint)" : "var(--color-bad-tint)",
@@ -510,14 +516,14 @@ export function FactorGrid({
                 className="flex items-center gap-1.5 text-[13px] font-bold"
                 style={{ color: colour }}
               >
-                <span aria-hidden="true" className="text-[9px]">
+                <span aria-hidden="true" className="text-[12px]">
                   {meta.glyph}
                 </span>
                 {meta.label}
               </span>
               {moved && (
                 <span
-                  className="anim-pop rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums"
+                  className="anim-pop rounded-full px-1.5 py-0.5 text-[12px] font-bold tabular-nums"
                   style={{
                     color: delta > 0 ? "var(--color-good)" : "var(--color-bad)",
                     background: delta > 0 ? "var(--color-good-tint)" : "var(--color-bad-tint)",
@@ -530,7 +536,7 @@ export function FactorGrid({
             </div>
             <div className="mb-1.5 flex items-baseline gap-1">
               <span
-                className="text-[26px] font-bold leading-none tabular-nums"
+                className="text-[24px] font-bold leading-none tabular-nums"
                 style={{ color: colour }}
               >
                 {dims[d]}
@@ -551,7 +557,7 @@ export function FactorGrid({
                 style={{ width: `${dims[d]}%`, background: colour }}
               />
             </div>
-            <p className="mt-2 text-[12.5px] text-(--color-muted)">{meta.question}</p>
+            <p className="mt-2 text-[13px] text-(--color-muted)">{meta.question}</p>
           </div>
         );
       })}
@@ -577,20 +583,23 @@ const LEDGER_TONE: Record<LedgerEntry["tone"], { icon: IconId; tone: Tone }> = {
 export function InsightRail({
   dims,
   entries,
-  consider,
-  advisorName,
   commits,
+  collapsed = false,
 }: {
   dims: Record<DimensionId, number>;
   entries: LedgerEntry[];
-  consider?: string[];
-  advisorName?: string;
   /** what the currently selected option would add to the ledger */
   commits?: string;
+  /**
+   * On the decision beat the ledger becomes detail-on-demand: a count and a summary
+   * line, openable. The framework allows 25–40% of briefing words behind one
+   * affordance, and forbids hiding anything decision-critical — the ledger is context.
+   */
+  collapsed?: boolean;
 }) {
   return (
     <div className="space-y-3.5">
-      <RailCard title="Key factors" icon="chart">
+      <RailCard title="Key factors" icon="chart" region="factors">
         <FactorBars dims={dims} />
       </RailCard>
 
@@ -604,13 +613,30 @@ export function InsightRail({
           <SectionTitle icon="scale" className="mb-1.5">
             If you commit
           </SectionTitle>
-          <p className="text-[12.5px] leading-snug text-(--color-ink-soft)">{commits}</p>
+          <p className="text-[13px] leading-snug text-(--color-ink-soft)">{commits}</p>
         </section>
       )}
 
-      <RailCard title="Where you stand" icon="layers">
-        {entries.length === 0 ? (
-          <p className="text-[12.5px] leading-relaxed text-(--color-muted)">
+      <RailCard title="Where you stand" icon="layers" region="ledger">
+        {collapsed && entries.length > 0 ? (
+          <details>
+            <summary className="cursor-pointer list-none text-[13px] text-(--color-muted)">
+              <span className="font-bold text-(--color-ink)">{entries.length}</span> things in
+              play <span className="text-(--color-accent)">— show</span>
+            </summary>
+            <ul className="mt-2.5 space-y-2">
+              {entries.map((e) => (
+                <li key={e.label} className="flex gap-2">
+                  <IconTile name={e.icon} tone={LEDGER_TONE[e.tone].tone} size={22} />
+                  <span className="min-w-0 text-[12px] font-bold leading-snug text-(--color-ink)">
+                    {e.label}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : entries.length === 0 ? (
+          <p className="text-[13px] leading-relaxed text-(--color-muted)">
             Nothing committed yet. Everything you learn and promise lands here.
           </p>
         ) : (
@@ -621,7 +647,7 @@ export function InsightRail({
                 <li key={e.label} className="flex gap-2">
                   <IconTile name={e.icon} tone={t.tone} size={26} />
                   <span className="min-w-0">
-                    <span className="block text-[12.5px] font-bold leading-snug text-(--color-ink)">
+                    <span className="block text-[13px] font-bold leading-snug text-(--color-ink)">
                       {e.label}
                     </span>
                     <span className="block text-[12px] leading-snug text-(--color-muted)">
@@ -635,30 +661,6 @@ export function InsightRail({
         )}
       </RailCard>
 
-      {consider && consider.length > 0 && (
-        <section
-          className="rounded-xl px-3.5 py-3"
-          style={{ background: "var(--color-accent-tint)" }}
-        >
-          <h3 className="mb-2 flex items-center gap-2 text-[14px] font-bold text-(--color-accent-deep)">
-            <Icon name="bulb" size={16} />
-            {advisorName ? `${advisorName.split(" ")[0]} is asking` : "Open questions"}
-          </h3>
-          <ul className="space-y-2">
-            {consider.map((c) => (
-              <li
-                key={c}
-                className="flex gap-2 text-[13px] leading-relaxed text-(--color-ink-soft)"
-              >
-                <span aria-hidden="true" className="shrink-0 font-bold text-(--color-accent)">
-                  +
-                </span>
-                {c}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
     </div>
   );
 }
@@ -681,7 +683,7 @@ export function PredictionStrip({
 }) {
   return (
     <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
-      <span className="text-[12.5px] font-semibold text-(--color-ink-soft)">
+      <span className="text-[13px] font-semibold text-(--color-ink-soft)">
         Which of the three will move least?
       </span>
       <div className="flex gap-1.5">
@@ -729,7 +731,7 @@ export function ActionBar({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-[66px] shrink-0 items-center gap-x-5 gap-y-2 border-t border-(--color-line) bg-(--color-surface) px-5 py-2.5">
+    <div data-region="commit" className="flex min-h-[66px] shrink-0 items-center gap-x-5 gap-y-2 border-t border-(--color-line) bg-(--color-surface) px-5 py-2.5">
       {aside && (
         <div className="flex w-[300px] shrink-0 items-center gap-3 rounded-xl border border-(--color-line) px-3.5 py-2.5">
           {aside.photo ? (
@@ -743,7 +745,7 @@ export function ActionBar({
           ) : (
             <IconTile name="bulb" tone="neutral" size={38} />
           )}
-          <p className="min-w-0 text-[12.5px] leading-snug text-(--color-ink-soft)">
+          <p className="min-w-0 text-[13px] leading-snug text-(--color-ink-soft)">
             <span className="font-bold text-(--color-ink)">{aside.from}: </span>
             “{aside.text}”
           </p>
@@ -754,7 +756,7 @@ export function ActionBar({
         <button
           onClick={onAction}
           disabled={disabled}
-          className="flex h-[48px] min-w-[280px] items-center justify-center gap-2.5 rounded-[12px] px-8 text-[15.5px] font-bold transition-colors duration-150 enabled:text-white disabled:cursor-not-allowed"
+          className="flex h-[48px] min-w-[280px] items-center justify-center gap-2.5 rounded-[12px] px-8 text-[15px] font-bold transition-colors duration-150 enabled:text-white disabled:cursor-not-allowed"
           style={
             disabled
               ? { background: "var(--color-accent-tint)", color: "var(--color-accent-deep)" }
@@ -817,7 +819,7 @@ export function BadgeChip({ id, animate = false }: { id: BadgeId; animate?: bool
       </span>
       <div>
         <p className="text-[13px] font-bold text-(--color-accent-deep)">{meta.label}</p>
-        <p className="text-[12.5px] leading-snug text-(--color-ink-soft)">{meta.note}</p>
+        <p className="text-[13px] leading-snug text-(--color-ink-soft)">{meta.note}</p>
       </div>
     </div>
   );

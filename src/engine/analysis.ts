@@ -145,13 +145,15 @@ export function playMission(state: GameState, content: Content, selection: strin
   // A prediction is required to commit, but it is purely informational — it never gates
   // an outcome, so the sweep fixes it rather than branching on it. Were it ever to affect
   // a branch, this would silently stop covering the alternatives.
-  let s: GameState = { ...state, selection, prediction: "win" };
+  let s: GameState = state.phase === "brief" ? advance(state, content) : state;
+  s = { ...s, selection, prediction: "win" };
   s = commit(s, content);
   s = advance(s, content); // resolving -> consequence
-  s = advance(s, content); // consequence -> lesson
-  s = advance(s, content); // lesson -> next node
+  s = advance(s, content); // consequence -> next node (or the diverted one)
   let guard = 0;
-  while (s.phase === "interlude" && guard++ < 20) s = advance(s, content);
+  while ((s.phase === "interlude" || s.phase === "brief") && guard++ < 20) {
+    s = advance(s, content);
+  }
   return s;
 }
 
@@ -165,7 +167,9 @@ export function openingState(content: Content): GameState {
   let s = createInitialState(content);
   s = advance(s, content); // title -> start node
   let guard = 0;
-  while (s.phase === "interlude" && guard++ < 20) s = advance(s, content);
+  while ((s.phase === "interlude" || s.phase === "brief") && guard++ < 20) {
+    s = advance(s, content);
+  }
   return s;
 }
 
@@ -176,7 +180,9 @@ export function pastSetup(content: Content, optionId?: string): GameState {
   if (node.kind !== "setup") return s;
   s = chooseSetup(s, content, optionId ?? (node.options[0]?.id as string));
   let guard = 0;
-  while (s.phase === "interlude" && guard++ < 20) s = advance(s, content);
+  while ((s.phase === "interlude" || s.phase === "brief") && guard++ < 20) {
+    s = advance(s, content);
+  }
   return s;
 }
 
@@ -261,7 +267,9 @@ export function sweep(content: Content): SweepResult {
           for (const option of node.options) {
             let after = chooseSetup(state, content, option.id);
             let g = 0;
-            while (after.phase === "interlude" && g++ < 20) after = advance(after, content);
+            while ((after.phase === "interlude" || after.phase === "brief") && g++ < 20) {
+              after = advance(after, content);
+            }
             for (const f of after.flags) result.reachableFlags.add(f);
             const key = stateKey(after, suffix.get(after.nodeId));
             if (!next.has(key)) next.set(key, after);
