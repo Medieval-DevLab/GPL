@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { story } from "../content/story";
-import { advance, causalThreads, createInitialState, finalVerdict, getNode } from "./engine";
+import {
+  advance,
+  causalThreads,
+  createInitialState,
+  finalVerdict,
+  getNode,
+  leastMoved,
+} from "./engine";
 import {
   findDominantOptions,
   pastSetup,
@@ -422,6 +429,46 @@ describe("no fake choices", () => {
     const findings = findDominantOptions(content);
     const readable = findings.map((f) => `${f.mission}: ${f.note}`);
     expect(readable).toEqual([]);
+  });
+});
+
+/**
+ * The prediction gate is the only place in the game where the player commits a claim and
+ * is marked on it, so it is the only thing in the build that can be *wrong* rather than
+ * merely unclear.
+ *
+ * It shipped wrong. The question was changed from "which will this hurt?" to "which will
+ * move least?" and the copy to "barely moved", but the key kept comparing signed deltas —
+ * which answers the old question and returns whichever dimension fell furthest. Across the
+ * 88 authored outcomes it named a falling dimension 61 times, so the screen said
+ * "Profitability barely moved" beside a tile reading −14.
+ *
+ * These assert the key answers the question that is printed on screen.
+ */
+describe("the prediction gate", () => {
+  it("names the smallest movement, not the largest fall", () => {
+    expect(leastMoved({ win: 0, profit: -14, deliver: 0 })).not.toBe("profit");
+    expect(leastMoved({ win: 4, profit: -8, deliver: -24 })).toBe("win");
+    expect(leastMoved({ win: -2, profit: 9, deliver: 5 })).toBe("win");
+    expect(leastMoved({ win: 0, profit: 3, deliver: -1 })).toBe("win");
+  });
+
+  it("never names a dimension that moved more than another, in either direction", () => {
+    for (const node of Object.values(content.nodes)) {
+      if (!isMission(node)) continue;
+      const outcomes =
+        node.kind === "choice" ? node.options.flatMap((o) => o.outcomes) : node.outcomes;
+      for (const o of outcomes) {
+        const d = { win: 0, profit: 0, deliver: 0, ...(o.effect.dims ?? {}) };
+        const named = leastMoved(d);
+        for (const other of DIMENSIONS) {
+          expect(
+            Math.abs(d[named]),
+            `${o.id}: says "${named}" moved least, but ${other} moved ${d[other]} vs ${d[named]}`,
+          ).toBeLessThanOrEqual(Math.abs(d[other]));
+        }
+      }
+    }
   });
 });
 

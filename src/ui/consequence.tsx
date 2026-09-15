@@ -254,7 +254,7 @@ export function ConsequenceScreen({
       </div>
 
       <div className="flex-1 space-y-4 px-5 py-4">
-        <YourCall predicted={resolution.predicted} actual={resolution.actualWorst} />
+        <YourCall predicted={resolution.predicted} actual={resolution.actualLeastMoved} />
 
         <Impact dims={resolution.dimsAfter} deltas={resolution.deltas} />
 

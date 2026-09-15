@@ -263,15 +263,21 @@ export function setPrediction(state: GameState, dim: DimensionId): GameState {
 }
 
 /**
- * Which dimension moved least.
+ * Which dimension moved least — smallest movement in either direction.
  *
  * The prediction gate used to ask which dimension this would HURT, which has no answer
  * on the 27-of-85 outcomes where nothing goes backwards — so on most of the game's good
  * beats the player's committed claim was discarded and a compliment shown instead.
  * "Moves least" is always answerable, so the gate now pays off everywhere.
+ *
+ * The magnitude matters: comparing signed deltas answers the OLD question, returning
+ * whichever dimension fell furthest. That shipped, and it meant the screen said
+ * "Profitability barely moved" beside a tile reading −14. On the 88 authored outcomes
+ * the signed comparison names a falling dimension 61 times and contradicts the printed
+ * question 52 times, so the one place the player's reasoning is tested returned noise.
  */
 export function leastMoved(deltas: Record<DimensionId, number>): DimensionId {
-  return DIMENSIONS.reduce((a, b) => (deltas[a] <= deltas[b] ? a : b));
+  return DIMENSIONS.reduce((a, b) => (Math.abs(deltas[a]) <= Math.abs(deltas[b]) ? a : b));
 }
 
 /* ───────────────────────────── resolution ───────────────────────────── */
@@ -364,7 +370,7 @@ export function commit(state: GameState, content: Content): GameState {
     newBadges: [...afterSelection.newBadges, ...afterOutcome.newBadges],
     revealed: sel.revealed,
     predicted: state.prediction,
-    actualWorst: leastMoved(deltas),
+    actualLeastMoved: leastMoved(deltas),
   };
 
   const entry: HistoryEntry = {

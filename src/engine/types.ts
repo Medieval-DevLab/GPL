@@ -454,10 +454,10 @@ export interface Resolution {
   newBadges: BadgeId[];
   /** populated for investigate missions */
   revealed: Evidence[];
-  /** what the player said this would cost, before committing */
+  /** which dimension the player said would move least, before committing */
   predicted: DimensionId | null;
-  /** what it actually cost most — null when nothing went backwards */
-  actualWorst: DimensionId | null;
+  /** which one actually did. Named for the question asked, so the two cannot drift again. */
+  actualLeastMoved: DimensionId | null;
 }
 
 export interface GameState {
