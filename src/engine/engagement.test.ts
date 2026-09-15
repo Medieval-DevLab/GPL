@@ -60,12 +60,28 @@ describe("the engagement gate", () => {
    * and the numbers may only move in the direction of the target.
    */
   it("is currently failing, by these exact numbers", () => {
-    // TARGET: 0. A non-reader must not reach the best verdict in the game.
-    // Today: 12 of 18 runs (6 fixed policies × 3 starting advantages).
+    /*
+     * TARGET: 0. A non-reader must not reach the best verdict in the game.
+     *
+     * This went 12 → 14 when the losable award beat landed, and the direction is worth
+     * recording rather than tidying away. Three of the eighteen non-reader runs now lose
+     * the award outright, which is the point — but the ones that survive it collect m9a's
+     * winning deltas on top, and that pushed two more over the "deal worth having"
+     * threshold. The loss branch made the distribution wider at both ends, not just the
+     * bottom. Closing this clause needs the two items still outstanding: no option is
+     * gated on knowledge (0 of 45), and the cost pips correlate with payoff at r = 0.110,
+     * so a non-reader still has nothing to get wrong.
+     */
     const topVerdictReachedBy = report.nonReaders.filter(
       (r) => r.verdict === "A deal worth having",
     ).length;
-    expect(topVerdictReachedBy).toBe(12);
+    expect(topVerdictReachedBy).toBe(14);
+
+    // The award beat is doing its job on the policies that never differentiate.
+    const lostTheAward = report.nonReaders.filter(
+      (r) => r.verdict === "They chose someone else",
+    ).length;
+    expect(lostTheAward).toBe(3);
 
     // TARGET: fewer than 6. Every verdict in the game is reachable without reading,
     // including the two written to describe a specific kind of misjudgement.

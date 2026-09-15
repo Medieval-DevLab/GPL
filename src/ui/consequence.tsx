@@ -19,6 +19,7 @@
 import { useEffect } from "react";
 
 import {
+  DIMENSIONS,
   DIMENSION_META,
   type Advisor,
   type DimensionId,
@@ -26,7 +27,7 @@ import {
   type Resolution,
 } from "../engine/types";
 import { Icon, SectionTitle } from "./icons";
-import { artUrl } from "./shell";
+import { BEAT_TITLE_ID, UI_LABEL, artUrl } from "./shell";
 
 /**
  * Tone is carried by the medallion's colour AND its icon — never colour alone (E6).
@@ -54,7 +55,13 @@ export function ResolvingScreen({ onDone }: { onDone: () => void }) {
   return (
     <div className="flex min-h-full flex-col items-center justify-center px-5">
       <div className="anim-fade w-full max-w-sm">
-        <p className="mb-5 text-center text-[13px] font-medium text-(--color-muted)">
+        {/* Carries the beat-title id even though it is not a heading: the work area takes
+            focus on every phase change, and for this one second it would otherwise be an
+            unnamed region — "main", and nothing else, while the player waits. */}
+        <p
+          id={BEAT_TITLE_ID}
+          className="mb-5 text-center text-[13px] font-medium text-(--color-muted)"
+        >
           Seeing what happens…
         </p>
         <div className="shimmer h-1.5 w-full overflow-hidden rounded-full bg-(--color-canvas-deep)" />
@@ -65,28 +72,66 @@ export function ResolvingScreen({ onDone }: { onDone: () => void }) {
 
 /* ───────────────────── the call the player made ───────────────────── */
 
-function YourCall({
-  predicted,
-  actual,
-  correct,
-  nothingMoved,
-}: {
-  predicted: DimensionId | null;
-  actual: DimensionId | null;
-  correct: boolean | null;
-  nothingMoved: boolean;
-}) {
+/**
+ * The verdict on the player's call, as one sentence.
+ *
+ * Lifted out of the component because it is now said in two places — on screen, and in
+ * the live region that speaks the resolution. Two copies of this sentence would drift,
+ * and the one that drifted would be the one nobody can see.
+ */
+export function predictionVerdict(resolution: Resolution): string | null {
+  const { predicted, actualLeastMoved: actual, predictionCorrect: correct, nothingMoved } = resolution;
   if (!predicted || !actual || correct === null) return null;
+  // With nothing to separate the three, naming a winner would be inventing one.
+  if (nothingMoved) return "Nothing moved. This one cost you nothing and bought you nothing.";
+  return correct
+    ? `You called it. ${DIMENSION_META[actual].label} barely moved.`
+    : `You said ${DIMENSION_META[predicted].label}. It was ${DIMENSION_META[actual].label} that held.`;
+}
 
-  const right = correct;
+/**
+ * Everything the resolution beat says, as one string for the live region.
+ *
+ * The screen shows an outcome headline, three meters that animate to new values, and a
+ * verdict on the prediction. None of it was announced: `role="meter"` does not report
+ * `aria-valuenow` changes, and the verdict was a paragraph that appeared in place. So a
+ * blind player committed, waited, and was told nothing — sixteen times.
+ *
+ * Only the dimensions that actually moved are named, because reading "Profitability 52,
+ * no change" three times a beat, 31 beats a run, is how a live region gets switched off.
+ */
+export function resolutionAnnouncement(resolution: Resolution): string {
+  const parts = [sentence(resolution.outcome.headline)];
+  for (const d of DIMENSIONS) {
+    const delta = resolution.deltas[d];
+    if (delta === 0) continue;
+    const sign = delta > 0 ? "+" : "";
+    parts.push(
+      `${DIMENSION_META[d].label} ${sign}${delta}, ${resolution.dimsAfter[d]} ${UI_LABEL.outOf} 100.`,
+    );
+  }
+  const verdict = predictionVerdict(resolution);
+  if (verdict) parts.push(sentence(verdict));
+  return parts.join(" ");
+}
+
+/**
+ * Terminal punctuation, so a run of announced facts is a run of sentences.
+ *
+ * Content is not guaranteed to end a headline with a full stop, and without one a
+ * screen reader runs the headline straight into the first number with no pause.
+ */
+function sentence(s: string): string {
+  return /[.!?…]$/.test(s.trim()) ? s.trim() : `${s.trim()}.`;
+}
+
+function YourCall({ resolution }: { resolution: Resolution }) {
+  const text = predictionVerdict(resolution);
+  if (!text) return null;
+
+  const right = resolution.predictionCorrect === true;
   const colour = right ? "var(--color-good)" : "var(--color-warn)";
   const tint = right ? "var(--color-good-tint)" : "var(--color-warn-tint)";
-  // With nothing to separate the three, naming a winner would be inventing one.
-  const text = nothingMoved
-    ? "Nothing moved. This one cost you nothing and bought you nothing."
-    : right
-      ? `You called it. ${DIMENSION_META[actual].label} barely moved.`
-      : `You said ${DIMENSION_META[predicted].label}. It was ${DIMENSION_META[actual].label} that held.`;
 
   return (
     <div
@@ -236,7 +281,10 @@ export function ConsequenceScreen({
                 You chose:{" "}
                 <span className="font-bold text-(--color-ink-soft)">{resolution.chosenLabel}</span>
               </p>
-              <h1 className="mt-1 text-[24px] font-bold leading-[1.12] tracking-[-0.015em] text-(--color-ink)">
+              <h1
+                id={BEAT_TITLE_ID}
+                className="mt-1 text-[24px] font-bold leading-[1.12] tracking-[-0.015em] text-(--color-ink)"
+              >
                 {resolution.outcome.headline}
               </h1>
             </div>
@@ -261,12 +309,7 @@ export function ConsequenceScreen({
       </div>
 
       <div className="flex-1 space-y-4 px-5 py-4">
-        <YourCall
-          predicted={resolution.predicted}
-          actual={resolution.actualLeastMoved}
-          correct={resolution.predictionCorrect}
-          nothingMoved={resolution.nothingMoved}
-        />
+        <YourCall resolution={resolution} />
 
         <Impact dims={resolution.dimsAfter} deltas={resolution.deltas} />
 

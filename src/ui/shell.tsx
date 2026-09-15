@@ -12,7 +12,7 @@
  * rather than aspirational.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   BADGE_META,
@@ -28,6 +28,164 @@ import type { LedgerEntry } from "../engine/engine";
 import { Icon, IconTile, SectionTitle, type Tone } from "./icons";
 
 export const artUrl = (name: string) => `${import.meta.env.BASE_URL}art/${name}.webp`;
+
+/* ───────────────────────── interface labels ─────────────────────────
+   Hard-coded strings, collected in one place on purpose.
+
+   `CLAUDE.md` puts player-facing prose in `src/content/story.ts`. None of these is
+   story: they are interface state and non-colour redundancy for information the
+   screen carries as an icon or a row of dots. `story.ts` has no field for any of
+   them yet, so they are named here rather than scattered through five components —
+   one object to move the day content gains a `ui:` block.
+
+   `outOf` already shipped, in the meters' `aria-label` ("…out of 100"); `chooseApproach`,
+   `pickTeam` and `teamPicked` already shipped as literals in `App.tsx` and were moved,
+   not written. `ready`, `up` and `down` are new. */
+export const UI_LABEL = {
+  /** magnitude, where the visual is a row of filled dots that produces no text */
+  outOf: "out of",
+  /** polarity, where the visual is a tick or a red cross and nothing else */
+  up: "Upside:",
+  down: "Trade-off:",
+  /** the commit gate */
+  chooseApproach: "Choose an approach to continue",
+  ready: "Ready to commit.",
+  pickTeam: "Pick your team's strength",
+  teamPicked: "This is who you are for the rest of the run.",
+} as const;
+
+/** Visually-hidden text: what an icon or a dot row says to the eye and to nothing else. */
+export function Hidden({ children }: { children: React.ReactNode }) {
+  return <span className="sr-only">{children}</span>;
+}
+
+/**
+ * The `id` of whatever names the beat on screen — normally its `h1`, and on the one
+ * beat with no heading (`resolving`) the line that stands in for one.
+ *
+ * Exactly one beat renders inside the console at a time, so a single id is enough, and
+ * `<main aria-labelledby>` can then name itself after the beat without every screen
+ * having to thread a label down.
+ */
+export const BEAT_TITLE_ID = "gpl-beat-title";
+
+/* ───────────────────────────── live regions ───────────────────────────── */
+
+/**
+ * The game's two spoken channels.
+ *
+ * Nothing in this interface used to be announced. Meters moved 58→64 in silence, the
+ * prediction verdict — the whole point of the gate — was never read, and the commit
+ * gate opening was invisible to anyone not looking at the button. A blind player made
+ * sixteen predictions and was told the result of none, which is not a polish defect:
+ * it is the learning loop missing (WCAG 4.1.3).
+ *
+ * Both are `polite`, and both live here, mounted for the whole run. A live region that
+ * mounts at the same moment its text arrives announces nothing — the element has to be
+ * in the accessibility tree *before* the change it reports.
+ *
+ * `gateKey` re-keys the gate's only child so an unchanged requirement can be spoken
+ * again: activating a gated button must answer, and a live region with identical text
+ * has not changed. Replacing the node is a change.
+ */
+export function LiveRegions({
+  announce,
+  gate,
+  gateKey,
+}: {
+  /** the resolution: headline, every non-zero delta, and whether the call was right */
+  announce: string;
+  /** what still stands between the player and committing */
+  gate: string;
+  gateKey: number;
+}) {
+  return (
+    <>
+      <div aria-live="polite" className="sr-only">
+        {announce}
+      </div>
+      <div aria-live="polite" className="sr-only">
+        <span key={gateKey}>{gate}</span>
+      </div>
+    </>
+  );
+}
+
+/* ───────────────────────────── radio group ───────────────────────────── */
+
+/**
+ * Mutual exclusion, said out loud.
+ *
+ * The option cards were real buttons with `aria-pressed`, in a bare `<div>`. So the set
+ * had no name, no boundary and no arity: choosing card B silently un-pressed card A and
+ * a screen reader announced only that B was now pressed — three unrelated toggles, where
+ * the game means "pick exactly one of these". `radiogroup`/`radio` says it in one word.
+ *
+ * Taking the group's semantics means taking its keyboard contract too: one tab stop for
+ * the whole set, arrows to move between members, selection following focus. Cards are
+ * found in the DOM rather than plumbed through refs, so a list only has to mark its
+ * members with `role="radio"` and set the roving `tabIndex`.
+ */
+export function RadioGroup({
+  label,
+  className,
+  style,
+  children,
+}: {
+  label: string;
+  className?: string;
+  style?: React.CSSProperties;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const step =
+      e.key === "ArrowRight" || e.key === "ArrowDown"
+        ? 1
+        : e.key === "ArrowLeft" || e.key === "ArrowUp"
+          ? -1
+          : 0;
+    if (!step && e.key !== "Home" && e.key !== "End") return;
+
+    const radios = [...(ref.current?.querySelectorAll<HTMLElement>('[role="radio"]') ?? [])];
+    const here = radios.findIndex((r) => r === document.activeElement);
+    if (radios.length < 2 || here === -1) return;
+
+    e.preventDefault();
+    const to =
+      e.key === "Home"
+        ? 0
+        : e.key === "End"
+          ? radios.length - 1
+          : (here + step + radios.length) % radios.length;
+    const target = radios[to];
+    if (!target) return;
+    target.focus();
+    // Selection follows focus, as the radio pattern requires — but re-activating the
+    // one already checked would toggle it OFF, and a radio cannot be unchecked.
+    if (target.getAttribute("aria-checked") !== "true") target.click();
+  };
+
+  return (
+    <div
+      ref={ref}
+      role="radiogroup"
+      aria-label={label}
+      onKeyDown={onKeyDown}
+      className={className}
+      style={style}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Roving tabindex: the checked member is the group's single tab stop, else the first. */
+export function radioTabIndex(isChecked: boolean, index: number, anyChecked: boolean): 0 | -1 {
+  if (anyChecked) return isChecked ? 0 : -1;
+  return index === 0 ? 0 : -1;
+}
 
 /* ───────────────────────────── chapter stepper ───────────────────────────── */
 
@@ -214,37 +372,73 @@ export function Console({
   left,
   right,
   bottom,
+  live,
+  focusKey,
   children,
 }: {
   bars: React.ReactNode;
   left?: React.ReactNode;
   right?: React.ReactNode;
   bottom?: React.ReactNode;
+  /** the two spoken channels, mounted here so they outlive every beat */
+  live: { announce: string; gate: string; gateKey: number };
+  /** changes when the beat changes, which is when focus must move */
+  focusKey: string;
   children: React.ReactNode;
 }) {
+  const work = useRef<HTMLElement>(null);
+
+  /**
+   * Focus follows the beat.
+   *
+   * Focus landed on `<body>` 48 times in a single run: the action-bar button becomes
+   * unavailable on brief→decide, and unmounts on commit→resolving, and Chromium blurs a
+   * control it takes away. From `<body>` there is no "where am I" — a screen-reader user
+   * is dropped at the top of a six-region console with no indication that the screen
+   * changed at all, and a keyboard user has to Tab past the whole header every beat.
+   *
+   * The work area takes the focus rather than the `h1`, because focusing a heading
+   * announces one line and leaves the reading cursor after it; focusing the region that
+   * *contains* the heading announces "main, <beat title>" and leaves everything below
+   * readable from the top.
+   */
+  useEffect(() => {
+    work.current?.focus();
+  }, [focusKey]);
+
   return (
     <div className="lg:h-screen lg:p-3">
       <div
         className="flex min-h-screen flex-col overflow-hidden border-(--color-line) bg-(--color-surface) lg:min-h-0 lg:h-full lg:rounded-[18px] lg:border"
         style={{ boxShadow: "0 1px 2px rgb(20 18 31/0.04), 0 18px 50px rgb(20 18 31/0.08)" }}
       >
+        <LiveRegions {...live} />
         {bars}
 
+        {/* The work area is FIRST in the DOM and second on screen.
+            `order` puts the left rail back where the mockups have it, but the reading
+            order now starts with the beat: the `h1` was previously the third heading on
+            the page, behind the rail's "Find the right client" and "The brief", so a
+            screen-reader user navigating by heading met the furniture before the
+            situation on all 31 beats. Below `lg` the stack was already content-first. */}
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-          {left && (
-            <aside className="order-2 shrink-0 border-t border-(--color-line) p-4 lg:order-none lg:w-[248px] lg:overflow-y-auto lg:border-r lg:border-t-0">
-              {left}
-            </aside>
-          )}
-          <div
+          <main
+            ref={work}
             data-work-area
-            className="order-1 min-w-0 flex-1 lg:order-none lg:overflow-y-auto"
+            tabIndex={-1}
+            aria-labelledby={BEAT_TITLE_ID}
+            className="order-1 min-w-0 flex-1 lg:order-2 lg:overflow-y-auto"
             style={{ background: "var(--color-canvas)" }}
           >
             {children}
-          </div>
+          </main>
+          {left && (
+            <aside className="order-2 shrink-0 border-t border-(--color-line) p-4 lg:order-1 lg:w-[248px] lg:overflow-y-auto lg:border-r lg:border-t-0">
+              {left}
+            </aside>
+          )}
           {right && (
-            <aside className="order-3 shrink-0 border-t border-(--color-line) p-4 lg:order-none lg:w-[264px] lg:overflow-y-auto lg:border-l lg:border-t-0">
+            <aside className="order-3 shrink-0 border-t border-(--color-line) p-4 lg:order-3 lg:w-[264px] lg:overflow-y-auto lg:border-l lg:border-t-0">
               {right}
             </aside>
           )}
@@ -322,9 +516,12 @@ export function MissionRail({
     <div data-region="orientation" className="space-y-3.5">
       <div>
         <p className="text-[12px] font-bold text-(--color-accent)">Chapter {chapter.number}</p>
-        <h2 className="mt-0.5 text-[18px] font-bold leading-tight text-(--color-ink)">
+        {/* Not a heading. It names where you are, and as an `h2` it outranked the beat's
+            own `h1` in the heading outline while saying less than the chapter stepper
+            two inches above it already says. */}
+        <p className="mt-0.5 text-[18px] font-bold leading-tight text-(--color-ink)">
           {chapter.title}
-        </h2>
+        </p>
         <p className="mt-1 text-[12px] font-medium text-(--color-muted) tabular-nums">
           Mission {missionNumber} of {totalMissions}
         </p>
@@ -656,9 +853,15 @@ export function InsightRail({
       <RailCard title="Where you stand" icon="layers" region="ledger">
         {collapsed && entries.length > 0 ? (
           <details>
-            <summary className="cursor-pointer list-none text-[13px] text-(--color-muted)">
-              <span className="font-bold text-(--color-ink)">{entries.length}</span> things in
-              play <span className="text-(--color-accent)">— show</span>
+            {/* 231×20 before, which fails 2.5.8 on the short axis. `min-h` rather than
+                padding, so the 24px is the target and not the gap to the list below. */}
+            <summary className="flex min-h-[24px] cursor-pointer list-none items-center text-[13px] text-(--color-muted)">
+              {/* One flex child, so the whitespace between these spans survives — a text
+                  run promoted to a flex item loses its leading and trailing spaces. */}
+              <span>
+                <span className="font-bold text-(--color-ink)">{entries.length}</span> things in
+                play <span className="text-(--color-accent)">— show</span>
+              </span>
             </summary>
             <ul className="mt-2.5 space-y-2">
               {entries.map((e) => (
@@ -710,6 +913,12 @@ export function InsightRail({
  * one tap, and it is what turns the consequence screen from the game telling you what
  * happened into the game answering a question you asked. See docs/ENGAGEMENT-MODEL.md.
  */
+/**
+ * While the strip is up, the question IS the outstanding requirement, so the commit
+ * button is described by it rather than by a second copy of the same sentence.
+ */
+export const PREDICTION_QUESTION_ID = "gpl-prediction-question";
+
 export function PredictionStrip({
   prediction,
   onPredict,
@@ -719,7 +928,10 @@ export function PredictionStrip({
 }) {
   return (
     <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
-      <span className="text-[13px] font-semibold text-(--color-ink-soft)">
+      <span
+        id={PREDICTION_QUESTION_ID}
+        className="text-[13px] font-semibold text-(--color-ink-soft)"
+      >
         Which of the three will move least?
       </span>
       <div className="flex gap-1.5">
@@ -752,16 +964,42 @@ export function PredictionStrip({
   );
 }
 
+const ACTION_HINT_ID = "gpl-action-hint";
+
+/**
+ * Why the primary action is `aria-disabled` and not `disabled`.
+ *
+ * A `disabled` button is removed from the tab order, which means the one control that
+ * explains why the player cannot proceed is the one control they cannot reach. The
+ * explanation was also an unassociated `<span>` sitting last in the bar, and
+ * `aria-describedby` was null on every control in the game — so a screen-reader user
+ * arrived at a decide screen, found no primary action at all, and had nothing to tell
+ * them a gate existed.
+ *
+ * `aria-disabled` keeps the button focusable and announced as unavailable, ties it to
+ * the requirement it is waiting on, and answers when activated: the gate's live region
+ * speaks the requirement instead of the game doing nothing. Sighted keyboard users get
+ * the same discoverability for free.
+ */
 export function ActionBar({
   label,
   onAction,
   disabled,
+  onBlocked,
+  hint,
+  hintId,
   aside,
   children,
 }: {
   label: string;
   onAction: () => void;
   disabled?: boolean;
+  /** activated while gated — say what is missing rather than swallowing the press */
+  onBlocked?: () => void;
+  /** the outstanding requirement, rendered here so the button can point at it */
+  hint?: string;
+  /** or the id of something already on screen that states it */
+  hintId?: string;
   /**
    * The colleague's practical steer. The mockups carry an unattributed "Tip" in this
    * slot; we keep their treatment — portrait, label, two lines — but the label is a
@@ -771,6 +1009,8 @@ export function ActionBar({
   /** left-hand content — the prediction strip on a decide screen */
   children?: React.ReactNode;
 }) {
+  const gated = Boolean(disabled);
+  const describedBy = hint ? ACTION_HINT_ID : hintId;
   /* `flex-wrap` matters more than it looks. Three children with fixed widths — a 300px
      advisor card, the prediction strip and a 280px button — give this bar a ~640px hard
      minimum, and the console shell is `overflow-hidden`. Below about 660px the primary
@@ -799,15 +1039,21 @@ export function ActionBar({
         </div>
       )}
       {children}
+      {hint && (
+        <span id={ACTION_HINT_ID} className="text-[13px] text-(--color-muted)">
+          {hint}
+        </span>
+      )}
       <div className="ml-auto shrink-0">
         <button
-          onClick={onAction}
-          disabled={disabled}
-          className="flex h-[48px] min-w-[280px] items-center justify-center gap-2.5 rounded-[12px] px-8 text-[15px] font-bold transition-colors duration-150 enabled:text-white disabled:cursor-not-allowed"
+          onClick={() => (gated ? onBlocked?.() : onAction())}
+          aria-disabled={gated || undefined}
+          aria-describedby={describedBy}
+          className="flex h-[48px] min-w-[280px] items-center justify-center gap-2.5 rounded-[12px] px-8 text-[15px] font-bold transition-colors duration-150 aria-disabled:cursor-not-allowed"
           style={
-            disabled
+            gated
               ? { background: "var(--color-accent-tint)", color: "var(--color-accent-deep)" }
-              : { background: "var(--color-accent)" }
+              : { background: "var(--color-accent)", color: "#fff" }
           }
         >
           {label}

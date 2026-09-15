@@ -226,6 +226,19 @@
     border-radius: 6px;
   }
 
+  /* The work area takes focus on every beat change, so it needs a ring that reads as
+     "you are here" rather than one that is half clipped. The offset goes negative
+     because the console shell is `overflow-hidden` and an outward ring on a region that
+     fills it would be cut on three sides; the white halo goes because a 4px bloom
+     around the whole screen is not a focus indicator, it is a flash.
+     Programmatic focus only matches `:focus-visible` when the last input was a key, so
+     a player driving with the mouse never sees this. */
+  [data-work-area]:focus-visible {
+    outline-offset: -2px;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
   button {
     font: inherit;
   }

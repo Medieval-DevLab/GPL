@@ -9,13 +9,11 @@ import {
   createInitialState,
   getNode,
   ledger,
-  selectableIds,
   selectionComplete,
   setPrediction,
   toggleSelection,
 } from "./engine/engine";
 import {
-  DIMENSIONS,
   isMission,
   type Chapter,
   type DimensionId,
@@ -24,7 +22,11 @@ import {
   type Mission,
   type Setup,
 } from "./engine/types";
-import { ConsequenceScreen, ResolvingScreen } from "./ui/consequence";
+import {
+  ConsequenceScreen,
+  ResolvingScreen,
+  resolutionAnnouncement,
+} from "./ui/consequence";
 import { BriefBody, DecideBody } from "./ui/mission";
 import {
   EndingScreen,
@@ -37,8 +39,10 @@ import {
   Console,
   InsightRail,
   MissionRail,
+  PREDICTION_QUESTION_ID,
   PredictionStrip,
   TopBar,
+  UI_LABEL,
 } from "./ui/shell";
 
 const STORAGE_KEY = "gpl.save.v3";
@@ -188,66 +192,41 @@ export default function App() {
   }, []);
 
   /**
-   * Keyboard play.
-   *   1–9   select the nth option
-   *   w/p/d call which dimension this will cost
-   *   Enter commit when ready, or advance any non-interactive beat
-   * Ignored while focus is in a control, so Space/Enter on a focused button keeps its
-   * normal meaning for keyboard and screen-reader users.
+   * There used to be a window `keydown` handler here binding `1`–`9`, `w`, `p`, `d` and
+   * `Enter`. It is deleted, not rescoped, and about forty lines went with it.
+   *
+   * It was a Level A failure of 2.1.4: single-character shortcuts with no way to turn
+   * them off, no modifier and no requirement that anything be focused. It suppressed
+   * itself only when `e.target.tagName` was BUTTON, SUMMARY, INPUT or TEXTAREA — so it
+   * fired on every keypress that reached `<body>`, which is precisely where a
+   * screen-reader user in browse mode lives. `d` is NVDA's landmark key and `1` its
+   * heading key; navigating this game by heading silently selected option one.
+   *
+   * It was also already broken for the player it was built for. After any mouse click
+   * the clicked button keeps focus, so `e.target` stayed a BUTTON and the handler
+   * ignored every subsequent keypress for the rest of the run.
+   *
+   * Nothing is lost. Every option is a real `<button>` in a `radiogroup` — one tab stop,
+   * arrows to move between cards, Space to choose — and the primary action is the last
+   * tab stop on every beat. `Enter` is gone too: on the title screen it meant "start
+   * again", which discarded a saved run on a keystroke, and it advanced interludes and
+   * consequences but not briefs. An inconsistent shortcut that destroys progress is
+   * worse than no shortcut. (Backlog 3.2, and 8.6 falls out with it.)
    */
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
-      const tag = (e.target as HTMLElement | null)?.tagName;
-      if (
-        tag === "BUTTON" ||
-        tag === "SUMMARY" ||
-        tag === "INPUT" ||
-        tag === "TEXTAREA"
-      )
-        return;
 
-      if (state.phase === "decide" && isMission(node)) {
-        const index = Number.parseInt(e.key, 10);
-        if (Number.isInteger(index) && index >= 1 && index <= 9) {
-          const id = selectableIds(node, state)[index - 1];
-          if (id) {
-            e.preventDefault();
-            doToggle(id);
-          }
-          return;
-        }
-        const dim = { w: "win", p: "profit", d: "deliver" }[
-          e.key.toLowerCase()
-        ] as DimensionId | undefined;
-        if (
-          dim &&
-          DIMENSIONS.includes(dim) &&
-          selectionComplete(state, content)
-        ) {
-          e.preventDefault();
-          doPredict(dim);
-          return;
-        }
-        if (e.key === "Enter" && canCommit(state, content)) {
-          e.preventDefault();
-          doCommit();
-        }
-        return;
-      }
+  /**
+   * What the two live regions say. See `LiveRegions` in `ui/shell.tsx` for why they
+   * exist at all; this is the only place that knows enough to fill them.
+   */
+  const announce =
+    state.phase === "consequence" && state.resolution
+      ? resolutionAnnouncement(state.resolution)
+      : "";
 
-      const advanceable =
-        state.phase === "interlude" ||
-        state.phase === "consequence" ||
-        state.phase === "title";
-      if (e.key === "Enter" && advanceable) {
-        e.preventDefault();
-        doAdvance();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [state, node, doAdvance, doCommit, doToggle, doPredict]);
+  /* Bumped when a gated button is activated, to re-speak a requirement that has not
+     changed. Doing nothing in response to a keypress is not an answer. */
+  const [gateNudge, setGateNudge] = useState(0);
+  const nudgeGate = useCallback(() => setGateNudge((n) => n + 1), []);
 
   const missionNumber = useMemo(() => {
     if (isMission(node)) return content.missionOrder.indexOf(node.id) + 1;
@@ -298,6 +277,29 @@ export default function App() {
     />
   );
 
+  /**
+   * What still stands between the player and committing, in words.
+   *
+   * One expression, used three ways: rendered in the action bar when there is no
+   * prediction strip up, pointed at by the button's `aria-describedby`, and spoken by
+   * the gate's live region as it changes. It was previously only the first of those,
+   * as a `<span>` associated with nothing.
+   */
+  const gate = onDecide
+    ? !selected
+      ? mission?.kind === "choice"
+        ? UI_LABEL.chooseApproach
+        : `${state.selection.length} of ${need} chosen`
+      : state.prediction === null
+        ? /* The prediction strip is on screen and asks it; do not write it twice. */
+          "Which of the three will move least?"
+        : UI_LABEL.ready
+    : state.phase === "setup"
+      ? advantage
+        ? UI_LABEL.teamPicked
+        : UI_LABEL.pickTeam
+      : "";
+
   /* The action bar is part of the console, so it never scrolls away. Its label names
      exactly what happens, and on a decide screen the prediction gate sits beside it. */
   let bottom: React.ReactNode = null;
@@ -309,6 +311,11 @@ export default function App() {
         label="Commit to this"
         onAction={doCommit}
         disabled={!ready}
+        onBlocked={nudgeGate}
+        /* When the strip is up it already states the requirement, so the button points
+           at that sentence rather than putting a second copy in the bar. */
+        hint={selected ? undefined : gate}
+        hintId={selected ? PREDICTION_QUESTION_ID : undefined}
         aside={
           mission?.tip && mission.advisor
             ? {
@@ -324,13 +331,7 @@ export default function App() {
             prediction={state.prediction}
             onPredict={doPredict}
           />
-        ) : (
-          <span className="text-[13px] text-(--color-muted)">
-            {mission?.kind === "choice"
-              ? "Choose an approach to continue"
-              : `${state.selection.length} of ${need} chosen`}
-          </span>
-        )}
+        ) : null}
       </ActionBar>
     );
   } else if (state.phase === "consequence") {
@@ -350,13 +351,9 @@ export default function App() {
         label="Start the pursuit"
         onAction={doSetup}
         disabled={!advantage}
-      >
-        <span className="text-[13px] text-(--color-muted)">
-          {advantage
-            ? "This is who you are for the rest of the run."
-            : "Pick your team's strength"}
-        </span>
-      </ActionBar>
+        onBlocked={nudgeGate}
+        hint={advantage ? UI_LABEL.teamPicked : UI_LABEL.pickTeam}
+      />
     );
   }
 
@@ -366,6 +363,10 @@ export default function App() {
     <Console
       bars={bars}
       bottom={bottom}
+      live={{ announce, gate, gateKey: gateNudge }}
+      /* A new beat is a new screen, so focus goes to the work area. Includes `phase`,
+         because brief→decide is the same node and is very much a new screen. */
+      focusKey={`${state.nodeId}:${state.phase}`}
       left={
         framed && mission ? (
           <MissionRail

@@ -19,7 +19,14 @@ import type {
   Option,
 } from "../engine/types";
 import { Icon, IconTile, Pill, SectionTitle } from "./icons";
-import { artUrl } from "./shell";
+import {
+  BEAT_TITLE_ID,
+  Hidden,
+  RadioGroup,
+  UI_LABEL,
+  artUrl,
+  radioTabIndex,
+} from "./shell";
 
 /* ───────────────────────── header ───────────────────────── */
 
@@ -30,7 +37,10 @@ function Header({ mission, situation }: { mission: Mission; situation: string[] 
         <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
           {mission.eyebrow}
         </p>
-        <h1 className="mt-1.5 text-[32px] font-bold leading-[1.1] tracking-[-0.015em] text-(--color-ink)">
+        <h1
+          id={BEAT_TITLE_ID}
+          className="mt-1.5 text-[32px] font-bold leading-[1.1] tracking-[-0.015em] text-(--color-ink)"
+        >
           {mission.title}
         </h1>
         <div className="mt-2 space-y-1">
@@ -212,13 +222,25 @@ function Concerns({ concerns }: { concerns?: string[] }) {
 
 /* ───────────────────────────── cost rows ───────────────────────────── */
 
+/**
+ * Magnitude, in text as well as in dots.
+ *
+ * The ●●○ row is `aria-hidden`, and the `aria-label` that used to sit on this `<div>`
+ * was inert: an `aria-label` on an element with no role is not exposed as content, so
+ * the cost of an option — the only number on the card — produced nothing at all when
+ * read. It survived only inside the button's concatenated name, which is exactly the
+ * 240-character run this card is being taken apart to fix.
+ */
 function CostRow({ icon, label, value }: { icon: "clock" | "coins"; label: string; value: number }) {
   return (
-    <div className="flex items-center gap-2" aria-label={`${label}: ${value} of 3`}>
+    <div className="flex items-center gap-2">
       <span className="shrink-0 text-(--color-muted)">
         <Icon name={icon} size={13} />
       </span>
       <span className="flex-1 text-[12px] font-medium text-(--color-muted)">{label}</span>
+      <Hidden>
+        {value} {UI_LABEL.outOf} 3.
+      </Hidden>
       <span aria-hidden="true" className="flex gap-[3px]">
         {[1, 2, 3].map((n) => (
           <span
@@ -247,13 +269,31 @@ function CostRow({ icon, label, value }: { icon: "clock" | "coins"; label: strin
  */
 const CARD_ROWS = 6;
 
+/**
+ * The card's accessible name is its title, and nothing else.
+ *
+ * Name-from-content concatenated the whole poster: 170–240 characters, re-spoken in full
+ * every time focus returned to the card, with no terminal punctuation anywhere, so it
+ * arrived as one unbroken run — "Apex Industrial The biggest number on the table… Resource
+ * cost Time: 3 of 3 Investment: 3 of 3 Select this option". A name is for telling this
+ * control apart from its three neighbours. Everything else is a description, which a
+ * screen reader can be told to skip and will not repeat on every revisit.
+ */
+const titleId = (id: string) => `opt-${id}-title`;
+const bodyIds = (id: string) => `opt-${id}-desc opt-${id}-trade opt-${id}-cost`;
+
 function OptionCard({
   option,
   selected,
+  anySelected,
+  index,
   onToggle,
 }: {
   option: Option;
   selected: boolean;
+  /** roving tabindex: the group is one tab stop, not four */
+  anySelected: boolean;
+  index: number;
   onToggle: () => void;
 }) {
   return (
@@ -262,7 +302,11 @@ function OptionCard({
       style={{ gridRow: `span ${CARD_ROWS}`, gridTemplateRows: "subgrid" }}
       data-selected={selected}
       onClick={onToggle}
-      aria-pressed={selected}
+      role="radio"
+      aria-checked={selected}
+      tabIndex={radioTabIndex(selected, index, anySelected)}
+      aria-labelledby={titleId(option.id)}
+      aria-describedby={bodyIds(option.id)}
     >
       {/* 1 · media + medallion */}
       <div className="relative">
@@ -288,6 +332,7 @@ function OptionCard({
 
       {/* 2 · title — the only thing the mockups centre */}
       <p
+        id={titleId(option.id)}
         className="px-4 pt-2.5 text-center text-[18px] font-bold leading-snug"
         style={{ color: selected ? "var(--color-accent-deep)" : "var(--color-ink)" }}
       >
@@ -295,12 +340,18 @@ function OptionCard({
       </p>
 
       {/* 3 · what it is */}
-      <p className="px-4 pt-2 text-[15px] leading-snug text-(--color-muted)">
+      <p
+        id={`opt-${option.id}-desc`}
+        className="px-4 pt-2 text-[15px] leading-snug text-(--color-muted)"
+      >
         {option.description}
       </p>
 
-      {/* 4 · what it trades */}
-      <div className="px-4 pt-3">
+      {/* 4 · what it trades.
+          Polarity was carried by a tick and a red cross, and the cross is `aria-hidden`,
+          so a pro and a con read identically: "Budget looks real", "Two rivals ahead of
+          you". Colour and shape alone (1.4.1), and here not even that. */}
+      <div id={`opt-${option.id}-trade`} className="px-4 pt-3">
         {(option.pros?.length || option.cons?.length) && (
           <ul className="space-y-1.5 border-t border-(--color-line) pt-3">
             {option.pros?.map((t) => (
@@ -308,7 +359,11 @@ function OptionCard({
                 <span className="mt-[2px] shrink-0 text-(--color-good)">
                   <Icon name="check" size={13} />
                 </span>
-                <span className="font-medium text-(--color-ink-soft)">{t}</span>
+                <span className="font-medium text-(--color-ink-soft)">
+                  <Hidden>{UI_LABEL.up} </Hidden>
+                  {t}
+                  <Hidden>.</Hidden>
+                </span>
               </li>
             ))}
             {option.cons?.map((t) => (
@@ -320,7 +375,11 @@ function OptionCard({
                 >
                   <Icon name="cross" size={9} />
                 </span>
-                <span className="text-(--color-muted)">{t}</span>
+                <span className="text-(--color-muted)">
+                  <Hidden>{UI_LABEL.down} </Hidden>
+                  {t}
+                  <Hidden>.</Hidden>
+                </span>
               </li>
             ))}
           </ul>
@@ -328,7 +387,7 @@ function OptionCard({
       </div>
 
       {/* 5 · what it costs — never what it returns */}
-      <div className="px-4 pt-3">
+      <div id={`opt-${option.id}-cost`} className="px-4 pt-3">
         {option.cost && (
           <div className="space-y-1.5 border-t border-(--color-line) pt-3">
             <p className="text-[13px] font-bold text-(--color-ink-soft)">Resource cost</p>
@@ -391,21 +450,25 @@ function ChoiceList({
 }) {
   const options = availableOptions(mission, state);
   const chosen = state.selection[0];
+  const anySelected = options.some((o) => o.id === chosen);
 
   return (
-    <div
+    <RadioGroup
+      label={mission.question}
       className={`grid items-stretch gap-3 ${columns(options.length)}`}
       style={{ gridTemplateRows: `repeat(${CARD_ROWS}, auto)` }}
     >
-      {options.map((o) => (
+      {options.map((o, i) => (
         <OptionCard
           key={o.id}
           option={o}
           selected={chosen === o.id}
+          anySelected={anySelected}
+          index={i}
           onToggle={() => onToggle(o.id)}
         />
       ))}
-    </div>
+    </RadioGroup>
   );
 }
 
@@ -420,8 +483,15 @@ function EvidenceList({
 }) {
   const full = state.selection.length >= mission.slots;
 
+  /* `role="group"` and `aria-pressed`, not a radiogroup: an investigation really is
+     multi-select — you buy several questions out of a smaller budget of slots — so
+     "pressed" is the honest state and mutual exclusion would be a lie. */
   return (
-    <div className={`grid items-stretch gap-3 ${columns(mission.evidence.length)}`}>
+    <div
+      role="group"
+      aria-label={mission.question}
+      className={`grid items-stretch gap-3 ${columns(mission.evidence.length)}`}
+    >
       {mission.evidence.map((e) => {
         const selected = state.selection.includes(e.id);
         return (
@@ -432,10 +502,17 @@ function EvidenceList({
             data-dimmed={!selected && full}
             onClick={() => onToggle(e.id)}
             aria-pressed={selected}
+            aria-labelledby={`ev-${e.id}-q`}
+            aria-describedby={`ev-${e.id}-label`}
           >
             <IconTile name="search" tone="accent" size={30} />
-            <p className="mt-2 text-[12px] font-bold text-(--color-accent)">{e.label}</p>
-            <p className="mt-0.5 text-[13px] font-bold leading-snug text-(--color-ink)">
+            <p id={`ev-${e.id}-label`} className="mt-2 text-[12px] font-bold text-(--color-accent)">
+              {e.label}
+            </p>
+            <p
+              id={`ev-${e.id}-q`}
+              className="mt-0.5 text-[13px] font-bold leading-snug text-(--color-ink)"
+            >
               {e.question}
             </p>
             <div className="mt-auto pt-2.5">
@@ -459,8 +536,14 @@ function ComponentList({
 }) {
   const full = state.selection.length >= mission.pick;
 
+  /* Also genuinely multi-select — a proposal is several components — so `aria-pressed`
+     stays and the container only has to say where the set begins and what it is for. */
   return (
-    <div className={`grid items-stretch gap-3 ${columns(mission.components.length)}`}>
+    <div
+      role="group"
+      aria-label={mission.question}
+      className={`grid items-stretch gap-3 ${columns(mission.components.length)}`}
+    >
       {mission.components.map((c) => {
         const selected = state.selection.includes(c.id);
         return (
@@ -471,12 +554,24 @@ function ComponentList({
             data-dimmed={!selected && full}
             onClick={() => onToggle(c.id)}
             aria-pressed={selected}
+            aria-labelledby={`cmp-${c.id}-title`}
+            aria-describedby={`cmp-${c.id}-desc cmp-${c.id}-tag`}
           >
             <div className="flex items-start justify-between gap-2">
-              <p className="text-[13px] font-bold leading-snug text-(--color-ink)">{c.title}</p>
-              <Pill tone={selected ? "accent" : "neutral"}>{c.tag}</Pill>
+              <p
+                id={`cmp-${c.id}-title`}
+                className="text-[13px] font-bold leading-snug text-(--color-ink)"
+              >
+                {c.title}
+              </p>
+              <span id={`cmp-${c.id}-tag`}>
+                <Pill tone={selected ? "accent" : "neutral"}>{c.tag}</Pill>
+              </span>
             </div>
-            <p className="mt-1.5 text-[13px] leading-snug text-(--color-muted)">
+            <p
+              id={`cmp-${c.id}-desc`}
+              className="mt-1.5 text-[13px] leading-snug text-(--color-muted)"
+            >
               {c.description}
             </p>
             <div className="mt-auto pt-2.5">
@@ -588,7 +683,10 @@ export function DecideBody({
         <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
           {mission.eyebrow}
         </p>
-        <h1 className="mt-1 text-[24px] font-bold leading-[1.15] tracking-[-0.02em] text-(--color-ink)">
+        <h1
+          id={BEAT_TITLE_ID}
+          className="mt-1 text-[24px] font-bold leading-[1.15] tracking-[-0.02em] text-(--color-ink)"
+        >
           {mission.question}
         </h1>
         <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-3">

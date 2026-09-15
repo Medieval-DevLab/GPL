@@ -12,7 +12,18 @@ import {
   type Setup,
 } from "../engine/types";
 import { Icon, Pill, SectionTitle } from "./icons";
-import { BadgeChip, Eyebrow, FactorGrid, PrimaryButton, artUrl } from "./shell";
+import {
+  BEAT_TITLE_ID,
+  BadgeChip,
+  Eyebrow,
+  FactorGrid,
+  Hidden,
+  PrimaryButton,
+  RadioGroup,
+  UI_LABEL,
+  artUrl,
+  radioTabIndex,
+} from "./shell";
 
 /* ─────────────────────────── title ─────────────────────────── */
 
@@ -142,7 +153,10 @@ export function SetupScreen({
         <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
           {node.eyebrow}
         </p>
-        <h1 className="mt-2 text-[32px] font-bold leading-[1.1] tracking-[-0.025em] text-(--color-ink)">
+        <h1
+          id={BEAT_TITLE_ID}
+          className="mt-2 text-[32px] font-bold leading-[1.1] tracking-[-0.025em] text-(--color-ink)"
+        >
           {node.title}
         </h1>
         <div className="mt-3 max-w-2xl space-y-1.5">
@@ -161,11 +175,16 @@ export function SetupScreen({
         </p>
       </div>
 
-      <div
+      {/* Same treatment as a mission's option set, because it is the same object and had
+          the same defect: three mutually exclusive cards in an unnamed `<div>`, each
+          announced as an independent toggle. This is also the first interactive thing
+          anyone meets. */}
+      <RadioGroup
+        label={node.question}
         className="mt-3 grid items-stretch gap-3 sm:grid-cols-3"
         style={{ gridTemplateRows: "repeat(5, auto)" }}
       >
-        {node.options.map((o) => {
+        {node.options.map((o, i) => {
           const on = chosen === o.id;
           return (
             <button
@@ -173,7 +192,11 @@ export function SetupScreen({
               className="choice grid gap-0 !p-0 text-left"
               style={{ gridRow: "span 5", gridTemplateRows: "subgrid" }}
               data-selected={on}
-              aria-pressed={on}
+              role="radio"
+              aria-checked={on}
+              tabIndex={radioTabIndex(on, i, chosen !== null)}
+              aria-labelledby={`team-${o.id}-title`}
+              aria-describedby={`team-${o.id}-desc team-${o.id}-trade`}
               onClick={() => onChoose(o.id)}
             >
               <div>
@@ -201,23 +224,31 @@ export function SetupScreen({
               </div>
 
               <p
+                id={`team-${o.id}-title`}
                 className="px-4 pt-2 text-center text-[15px] font-bold"
                 style={{ color: on ? "var(--color-accent-deep)" : "var(--color-ink)" }}
               >
                 {o.title}
               </p>
-              <p className="px-4 pt-1.5 text-center text-[13px] leading-snug text-(--color-muted)">
+              <p
+                id={`team-${o.id}-desc`}
+                className="px-4 pt-1.5 text-center text-[13px] leading-snug text-(--color-muted)"
+              >
                 {o.description}
               </p>
 
-              <div className="px-4 pt-3">
+              <div id={`team-${o.id}-trade`} className="px-4 pt-3">
                 <ul className="space-y-1 border-t border-(--color-line) pt-2.5">
                   {o.strengths.map((t) => (
                     <li key={t} className="flex items-start gap-1.5 text-[12px] leading-snug">
                       <span className="mt-[2px] shrink-0 text-(--color-good)">
                         <Icon name="check" size={13} />
                       </span>
-                      <span className="font-medium text-(--color-ink-soft)">{t}</span>
+                      <span className="font-medium text-(--color-ink-soft)">
+                        <Hidden>{UI_LABEL.up} </Hidden>
+                        {t}
+                        <Hidden>.</Hidden>
+                      </span>
                     </li>
                   ))}
                   <li className="flex items-start gap-1.5 text-[12px] leading-snug">
@@ -228,7 +259,11 @@ export function SetupScreen({
                     >
                       <Icon name="cross" size={9} />
                     </span>
-                    <span className="text-(--color-muted)">{o.tradeoff}</span>
+                    <span className="text-(--color-muted)">
+                      <Hidden>{UI_LABEL.down} </Hidden>
+                      {o.tradeoff}
+                      <Hidden>.</Hidden>
+                    </span>
                   </li>
                 </ul>
               </div>
@@ -257,7 +292,7 @@ export function SetupScreen({
             </button>
           );
         })}
-      </div>
+      </RadioGroup>
     </div>
   );
 }
@@ -295,7 +330,10 @@ export function InterludeScreen({
           </p>
         )}
         <p className={`eyebrow ${node.milestone ? "mt-3" : "mt-5"}`}>{node.eyebrow}</p>
-        <h1 className="mt-2.5 text-[32px] font-bold leading-[1.08] tracking-[-0.025em] text-(--color-ink)">
+        <h1
+          id={BEAT_TITLE_ID}
+          className="mt-2.5 text-[32px] font-bold leading-[1.08] tracking-[-0.025em] text-(--color-ink)"
+        >
           {node.title}
         </h1>
         <div className="mt-6 space-y-3.5">
@@ -408,7 +446,10 @@ export function EndingScreen({ state }: { state: GameState }) {
     <div className="mx-auto max-w-3xl px-5 py-8">
       <div className="anim-fade">
         <Eyebrow>How it ended</Eyebrow>
-        <h1 className="mt-2.5 text-[32px] font-bold leading-[1.1] tracking-[-0.025em] text-(--color-ink)">
+        <h1
+          id={BEAT_TITLE_ID}
+          className="mt-2.5 text-[32px] font-bold leading-[1.1] tracking-[-0.025em] text-(--color-ink)"
+        >
           {verdict.title}
         </h1>
         <p className="mt-4 text-[15px] leading-[1.6] text-(--color-ink-soft)">{verdict.summary}</p>

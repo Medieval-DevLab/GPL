@@ -175,18 +175,6 @@ export function availableOptions(mission: Mission, state: GameState): Option[] {
   return mission.options.filter((o) => evaluateCondition(o.requires, state.flags, state.dims));
 }
 
-/** Everything selectable on this mission, in display order. Drives keyboard shortcuts. */
-export function selectableIds(mission: Mission, state: GameState): string[] {
-  switch (mission.kind) {
-    case "choice":
-      return availableOptions(mission, state).map((o) => o.id);
-    case "investigate":
-      return mission.evidence.map((e) => e.id);
-    case "build":
-      return mission.components.map((c) => c.id);
-  }
-}
-
 /** How many things the current mission expects the player to select. */
 export function requiredSelectionCount(mission: Mission): number {
   switch (mission.kind) {
@@ -217,6 +205,18 @@ export function toggleSelection(state: GameState, content: Content, id: string):
 
   const limit = requiredSelectionCount(node);
   const already = state.selection.includes(id);
+
+  /**
+   * A single-pick option cannot be un-picked.
+   *
+   * It used to be: activating the selected card cleared the selection. That is wrong for
+   * a set where exactly one must be chosen, and it became visible when the option group
+   * gained radio semantics — a radio cannot be unchecked by activating it, so Space on
+   * the checked card left the group with nothing selected while still announcing itself
+   * as a radiogroup. Re-selecting is now a no-op, which is also what the keyboard's
+   * selection-follows-focus behaviour needs.
+   */
+  if (already && limit === 1) return state;
 
   // Changing your mind about the choice invalidates the call you made about it.
   if (already) {
