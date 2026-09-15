@@ -52,6 +52,9 @@ export const UI_LABEL = {
   ready: "Ready to commit.",
   pickTeam: "Pick your team's strength",
   teamPicked: "This is who you are for the rest of the run.",
+  /** recovering a run this build can no longer read — see engine/save.ts */
+  runCode: "Your run code",
+  continueFromCode: "Continue from this code",
 } as const;
 
 /** Visually-hidden text: what an icon or a dot row says to the eye and to nothing else. */

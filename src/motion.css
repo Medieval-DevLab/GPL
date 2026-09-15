@@ -1,0 +1,15 @@
+/**
+ * Motion.
+ *
+ * Its own file so it has a single owner and a single place to be audited. `index.css`
+ * holds the tokens; this holds everything that moves.
+ *
+ * Two standing rules, both learned the hard way in this project:
+ *
+ *  1. Committing a decision fired a 1,150ms SKELETON SHIMMER — the visual idiom of a
+ *     pending network request, in a deterministic game with no network. Motion here must
+ *     represent something that actually happened, never fake latency.
+ *  2. Every animation must collapse under `prefers-reduced-motion: reduce`. The harness
+ *     asserts it, and a beat whose meaning depends on movement is a beat some players
+ *     cannot read.
+ */

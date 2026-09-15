@@ -1,5 +1,7 @@
 /** Title, chapter interludes, and the closing debrief. */
 
+import { useState } from "react";
+
 import { story } from "../content/story";
 import { causalThreads, finalVerdict, ledger } from "../engine/engine";
 import {
@@ -33,11 +35,17 @@ export function TitleScreen({
   hasSave,
   onResume,
   chapters,
+  stale,
+  onCode,
 }: {
   onBegin: () => void;
   hasSave: boolean;
   onResume: () => void;
   chapters: Chapter[];
+  /** a save this build can no longer read, and what can be recovered from it */
+  stale?: { message: string; code: string | null; replayable: boolean } | null;
+  /** returns an error message, or null when the code was accepted */
+  onCode?: (code: string) => string | null;
 }) {
   return (
     <div className="mx-auto flex min-h-screen max-w-4xl flex-col justify-center px-5 py-14">
@@ -126,6 +134,59 @@ export function TitleScreen({
           </button>
         )}
       </div>
+
+      {stale && <StaleSave stale={stale} onCode={onCode} />}
+    </div>
+  );
+}
+
+/**
+ * A run this build can no longer read, and what is left of it.
+ *
+ * The save used to be keyed `gpl.save.v3`, so any content change voided every run in
+ * progress silently — ship a typo fix mid-cohort and the room resets with no explanation.
+ * Now a stale save says so, and hands back the run code it stored at save time: fourteen
+ * characters that replay the whole run, which exist only because the game is
+ * deterministic. `replayable` is false when the decision structure itself moved, and then
+ * this says that rather than offering a code the build will refuse.
+ */
+function StaleSave({
+  stale,
+  onCode,
+}: {
+  stale: { message: string; code: string | null; replayable: boolean };
+  onCode?: (code: string) => string | null;
+}) {
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <div
+      className="anim-fade mt-8 max-w-xl rounded-[14px] border px-5 py-4"
+      role="note"
+      style={{ borderColor: "var(--color-border-control)", background: "var(--color-panel)" }}
+    >
+      <p className="text-[13px] leading-relaxed text-(--color-ink-soft)">{stale.message}</p>
+      {stale.code && stale.replayable && onCode && (
+        <>
+          <p className="mt-2.5 text-[12px] font-bold uppercase tracking-[0.07em] text-(--color-muted)">
+            {UI_LABEL.runCode}
+          </p>
+          <p className="mt-1 text-[18px] font-bold tracking-[0.04em] text-(--color-ink)">
+            {stale.code}
+          </p>
+          <button
+            onClick={() => setError(onCode(stale.code as string))}
+            className="mt-3 rounded-xl border border-(--color-line-strong) bg-(--color-surface) px-4 py-2 text-[13px] font-semibold text-(--color-ink) transition-colors hover:bg-(--color-surface-sunk)"
+          >
+            {UI_LABEL.continueFromCode}
+          </button>
+          {error && (
+            <p role="alert" className="mt-2 text-[13px] text-(--color-risk-text)">
+              {error}
+            </p>
+          )}
+        </>
+      )}
     </div>
   );
 }

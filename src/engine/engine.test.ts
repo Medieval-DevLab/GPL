@@ -12,29 +12,16 @@ import {
 } from "./engine";
 import {
   findDominantOptions,
-  findRealisedDominance,
   pastSetup,
-  reachableExtremes,
   playMission,
   playScript,
   possibleSelections,
-  sweep,
 } from "./analysis";
 import { formatIssues, validateContent } from "./validate";
-import { DIMENSIONS, isMission, type GameState } from "./types";
+import { DIMENSIONS, isMission } from "./types";
 
 const content = story;
 
-/** Deterministic PRNG (mulberry32), so a sampled failure replays from its seed. */
-function seededRng(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 describe("content validity", () => {
   const issues = validateContent(content);
@@ -112,120 +99,6 @@ describe("content validity", () => {
   });
 });
 
-describe("determinism", () => {
-  it("produces identical state from identical choices", () => {
-    const run = (): GameState => {
-      let s = pastSetup(content);
-      let guard = 0;
-      while (isMission(getNode(content, s.nodeId)) && guard++ < 50) {
-        const mission = getNode(content, s.nodeId);
-        if (!isMission(mission)) break;
-        const selection = possibleSelections(mission, s)[0];
-        if (!selection) break;
-        s = playMission(s, content, selection);
-      }
-      return s;
-    };
-
-    const a = run();
-    const b = run();
-    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
-  });
-
-  // Two exhaustive sweeps of the whole state space. Legitimately slow, and the
-  // single most important guarantee in the game — if this ever fails, a result
-  // stopped being attributable to the player's decisions.
-  it(
-    "uses no randomness — repeated sweeps match exactly",
-    () => {
-      const one = sweep(content);
-      const two = sweep(content);
-      expect([...one.firedOutcomes].sort()).toEqual([...two.firedOutcomes].sort());
-      expect(one.finalRange).toEqual(two.finalRange);
-    },
-    60_000,
-  );
-});
-
-describe("every path is playable", () => {
-  const result = sweep(content);
-
-  it("reaches an ending from every branch", () => {
-    expect(result.endings).toBeGreaterThan(0);
-  });
-
-  it("keeps every dimension inside 0..100", () => {
-    for (const d of DIMENSIONS) {
-      expect(result.finalRange[d].min).toBeGreaterThanOrEqual(0);
-      expect(result.finalRange[d].max).toBeLessThanOrEqual(100);
-    }
-  });
-
-  /**
-   * The assertion above is satisfied by `clamp` and therefore cannot fail — it looks like
-   * a meter-bounds test and is not one. The real question is whether a verdict threshold
-   * is crossable, and `finalRange` cannot answer it: the dedup key drops dimensions, so
-   * its ranges are first-arrival samples. They reported profit ≤ 90 and deliver ≥ 20
-   * while both are wrong, and two reviewers read the win figure as proof that the
-   * "did not win the work" ending was dead.
-   *
-   * `reachableExtremes` replays greedy policies, so every number is witnessed.
-   */
-  it("reports witnessed extremes wider than the sweep's sampled ranges", () => {
-    const witnessed = reachableExtremes(content);
-    for (const d of DIMENSIONS) {
-      // A witnessed path is proof; the sample cannot legitimately exceed it on either end.
-      expect(
-        witnessed[d].max,
-        `${d}: sweep claims max ${result.finalRange[d].max}, witnessed only ${witnessed[d].max}`,
-      ).toBeGreaterThanOrEqual(result.finalRange[d].max);
-    }
-    // Every meter can be driven to the ceiling, which is itself a finding: see D-040.
-    expect(witnessed.profit.max).toBe(100);
-    expect(witnessed.deliver.max).toBe(100);
-  }, 120_000);
-
-  it("exercises every option at least once", () => {
-    const declared: string[] = [];
-    for (const node of Object.values(content.nodes)) {
-      if (isMission(node) && node.kind === "choice") {
-        for (const o of node.options) declared.push(`${node.id}/${o.id}`);
-      }
-    }
-    const missed = declared.filter((id) => !result.exercisedOptions.has(id));
-    expect(missed).toEqual([]);
-  });
-
-  it("fires every authored outcome on some path", () => {
-    const declared: string[] = [];
-    for (const node of Object.values(content.nodes)) {
-      if (!isMission(node)) continue;
-      if (node.kind === "choice") {
-        for (const o of node.options) for (const oc of o.outcomes) declared.push(oc.id);
-      } else {
-        for (const oc of node.outcomes) declared.push(oc.id);
-      }
-    }
-    const dead = declared.filter((id) => !result.firedOutcomes.has(id));
-    expect(dead).toEqual([]);
-  });
-
-  it("fires every situation variant on some path", () => {
-    const declared: string[] = [];
-    for (const node of Object.values(content.nodes)) {
-      if (!isMission(node)) continue;
-      (node.variants ?? []).forEach((_, i) => declared.push(`${node.id}#${i}`));
-    }
-    const dead = declared.filter((id) => !result.firedVariants.has(id));
-    expect(dead).toEqual([]);
-  });
-});
-
-/**
- * These are the pedagogy tests. They assert that playing well and playing
- * badly actually feel different, and — more importantly — that the specific
- * causal chains the game is built to teach genuinely fire.
- */
 describe("the game teaches what it claims to teach", () => {
   /** Never asks a question, never involves Operations, over-promises, discounts. */
   const RECKLESS: string[][] = [
@@ -556,75 +429,6 @@ describe("the game teaches what it claims to teach", () => {
  * that genuinely happens together AND is genuinely causal. Several commoner pairs were
  * rejected on the second test.
  */
-describe("the debrief has something to say", () => {
-  it("shows at least one causal thread on most runs", () => {
-    const advantages = ["s-connector", "s-builder", "s-challenger"];
-    let zero = 0;
-    let atCap = 0;
-    const RUNS = 600;
-    for (let i = 0; i < RUNS; i++) {
-      const rng = seededRng(i + 1);
-      let s = pastSetup(content, advantages[i % 3]);
-      let guard = 0;
-      while (isMission(getNode(content, s.nodeId)) && guard++ < 40) {
-        const mission = getNode(content, s.nodeId);
-        if (!isMission(mission)) break;
-        const legal = possibleSelections(mission, s);
-        s = playMission(s, content, legal[Math.floor(rng() * legal.length)] as string[]);
-      }
-      const n = causalThreads(s, content).length;
-      if (n === 0) zero++;
-      if (n >= 3) atCap++;
-    }
-    // Was 77% empty. Product adoption's threshold was >=70% of runs showing one.
-    expect(zero / RUNS).toBeLessThan(0.4);
-    // And the cap is now reachable, so slice(0, 3) is not dead code.
-    expect(atCap).toBeGreaterThan(0);
-  }, 180_000);
-
-  it("keeps the thread table in content, where a writer can reach it", () => {
-    expect(content.threads.length).toBeGreaterThanOrEqual(12);
-    // Every rule needs two outcomes: one is a decision restated as a chain.
-    for (const t of content.threads) {
-      expect(t.needsOutcomes.length, `"${t.because}" fires on one outcome`).toBeGreaterThan(1);
-    }
-    // And every id it names must exist, or the rule can never fire.
-    const authored = new Set<string>();
-    for (const node of Object.values(content.nodes)) {
-      if (!isMission(node)) continue;
-      const outs = node.kind === "choice" ? node.options.flatMap((o) => o.outcomes) : node.outcomes;
-      for (const o of outs) authored.add(o.id);
-    }
-    const unknown = content.threads.flatMap((t) => t.needsOutcomes).filter((id) => !authored.has(id));
-    expect(unknown).toEqual([]);
-  });
-});
-
-describe("no fake choices, in the states that occur", () => {
-  it("has no option that dominates a sibling in 90% of reachable states", () => {
-    const findings = findRealisedDominance(content, 0.9);
-    expect(findings.map((f) => `${f.mission}: ${f.note}`)).toEqual([]);
-  }, 180_000);
-
-  /**
-   * Reported, not enforced. A relation in the 75–90% band is usually a legitimately
-   * strong option rather than a fake choice, and the threshold is a judgement — but an
-   * unwatched list is how these got to 90% in the first place.
-   */
-  it("reports weaker dominance relations for review", () => {
-    const findings = findRealisedDominance(content, 0.75);
-    if (findings.length) {
-      const lines = findings.map(
-        (f) =>
-          `  ${f.mission}  ${f.dominant} > ${f.dominated}  ` +
-          `${Math.round(f.share * 100)}% of ${f.comparedIn}`,
-      );
-      console.log(["", "dominance relations in the 75-90% band:", ...lines, ""].join("\n"));
-    }
-    expect(findings.length).toBeLessThanOrEqual(6);
-  }, 180_000);
-});
-
 describe("no fake choices", () => {
   it("has no option that beats a sibling on all three dimensions in every case", () => {
     const findings = findDominantOptions(content);

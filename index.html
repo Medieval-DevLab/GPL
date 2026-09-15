@@ -9,13 +9,67 @@
       name="description"
       content="A short game about how work really moves through a consulting firm: from a client you have never met, to a promise you have to keep."
     />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- One family. No mockup contains a serif, and we had one for display type. -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap"
-      rel="stylesheet"
-    />
+    <!--
+      Inter, self-hosted. One family. No mockup contains a serif, and we had one for
+      display type.
+
+      It used to arrive from fonts.googleapis.com at runtime, which fails in both places
+      this game is actually played: a locked-down LMS with no egress, and a zip on a
+      colleague's laptop. In both of those, every type, air and contrast measurement in
+      docs/DESIGN-SYSTEM.md was being taken against a font the cohort never received —
+      they read the game in Segoe UI.
+
+      The file is byte-identical to the `latin` subset Chrome fetched from Google for this
+      page (fonts.gstatic.com/s/inter/v20/UcCo3FwrK3iLTcviYwY.woff2 — 72,920 bytes,
+      SHA-256 2c295d99e26dcf357d4d01bcf270fd6924b600c9a13dd8c363ef114f4c6976fa), so the
+      type system does not change: same variable font, same opsz and wght axes, same
+      subset. Only the origin moves. Its licence travels with it in public/fonts/OFL.txt,
+      because SIL OFL 1.1 requires that of anyone redistributing the file — which is what
+      self-hosting means.
+
+      Declared 400–700 because that is the range the interface uses (measured: 65
+      font-bold, 10 font-medium, 6 font-semibold, the rest inherited 400). The old link
+      also asked Google for 800, which no component has ever used.
+
+      `unicode-range` is copied from Google's own stylesheet and is load-bearing. Without
+      it the browser believes this one file covers every character, and paints tofu for
+      the arrows, the delta and the geometric glyphs the interface uses (→ ▲ ◆ ● Δ ≥)
+      instead of falling back to the system font the way it does today.
+    -->
+    <style>
+      @font-face {
+        font-family: "Inter";
+        font-style: normal;
+        font-weight: 400 700;
+        font-display: swap;
+        src: url("/fonts/inter-latin-var.woff2") format("woff2");
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+          U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+          U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+    </style>
+    <!--
+      Ask for the font now, instead of when React first paints text.
+
+      A font is only fetched when something needs a glyph from it, and in a client-
+      rendered game that is several hundred milliseconds after the document arrives —
+      long enough for a whole screen to paint in the fallback and then reflow.
+
+      `<link rel="preload" as="font">` is the usual answer and it cannot be used here.
+      A font is always fetched in CORS mode, so a preload only matches the real request
+      if it carries `crossorigin` — and `crossorigin` is precisely the attribute that
+      makes Chromium refuse a file:// subresource. Measured, on the built page opened as
+      a file: with `crossorigin` the preload logs two console errors and is then ignored
+      ("the request credentials mode does not match"); without it the preload is ignored
+      over http instead and the font is fetched twice. Two lines of the Font Loading API
+      do the same job with no attribute at all, and come out clean in both places.
+    -->
+    <script>
+      if (document.fonts) {
+        document.fonts.load('400 1em "Inter"');
+        document.fonts.load('700 1em "Inter"');
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

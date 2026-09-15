@@ -1,6 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { story } from "./content/story";
+import { decodeRun } from "./engine/runcode";
+import {
+  LEGACY_SAVE_KEYS,
+  decodeSave,
+  encodeSave,
+  saveKey,
+  type LoadOutcome,
+} from "./engine/save";
 import {
   advance,
   canCommit,
@@ -45,7 +53,16 @@ import {
   UI_LABEL,
 } from "./ui/shell";
 
-const STORAGE_KEY = "gpl.save.v3";
+/**
+ * The save key no longer carries a version, because the version is now inside the file.
+ *
+ * It was `gpl.save.v3`, which meant every content change silently voided every
+ * in-progress save: ship a typo fix mid-cohort and the room resets with no message. The
+ * envelope carries a schema version and two content fingerprints instead, so a stale save
+ * can say so — and can hand the player the run code it stored at save time, which is
+ * fourteen characters and replays the whole run.
+ */
+const STORAGE_KEY = saveKey();
 const content = story;
 
 function chapterFor(number: number): Chapter {
@@ -54,22 +71,15 @@ function chapterFor(number: number): Chapter {
   );
 }
 
-function loadSave(): GameState | null {
+function loadSave(): LoadOutcome {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as GameState;
-    // Cheap sanity check — a save from older content must not half-load.
-    if (
-      !parsed ||
-      typeof parsed.nodeId !== "string" ||
-      !content.nodes[parsed.nodeId]
-    )
-      return null;
-    if (parsed.phase === "title") return null;
-    return parsed;
+    const raw =
+      window.localStorage.getItem(STORAGE_KEY) ??
+      LEGACY_SAVE_KEYS.map((k) => window.localStorage.getItem(k)).find((v) => v !== null) ??
+      null;
+    return decodeSave(raw, content);
   } catch {
-    return null;
+    return { status: "empty" };
   }
 }
 
@@ -140,19 +150,19 @@ export default function App() {
   const [state, setState] = useState<GameState>(() =>
     createInitialState(content),
   );
-  const savedRef = useRef<GameState | null>(null);
-  const [hasSave, setHasSave] = useState(false);
+  const [saved, setSaved] = useState<LoadOutcome>({ status: "empty" });
 
   useEffect(() => {
-    const save = loadSave();
-    savedRef.current = save;
-    setHasSave(save !== null);
+    setSaved(loadSave());
   }, []);
 
   useEffect(() => {
     if (state.phase === "title") return;
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      window.localStorage.setItem(STORAGE_KEY, encodeSave(state, content));
+      /* The migration only closes once the old copy is gone, or a later load would keep
+         adopting a bare state that has no fingerprint and cannot be checked. */
+      for (const k of LEGACY_SAVE_KEYS) window.localStorage.removeItem(k);
     } catch {
       /* storage unavailable — the game still works, it just will not resume */
     }
@@ -179,16 +189,32 @@ export default function App() {
   const doRestart = useCallback(() => {
     try {
       window.localStorage.removeItem(STORAGE_KEY);
+      for (const k of LEGACY_SAVE_KEYS) window.localStorage.removeItem(k);
     } catch {
       /* ignore */
     }
-    savedRef.current = null;
-    setHasSave(false);
+    setSaved({ status: "empty" });
     setState(createInitialState(content));
   }, []);
 
   const doResume = useCallback(() => {
-    if (savedRef.current) setState(savedRef.current);
+    if (saved.status === "ok") setState(saved.state);
+  }, [saved]);
+
+  /**
+   * Resume from a run code.
+   *
+   * The whole run is fourteen characters, because the game is deterministic: the code is
+   * the list of decisions, not the state. That is what makes a stale save recoverable, a
+   * bug reproducible from a bug report, and a cohort comparable without a backend.
+   * `decodeRun` returns a reason rather than throwing, so a mistyped code says which
+   * character class failed instead of quietly playing somebody else's run.
+   */
+  const doCode = useCallback((code: string): string | null => {
+    const read = decodeRun(content, code);
+    if (!read.ok) return read.message;
+    setState(read.state);
+    return null;
   }, []);
 
   /**
@@ -249,8 +275,10 @@ export default function App() {
     return wideEnough ? (
       <TitleScreen
         onBegin={doAdvance}
-        hasSave={hasSave}
+        hasSave={saved.status === "ok"}
         onResume={doResume}
+        stale={saved.status === "stale" ? saved : null}
+        onCode={doCode}
         chapters={content.chapters}
       />
     ) : (
