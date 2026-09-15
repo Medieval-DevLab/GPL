@@ -847,7 +847,7 @@ const nodes: GameNode[] = [
         "A competitor's move is information. Reacting to all of it makes you thrash; reacting to none of it makes you irrelevant.",
       watchFor: "Ask what actually changed — the facts, or just the noise.",
     },
-    next: "int-3",
+    next: "m5b",
   },
 
   /* ══════════════════════════ CHAPTER 3 ══════════════════════════ */
@@ -993,7 +993,7 @@ const nodes: GameNode[] = [
         "Their brief described a symptom they could see. The job is to work out whether that is where the damage actually is — and then to be able to show it.",
       watchFor: "Ask what evidence you would need before you are allowed to disagree with the brief.",
     },
-    next: "m7",
+    next: "m6b",
   },
 
   {
@@ -1128,7 +1128,7 @@ const nodes: GameNode[] = [
         "Every component you chose made the proposal more attractive, harder to deliver, or less profitable. There was no option that did all three well — that is not a flaw in the choices, it is the actual job.",
       watchFor: "Notice which parts of a proposal exist to win it, and which exist to survive it.",
     },
-    next: "int-4",
+    next: "m7b",
   },
 
   /* ══════════════════════════ CHAPTER 4 ══════════════════════════ */
@@ -1496,7 +1496,7 @@ const nodes: GameNode[] = [
         "Every option here cost something — margin, scope, or goodwill. All of them cost less now than the same problem will cost in month five of delivery.",
       watchFor: "When a review flags something, notice whether you are solving it or just recording it.",
     },
-    next: "int-5",
+    next: "m9b",
   },
 
   /* ══════════════════════════ CHAPTER 5 ══════════════════════════ */
@@ -1708,6 +1708,938 @@ const nodes: GameNode[] = [
         "What went wrong in month five was not a delivery mistake. It was the arithmetic of choices made during qualification, solutioning and pricing, arriving on schedule.",
       watchFor: "When you make a commitment, ask who has to keep it and whether they know yet.",
     },
+    next: "m10b",
+  },
+
+  /* ═════════════ missions restored from the PRD (see D-020) ═════════════ */
+
+  /**
+   * PRD M8 — prioritisation. "Where should we spend our limited attention?"
+   *
+   * Doubles as the recovery beat: everything here feeds a flag that a later mission
+   * reads, so a player who spent their two questions badly in M2 gets one more chance
+   * to acquire what they need. Failure has a route forward (PRD pp. 174–175).
+   */
+  {
+    kind: "build",
+    id: "m5b",
+    chapter: 2,
+    stage: "opportunity",
+    title: "Where the team actually goes",
+    eyebrow: "Prioritisation",
+    objective: "Fund two of five before the proposal.",
+    minutes: 4,
+    hero: "solution-workshop",
+    situation: [
+      "Sarah wants five things done before you propose. Your people have a fortnight and there is room for two.",
+      "Nobody will tell you which two. The other three simply will not happen.",
+    ],
+    advisor: RIYA,
+    consider: [
+      "Which of these changes what we propose?",
+      "What do we still not know?",
+      "Which would we regret skipping in month five?",
+    ],
+    tip: "We cannot do everything. Choosing what not to do is the decision.",
+    prompt: "Two of five. The other three do not happen.",
+    question: "What do you fund?",
+    pick: 2,
+    components: [
+      {
+        id: "c-ops-workshop",
+        title: "A workshop with Operations",
+        description: "Get Marcus Reed and his leads in a room before anything is written down.",
+        tag: "Unglamorous",
+        dims: { deliver: 8, win: 2, profit: -2 },
+        flags: ["ops_engaged"],
+      },
+      {
+        id: "c-benchmark",
+        title: "Benchmark the competition",
+        description: "Work out precisely what the rival's platform does and does not cover.",
+        tag: "Intelligence",
+        dims: { win: 6, profit: -1 },
+        flags: ["knows:rival_gap"],
+      },
+      {
+        id: "c-reference",
+        title: "A reference visit",
+        description: "Take Sarah to a retailer where you have already done this.",
+        tag: "Proof",
+        dims: { win: 7, profit: -3 },
+        flags: ["credibility"],
+      },
+      {
+        id: "c-data-audit",
+        title: "Audit their data",
+        description: "Find out whether the order and returns data is usable at all.",
+        tag: "Foundation",
+        dims: { deliver: 6, profit: 3, win: -2 },
+        flags: ["has:data"],
+      },
+      {
+        id: "c-stakeholders",
+        title: "Map the stakeholders",
+        description: "Who signs, who blocks, who has to live with it afterwards.",
+        tag: "Political",
+        dims: { deliver: 5, win: 3 },
+        flags: ["knows:ops_constraint"],
+      },
+    ],
+    outcomes: [
+      {
+        id: "m5b-grounded",
+        when: { all: ["ops_engaged", "has:data"] },
+        tone: "strong",
+        headline: "You bought the two things nobody else will have.",
+        detail:
+          "Operations has been in a room with you, and you know what their data can actually support. Neither is impressive in a pitch. Both are the difference between a proposal and a promise.",
+        changed: [
+          "Operations has met you before the proposal lands",
+          "You know what the data can and cannot do",
+        ],
+        effect: { dims: { deliver: 4 }, badge: "smart_tradeoff" },
+      },
+      {
+        id: "m5b-persuasion",
+        when: { all: ["credibility", "knows:rival_gap"] },
+        tone: "strong",
+        headline: "You have built the argument, not the plan.",
+        detail:
+          "Sarah has seen the work in a real store and you can name exactly where the rival falls short. You are going to win the room. Nobody has yet checked whether you can deliver what you are about to promise.",
+        changed: ["A strong case with the sponsor", "Nothing tested about delivery"],
+        effect: { dims: { win: 5, deliver: -3 } },
+      },
+      {
+        id: "m5b-spread",
+        tone: "mixed",
+        headline: "Two useful weeks, and the gaps that are left are the ones you chose.",
+        detail:
+          "Both pieces of work land. What matters now is the three you did not fund — because the proposal has to be written as though you know those things anyway.",
+        changed: ["Two things you now know", "Three assumptions still standing"],
+        effect: { dims: { win: 2, deliver: 1 } },
+      },
+    ],
+    lesson: {
+      principle: "Deciding what not to do is the harder half of prioritising.",
+      because:
+        "Every one of those five was worth doing. Choosing two meant deciding which three gaps you were willing to carry into a contract.",
+      watchFor: "When you cannot do everything, name what you are choosing to be ignorant about.",
+    },
+    next: "int-3",
+  },
+
+  /** PRD M12 — the innovation mission: "no single obvious button". */
+  {
+    kind: "choice",
+    id: "m6b",
+    chapter: 3,
+    stage: "solution",
+    title: "Is there another way to do this?",
+    eyebrow: "Think differently",
+    objective: "Find a shape nobody else will propose.",
+    minutes: 4,
+    hero: "solution-screen",
+    situation: [
+      "Two firms are proposing versions of the same thing. There is a third way to answer this, and it is not on anybody's slide yet.",
+    ],
+    advisor: ARJUN,
+    consider: [
+      "What would we do if we could not staff it?",
+      "Who else already solved part of this?",
+      "What would make us the only credible answer?",
+    ],
+    tip: "The interesting answers are usually the ones that change the shape of the deal.",
+    prompt: "None of these is the safe option. That is the point.",
+    question: "What do you bring them?",
+    options: [
+      {
+        id: "o-partner",
+        title: "Bring in a logistics partner",
+        icon: "talk",
+        description: "Team with a specialist who already runs returns at this scale.",
+        commits: "Shared margin and a dependency you do not control.",
+        pros: ["Real delivery capability", "Credible immediately"],
+        cons: ["Margin split", "A dependency you cannot control"],
+        cost: { time: 2, investment: 2 },
+        outcomes: [
+          {
+            id: "m6b-partner-fit",
+            when: { any: ["knows:real_pain", "has:data"] },
+            tone: "strong",
+            headline: "The partner makes your weakest claim your strongest.",
+            detail:
+              "You know the pain is operational, and now the operational answer comes from people who do it for a living. Sarah stops asking whether you can deliver it and starts asking when.",
+            changed: ["Delivery capability is no longer a question", "Margin shared with a partner"],
+            effect: { dims: { win: 9, deliver: 8, profit: -6 }, flags: ["has:partner"] },
+          },
+          {
+            id: "m6b-partner-loose",
+            tone: "mixed",
+            headline: "A capable partner, attached to a problem you have not pinned down.",
+            detail:
+              "They are good and they are expensive. Without a clear read on what is actually broken, you are paying a specialist to solve a problem you have described in general terms.",
+            changed: ["Capability bought", "Margin shared before the problem is clear"],
+            effect: { dims: { win: 4, deliver: 4, profit: -7 }, flags: ["has:partner"] },
+          },
+        ],
+      },
+      {
+        id: "o-reuse",
+        title: "Reuse what you already built",
+        icon: "layers",
+        description: "Adapt the returns platform your team built for another retailer.",
+        commits: "A solution shaped by somebody else's business.",
+        pros: ["Fast and cheap", "Already proven once"],
+        cons: ["Fits another client's shape", "Looks off-the-shelf"],
+        cost: { time: 1, investment: 1 },
+        outcomes: [
+          {
+            id: "m6b-reuse",
+            tone: "mixed",
+            headline: "Cheap, fast, and visibly second-hand.",
+            detail:
+              "It works, and it costs a fraction of building new. It also solves the last client's problem rather than this one, and Sarah notices the gap between what it does and what she asked for.",
+            changed: ["Strong margin", "A solution that fits imperfectly"],
+            effect: { dims: { profit: 10, deliver: 5, win: -5 }, flags: ["reused_asset"] },
+            lesson: {
+              principle: "Reuse is leverage until it becomes a substitute for thinking.",
+              because:
+                "The asset was real and the saving was real. It answered a question this client had not asked.",
+              watchFor: "Check whether you are reusing the solution or reusing the diagnosis.",
+            },
+          },
+        ],
+      },
+      {
+        id: "o-outcome-deal",
+        title: "Price it on the outcome",
+        icon: "scale",
+        description: "Tie a third of the fee to the fall in support contacts.",
+        commits: "You get paid only if it works.",
+        pros: ["Nobody else will offer it", "Total alignment"],
+        cons: ["You carry the risk", "Needs measurement to exist"],
+        cost: { time: 2, investment: 3 },
+        outcomes: [
+          {
+            id: "m6b-outcome-measurable",
+            when: { all: ["has:data"] },
+            tone: "strong",
+            headline: "You can offer it because you can measure it.",
+            detail:
+              "An outcome deal is only honest if both sides trust the number. You audited their data, so there is a baseline everyone believes. Sarah's board finds it very hard to say no to.",
+            changed: ["A proposal nobody can compare", "A third of the fee now depends on results"],
+            effect: {
+              dims: { win: 13, profit: -3, deliver: 2 },
+              flags: ["outcome_based"],
+              badge: "connected_dots",
+            },
+          },
+          {
+            id: "m6b-outcome-blind",
+            tone: "hard",
+            headline: "You have bet a third of the fee on a number nobody can agree.",
+            detail:
+              "The idea is genuinely strong. But there is no trusted baseline for support contacts, so the first argument of the delivery will be about what the measurement means — and you will be having it with your own money on the table.",
+            changed: ["A distinctive offer", "A third of the fee tied to an undefined number"],
+            effect: { dims: { win: 6, profit: -10, deliver: -4 }, flags: ["outcome_based"] },
+          },
+        ],
+      },
+      {
+        id: "o-conventional",
+        title: "Keep it conventional",
+        icon: "shield",
+        description: "A well-built version of what everyone else is proposing.",
+        commits: "You compete on execution and price alone.",
+        pros: ["Nothing to explain", "Lowest risk"],
+        cons: ["Directly comparable", "No reason to pick you"],
+        cost: { time: 1, investment: 1 },
+        outcomes: [
+          {
+            id: "m6b-conventional",
+            tone: "mixed",
+            headline: "Solid, and entirely expected.",
+            detail:
+              "There is nothing wrong with it, which is the problem. Three firms are now offering the same shape of answer, and the only remaining variables are price and who the client likes.",
+            changed: ["A defensible proposal", "Nothing that distinguishes it"],
+            effect: { dims: { deliver: 4, profit: 3, win: -4 }, flags: ["conventional"] },
+          },
+        ],
+      },
+    ],
+    lesson: {
+      principle: "The shape of a deal is a design decision, not a given.",
+      because:
+        "Who delivers it, what you reuse, and how you get paid are all choices — and each one changes what you are competing on.",
+      watchFor: "When every firm is answering the same question, look at what else could be moved.",
+    },
+    next: "m7",
+  },
+
+  /**
+   * PRD M13 — the solution review. "The first time all three become visible together."
+   *
+   * The player has been watching the three factors all game, so the reveal the PRD
+   * intended is spent. What this mission does instead is make the imbalance *actionable*:
+   * the review names which one is weakest and asks what you will give up to fix it.
+   */
+  {
+    kind: "choice",
+    id: "m7b",
+    chapter: 3,
+    stage: "solution",
+    title: "The internal review",
+    eyebrow: "Before it goes out",
+    objective: "Rebalance the proposal, or defend it.",
+    minutes: 3,
+    hero: "hero-boardroom",
+    situation: [
+      "Your own people read the proposal before the client does. They are not impressed by it and they are not trying to be.",
+      "One of the three is visibly weaker than the others. You can spend a week fixing it.",
+    ],
+    variants: [
+      {
+        when: { all: ["scope:heavy"], none: ["has:ops_workstream"] },
+        situation: [
+          "Your own people read the proposal before the client does.",
+          "The room keeps returning to the same thing: this promises to rebuild the systems at the centre of their operation, and nothing in it says how those changes reach production.",
+        ],
+      },
+      {
+        // Gated on promised:fast, not on discounted — m7b runs BEFORE the pricing
+        // mission, so a flag written in m8 can never be set here. The sweep caught it.
+        when: { all: ["promised:fast"] },
+        situation: [
+          "Your own people read the proposal before the client does.",
+          "The eight-week pilot is what the room keeps coming back to. Everyone likes it. Nobody can point at the line that says how the data gets ready in time.",
+        ],
+      },
+      {
+        when: { all: ["ops_onside", "evidenced"] },
+        situation: [
+          "Your own people read the proposal before the client does.",
+          "It is a good document. The challenge from the room is the opposite of the usual one: is it ambitious enough to be worth their year, or have you priced yourself into a safe, small piece of work?",
+        ],
+      },
+    ],
+    advisor: ARJUN,
+    consider: [
+      "Which of the three is actually weakest?",
+      "What would fixing it cost the other two?",
+      "Is the review right, or just cautious?",
+    ],
+    tip: "A review is free advice from people with nothing to sell you.",
+    prompt: "A week to spend, or a case to make.",
+    question: "What do you do with the week?",
+    options: [
+      {
+        id: "o-shore-deliver",
+        title: "Shore up the delivery case",
+        icon: "shield",
+        description: "Add the integration detail, the named people, the testing plan.",
+        commits: "A longer, less exciting document.",
+        pros: ["Survives the review", "Delivery inherits a plan"],
+        cons: ["Reads as cautious", "Costs a week of selling"],
+        cost: { time: 2, investment: 1 },
+        outcomes: [
+          {
+            id: "m7b-shore",
+            tone: "strong",
+            headline: "It is duller, and it will hold.",
+            detail:
+              "Nobody wins a pitch on a testing plan. But the reviewers stop objecting, and the people who will deliver this can now see how it is meant to work.",
+            changed: ["Delivery risk materially reduced", "A week not spent on the client"],
+            effect: { dims: { deliver: 10, win: -3 }, flags: ["reviewed"] },
+          },
+        ],
+      },
+      {
+        id: "o-sharpen-win",
+        title: "Sharpen the argument",
+        icon: "spark",
+        description: "Spend the week making the case land harder with Sarah's board.",
+        commits: "The weaknesses stay where they are.",
+        pros: ["Better chance of winning", "Sponsor gets ammunition"],
+        cons: ["Nothing underneath improves", "Reviewers stay unhappy"],
+        cost: { time: 2, investment: 1 },
+        outcomes: [
+          {
+            id: "m7b-sharpen-risky",
+            when: { any: ["scope:heavy", "promised:fast", "discounted"] },
+            tone: "hard",
+            headline: "A better pitch for a proposal that was already thin.",
+            detail:
+              "You have made the document more persuasive without making it more true. The reviewers put their concerns in writing and stop arguing, which is worse than them arguing.",
+            changed: ["A stronger pitch", "A documented internal objection you overrode"],
+            effect: { dims: { win: 8, deliver: -7 }, flags: ["overrode_review"] },
+          },
+          {
+            id: "m7b-sharpen-ok",
+            tone: "mixed",
+            headline: "The case is tighter. The gaps are the same size.",
+            detail:
+              "It is a better read than it was, and the underlying proposal has not changed. Since it was reasonably solid to begin with, that is a defensible use of a week.",
+            changed: ["A more persuasive proposal", "The same underlying gaps"],
+            effect: { dims: { win: 7, deliver: -2 } },
+          },
+        ],
+      },
+      {
+        id: "o-trim-profit",
+        title: "Protect the margin",
+        icon: "coins",
+        description: "Rework the commercial case so the numbers survive a bad month.",
+        commits: "A smaller, more careful offer.",
+        pros: ["Contingency restored", "Survives a surprise"],
+        cons: ["Less to offer the client", "Reads as small"],
+        cost: { time: 2, investment: 1 },
+        outcomes: [
+          {
+            id: "m7b-trim",
+            tone: "mixed",
+            headline: "The numbers work. The proposal is smaller.",
+            detail:
+              "You have put slack back into the commercial case, which is the single most useful thing you can do for a programme that has not started. It also means offering less than the firm across town.",
+            changed: ["Contingency restored", "A less ambitious offer"],
+            effect: { dims: { profit: 10, win: -5, deliver: 3 }, flags: ["reviewed"] },
+          },
+        ],
+      },
+      {
+        id: "o-defend",
+        title: "Defend it as it stands",
+        icon: "block",
+        description: "Tell the review you have weighed this and you are comfortable.",
+        commits: "You own the objections from here.",
+        pros: ["Keeps the week", "Goes out on your terms"],
+        cons: ["You own every gap", "Only right if you are right"],
+        cost: { time: 1, investment: 1 },
+        outcomes: [
+          {
+            id: "m7b-defend-earned",
+            when: { all: ["ops_onside"], none: ["scope:heavy", "discounted"] },
+            tone: "strong",
+            headline: "You had the standing to say no, and you used it.",
+            detail:
+              "The reviewers were being careful, which is their job. Your proposal already has Operations inside it and a commercial case with room in it, so there was nothing to fix and a week to save.",
+            changed: ["A week saved", "You backed your own judgement"],
+            effect: { dims: { win: 4, profit: 4 }, badge: "held_nerve" },
+          },
+          {
+            id: "m7b-defend-hubris",
+            tone: "hard",
+            headline: "You overruled the only people who had nothing to sell you.",
+            detail:
+              "The review had no interest in the pitch and no stake in the number. They read the document cold and told you what was wrong with it, and you decided you knew better.",
+            changed: ["A week saved", "Every flagged gap is now yours"],
+            effect: { dims: { deliver: -9, win: 2 }, flags: ["overrode_review"] },
+            lesson: {
+              principle: "Take the free advice from the people with nothing to sell you.",
+              because:
+                "The deal team wanted to win it and the reviewers did not care whether you did. That is precisely what made them worth listening to.",
+              watchFor: "When you overrule a review, write down what you are betting will not happen.",
+            },
+          },
+        ],
+      },
+    ],
+    lesson: {
+      principle: "A week before signature buys more than a month after it.",
+      because:
+        "Whatever you spent the week on, it was cheap. The same fix during delivery costs a renegotiation, and the same gap left open costs a client.",
+      watchFor: "Ask which of the three your proposal is weakest on, before somebody else does.",
+    },
+    next: "int-4",
+  },
+
+  /**
+   * PRD M17 — the deal decision, and the reason it has to exist:
+   *
+   *   "Walking away must sometimes be a good decision. Otherwise the game teaches:
+   *    Always accept the contract." (p. 132)
+   *
+   * So walking away is genuinely strong when the deal has become bad, and genuinely
+   * costly when it has not. `m9b-walk-right` and `m9b-walk-wrong` are the same action
+   * with opposite verdicts, decided entirely by what the player did earlier.
+   */
+  {
+    kind: "choice",
+    id: "m9b",
+    chapter: 4,
+    stage: "deal",
+    title: "Do we take it?",
+    eyebrow: "The last gate",
+    objective: "Decide whether this is a deal worth signing.",
+    minutes: 4,
+    hero: "hero-negotiation",
+    situation: [
+      "Everything is agreed. Nothing is signed. This is the last moment at which saying no costs you nothing but the pursuit.",
+      "Read your own position honestly before you answer.",
+    ],
+    variants: [
+      {
+        when: { any: ["discounted", "thin_mitigation"], all: ["risk_accepted"] },
+        situation: [
+          "Everything is agreed. Nothing is signed.",
+          "Look at what this has become: margin given away to close a gap, and a risk the review flagged that nobody has funded. Somebody will deliver this, and it will not be the team that sold it.",
+        ],
+      },
+      {
+        when: { all: ["ops_onside", "evidenced"] },
+        situation: [
+          "Everything is agreed. Nothing is signed.",
+          "This one is in good shape. Operations is inside the proposal, the argument came from their own data, and the commercial case has room in it. The only question left is whether you want the work.",
+        ],
+      },
+    ],
+    saidQuote: {
+      text: "We are ready to sign. I would rather hear a problem from you now than in six months.",
+      attribution: "Sarah Lim · Chief Transformation Officer, Orion Retail",
+    },
+    concerns: [
+      "Everything after this is expensive to change",
+      "Delivery inherits every sentence",
+      "Saying no now costs only the pursuit",
+    ],
+    advisor: RIYA_DEAL,
+    consider: [
+      "Would we staff this ourselves?",
+      "What has the deal become since we started?",
+      "Is saying no still available?",
+    ],
+    tip: "The last cheap moment to say no is the moment before you sign.",
+    prompt: "No is a real answer here.",
+    question: "What is your call?",
+    options: [
+      {
+        id: "o-proceed",
+        title: "Proceed as agreed",
+        icon: "check",
+        description: "Sign it as it stands and get on with the work.",
+        commits: "Everything in the document becomes a commitment.",
+        pros: ["Momentum kept", "Relationship intact"],
+        cons: ["Every gap is now contractual"],
+        cost: { time: 1, investment: 1 },
+        outcomes: [
+          {
+            id: "m9b-proceed-sound",
+            when: { any: ["ops_onside", "evidenced", "reviewed"] },
+            tone: "strong",
+            headline: "Signed, and worth signing.",
+            detail:
+              "You are taking on work you understand, with the people who have to deliver it already involved. That is a better position than most teams are in on the day they sign.",
+            changed: ["Contract signed", "Delivery starts from a position you built"],
+            effect: { dims: { win: 6, profit: 2 }, flags: ["signed"] },
+          },
+          {
+            id: "m9b-proceed-loaded",
+            tone: "mixed",
+            headline: "Signed, with everything you did not fix now written down.",
+            detail:
+              "The deal is real and so are its gaps. Nothing here is fatal on its own; the question is how many of them arrive in the same month.",
+            changed: ["Contract signed", "The known gaps are now contractual"],
+            effect: { dims: { win: 7, deliver: -3 }, flags: ["signed"] },
+          },
+        ],
+      },
+      {
+        id: "o-modify",
+        title: "Modify before signing",
+        icon: "scale",
+        description: "Reopen the two clauses you are least comfortable with.",
+        commits: "A fortnight of delay and a slightly cooler client.",
+        pros: ["Fixes it while it is cheap", "Honest about the risk"],
+        cons: ["Delays the start", "Reopens a settled deal"],
+        cost: { time: 2, investment: 2 },
+        outcomes: [
+          {
+            id: "m9b-modify-trusted",
+            when: { any: ["credibility", "ops_engaged", "evidenced"] },
+            tone: "strong",
+            headline: "She takes the call, because you have earned it.",
+            detail:
+              "Reopening a signed-in-principle deal is only survivable if the client believes you are doing it for the programme rather than for the margin. Sarah does. Both clauses move.",
+            changed: ["Two real risks removed before signature", "Two weeks lost"],
+            effect: {
+              dims: { deliver: 9, profit: 4, win: -2 },
+              flags: ["signed", "reviewed"],
+              badge: "smart_tradeoff",
+            },
+          },
+          {
+            id: "m9b-modify-cold",
+            tone: "mixed",
+            headline: "You get one of the two, and it costs you warmth.",
+            detail:
+              "Procurement treats a late change as an attempt to improve your position. You get the clause that matters most and drop the other to keep the deal moving.",
+            changed: ["One risk removed", "The relationship is more transactional"],
+            effect: { dims: { deliver: 5, win: -5 }, flags: ["signed"] },
+          },
+        ],
+      },
+      {
+        id: "o-walk",
+        title: "Walk away",
+        icon: "block",
+        description: "Tell them honestly that this one is not worth signing.",
+        commits: "No contract, and the pursuit cost is gone for good.",
+        pros: ["Protects your people", "They will remember the honesty"],
+        cons: ["Nothing to show for the quarter", "The relationship cools"],
+        cost: { time: 1, investment: 1 },
+        outcomes: [
+          {
+            id: "m9b-walk-right",
+            when: { any: ["risk_accepted", "thin_mitigation", "unanchored", "overrode_review"] },
+            tone: "strong",
+            headline: "You stopped something that was going to hurt.",
+            detail:
+              "This deal had accumulated a shape nobody would have chosen deliberately. Saying so cost you a quarter and saved you a year — and Sarah, who has watched a programme die here before, understands exactly what you just did.",
+            changed: [
+              "No contract, and no loss-making delivery",
+              "Your people are free for work you can do well",
+              "Sarah will call you about the next one",
+            ],
+            effect: {
+              dims: { win: -18, profit: 16, deliver: 20 },
+              flags: ["walked_away"],
+              badge: "held_nerve",
+            },
+            lesson: {
+              principle: "Walking away is a decision, not a failure to decide.",
+              because:
+                "By the time you looked at this honestly it had a discount, an unfunded risk and no route into production. Signing it would have been the easy call and the wrong one.",
+              watchFor:
+                "Before signing, ask whether you would staff this yourself. If the answer is no, say so while saying no is still cheap.",
+            },
+            next: "end",
+          },
+          {
+            id: "m9b-walk-wrong",
+            tone: "hard",
+            headline: "You walked away from a deal that was fine.",
+            detail:
+              "Caution is not the same as judgement. This engagement was in decent shape — the people who had to deliver it were involved and the numbers worked — and you talked yourself out of a year of good work.",
+            changed: [
+              "No contract",
+              "A quarter of pursuit cost written off",
+              "A client who will be slower to call next time",
+            ],
+            effect: { dims: { win: -22, profit: -6, deliver: 8 }, flags: ["walked_away"] },
+            lesson: {
+              principle: "Discipline and timidity look identical until you check the position.",
+              because:
+                "Walking away is right when the deal has become bad. This one had not — you refused work you could have delivered well.",
+              watchFor: "Before you decline, name the specific thing you are unwilling to carry.",
+            },
+            next: "end",
+          },
+        ],
+      },
+    ],
+    lesson: {
+      principle: "Signing is a decision, and so is not signing.",
+      because:
+        "Everything before this was reversible. The signature is the line after which the promises belong to somebody else.",
+      watchFor: "Ask what the deal has become since you started chasing it.",
+    },
+    next: "int-5",
+  },
+
+  /** PRD M18 — the capacity problem. */
+  {
+    kind: "choice",
+    id: "m10b",
+    chapter: 5,
+    stage: "delivery",
+    title: "Two people short",
+    eyebrow: "Capacity",
+    objective: "Resource the programme you actually sold.",
+    minutes: 3,
+    hero: "solution-workshop",
+    situation: [
+      "The plan needs two more people than the firm has spare. One of your best is being pulled onto a bigger account and the replacement is available in six weeks.",
+    ],
+    advisor: AISHA,
+    consider: [
+      "Who actually has to be senior here?",
+      "What happens to the rest of the firm?",
+      "Does the client need to know?",
+    ],
+    tip: "Every plan assumes people. Check which of them exist.",
+    prompt: "Somebody is going to be disappointed.",
+    question: "How do you staff it?",
+    options: [
+      {
+        id: "o-juniors",
+        title: "Staff it with juniors and supervise",
+        icon: "people",
+        description: "Two graduates plus more of your own time reviewing their work.",
+        commits: "Your attention, for the whole programme.",
+        pros: ["Available now", "Cheap"],
+        cons: ["Slower and more rework", "Costs your attention"],
+        cost: { time: 3, investment: 1 },
+        outcomes: [
+          {
+            id: "m10b-juniors-held",
+            when: { any: ["has:training", "ops_onside"] },
+            tone: "strong",
+            headline: "It works, because the scaffolding was already there.",
+            detail:
+              "Juniors on a programme with a training workstream and an engaged client team is a development opportunity. On a programme without either it is a risk. You had one.",
+            changed: ["Fully staffed", "Your time is committed to reviewing"],
+            effect: { dims: { deliver: 5, profit: 6, win: -1 } },
+          },
+          {
+            id: "m10b-juniors-thin",
+            tone: "mixed",
+            headline: "Staffed, slower, and leaning on you.",
+            detail:
+              "The work gets done and the rework rate is what you would expect. Every review cycle runs through you, which means the programme now has a single point of failure and it is your calendar.",
+            changed: ["Fully staffed", "Everything routes through you"],
+            effect: { dims: { deliver: -2, profit: 7 } },
+          },
+        ],
+      },
+      {
+        id: "o-contractors",
+        title: "Bring in contractors",
+        icon: "coins",
+        description: "Two experienced people, available next week, at twice the rate.",
+        commits: "Margin, and knowledge that leaves when they do.",
+        pros: ["Experienced and immediate", "No ramp-up"],
+        cons: ["Twice the rate", "The knowledge leaves with them"],
+        cost: { time: 1, investment: 3 },
+        outcomes: [
+          {
+            id: "m10b-contractors-broke",
+            when: { any: ["discounted", "thin_mitigation"] },
+            tone: "hard",
+            headline: "You cannot fund the obvious answer. Again.",
+            detail:
+              "Contractors at twice the rate need a contract with room in it. This one has none, so you take one contractor instead of two and the plan quietly absorbs the difference.",
+            changed: ["Half-staffed", "The contract is close to loss-making"],
+            effect: { dims: { profit: -11, deliver: 1 } },
+          },
+          {
+            id: "m10b-contractors",
+            tone: "mixed",
+            headline: "Staffed properly, and it shows in the numbers.",
+            detail:
+              "The programme has the people it needs from next week. It also has a cost base the commercial case did not anticipate, and in nine months nothing they learned will still be in the building.",
+            changed: ["Properly staffed", "Margin reduced", "Knowledge will leave with them"],
+            effect: { dims: { deliver: 8, profit: -8 } },
+          },
+        ],
+      },
+      {
+        id: "o-slip",
+        title: "Move the date",
+        icon: "clock",
+        description: "Wait six weeks for the right people and re-plan around it.",
+        commits: "A date the client has already told their board.",
+        pros: ["Right team, no compromise", "Nothing rushed"],
+        cons: ["A date already announced", "Six weeks of nothing"],
+        cost: { time: 2, investment: 1 },
+        outcomes: [
+          {
+            id: "m10b-slip-ok",
+            when: { any: ["credibility", "ops_onside", "evidenced"] },
+            tone: "strong",
+            headline: "They move the date, because you asked early.",
+            detail:
+              "Six weeks is a manageable conversation in month two and an impossible one in month five. Because you went early and had the standing to be believed, the plan moves and nothing else does.",
+            changed: ["The right team", "The date moved with the client's agreement"],
+            effect: { dims: { deliver: 9, profit: 3, win: -3 }, badge: "recovered" },
+          },
+          {
+            id: "m10b-slip-cold",
+            when: { any: ["promised:fast", "overrode_review"] },
+            tone: "hard",
+            headline: "That date was the reason they picked you.",
+            detail:
+              "Speed was the most attractive thing in your proposal, and the first thing you have done is ask for six more weeks. Sarah has to go back to a board that approved this on the timeline.",
+            changed: ["The right team eventually", "The thing you sold on is gone"],
+            effect: { dims: { win: -12, deliver: 6 } },
+          },
+          {
+            id: "m10b-slip",
+            tone: "mixed",
+            headline: "Accepted, and noted.",
+            detail:
+              "The date moves without much drama. It does establish, in month two, that your plan was written for a team you did not have.",
+            changed: ["The right team", "Six weeks late from the start"],
+            effect: { dims: { deliver: 5, win: -6 } },
+          },
+        ],
+      },
+    ],
+    lesson: {
+      principle: "A plan is a set of assumptions about people.",
+      because:
+        "The programme was scoped as though the right people would be free. Whether that was optimism or an oversight, the delivery team is the one that finds out.",
+      watchFor: "When you commit to a date, ask who specifically is going to be sitting there.",
+    },
+    next: "m10c",
+  },
+
+  /** PRD M19 — the unexpected situation. The one beat the player cannot plan for. */
+  {
+    kind: "choice",
+    id: "m10c",
+    chapter: 5,
+    stage: "delivery",
+    title: "Nobody planned for this",
+    eyebrow: "The unexpected",
+    objective: "Respond to something outside the plan.",
+    minutes: 3,
+    hero: "solution-in-store-tech",
+    situation: [
+      "Sarah is leaving. She has taken a bigger role elsewhere and finishes in three weeks.",
+      "Your sponsor, your budget holder and the person who believed in this are all the same person.",
+    ],
+    variants: [
+      {
+        when: { all: ["ops_onside"] },
+        situation: [
+          "Sarah is leaving. She finishes in three weeks, and she was your sponsor, your budget holder and your advocate.",
+          "One thing is in your favour: Marcus Reed's team is already inside this programme, and Marcus is not going anywhere.",
+        ],
+      },
+      {
+        when: { all: ["outcome_based"] },
+        situation: [
+          "Sarah is leaving in three weeks.",
+          "She is also the person who agreed that a third of your fee depends on a fall in support contacts. Her successor will inherit that clause without having agreed to it.",
+        ],
+      },
+    ],
+    saidQuote: {
+      text: "I have told them this programme matters. After that it is not in my hands, and my successor will make their own mind up.",
+      attribution: "Sarah Lim · Chief Transformation Officer, Orion Retail",
+    },
+    concerns: [
+      "The budget holder is leaving",
+      "Nobody else has publicly backed this",
+      "A new sponsor will want their own priorities",
+    ],
+    advisor: AISHA,
+    consider: [
+      "Who else already has a stake in this?",
+      "What would a new sponsor cancel first?",
+      "What can we prove in three weeks?",
+    ],
+    tip: "A programme that depends on one person is one resignation from trouble.",
+    prompt: "Three weeks before the room changes.",
+    question: "What do you do with the three weeks?",
+    options: [
+      {
+        id: "o-broaden",
+        title: "Broaden the base",
+        icon: "people",
+        description: "Get the programme owned by three people instead of one.",
+        commits: "Three weeks of politics instead of delivery.",
+        pros: ["Survives any one departure", "Builds real advocates"],
+        cons: ["Three weeks not delivering", "Slower decisions afterwards"],
+        cost: { time: 2, investment: 1 },
+        outcomes: [
+          {
+            id: "m10b-broaden-ops",
+            when: { any: ["ops_onside", "has:ops_workstream"] },
+            tone: "strong",
+            headline: "Marcus becomes the sponsor, and he was never going to leave.",
+            detail:
+              "The person best placed to own this was the one you brought inside the proposal months ago. What was a courtesy then is now the reason the programme survives a change of leadership.",
+            changed: [
+              "Ownership spread across three people",
+              "Operations now sponsors the work it has to run",
+            ],
+            effect: {
+              dims: { win: 9, deliver: 8 },
+              flags: ["broad_base"],
+              badge: "connected_dots",
+            },
+          },
+          {
+            id: "m10b-broaden-cold",
+            tone: "mixed",
+            headline: "You find two names. Neither of them is invested.",
+            detail:
+              "Three weeks of introductions produces two people who will not block the programme. That is not the same as two people who will defend it, and you are starting those relationships from nothing at the worst possible moment.",
+            changed: ["Two more names attached", "Neither of them owns it"],
+            effect: { dims: { win: 3, deliver: 1 } },
+          },
+        ],
+      },
+      {
+        id: "o-prove-fast",
+        title: "Get something live before she goes",
+        icon: "rocket",
+        description: "Ship whatever is demonstrable while the sponsor is still there.",
+        commits: "Three weeks of pressure on the delivery team.",
+        pros: ["A result on the record", "Hard to cancel a working thing"],
+        cons: ["Rushed and partial", "Costs the team"],
+        cost: { time: 1, investment: 2 },
+        outcomes: [
+          {
+            id: "m10c-prove-ready",
+            when: { any: ["has:data", "promised:fast"] },
+            tone: "strong",
+            headline: "Something real goes live, and it outlives her.",
+            detail:
+              "You had the foundations to move quickly, so three weeks was enough to put a working thing in front of the business. A new sponsor can cancel a plan easily. Cancelling something that already works is a much harder meeting.",
+            changed: ["A live result on the record", "The team is tired"],
+            effect: { dims: { win: 10, deliver: 2, profit: -3 } },
+          },
+          {
+            id: "m10c-prove-thin",
+            tone: "hard",
+            headline: "You ship a demo and it convinces nobody.",
+            detail:
+              "Three weeks was not enough to stand anything up properly, so what goes in front of Sarah is a prototype with the difficult parts stubbed out. Her successor reads it as a programme with nothing to show after five months.",
+            changed: ["Something shipped", "It made the programme look weaker, not stronger"],
+            effect: { dims: { win: -8, deliver: -5, profit: -2 } },
+          },
+        ],
+      },
+      {
+        id: "o-handover",
+        title: "Write the handover she needs",
+        icon: "layers",
+        description: "Give Sarah the document that makes the case without her in the room.",
+        commits: "It works only if somebody reads it.",
+        pros: ["Cheap and honest", "Survives on its own terms"],
+        cons: ["Only as good as its reader", "No advocate behind it"],
+        cost: { time: 1, investment: 1 },
+        outcomes: [
+          {
+            id: "m10c-handover-evidenced",
+            when: { any: ["evidenced", "has:data"] },
+            tone: "strong",
+            headline: "The case stands up without anybody selling it.",
+            detail:
+              "Because the programme was argued from Orion's own evidence in the first place, the handover is a page of their data and what has changed since. A new sponsor reading that cold has very little to disagree with.",
+            changed: ["A case that survives on paper", "No advocate, but no argument either"],
+            effect: { dims: { win: 6, deliver: 3, profit: 2 } },
+          },
+          {
+            id: "m10c-handover-thin",
+            tone: "mixed",
+            headline: "A good document, waiting for a reader who cares.",
+            detail:
+              "It is honest and clear and it costs you almost nothing. It also relies entirely on somebody new choosing to back a programme they did not start, on the strength of a handover note.",
+            changed: ["The case is written down", "Nobody is carrying it"],
+            effect: { dims: { win: -2, profit: 3 } },
+          },
+        ],
+      },
+    ],
+    lesson: {
+      principle: "Relationships are infrastructure, and single points of failure are real.",
+      because:
+        "Nothing about the work changed. One person left, and the programme's future changed with them — because its future was attached to that one person.",
+      watchFor: "Ask who would defend this programme if your sponsor stopped being able to.",
+    },
     next: "end",
   },
 
@@ -1716,7 +2648,24 @@ const nodes: GameNode[] = [
 
 export const story: Content = {
   startNodeId: "int-1",
-  missionOrder: ["m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8", "m9", "m10"],
+  missionOrder: [
+    "m1",
+    "m2",
+    "m3",
+    "m4",
+    "m5",
+    "m5b",
+    "m6",
+    "m6b",
+    "m7",
+    "m7b",
+    "m8",
+    "m9",
+    "m9b",
+    "m10",
+    "m10b",
+    "m10c",
+  ],
   chapters: [
     {
       number: 1,
@@ -1729,29 +2678,29 @@ export const story: Content = {
       number: 2,
       label: "Opportunity",
       title: "Make it an opportunity",
-      missionIds: ["m4", "m5"],
-      steps: ["Qualify the lead", "Answer the market"],
+      missionIds: ["m4", "m5", "m5b"],
+      steps: ["Qualify the lead", "Answer the market", "Prioritise the work"],
     },
     {
       number: 3,
       label: "Solution",
       title: "Build the response",
-      missionIds: ["m6", "m7"],
-      steps: ["Define the problem", "Assemble the offer"],
+      missionIds: ["m6", "m6b", "m7", "m7b"],
+      steps: ["Define the problem", "Find another way", "Assemble the offer", "Clear the review"],
     },
     {
       number: 4,
       label: "Deal",
       title: "Make the deal work",
-      missionIds: ["m8", "m9"],
-      steps: ["Handle the price", "Clear the review"],
+      missionIds: ["m8", "m9", "m9b"],
+      steps: ["Handle the price", "Face the risk review", "Take it or leave it"],
     },
     {
       number: 5,
       label: "Delivery",
       title: "Deliver the promise",
-      missionIds: ["m10"],
-      steps: ["Month five"],
+      missionIds: ["m10", "m10b", "m10c"],
+      steps: ["Month five", "Two people short", "The unexpected"],
     },
   ],
   nodes: Object.fromEntries(nodes.map((n) => [n.id, n])),

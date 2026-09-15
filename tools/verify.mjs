@@ -233,7 +233,7 @@ async function main() {
   }
 
   /* ── assertions ─────────────────────────────────────────── */
-  const expected = 10;
+  const expected = 16;
   if (missions !== expected) problems.push(`played ${missions} missions, expected ${expected}`);
   if (consequences !== expected) problems.push(`saw ${consequences} consequences, expected ${expected}`);
   if (lessons !== expected) problems.push(`saw ${lessons} lessons, expected ${expected}`);

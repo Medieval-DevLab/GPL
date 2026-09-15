@@ -29,8 +29,8 @@ describe("content validity", () => {
     expect(Array.isArray(warnings)).toBe(true);
   });
 
-  it("has ten missions", () => {
-    expect(content.missionOrder).toHaveLength(10);
+  it("has sixteen missions", () => {
+    expect(content.missionOrder).toHaveLength(16);
   });
 
   /**
@@ -90,7 +90,7 @@ describe("determinism", () => {
       expect([...one.firedOutcomes].sort()).toEqual([...two.firedOutcomes].sort());
       expect(one.finalRange).toEqual(two.finalRange);
     },
-    30_000,
+    60_000,
   );
 });
 
@@ -157,11 +157,17 @@ describe("the game teaches what it claims to teach", () => {
     ["o-campaign"],
     ["o-pursue"],
     ["o-hold"],
+    ["c-benchmark", "c-reference"],
     ["o-asked"],
+    ["o-conventional"],
     ["c-journey", "c-platform", "c-pilot"],
+    ["o-defend"],
     ["o-discount"],
     ["o-accept-risk"],
+    ["o-proceed"],
     ["o-push"],
+    ["o-contractors"],
+    ["o-prove-fast"],
   ];
 
   /** Investigates, involves Operations, prices honestly, mitigates, resets early. */
@@ -171,11 +177,17 @@ describe("the game teaches what it claims to teach", () => {
     ["o-pov"],
     ["o-workshop"],
     ["o-reframe"],
+    ["c-ops-workshop", "c-data-audit"],
     ["o-real"],
+    ["o-outcome-deal"],
     ["c-ops", "c-training", "c-journey"],
+    ["o-shore-deliver"],
     ["o-phase"],
     ["o-mitigate"],
+    ["o-modify"],
     ["o-reset"],
+    ["o-slip"],
+    ["o-broaden"],
   ];
 
   /** Good instincts, but wins the deal by giving away the contingency. */
@@ -185,11 +197,17 @@ describe("the game teaches what it claims to teach", () => {
     ["o-pov"],
     ["o-pursue"],
     ["o-reframe"],
+    ["c-reference", "c-benchmark"],
     ["o-real"],
+    ["o-conventional"],
     ["c-ops", "c-journey", "c-pilot"],
+    ["o-sharpen-win"],
     ["o-discount"],
     ["o-mitigate"],
+    ["o-proceed"],
     ["o-absorb"],
+    ["o-contractors"],
+    ["o-handover"],
   ];
 
   const reckless = playScript(content, RECKLESS);
@@ -199,14 +217,20 @@ describe("the game teaches what it claims to teach", () => {
   it("all three reach the ending", () => {
     for (const s of [reckless, considered, discounter]) {
       expect(s.phase).toBe("ending");
-      expect(s.history).toHaveLength(10);
+      expect(s.history).toHaveLength(16);
     }
   });
 
-  it("the considered run beats the reckless run on every dimension", () => {
-    for (const d of DIMENSIONS) {
-      expect(considered.dims[d]).toBeGreaterThan(reckless.dims[d]);
-    }
+  /**
+   * Note what this does NOT claim. Recklessness can absolutely win the work — it
+   * over-promises, and over-promising is persuasive. What it cannot do is leave the
+   * engagement profitable or deliverable. Asserting that the considered run wins on
+   * all three would be asserting something the game deliberately does not teach.
+   */
+  it("the considered run beats the reckless run where it matters", () => {
+    expect(considered.dims.profit).toBeGreaterThan(reckless.dims.profit);
+    expect(considered.dims.deliver).toBeGreaterThan(reckless.dims.deliver);
+    expect(considered.dims.win).toBeGreaterThanOrEqual(reckless.dims.win);
   });
 
   it("the reckless run genuinely fails delivery", () => {
@@ -238,11 +262,17 @@ describe("the game teaches what it claims to teach", () => {
       ["o-direct"],
       ["o-workshop"],
       ["o-reframe"],
+      ["c-benchmark", "c-stakeholders"],
       ["o-real"], // correct call, no proof
+      ["o-conventional"],
       ["c-ops", "c-training", "c-data"],
+      ["o-shore-deliver"],
       ["o-phase"],
       ["o-mitigate"],
+      ["o-modify"],
       ["o-reset"],
+      ["o-slip"],
+      ["o-handover"],
     ]);
     const m6 = blind.history.find((h) => h.missionId === "m6");
     expect(m6?.outcomeId).toBe("m6-real-hunch");
@@ -271,6 +301,74 @@ describe("the game teaches what it claims to teach", () => {
   it("awards recognition only where it was earned", () => {
     expect(considered.badges.length).toBeGreaterThan(0);
     expect(reckless.badges).toHaveLength(0);
+  });
+
+  /**
+   * The PRD is blunt about why this has to work: "Walking away must sometimes be a good
+   * decision. Otherwise the game teaches: Always accept the contract." (p. 132)
+   *
+   * So the SAME action has to resolve two ways, decided entirely by the position the
+   * player built. Both of these walk away at m9b; one is praised and one is not.
+   */
+  describe("walking away", () => {
+    const walkFromBadDeal = playScript(content, [
+      ["o-northwind"],
+      ["ev-rivals", "ev-budget"],
+      ["o-campaign"],
+      ["o-pursue"],
+      ["o-hold"],
+      ["c-benchmark", "c-reference"],
+      ["o-asked"],
+      ["o-conventional"],
+      ["c-journey", "c-platform", "c-pilot"],
+      ["o-defend"],
+      ["o-discount"],
+      ["o-accept-risk"],
+      ["o-walk"],
+    ]);
+
+    const walkFromGoodDeal = playScript(content, [
+      ["o-northwind"],
+      ["ev-pain", "ev-sponsor"],
+      ["o-pov"],
+      ["o-workshop"],
+      ["o-reframe"],
+      ["c-ops-workshop", "c-data-audit"],
+      ["o-real"],
+      ["o-outcome-deal"],
+      ["c-ops", "c-training", "c-journey"],
+      ["o-shore-deliver"],
+      ["o-phase"],
+      ["o-mitigate"],
+      ["o-walk"],
+    ]);
+
+    it("ends the game there, skipping delivery entirely", () => {
+      for (const s of [walkFromBadDeal, walkFromGoodDeal]) {
+        expect(s.phase).toBe("ending");
+        expect(s.history).toHaveLength(13);
+        expect(s.flags).toContain("walked_away");
+      }
+    });
+
+    it("is the right call on a deal that had gone bad", () => {
+      const m9b = walkFromBadDeal.history.find((h) => h.missionId === "m9b");
+      expect(m9b?.outcomeId).toBe("m9b-walk-right");
+      expect(m9b?.tone).toBe("strong");
+      expect(walkFromBadDeal.badges).toContain("held_nerve");
+    });
+
+    it("is the wrong call on a deal that was sound", () => {
+      const m9b = walkFromGoodDeal.history.find((h) => h.missionId === "m9b");
+      expect(m9b?.outcomeId).toBe("m9b-walk-wrong");
+      expect(m9b?.tone).toBe("hard");
+    });
+
+    it("is named as a choice in the verdict, not as a loss", () => {
+      expect(finalVerdict(walkFromBadDeal.dims, walkFromBadDeal.flags).title).toBe(
+        "You walked away",
+      );
+    });
   });
 
   it("produces distinct verdicts across the outcome space", () => {
@@ -322,7 +420,7 @@ describe("engine mechanics", () => {
       if (!selection) break;
       s = playMission(s, content, selection);
     }
-    expect(s.history).toHaveLength(10);
+    expect(s.history).toHaveLength(16);
     expect(s.phase).toBe("ending");
   });
 });

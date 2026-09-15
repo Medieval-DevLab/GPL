@@ -178,7 +178,7 @@ const LEDGER_COLOUR = {
 } as const;
 
 export function EndingScreen({ state, onRestart }: { state: GameState; onRestart: () => void }) {
-  const verdict = finalVerdict(state.dims);
+  const verdict = finalVerdict(state.dims, state.flags);
   const threads = causalThreads(state);
   const account = ledger(state);
 

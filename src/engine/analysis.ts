@@ -20,6 +20,7 @@ import { advance, commit, createInitialState, evaluateCondition, getNode } from 
 import {
   DIMENSIONS,
   isMission,
+  type Condition,
   type Content,
   type DimensionId,
   type GameState,
@@ -47,22 +48,70 @@ function combinations<T>(items: readonly T[], k: number): T[][] {
   return out;
 }
 
+/** Flags read by the conditions of one mission. */
+function missionReadFlags(node: Mission): Set<string> {
+  const read = new Set<string>();
+  const note = (c: Condition | undefined) => {
+    if (!c) return;
+    for (const f of [...(c.all ?? []), ...(c.any ?? []), ...(c.none ?? [])]) read.add(f);
+  };
+  for (const v of node.variants ?? []) note(v.when);
+  if (node.kind === "choice") {
+    for (const o of node.options) {
+      note(o.requires);
+      for (const oc of o.outcomes) note(oc.when);
+    }
+  } else {
+    for (const oc of node.outcomes) note(oc.when);
+  }
+  return read;
+}
+
+/**
+ * For each mission, the flags that IT or ANY LATER mission reads.
+ *
+ * This is what makes the sweep both exact and tractable. Two states that differ only in
+ * flags no remaining mission will ever read cannot diverge again, so they are the same
+ * state for coverage purposes and collapsing them loses nothing.
+ */
+function suffixReadFlags(content: Content): Map<string, Set<string>> {
+  const order = content.missionOrder;
+  const out = new Map<string, Set<string>>();
+  const acc = new Set<string>();
+  for (let i = order.length - 1; i >= 0; i--) {
+    const node = content.nodes[order[i] as string];
+    if (node && isMission(node)) for (const f of missionReadFlags(node)) acc.add(f);
+    out.set(order[i] as string, new Set(acc));
+  }
+  return out;
+}
+
 /**
  * Dedup key for the sweep.
  *
- * Deliberately FLAGS ONLY, not dimensions. Every branching condition in this
- * game gates on flags; none reads a dimension value. (`validate.ts` warns if
- * that ever stops being true, because this analysis would then be incomplete.)
- * Keying on dimensions as well produced ~4.1M distinct states and exhausted the
- * heap; keying on flags collapses that to a few thousand while remaining exact
- * for branch coverage.
+ * Three deliberate exclusions, each of which keeps this exact rather than approximate:
+ *
+ *  1. DIMENSIONS. No branching condition reads a dimension value — `validate.ts` warns
+ *     if that ever changes. Including them produced ~4.1M states and exhausted the heap.
+ *  2. FLAGS NOTHING READS. Purely narrative flags (`signed`, `conventional`…) cannot
+ *     affect any branch.
+ *  3. FLAGS NOTHING READS *FROM HERE ON*. `knows:real_pain` matters up to the solution
+ *     missions and is inert afterwards, so carrying it in the key past that point splits
+ *     states that can no longer behave differently.
+ *
+ * (2) and (3) matter in practice: with the full flag set the frontier hit its ceiling at
+ * mission 10 of 16, silently truncating coverage and reporting reachable outcomes as dead
+ * content. The node id is part of the key because a branch can divert the whole game —
+ * walking away from the deal skips delivery — so the frontier holds states at different
+ * nodes at the same time.
  */
-function stateKey(s: GameState): string {
-  return [...s.flags].sort().join(",");
+function stateKey(s: GameState, read: Set<string> | undefined): string {
+  const flags = read ? s.flags.filter((f) => read.has(f)) : [...s.flags];
+  return `${s.nodeId}|${flags.sort().join(",")}`;
 }
 
 /** Hard ceiling, so a future content change cannot silently OOM the test run. */
-const MAX_FRONTIER = 20000;
+const MAX_FRONTIER = 200_000;
 
 /** Every selection a player could legally make at this mission from this state. */
 export function possibleSelections(mission: Mission, state: GameState): string[][] {
@@ -161,54 +210,80 @@ export function sweep(content: Content): SweepResult {
     firedVariants: new Set(),
   };
 
-  let frontier = new Map<string, GameState>();
+  const suffix = suffixReadFlags(content);
   const start = openingState(content);
-  frontier.set(stateKey(start), start);
+  let frontier = new Map<string, GameState>([[stateKey(start, suffix.get(start.nodeId)), start]]);
+  let truncated = false;
 
+  /* The frontier can hold states sitting at DIFFERENT nodes, because an outcome may
+     divert the game. So group by node each round rather than assuming one node per
+     level, and keep terminal states aside as they arrive. */
   let guard = 0;
-  while (frontier.size > 0 && guard++ < 100) {
-    const sample = frontier.values().next().value as GameState;
-    const node = getNode(content, sample.nodeId);
-
-    if (!isMission(node)) {
-      // terminal
-      result.endings = frontier.size;
-      for (const s of frontier.values()) widen(result.finalRange, s.dims);
-      break;
+  while (frontier.size > 0 && guard++ < 200) {
+    const byNode = new Map<string, GameState[]>();
+    for (const state of frontier.values()) {
+      const list = byNode.get(state.nodeId);
+      if (list) list.push(state);
+      else byNode.set(state.nodeId, [state]);
     }
-
-    const mission = node;
-    result.statesAtMission[mission.id] = frontier.size;
-    result.entryRanges[mission.id] = emptyRange();
 
     const next = new Map<string, GameState>();
 
-    for (const state of frontier.values()) {
-      widen(result.entryRanges[mission.id], state.dims);
+    for (const [nodeId, states] of byNode) {
+      const node = getNode(content, nodeId);
 
-      // which situation variant this state would see
-      const variants = mission.variants ?? [];
-      for (let i = 0; i < variants.length; i++) {
-        if (evaluateCondition(variants[i]?.when, state.flags, state.dims)) {
-          result.firedVariants.add(`${mission.id}#${i}`);
-          break;
-        }
+      if (!isMission(node)) {
+        result.endings += states.length;
+        for (const s of states) widen(result.finalRange, s.dims);
+        continue;
       }
 
-      for (const selection of possibleSelections(mission, state)) {
-        if (mission.kind === "choice" && selection[0]) {
-          result.exercisedOptions.add(`${mission.id}/${selection[0]}`);
+      const mission = node;
+      result.statesAtMission[mission.id] = (result.statesAtMission[mission.id] ?? 0) + states.length;
+      result.entryRanges[mission.id] ??= emptyRange();
+
+      for (const state of states) {
+        widen(result.entryRanges[mission.id] as Record<DimensionId, DimRange>, state.dims);
+
+        // which situation variant this state would see
+        const variants = mission.variants ?? [];
+        for (let i = 0; i < variants.length; i++) {
+          if (evaluateCondition(variants[i]?.when, state.flags, state.dims)) {
+            result.firedVariants.add(`${mission.id}#${i}`);
+            break;
+          }
         }
-        const after = playMission(state, content, selection);
-        const fired = after.history[after.history.length - 1];
-        if (fired) result.firedOutcomes.add(fired.outcomeId);
-        for (const f of after.flags) result.reachableFlags.add(f);
-        const key = stateKey(after);
-        if (!next.has(key) && next.size < MAX_FRONTIER) next.set(key, after);
+
+        for (const selection of possibleSelections(mission, state)) {
+          if (mission.kind === "choice" && selection[0]) {
+            result.exercisedOptions.add(`${mission.id}/${selection[0]}`);
+          }
+          const after = playMission(state, content, selection);
+          const fired = after.history[after.history.length - 1];
+          if (fired) result.firedOutcomes.add(fired.outcomeId);
+          for (const f of after.flags) result.reachableFlags.add(f);
+
+          const key = stateKey(after, suffix.get(after.nodeId));
+          if (next.has(key)) continue;
+          if (next.size >= MAX_FRONTIER) {
+            truncated = true;
+            continue;
+          }
+          next.set(key, after);
+        }
       }
     }
 
     frontier = next;
+  }
+
+  /* Truncation would make every "is this reachable?" answer unsound, so it must never
+     be silent. If this fires, narrow the dedup key further rather than raising the cap. */
+  if (truncated) {
+    throw new Error(
+      `sweep: frontier exceeded ${MAX_FRONTIER} states, so coverage is no longer exhaustive. ` +
+        `Narrow the dedup key (see stateKey) rather than raising the ceiling.`,
+    );
   }
 
   return result;

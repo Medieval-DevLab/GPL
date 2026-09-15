@@ -104,6 +104,14 @@ export interface Outcome {
   effect: Effect;
   /** overrides the mission lesson on this branch */
   lesson?: Lesson;
+  /**
+   * Where this branch goes instead of the mission's own `next`.
+   *
+   * Exists so that walking away from a deal can actually end the pursuit. The PRD is
+   * blunt about why this must be possible: "Walking away must sometimes be a good
+   * decision. Otherwise the game teaches: Always accept the contract." (p. 132)
+   */
+  next?: string;
 }
 
 /** Icon keys. Rendered as inline SVG — no image assets anywhere in this game. */

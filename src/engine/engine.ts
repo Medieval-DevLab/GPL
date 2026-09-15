@@ -387,8 +387,12 @@ export function advance(state: GameState, content: Content): GameState {
     case "consequence":
       return { ...state, phase: "lesson" };
 
-    case "lesson":
-      return isMission(node) ? enterNode(state, content, node.next) : state;
+    case "lesson": {
+      if (!isMission(node)) return state;
+      // A branch may divert the whole game — walking away from the deal skips delivery.
+      const to = state.resolution?.outcome.next ?? node.next;
+      return enterNode(state, content, to);
+    }
 
     case "decide":
     case "ending":
@@ -634,12 +638,20 @@ export function causalThreads(state: GameState): CausalThread[] {
   return out.slice(0, 3);
 }
 
-/** Overall read on the engagement, derived only from final dimension values. */
-export function finalVerdict(dims: Record<DimensionId, number>): {
-  title: string;
-  summary: string;
-} {
+/** Overall read on the engagement, from the final dimensions and how it ended. */
+export function finalVerdict(
+  dims: Record<DimensionId, number>,
+  flags: readonly string[] = [],
+): { title: string; summary: string } {
   const { win, profit, deliver } = dims;
+
+  if (flags.includes("walked_away")) {
+    return {
+      title: "You walked away",
+      summary:
+        "No contract, no delivery, and your people are free. Whether that was discipline or timidity depends entirely on what the deal had become by the time you looked at it honestly.",
+    };
+  }
   const lowest = DIMENSIONS.reduce((a, b) => (dims[a] <= dims[b] ? a : b));
   const avg = Math.round((win + profit + deliver) / 3);
 
