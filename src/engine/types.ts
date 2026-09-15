@@ -518,6 +518,22 @@ export interface GameState {
   completed: string[];
 }
 
+/**
+ * One "because → so later" pair in the closing debrief.
+ *
+ * `because` names something the player did; `soLater` names what it caused. A rule fires
+ * only when every id in `needsOutcomes` fired on this run, so a thread is never a
+ * generality — it is an account of two things that both actually happened.
+ */
+export interface CausalThreadRule {
+  /** every one of these outcomes must have fired */
+  needsOutcomes: string[];
+  /** and every one of these flags must be set */
+  needsFlags?: string[];
+  because: string;
+  soLater: string;
+}
+
 export interface Content {
   nodes: Record<string, GameNode>;
   startNodeId: string;
@@ -525,4 +541,14 @@ export interface Content {
   missionOrder: string[];
   /** chapter structure — drives the top stepper and the left rail */
   chapters: Chapter[];
+  /**
+   * The causal threads, which live here rather than in the engine.
+   *
+   * They were a `const` inside `engine.ts`, which made the single most content-shaped
+   * table in the game unreachable to whoever writes the content — and it showed: five
+   * rules existed, `DECISIONS.md` D-012 claimed nine, and 77% of runs ended with the
+   * section the code calls "the payoff of the whole design" completely empty. Adding a
+   * thread is authoring, not engineering, so it belongs where the authoring is.
+   */
+  threads: CausalThreadRule[];
 }

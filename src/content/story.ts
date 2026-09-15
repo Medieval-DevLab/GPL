@@ -3077,6 +3077,103 @@ export const story: Content = {
     "m10b",
     "m10c",
   ],
+
+  /**
+   * The causal threads — "because you did this, later that happened".
+   *
+   * These lived in `engine.ts` as a `const`, which put the most content-shaped table in
+   * the game beyond the reach of whoever writes the content. It showed: five rules
+   * existed, `DECISIONS.md` D-012 claimed nine, and **77% of runs ended with this
+   * section empty** — the section `engine.ts` itself calls "the payoff of the whole
+   * design".
+   *
+   * The seven added below were not guessed. Three thousand random playthroughs were
+   * walked and every co-occurring pair of outcomes counted, so each new rule joins two
+   * things that genuinely happen together often — `m2-ops + m7-anchored` co-occurs on
+   * 24% of runs, `m3-campaign + m5b-spread` on 20% — and each pair had to be a real
+   * cause, not merely a frequent coincidence. Several commoner pairs were rejected for
+   * exactly that reason.
+   *
+   * A rule needs at least two outcomes. Four once fired on a single outcome, so a
+   * section introduced as "the chains your own decisions created" presented one decision
+   * restated as a chain, and one simply paraphrased its own outcome's detail text.
+   */
+  threads: [
+    {
+      needsOutcomes: ["m8-discount", "m9-mitigate-broke"],
+      because: "You met the client on price to close the gap.",
+      soLater:
+        "When the review found a real risk, the money that would have covered it had already been spent winning the deal.",
+    },
+    {
+      needsOutcomes: ["m9-mitigate-broke", "m10-absorb-broke"],
+      because: "The mitigation you could afford was thinner than the one the review asked for.",
+      soLater:
+        "In month five there was nothing left to absorb the problem, and the contract went underwater.",
+    },
+    {
+      needsOutcomes: ["m7-anchored", "m10-reset-trust"],
+      because: "You put an Operations workstream in the proposal before anyone asked for one.",
+      soLater:
+        "When delivery needed to be re-planned, Operations was already invested — so a hard conversation was treated as management rather than failure.",
+    },
+    {
+      needsOutcomes: ["m7-overreach", "m10-push-fragile"],
+      because: "You promised to rebuild the systems at the centre of their operation with no route into production.",
+      soLater:
+        "Something shipped on the promised date that could not actually reach the business it was built for.",
+    },
+    {
+      needsOutcomes: ["m2-both", "m6-real-evidenced"],
+      because: "You spent your two questions on the complaints and on who actually decides.",
+      soLater:
+        "You could open the solution conversation with their own evidence, which is why nobody argued with you.",
+    },
+
+    /* ── added from the co-occurrence measurement ───────────────────────────── */
+    {
+      needsOutcomes: ["m2-ops", "m7-anchored"],
+      because: "You used a question to find out who could stop this, and it was Marcus Reed.",
+      soLater:
+        "The proposal named his systems and his people, so the person best placed to object had nothing left to object to.",
+    },
+    {
+      needsOutcomes: ["m2-ops", "m6-asked"],
+      because: "You learned who could stop this, and then proposed the thing they had already asked for.",
+      soLater:
+        "The information was in your hands and not in the document. Knowing who matters is only worth what you do with it.",
+    },
+    {
+      needsOutcomes: ["m3-campaign", "m5b-spread"],
+      because: "You went wide to get attention, then spread your two discovery weeks thin.",
+      soLater:
+        "Breadth twice over. You entered the solution phase knowing a little about a lot, which is the position every competitor was also in.",
+    },
+    {
+      needsOutcomes: ["m5b-spread", "m7-overreach"],
+      because: "You funded a little of everything rather than two things properly.",
+      soLater:
+        "With nothing proven, the proposal had to promise instead — and promising is what you do when you cannot demonstrate.",
+    },
+    {
+      needsOutcomes: ["m7-anchored", "m9b-proceed-sound"],
+      because: "Operations had people named in the proposal before signature.",
+      soLater:
+        "Signing was a defensible decision rather than a hopeful one, because the part most likely to fail already had an owner.",
+    },
+    {
+      needsOutcomes: ["m5b-grounded", "m9a-value-strong"],
+      because: "You bought the two pieces of evidence nobody else would have.",
+      soLater:
+        "At the award you could argue from their own numbers. Procurement did not have to like you; it had to be able to justify you.",
+    },
+    {
+      needsOutcomes: ["m6-asked", "m9a-lost-submit"],
+      because: "You proposed what they asked for, and then let the submission speak for itself.",
+      soLater:
+        "Three capable proposals arrived and nothing separated them but price. A scorecard with every column level is decided on cost.",
+    },
+  ],
   chapters: [
     {
       number: 1,

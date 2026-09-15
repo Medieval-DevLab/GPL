@@ -666,43 +666,7 @@ export interface CausalThread {
   soLater: string;
 }
 
-interface ThreadRule extends CausalThread {
-  needsOutcomes: string[];
-  needsFlags?: string[];
-}
 
-const THREAD_RULES: ThreadRule[] = [
-  {
-    needsOutcomes: ["m8-discount", "m9-mitigate-broke"],
-    because: "You met the client on price to close the gap.",
-    soLater:
-      "When the review found a real risk, the money that would have covered it had already been spent winning the deal.",
-  },
-  {
-    needsOutcomes: ["m9-mitigate-broke", "m10-absorb-broke"],
-    because: "The mitigation you could afford was thinner than the one the review asked for.",
-    soLater:
-      "In month five there was nothing left to absorb the problem, and the contract went underwater.",
-  },
-  {
-    needsOutcomes: ["m7-anchored", "m10-reset-trust"],
-    because: "You put an Operations workstream in the proposal before anyone asked for one.",
-    soLater:
-      "When delivery needed to be re-planned, Operations was already invested — so a hard conversation was treated as management rather than failure.",
-  },
-  {
-    needsOutcomes: ["m7-overreach", "m10-push-fragile"],
-    because: "You promised to rebuild the systems at the centre of their operation with no route into production.",
-    soLater:
-      "Something shipped on the promised date that could not actually reach the business it was built for.",
-  },
-  {
-    needsOutcomes: ["m2-both", "m6-real-evidenced"],
-    because: "You spent your two questions on the complaints and on who actually decides.",
-    soLater:
-      "You could open the solution conversation with their own evidence, which is why nobody argued with you.",
-  },
-];
 
 /**
  * A thread needs at least two outcomes.
@@ -712,10 +676,10 @@ const THREAD_RULES: ThreadRule[] = [
  * them simply paraphrased its own outcome's detail text. Two genuine threads read as
  * authored; nine restatements read as padding.
  */
-export function causalThreads(state: GameState): CausalThread[] {
+export function causalThreads(state: GameState, content: Content): CausalThread[] {
   const fired = new Set(state.history.map((h) => h.outcomeId));
   const out: CausalThread[] = [];
-  for (const rule of THREAD_RULES) {
+  for (const rule of content.threads) {
     if (!rule.needsOutcomes.every((id) => fired.has(id))) continue;
     if (rule.needsFlags && !rule.needsFlags.every((f) => state.flags.includes(f))) continue;
     out.push({ because: rule.because, soLater: rule.soLater });
@@ -743,7 +707,10 @@ export const ENGINE_READ_FLAGS: ReadonlySet<string> = new Set([
     ...(r.when.any ?? []),
     ...(r.when.none ?? []),
   ]),
-  ...THREAD_RULES.flatMap((r) => r.needsFlags ?? []),
+  /* The thread table moved to content, so its `needsFlags` are no longer visible from
+     here — a module-level constant in the engine cannot read content without a cycle.
+     `validateContent` therefore seeds them itself from `content.threads`, which is the
+     right place for it: it is the only thing that holds both sides. */
 ]);
 
 /** Overall read on the engagement, from the final dimensions and how it ended. */

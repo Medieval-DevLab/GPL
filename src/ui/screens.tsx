@@ -1,5 +1,6 @@
 /** Title, chapter interludes, and the closing debrief. */
 
+import { story } from "../content/story";
 import { causalThreads, finalVerdict, ledger } from "../engine/engine";
 import {
   DIMENSIONS,
@@ -439,7 +440,7 @@ function BalanceRing({ dims }: { dims: Record<DimensionId, number> }) {
 
 export function EndingScreen({ state }: { state: GameState }) {
   const verdict = finalVerdict(state.dims, state.flags);
-  const threads = causalThreads(state);
+  const threads = causalThreads(state, story);
   const account = ledger(state);
 
   return (

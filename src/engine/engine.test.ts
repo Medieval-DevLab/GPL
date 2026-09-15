@@ -25,6 +25,17 @@ import { DIMENSIONS, isMission, type GameState } from "./types";
 
 const content = story;
 
+/** Deterministic PRNG (mulberry32), so a sampled failure replays from its seed. */
+function seededRng(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 describe("content validity", () => {
   const issues = validateContent(content);
   const errors = issues.filter((i) => i.severity === "error");
@@ -358,13 +369,13 @@ describe("the game teaches what it claims to teach", () => {
   });
 
   it("surfaces the causal thread the player actually created", () => {
-    const threads = causalThreads(discounter);
+    const threads = causalThreads(discounter, content);
     expect(threads.length).toBeGreaterThan(0);
     const all = threads.map((t) => `${t.because} ${t.soLater}`).join(" ");
     expect(all).toContain("price");
 
     // A thread must never appear for a chain the player did not cause.
-    const considered2 = causalThreads(considered);
+    const considered2 = causalThreads(considered, content);
     expect(considered2.some((t) => t.because.includes("met the client on price"))).toBe(false);
   });
 
@@ -532,6 +543,63 @@ describe("the game teaches what it claims to teach", () => {
  *     Winability was pinned near 100 by then, so the discount's one advantage was eaten
  *     by the clamp. Adding the losable award beat fixed that without touching a number.
  */
+/**
+ * Thread coverage.
+ *
+ * `engine.ts` calls the thread section "the payoff of the whole design" and `README.md`
+ * promises "the closing debrief shows the causal chains you personally created". It was
+ * empty on 77% of runs, with five rules where `DECISIONS.md` D-012 claimed nine, and no
+ * run ever reached the cap of three — so `slice(0, 3)` was dead code.
+ *
+ * Seven rules were added, authored from a measurement rather than guessed: 3,000 random
+ * playthroughs, every co-occurring outcome pair counted, and each new rule joins a pair
+ * that genuinely happens together AND is genuinely causal. Several commoner pairs were
+ * rejected on the second test.
+ */
+describe("the debrief has something to say", () => {
+  it("shows at least one causal thread on most runs", () => {
+    const advantages = ["s-connector", "s-builder", "s-challenger"];
+    let zero = 0;
+    let atCap = 0;
+    const RUNS = 600;
+    for (let i = 0; i < RUNS; i++) {
+      const rng = seededRng(i + 1);
+      let s = pastSetup(content, advantages[i % 3]);
+      let guard = 0;
+      while (isMission(getNode(content, s.nodeId)) && guard++ < 40) {
+        const mission = getNode(content, s.nodeId);
+        if (!isMission(mission)) break;
+        const legal = possibleSelections(mission, s);
+        s = playMission(s, content, legal[Math.floor(rng() * legal.length)] as string[]);
+      }
+      const n = causalThreads(s, content).length;
+      if (n === 0) zero++;
+      if (n >= 3) atCap++;
+    }
+    // Was 77% empty. Product adoption's threshold was >=70% of runs showing one.
+    expect(zero / RUNS).toBeLessThan(0.4);
+    // And the cap is now reachable, so slice(0, 3) is not dead code.
+    expect(atCap).toBeGreaterThan(0);
+  }, 180_000);
+
+  it("keeps the thread table in content, where a writer can reach it", () => {
+    expect(content.threads.length).toBeGreaterThanOrEqual(12);
+    // Every rule needs two outcomes: one is a decision restated as a chain.
+    for (const t of content.threads) {
+      expect(t.needsOutcomes.length, `"${t.because}" fires on one outcome`).toBeGreaterThan(1);
+    }
+    // And every id it names must exist, or the rule can never fire.
+    const authored = new Set<string>();
+    for (const node of Object.values(content.nodes)) {
+      if (!isMission(node)) continue;
+      const outs = node.kind === "choice" ? node.options.flatMap((o) => o.outcomes) : node.outcomes;
+      for (const o of outs) authored.add(o.id);
+    }
+    const unknown = content.threads.flatMap((t) => t.needsOutcomes).filter((id) => !authored.has(id));
+    expect(unknown).toEqual([]);
+  });
+});
+
 describe("no fake choices, in the states that occur", () => {
   it("has no option that dominates a sibling in 90% of reachable states", () => {
     const findings = findRealisedDominance(content, 0.9);
