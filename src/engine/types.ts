@@ -40,30 +40,53 @@ export type DimensionId = "win" | "profit" | "deliver";
 
 export const DIMENSIONS: readonly DimensionId[] = ["win", "profit", "deliver"] as const;
 
+/**
+ * Two colour tokens per dimension, not one, because no single value is legal in both
+ * places. `fillVar` is the saturated solid: correct for a bar, a stroke or a chip
+ * background, where 1.4.11 asks for 3:1. `textVar` is the darkened variant, the only one
+ * legal on type, where 1.4.3 asks for 4.5:1.
+ *
+ * A single `varName` pointing at `--color-win` shipped instead, and it painted the label
+ * "Winability" in the fill colour — #cd6d0a on white, 3.63:1 — on 42 of 45 screens, while
+ * DESIGN-SYSTEM.md stated the rule it was breaking. One token cannot do both jobs, so the
+ * type no longer offers one that claims to.
+ */
 export const DIMENSION_META: Record<
   DimensionId,
-  { label: string; question: string; glyph: string; icon: IconId; varName: string }
+  {
+    label: string;
+    question: string;
+    glyph: string;
+    icon: IconId;
+    /** saturated: bar fills, strokes, chip backgrounds. Never on type. */
+    fillVar: string;
+    /** darkened: labels, numbers, anything read as text. */
+    textVar: string;
+  }
 > = {
   win: {
     label: "Winability",
     question: "Can we win it?",
     glyph: "◆",
     icon: "target",
-    varName: "--color-win",
+    fillVar: "--color-win-solid",
+    textVar: "--color-win-text",
   },
   profit: {
     label: "Profitability",
     question: "Should we win it?",
     glyph: "●",
     icon: "coins",
-    varName: "--color-profit",
+    fillVar: "--color-profit-solid",
+    textVar: "--color-profit-text",
   },
   deliver: {
     label: "Deliverability",
     question: "Can we deliver it?",
     glyph: "▲",
     icon: "layers",
-    varName: "--color-deliver",
+    fillVar: "--color-deliver-solid",
+    textVar: "--color-deliver-text",
   },
 };
 

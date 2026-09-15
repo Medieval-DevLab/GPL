@@ -225,7 +225,7 @@ export default function App() {
         {selected ? (
           <PredictionStrip prediction={state.prediction} onPredict={doPredict} />
         ) : (
-          <span className="text-[12.5px] text-(--color-muted)">
+          <span className="text-[13px] text-(--color-muted)">
             {mission?.kind === "choice"
               ? "Choose an approach to continue"
               : `${state.selection.length} of ${need} chosen`}
@@ -247,7 +247,7 @@ export default function App() {
   } else if (state.phase === "setup") {
     bottom = (
       <ActionBar label="Start the pursuit" onAction={doSetup} disabled={!advantage}>
-        <span className="text-[12.5px] text-(--color-muted)">
+        <span className="text-[13px] text-(--color-muted)">
           {advantage ? "This is who you are for the rest of the run." : "Pick your team's strength"}
         </span>
       </ActionBar>

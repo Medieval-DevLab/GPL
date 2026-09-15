@@ -138,12 +138,14 @@
   --color-accent-tint: var(--color-brand-tint);
   --color-accent-ring: var(--color-border-control); /* was 1.86:1 — invisible */
 
+  /* The `-tint` aliases used to be listed here as `--color-win-tint: var(--color-win-tint)`.
+     A custom property that references itself is invalid at computed-value time, so the
+     self-reference did not alias the L2 token — it destroyed it, and all three dimension
+     tints computed to the empty string. Declared twice, resolving to nothing, while both
+     DESIGN-SYSTEM.md and tokens.test.ts checked only that the name was declared. */
   --color-win: var(--color-win-solid);
-  --color-win-tint: var(--color-win-tint);
   --color-profit: var(--color-profit-solid);
-  --color-profit-tint: var(--color-profit-tint);
   --color-deliver: var(--color-deliver-solid);
-  --color-deliver-tint: var(--color-deliver-tint);
 
   /* Valence is NOT a hue.
      Green belongs to Profitability and gold to Winability, so a green tick beside a

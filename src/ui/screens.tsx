@@ -352,7 +352,7 @@ function BalanceRing({ dims }: { dims: Record<DimensionId, number> }) {
   const rings = DIMENSIONS.map((d, i) => ({
     d,
     r: 62 - i * 15,
-    colour: `var(${DIMENSION_META[d].varName})`,
+    colour: `var(${DIMENSION_META[d].fillVar})`,
     value: dims[d],
   }));
   const score = Math.round((dims.win + dims.profit + dims.deliver) / 3);

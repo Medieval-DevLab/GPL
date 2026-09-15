@@ -113,7 +113,7 @@ function Impact({
     <div className="card grid gap-px overflow-hidden sm:grid-cols-3" style={{ background: "var(--color-line)" }}>
       {(Object.keys(DIMENSION_META) as DimensionId[]).map((d) => {
         const meta = DIMENSION_META[d];
-        const colour = `var(${meta.varName})`;
+        const colour = `var(${meta.textVar})`;
         const delta = deltas[d];
         return (
           <div key={d} className="bg-(--color-surface) px-4 py-3">

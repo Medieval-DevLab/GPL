@@ -407,7 +407,10 @@ export function AdvisorCard({ advisor }: { advisor: Advisor }) {
             aria-hidden="true"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[12px] font-bold text-white"
             style={{
-              background: "linear-gradient(135deg, var(--color-win), var(--color-accent-deep))",
+              /* Ink, not the Winability solid. White on #cd6d0a is 3.63:1, and the
+                 gradient's other stop was the same ink anyway, so this was a two-stop
+                 gradient between one colour and a contrast failure. */
+              background: "var(--color-brand-solid)",
             }}
           >
             {initials}
@@ -440,7 +443,8 @@ export function FactorBars({
     <div className="space-y-3">
       {DIMENSIONS.map((d) => {
         const meta = DIMENSION_META[d];
-        const colour = `var(${meta.varName})`;
+        const ink = `var(${meta.textVar})`;
+        const fill = `var(${meta.fillVar})`;
         const delta = deltas?.[d] ?? 0;
         const moved = showDeltas && delta !== 0;
         return (
@@ -448,7 +452,7 @@ export function FactorBars({
             <div className="mb-1 flex items-baseline justify-between gap-2">
               <span
                 className="flex items-center gap-2 text-[13px] font-bold"
-                style={{ color: colour }}
+                style={{ color: ink }}
               >
                 <Icon name={meta.icon} size={15} />
                 {meta.label}
@@ -482,7 +486,7 @@ export function FactorBars({
             >
               <div
                 className="h-full rounded-full transition-[width] duration-[900ms] ease-out"
-                style={{ width: `${dims[d]}%`, background: colour }}
+                style={{ width: `${dims[d]}%`, background: fill }}
               />
             </div>
           </div>
@@ -506,7 +510,8 @@ export function FactorGrid({
     <div className="grid gap-5 sm:grid-cols-3">
       {DIMENSIONS.map((d) => {
         const meta = DIMENSION_META[d];
-        const colour = `var(${meta.varName})`;
+        const ink = `var(${meta.textVar})`;
+        const fill = `var(${meta.fillVar})`;
         const delta = deltas?.[d] ?? 0;
         const moved = showDeltas && delta !== 0;
         return (
@@ -514,7 +519,7 @@ export function FactorGrid({
             <div className="mb-2 flex items-center justify-between gap-2">
               <span
                 className="flex items-center gap-1.5 text-[13px] font-bold"
-                style={{ color: colour }}
+                style={{ color: ink }}
               >
                 <span aria-hidden="true" className="text-[12px]">
                   {meta.glyph}
@@ -537,7 +542,7 @@ export function FactorGrid({
             <div className="mb-1.5 flex items-baseline gap-1">
               <span
                 className="text-[24px] font-bold leading-none tabular-nums"
-                style={{ color: colour }}
+                style={{ color: ink }}
               >
                 {dims[d]}
               </span>
@@ -554,7 +559,7 @@ export function FactorGrid({
             >
               <div
                 className="h-full rounded-full transition-[width] duration-[900ms] ease-out"
-                style={{ width: `${dims[d]}%`, background: colour }}
+                style={{ width: `${dims[d]}%`, background: fill }}
               />
             </div>
             <p className="mt-2 text-[13px] text-(--color-muted)">{meta.question}</p>
@@ -695,13 +700,18 @@ export function PredictionStrip({
               key={d}
               onClick={() => onPredict(d)}
               aria-pressed={on}
-              className="rounded-lg border px-2.5 py-1 text-[12px] font-bold transition-colors"
+              className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-bold transition-colors"
               style={{
-                borderColor: on ? `var(${meta.varName})` : "var(--color-line-strong)",
-                background: on ? `var(${meta.varName})` : "var(--color-surface)",
-                color: on ? "#fff" : `var(${meta.varName})`,
+                /* Selected is a tint fill with the dark text token, never white on the
+                   solid: win and profit solids are 3.63:1 and 3.90:1 on white, which is
+                   a fill ratio, not a type ratio. */
+                borderColor: on ? `var(${meta.fillVar})` : "var(--color-border-control)",
+                background: on ? `var(--color-${d}-tint)` : "var(--color-surface)",
+                color: `var(${meta.textVar})`,
               }}
             >
+              {/* The pictogram, so the chip carries identity without relying on hue. */}
+              <Icon name={meta.icon} size={13} />
               {meta.label}
             </button>
           );
