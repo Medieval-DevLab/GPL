@@ -481,6 +481,13 @@ export interface Resolution {
   predicted: DimensionId | null;
   /** which one actually did. Named for the question asked, so the two cannot drift again. */
   actualLeastMoved: DimensionId | null;
+  /**
+   * Whether the prediction was right — decided here rather than in the component, because
+   * a tie has several right answers and a component comparing two ids cannot know that.
+   */
+  predictionCorrect: boolean | null;
+  /** All three deltas are zero, so there is no "one that held" to name. */
+  nothingMoved: boolean;
 }
 
 export interface GameState {

@@ -277,7 +277,23 @@ export function setPrediction(state: GameState, dim: DimensionId): GameState {
  * question 52 times, so the one place the player's reasoning is tested returned noise.
  */
 export function leastMoved(deltas: Record<DimensionId, number>): DimensionId {
-  return DIMENSIONS.reduce((a, b) => (Math.abs(deltas[a]) <= Math.abs(deltas[b]) ? a : b));
+  return leastMovedSet(deltas)[0] as DimensionId;
+}
+
+/**
+ * EVERY dimension tied for the smallest movement — which is the honest answer, because
+ * the question has more than one on 12 of the 88 authored outcomes.
+ *
+ * Returning a single winner made the tie-break carry meaning it cannot carry. `reduce`
+ * keeps the earlier element on a tie and `DIMENSIONS` starts with `win`, so six of those
+ * twelve silently keyed to Winability, and "always answer Winability" scored well above
+ * chance. Worse, a meter-greedy run clamps all three meters at 100 by mission 14, after
+ * which every remaining beat moves nothing at all — and the screen told the player
+ * "Winability held" about a beat in which literally nothing did.
+ */
+export function leastMovedSet(deltas: Record<DimensionId, number>): DimensionId[] {
+  const smallest = Math.min(...DIMENSIONS.map((d) => Math.abs(deltas[d])));
+  return DIMENSIONS.filter((d) => Math.abs(deltas[d]) === smallest);
 }
 
 /* ───────────────────────────── resolution ───────────────────────────── */
@@ -371,6 +387,10 @@ export function commit(state: GameState, content: Content): GameState {
     revealed: sel.revealed,
     predicted: state.prediction,
     actualLeastMoved: leastMoved(deltas),
+    /* The verdict is the engine's to decide, not the component's: a prediction is right
+       if it names ANY dimension tied for the smallest movement. */
+    predictionCorrect: state.prediction ? leastMovedSet(deltas).includes(state.prediction) : null,
+    nothingMoved: DIMENSIONS.every((d) => deltas[d] === 0),
   };
 
   const entry: HistoryEntry = {

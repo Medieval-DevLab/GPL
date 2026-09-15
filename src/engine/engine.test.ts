@@ -8,6 +8,7 @@ import {
   finalVerdict,
   getNode,
   leastMoved,
+  leastMovedSet,
 } from "./engine";
 import {
   findDominantOptions,
@@ -469,6 +470,47 @@ describe("the prediction gate", () => {
         }
       }
     }
+  });
+
+  /**
+   * The assertion above is satisfied by a *biased* answer, which is what shipped: `reduce`
+   * keeps the earlier element on a tie and `DIMENSIONS` begins with `win`, so 6 of the 12
+   * tied outcomes keyed to Winability and "always answer Winability" beat chance. A test
+   * that a value is *a* minimum cannot see that. These can.
+   */
+  it("marks every tied minimum correct, not just the first one", () => {
+    // Profit and deliver both move 2; either answer is right, win is not.
+    const tied = { win: -9, profit: 2, deliver: -2 };
+    expect(leastMovedSet(tied).sort()).toEqual(["deliver", "profit"]);
+    expect(leastMovedSet(tied)).not.toContain("win");
+
+    // Nothing moved: all three are equally correct.
+    expect(leastMovedSet({ win: 0, profit: 0, deliver: 0 }).sort()).toEqual([
+      "deliver",
+      "profit",
+      "win",
+    ]);
+  });
+
+  it("does not favour any one dimension across the authored outcomes", () => {
+    const keyed: Record<string, number> = { win: 0, profit: 0, deliver: 0 };
+    let tiedOutcomes = 0;
+    for (const node of Object.values(content.nodes)) {
+      if (!isMission(node)) continue;
+      const outcomes =
+        node.kind === "choice" ? node.options.flatMap((o) => o.outcomes) : node.outcomes;
+      for (const o of outcomes) {
+        const d = { win: 0, profit: 0, deliver: 0, ...(o.effect.dims ?? {}) };
+        const set = leastMovedSet(d);
+        if (set.length > 1) tiedOutcomes++;
+        // On a tie every member must be accepted, so no single id may be the whole answer.
+        for (const id of set) keyed[id] = (keyed[id] as number) + 1;
+      }
+    }
+    // The content genuinely contains ties; if it stops doing so, this test is vacuous.
+    expect(tiedOutcomes).toBeGreaterThan(0);
+    // Every dimension is reachable as a correct answer — no dimension is dead.
+    for (const d of DIMENSIONS) expect(keyed[d], `${d} is never the least-moved`).toBeGreaterThan(0);
   });
 });
 

@@ -68,18 +68,25 @@ export function ResolvingScreen({ onDone }: { onDone: () => void }) {
 function YourCall({
   predicted,
   actual,
+  correct,
+  nothingMoved,
 }: {
   predicted: DimensionId | null;
   actual: DimensionId | null;
+  correct: boolean | null;
+  nothingMoved: boolean;
 }) {
-  if (!predicted || !actual) return null;
+  if (!predicted || !actual || correct === null) return null;
 
-  const right = predicted === actual;
+  const right = correct;
   const colour = right ? "var(--color-good)" : "var(--color-warn)";
   const tint = right ? "var(--color-good-tint)" : "var(--color-warn-tint)";
-  const text = right
-    ? `You called it. ${DIMENSION_META[actual].label} barely moved.`
-    : `You said ${DIMENSION_META[predicted].label}. It was ${DIMENSION_META[actual].label} that held.`;
+  // With nothing to separate the three, naming a winner would be inventing one.
+  const text = nothingMoved
+    ? "Nothing moved. This one cost you nothing and bought you nothing."
+    : right
+      ? `You called it. ${DIMENSION_META[actual].label} barely moved.`
+      : `You said ${DIMENSION_META[predicted].label}. It was ${DIMENSION_META[actual].label} that held.`;
 
   return (
     <div
@@ -254,7 +261,12 @@ export function ConsequenceScreen({
       </div>
 
       <div className="flex-1 space-y-4 px-5 py-4">
-        <YourCall predicted={resolution.predicted} actual={resolution.actualLeastMoved} />
+        <YourCall
+          predicted={resolution.predicted}
+          actual={resolution.actualLeastMoved}
+          correct={resolution.predictionCorrect}
+          nothingMoved={resolution.nothingMoved}
+        />
 
         <Impact dims={resolution.dimsAfter} deltas={resolution.deltas} />
 
