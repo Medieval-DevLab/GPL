@@ -306,16 +306,28 @@ export interface ClientProfile {
 }
 
 /**
+ * Something a client-side person actually said, and who they are.
+ *
+ * `speaker` and `role` are separate fields because they were one string for a while
+ * — "Sarah Lim · Chief Transformation Officer, Orion Retail" — which put a typographic
+ * separator inside authored prose and left the UI unable to tell a name from a job
+ * title. So the name could not be weighted differently from the role, and it could not
+ * be reduced to initials. Content says who spoke; the interface decides how that looks.
+ */
+export interface SaidQuote {
+  text: string;
+  speaker: string;
+  role: string;
+}
+
+/**
  * A client-side line of dialogue, shown only when `when` passes.
  *
- * Same shape as `Mission.saidQuote` plus a condition, so the two are interchangeable
- * where they are rendered and an author can promote an unconditional quote to a
- * conditional one without touching the UI.
+ * Extends `SaidQuote` so the two are interchangeable where they are rendered, and an
+ * author can promote an unconditional quote to a conditional one without touching the UI.
  */
-export interface ConditionalQuote {
+export interface ConditionalQuote extends SaidQuote {
   when?: Condition;
-  text: string;
-  attribution: string;
 }
 
 export type FactorLevel = "low" | "medium" | "high" | "strong";
@@ -364,7 +376,7 @@ interface MissionBase {
   /** a read on the current situation, shown as bars */
   assessment?: AssessmentFactor[];
   /** something the client actually said */
-  saidQuote?: { text: string; attribution: string };
+  saidQuote?: SaidQuote;
   /**
    * Client-side voices that only speak once the player knows they exist.
    *

@@ -21,6 +21,7 @@ import {
   possibleSelections,
   reachableExtremes,
   sweep,
+  sweepWalk,
 } from "./analysis";
 import { DIMENSIONS, isMission, type GameState } from "./types";
 
@@ -36,9 +37,32 @@ const content = story;
  * check genuinely needs a second, independent sweep; everything else is asking the same
  * question of the same answer.
  */
+/**
+ * Drive the sweep, letting the worker breathe between levels.
+ *
+ * The scheduling lives in the test rather than the engine, which may not touch a timer.
+ * `setTimeout`, not `queueMicrotask`: a microtask does not let the worker service its
+ * message port, and servicing it is the entire point. A worker blocked in a twenty-second
+ * synchronous loop cannot read the reply to its own `onTaskUpdate` call, so birpc's
+ * hardcoded 60s deadline expires and the run exits 1 with every test green.
+ *
+ * Belt and braces alongside `fileParallelism: false`. That stops the workers competing
+ * for cores today; this stops one long level from being able to blow the deadline however
+ * much content arrives later.
+ */
+async function driveSweep(): Promise<ReturnType<typeof sweep>> {
+  const walk = sweepWalk(content);
+  let step = walk.next();
+  while (!step.done) {
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    step = walk.next();
+  }
+  return step.value;
+}
+
 let memo: ReturnType<typeof sweep> | null = null;
-function sharedSweep(): ReturnType<typeof sweep> {
-  if (!memo) memo = sweep(content);
+async function sharedSweep(): Promise<ReturnType<typeof sweep>> {
+  if (!memo) memo = await driveSweep();
   return memo;
 }
 
@@ -89,13 +113,13 @@ describe("determinism", () => {
    */
   let first: ReturnType<typeof sweep> | null = null;
 
-  it("sweeps the whole state space once", () => {
-    first = sharedSweep();
+  it("sweeps the whole state space once", async () => {
+    first = await sharedSweep();
     expect(first.endings).toBeGreaterThan(0);
   }, 180_000);
 
-  it("uses no randomness — a second sweep matches exactly", () => {
-    const second = sweep(content);
+  it("uses no randomness — a second sweep matches exactly", async () => {
+    const second = await driveSweep();
     expect(first).not.toBeNull();
     expect([...(first as NonNullable<typeof first>).firedOutcomes].sort()).toEqual(
       [...second.firedOutcomes].sort(),
@@ -111,8 +135,8 @@ describe("every path is playable", () => {
      splitting the file did not help, because the work had simply moved to another
      worker's collect. */
   let result: ReturnType<typeof sweep>;
-  beforeAll(() => {
-    result = sharedSweep();
+  beforeAll(async () => {
+    result = await sharedSweep();
   }, 180_000);
 
   it("reaches an ending from every branch", () => {

@@ -78,10 +78,13 @@ const AISHA: Advisor = {
   quote: "My team inherits every sentence in that proposal. Which ones did you mean?",
 };
 
-/* Client-side attributions, written once. Four copies of Sarah's drifted apart before. */
-const SARAH = "Sarah Lim · Chief Transformation Officer, Orion Retail";
-const MARCUS = "Marcus Reed · Operations Director, Orion Retail";
-const FOYLE = "Declan Foyle · Procurement, Orion Retail";
+/* The client-side speakers, written once. Four hand-copied copies of Sarah's had already
+   accumulated in the file; none had drifted yet, which is luck rather than a system. */
+/* Roles without ", Orion Retail". There is exactly one client in this game and it is
+   named on the same screen; the suffix cost a whole extra line in a 186px column. */
+const SARAH = { speaker: "Sarah Lim", role: "Chief Transformation Officer" };
+const MARCUS = { speaker: "Marcus Reed", role: "Operations Director" };
+const FOYLE = { speaker: "Declan Foyle", role: "Procurement" };
 
 const ORION: ClientProfile = {
   name: "Orion Retail Group",
@@ -795,7 +798,7 @@ const nodes: GameNode[] = [
     ],
     saidQuote: {
       text: "We like your perspective, but this looks impressive and my board has already seen it. Help me understand how you are different.",
-      attribution: SARAH,
+      ...SARAH,
     },
     concerns: [
       "A recognisable vendor name attached",
@@ -989,7 +992,7 @@ const nodes: GameNode[] = [
       {
         when: { all: ["knows:ops_constraint"] },
         text: "Every programme like this arrives with a plan for my systems and none for my people. I have agreed to two of them. Ask me how those went.",
-        attribution: MARCUS,
+        ...MARCUS,
       },
     ],
     advisor: ARJUN,
@@ -1275,7 +1278,7 @@ const nodes: GameNode[] = [
     ],
     saidQuote: {
       text: "I am not asking you to be the cheapest. I am asking for something I can defend in a board meeting that has already seen a smaller number.",
-      attribution: SARAH,
+      ...SARAH,
     },
     concerns: [
       "Procurement has the comparison in writing",
@@ -1720,12 +1723,12 @@ const nodes: GameNode[] = [
       {
         when: { all: ["ops_onside"] },
         text: "My people are re-planning around this for the second time. I backed you in that room, and I would rather not have to explain why.",
-        attribution: MARCUS,
+        ...MARCUS,
       },
     ],
     saidQuote: {
       text: "The board has asked for one more thing and I said I would put it to you. I am aware of what I am asking.",
-      attribution: SARAH,
+      ...SARAH,
     },
     advisor: AISHA,
     consider: [
@@ -2026,6 +2029,12 @@ const nodes: GameNode[] = [
       "Sarah wants five things done before you propose. Your people have a fortnight and there is room for two.",
       "Nobody will tell you which two. The other three simply will not happen.",
     ],
+    /* The beat where the sponsor asks for five things had no sponsor in it. She is also
+       the one being squeezed — the fortnight is not her choice either. */
+    saidQuote: {
+      text: "There are five things I need covered before you put anything in writing. I gather you have a fortnight.",
+      ...SARAH,
+    },
     advisorLine: "Two weeks of my team's time. Tell me what it is buying.",
     advisor: RIYA,
     consider: [
@@ -2100,6 +2109,18 @@ const nodes: GameNode[] = [
           "You know what the data can and cannot do",
         ],
         effect: { dims: { deliver: 3 }, badge: "smart_tradeoff" },
+        /* This beat printed the mission's fallback lesson on all three of its outcomes,
+           including the two that are nearly opposite. Winning the room with nothing
+           tested and grounding the work in what Operations can actually take are not the
+           same experience, and they were being given the same sentence. */
+        lesson: {
+          principle:
+            "The two least impressive things on that list are the two I would have bought.",
+          because:
+            "Neither a workshop nor a data audit buys you anything in the room. Both mean the proposal you write next describes something real.",
+          watchFor:
+            "The unglamorous option is usually the one that removes an assumption instead of adding a claim.",
+        },
       },
       {
         id: "m5b-persuasion",
@@ -2110,6 +2131,14 @@ const nodes: GameNode[] = [
           "Sarah has seen the work in a real store and you can name exactly where the rival falls short. You are going to win the room. Nobody has yet checked whether you can deliver what you are about to promise.",
         changed: ["A strong case with the sponsor", "Nothing tested about delivery"],
         effect: { dims: { win: 3, deliver: -3 } },
+        lesson: {
+          principle:
+            "In a fortnight I can build the argument or I can test the plan. We chose the argument.",
+          because:
+            "A reference visit and a benchmark both aim at the room. Nothing you funded asked whether the work is doable.",
+          watchFor:
+            "Notice when everything you paid for points at winning rather than at doing.",
+        },
       },
       {
         id: "m5b-spread",
@@ -2531,7 +2560,7 @@ const nodes: GameNode[] = [
        decision to make. */
     saidQuote: {
       text: "I have three proposals, a scorecard and a savings target. Give me something to write in the box that explains why I did not take the cheapest.",
-      attribution: FOYLE,
+      ...FOYLE,
     },
     advisorLine: "Foyle is not the obstacle. He has a number to hit and nobody has helped him hit it.",
     advisor: RIYA_DEAL,
@@ -2789,7 +2818,7 @@ const nodes: GameNode[] = [
     ],
     saidQuote: {
       text: "We are ready to sign. I would rather hear a problem from you now than in six months.",
-      attribution: SARAH,
+      ...SARAH,
     },
     concerns: [
       "Everything after this is expensive to change",
@@ -3137,7 +3166,7 @@ const nodes: GameNode[] = [
     ],
     saidQuote: {
       text: "I have told them this programme matters. After that it is not in my hands, and my successor will make their own mind up.",
-      attribution: SARAH,
+      ...SARAH,
     },
     concerns: [
       "The budget holder is leaving",

@@ -89,14 +89,14 @@ These matter because a learner carries them into a real meeting.
 
 | # | item | evidence |
 |---|---|---|
-| 6.1 | **32 of 32 `lesson.principle` lines are timeless maxims and 0 refer to anything that happened.** 36 of 64 lesson lines say *you*; **0 say *we***, because they were never written for a person to say. A colleague reciting a definition in quotation marks under a portrait is the lecture with a face on it. Strip them from the consequence screen; the principle goes into the player's hands via 4.5. | narrative N1, conceded by learning-science on placement |
-| 6.2 | **One voice, four names.** 12 of 25 advisor utterances are role-locked; 9 share one template (numbered past experience + rueful reversal). Nobody interrupts, jokes, or is frightened. | narrative N2 |
-| 6.3 | **Marcus Reed: 8 mentions, 0 lines.** The game turns on his consent and the player never looks him in the eye. | narrative N3 |
-| 6.4 | **Sarah Lim is never under pressure** and never asks a question the player cannot answer well. A game about the pressure that corrupts judgement never dramatises it. | narrative N6 |
+| 6.1 | **DONE** · **32 of 32 `lesson.principle` lines are timeless maxims and 0 refer to anything that happened.** 36 of 64 lesson lines say *you*; **0 say *we***, because they were never written for a person to say. A colleague reciting a definition in quotation marks under a portrait is the lecture with a face on it. Strip them from the consequence screen; the principle goes into the player's hands via 4.5. | narrative N1, conceded by learning-science on placement |
+| 6.2 | **DONE** · **One voice, four names.** 12 of 25 advisor utterances are role-locked; 9 share one template (numbered past experience + rueful reversal). Nobody interrupts, jokes, or is frightened. | narrative N2 |
+| 6.3 | **DONE** · **Marcus Reed: 8 mentions, 0 lines.** The game turns on his consent and the player never looks him in the eye. | narrative N3 |
+| 6.4 | **DONE** · **Sarah Lim is never under pressure** and never asks a question the player cannot answer well. A game about the pressure that corrupts judgement never dramatises it. | narrative N6 |
 | 6.5 | **DONE** · **`story.ts:2656`** — a delivery lead says "depends on what you did in chapter three". | verified |
-| 6.6 | **m5b is a dramatic dead spot**: spread 2, no negative outcome exists, and it closes chapter 2. | narrative N5 |
+| 6.6 | **DONE** · **m5b is a dramatic dead spot**: spread 2, no negative outcome exists, and it closes chapter 2. | narrative N5 |
 | 6.7 | **DONE** · 11 of 16 eyebrows are methodology headings ("Opportunity assessment", "Prioritisation"). | narrative N8 |
-| 6.8 | Sarah Lim has no portrait — no suitable image found, recorded rather than fudged. | this session |
+| 6.8 | **DONE** · Sarah Lim has no portrait — no suitable image found, recorded rather than fudged. | this session |
 
 ## 7 · Craft
 
@@ -145,7 +145,7 @@ passes. `advisor.steer` is declared in `types.ts` and used by zero missions. *(Q
 
 ## Status, as of the last commit
 
-**40 of 52 shipped. 10 open, 2 partial.** Counted rather than estimated, by grepping the
+**46 of 52 shipped. 4 open, 2 partial.** Counted rather than estimated, by grepping the
 repo for each item.
 
 | section | shipped | open |

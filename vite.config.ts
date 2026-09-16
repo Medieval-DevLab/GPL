@@ -105,22 +105,37 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.test.ts"],
     /**
-     * Leave the scheduler room to breathe.
+     * One test file at a time.
      *
-     * The suite kept exiting 1 with every one of its 158 tests passing:
-     * `[vitest-worker]: Timeout calling "onTaskUpdate"`. That call goes FROM a worker TO
-     * the main thread, and birpc's timeout is hardcoded at 60s — so the failure is not a
-     * slow test, it is a main thread too busy to answer one. No individual test here
-     * exceeds 35s, and the suite still failed, because eight workers on eight cores
-     * running the exhaustive state-space sweeps left nothing to reply with.
+     * The suite kept exiting 1 with every test passing:
+     * `[vitest-worker]: Timeout calling "onTaskUpdate"`. birpc's deadline is hardcoded at
+     * 60s (`DEFAULT_TIMEOUT` in vitest's bundled copy, not user-configurable), so this was
+     * never a slow test — no individual test here exceeds 35s.
      *
-     * Capping the pool fixes it without weakening a single assertion, which is the whole
-     * appeal — the alternative on the table was making the determinism check cheaper, and
-     * that one compares two independent sweeps of the entire reachable state space and is
-     * the most important guarantee in the project.
+     * `maxWorkers: 4` was the previous fix and it was an INCOMPLETE DIAGNOSIS. It read the
+     * failure as a main thread too busy to answer, which is only half of it: a worker
+     * blocked in a twenty-second synchronous loop cannot read the reply to its own call
+     * either, so the round trip blows the deadline no matter how idle the main thread is.
+     * Capping the pool bought headroom rather than removing the race, and the failure came
+     * straight back the moment anything else was using the machine.
+     *
+     * Measured, with an ordinary browser open — which is the normal condition, not an
+     * exotic one:
+     *
+     *   4 workers, 9 files      143s, exit 1
+     *   2 workers, 2 heavy files 148s, exit 1
+     *   serial, 9 files          150s, exit 0
+     *
+     * So on a machine that is already busy, parallelism buys NOTHING — the heavy files
+     * saturate the cores either way — and costs the exit code. It is only faster on an
+     * idle machine (35s), and a green suite that needs four spare cores to report itself
+     * green is not a gate, it is a coin toss.
+     *
+     * Not a weakened assertion anywhere. `analysis.test.ts` also drives the sweep as a
+     * generator and yields between levels, so a single level could not blow the deadline
+     * even if this line were removed.
      */
-    maxWorkers: 4,
-    minWorkers: 1,
+    fileParallelism: false,
     /**
      * Vitest blanks every `.css` request so a component import cannot drag a stylesheet
      * into a node environment. That also blanks `index.css?raw`, which is how

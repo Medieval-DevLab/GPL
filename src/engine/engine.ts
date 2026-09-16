@@ -24,6 +24,7 @@ import {
   type Option,
   type Outcome,
   type Resolution,
+  type SaidQuote,
 } from "./types";
 
 export const START_DIMS: Record<DimensionId, number> = { win: 50, profit: 50, deliver: 50 };
@@ -176,13 +177,10 @@ export function resolveSituation(mission: Mission, state: GameState): string[] {
  * `Mission.quotes` for why the conditional list exists at all — the short version is that
  * Marcus Reed must not introduce himself to a player who never asked who he was.
  */
-export function resolveSaidQuote(
-  mission: Mission,
-  state: GameState,
-): { text: string; attribution: string } | undefined {
+export function resolveSaidQuote(mission: Mission, state: GameState): SaidQuote | undefined {
   for (const q of mission.quotes ?? []) {
     if (evaluateCondition(q.when, state.flags, state.dims)) {
-      return { text: q.text, attribution: q.attribution };
+      return { text: q.text, speaker: q.speaker, role: q.role };
     }
   }
   return mission.saidQuote;

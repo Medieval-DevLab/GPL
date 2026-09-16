@@ -368,6 +368,11 @@ describe("engine purity", () => {
     [/\bfetch\s*\(|\bXMLHttpRequest\b/, "a network call — there is no backend (D-004)"],
     [/\bdocument\.|\bwindow\.|\blocalStorage\b|\bsessionStorage\b/, "the DOM"],
     [/from\s+"react|from\s+'react/, "React"],
+    /* Added when the exhaustive sweep became a generator so a test could pause it. The
+       generator is pure and stays in the engine; the scheduling moved to
+       `analysis.test.ts`, and this line is what keeps it there. A timer in the engine is
+       how a replayable walk quietly acquires a dependency on how busy the machine is. */
+    [/\bsetTimeout\b|\bsetInterval\b|\bsetImmediate\b|\bqueueMicrotask\b/, "a timer"],
   ];
 
   it("loaded the engine sources", () => {

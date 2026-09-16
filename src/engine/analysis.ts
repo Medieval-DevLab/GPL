@@ -442,7 +442,26 @@ function widen(range: Record<DimensionId, DimRange>, dims: Record<DimensionId, n
   }
 }
 
-export function sweep(content: Content, opts: SweepOptions = {}): SweepResult {
+/**
+ * The walk itself, as a generator that pauses between levels.
+ *
+ * A sweep is tens of seconds of unbroken synchronous CPU, and that is what has been
+ * failing this build on and off for a fortnight with `Timeout calling "onTaskUpdate"`
+ * while every test passes. The diagnosis in D-043 was incomplete. Capping workers at 4
+ * helped and did not fix it, because the mechanism is not only that the main thread is
+ * busy: A WORKER BLOCKED IN A 50-SECOND LOOP CANNOT READ THE REPLY TO ITS OWN RPC. The
+ * request goes out, the worker stops servicing its event loop, and by the time it looks
+ * again birpc's hardcoded 60s deadline has passed. Adding cores cannot help that, and the
+ * failure therefore came back the moment a dev server was running alongside the suite.
+ *
+ * So the loop yields once per breadth-first level — around eighteen times per sweep, at
+ * points where no partial state is exposed. `sweep` drives it to completion synchronously
+ * and is unchanged for every caller; a test drives it step by step instead.
+ */
+export function* sweepWalk(
+  content: Content,
+  opts: SweepOptions = {},
+): Generator<void, SweepResult, void> {
   const keying = keyingFor(content, opts);
   const result: SweepResult = {
     statesAtMission: {},
@@ -547,6 +566,9 @@ export function sweep(content: Content, opts: SweepOptions = {}): SweepResult {
     }
 
     frontier = next;
+    /* Between levels, so a caller that wants to stay responsive can. Nothing is
+       half-updated here: `result` is consistent and `frontier` is the next whole level. */
+    yield;
   }
 
   /* Truncation would make every "is this reachable?" answer unsound, so it must never
@@ -559,6 +581,21 @@ export function sweep(content: Content, opts: SweepOptions = {}): SweepResult {
   }
 
   return result;
+}
+
+/**
+ * Exhaustive walk of the reachable state space. Blocks until finished.
+ *
+ * The generator above is the only implementation. A caller that must stay responsive
+ * drives `sweepWalk` itself and awaits something between steps — see `analysis.test.ts`.
+ * The scheduling deliberately lives there and not here: deciding when to pause is not a
+ * game rule, and the engine may not touch a timer, which `runcode.test.ts` now enforces.
+ */
+export function sweep(content: Content, opts: SweepOptions = {}): SweepResult {
+  const walk = sweepWalk(content, opts);
+  let step = walk.next();
+  while (!step.done) step = walk.next();
+  return step.value;
 }
 
 /* ─────────────────── witnessed meter extremes ─────────────────── */

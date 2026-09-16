@@ -6,6 +6,50 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-050 · `maxWorkers: 4` was an incomplete diagnosis, and the failure came back
+The suite has exited 1 with every test passing, on and off, for a fortnight:
+`[vitest-worker]: Timeout calling "onTaskUpdate"`. D-043 read that as a main thread too
+busy to answer an RPC and capped the pool at four workers. The suite went green and three
+times faster, so the diagnosis looked confirmed. **It was half right, and the half it
+missed is the half that matters.**
+
+`onTaskUpdate` is a round trip. A worker blocked in a twenty-second synchronous sweep
+cannot read the REPLY to its own call either, so the measured latency exceeds birpc's
+deadline however idle the main thread is. Capping the pool bought headroom; it never
+removed the race. The failure returned the moment anything else was using the machine
+— in this case an ordinary browser, which is the normal condition and not an exotic one.
+
+Measured, all three with a browser open:
+
+| | duration | exit |
+|---|---|---|
+| 4 workers, 9 files | 143s | **1** |
+| 2 workers, the 2 heavy files only | 148s | **1** |
+| serial, 9 files | 150s | **0** |
+
+So on a busy machine parallelism buys **nothing** — the heavy files saturate the cores
+either way — and costs the exit code. It is only faster on an idle machine (35s), and a
+suite that needs four spare cores to report itself green is not a gate, it is a coin toss.
+`fileParallelism: false`.
+
+Belt and braces, because serialising is a statement about today's content: the exhaustive
+walk is now the generator `sweepWalk`, and `analysis.test.ts` drives it and awaits a
+macrotask between breadth-first levels. One level could not blow the deadline even if the
+config line were deleted. **The scheduling lives in the test, not the engine**, and the
+purity check now bans `setTimeout`/`setInterval`/`setImmediate`/`queueMicrotask` in
+`src/engine` to keep it there — a timer in the engine is how a replayable walk quietly
+acquires a dependency on how busy the machine is. `sweep` itself is unchanged for every
+caller and remains the single implementation.
+
+**Cost:** ~110s of wall clock on an idle machine, and `npx vitest run <file>` is still fast
+for iteration. **Not paid:** no assertion weakened. The alternative repeatedly on the table
+was making the determinism check cheaper, and that one compares two independent sweeps of
+the entire reachable state space — if it ever fails, a result has stopped being
+attributable to the player's decisions, which is the whole premise of the game.
+**Reversible:** yes, one line.
+
+---
+
 ## D-049 · Conditional client dialogue, because Marcus must not introduce himself
 `saidQuote` renders unconditionally, which was fine while all four of them were the
 sponsor — she is on screen in chapter one and owns the budget. It is not fine for the two

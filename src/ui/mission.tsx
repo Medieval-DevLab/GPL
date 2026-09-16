@@ -23,6 +23,7 @@ import type {
   GameState,
   Mission,
   Option,
+  SaidQuote,
 } from "../engine/types";
 import { Facsimile } from "./facsimile";
 import { Bullet, Icon, IconTile, Pill, SectionTitle } from "./icons";
@@ -39,6 +40,14 @@ import {
 
 /* ───────────────────────── header ───────────────────────── */
 
+/** "Marcus Reed" → "MR". First and last, so a middle name cannot make three. */
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "";
+  return (first + last).toUpperCase();
+}
+
 function Header({
   mission,
   situation,
@@ -48,7 +57,7 @@ function Header({
   situation: string[];
   /* Resolved by the engine, not read off the mission: which client voice speaks here
      depends on what the player has found out. See `resolveSaidQuote`. */
-  said?: { text: string; attribution: string };
+  said?: SaidQuote;
 }) {
   return (
     <div className="flex items-stretch gap-5">
@@ -87,9 +96,38 @@ function Header({
           <blockquote className="border-l-[3px] border-(--color-accent) pl-3 text-[13px] italic leading-snug text-(--color-ink-soft) text-pretty">
             {quoted(said.text)}
           </blockquote>
-          <p className="mt-2 pl-3 text-[12px] font-bold text-(--color-ink)">
-            {said.attribution}
-          </p>
+          {/**
+           * The client side gets a face, and it is deliberately not a photograph.
+           *
+           * Four colleagues have portraits because they brief the player directly. The
+           * three client voices had nothing — which read as a hierarchy where the people
+           * whose money and systems are at stake matter less than the people advising on
+           * them. The obvious fix was a fifth stock portrait for the sponsor; the reason
+           * not to is that upscaled stock photography was already 9.2% of the pixels in
+           * this game and is the measured cause of "it looks like a PPT".
+           *
+           * So: the monogram device the client card already uses, drawn from the name in
+           * content. `aria-hidden`, because the name it abbreviates is the next element.
+           */}
+          <div className="mt-2.5 flex items-start gap-2 pl-3">
+            <span
+              aria-hidden="true"
+              className="mt-px flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full text-[12px] leading-none font-bold text-white"
+              style={{
+                background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-deep))",
+              }}
+            >
+              {initials(said.speaker)}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[12px] font-bold leading-tight text-(--color-ink)">
+                {said.speaker}
+              </span>
+              <span className="block text-[12px] leading-tight text-(--color-text-muted)">
+                {said.role}
+              </span>
+            </span>
+          </div>
         </div>
       )}
 

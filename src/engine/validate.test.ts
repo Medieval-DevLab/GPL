@@ -199,7 +199,7 @@ describe("every pre-decision field is leak-checked", () => {
     ["advisor.steer", (m) => void (m.advisor && (m.advisor.steer = "Take the recommended path."))],
     [
       "saidQuote",
-      (m) => void (m.saidQuote = { text: "Give us the best choice.", attribution: "Sarah Lim" }),
+      (m) => void (m.saidQuote = { text: "Give us the best choice.", speaker: "Sarah Lim", role: "CTO" }),
     ],
     ["concerns", (m) => void (m.concerns = ["You should hurry."])],
     [
@@ -310,7 +310,7 @@ describe("the four unbudgeted briefing fields", () => {
 
   it("budgets saidQuote", () => {
     const c = clone();
-    firstChoice(c).saidQuote = { text: longText(40), attribution: "Sarah Lim" };
+    firstChoice(c).saidQuote = { text: longText(40), speaker: "Sarah Lim", role: "CTO" };
     expect(brokeIt(c)).toMatch(/"saidQuote" is 40 words/);
   });
 });
