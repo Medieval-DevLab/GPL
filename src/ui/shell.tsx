@@ -105,6 +105,10 @@ export const UI_LABEL = {
   decisionsOpen: "— and what they told you to watch for",
   ledToWhat: "What led to what",
   howYouPlayed: "How you played",
+  /** the persistent navigation added when the game gained a hub and a map */
+  done: "done",
+  journey: "Journey",
+  recognition: "Awards",
 } as const;
 
 /** Visually-hidden text: what an icon or a dot row says to the eye and to nothing else. */
@@ -564,10 +568,32 @@ export function TopBar({
   chapters,
   currentChapter,
   onRestart,
+  progress,
+  badgeCount,
+  onJourney,
+  onRecognition,
 }: {
   chapters: Chapter[];
   currentChapter: number;
   onRestart: () => void;
+  /**
+   * Missions completed out of the total. PROGRESS, deliberately, and not a score.
+   *
+   * A score used to live in this bar — the mean of the three meters — and it was deleted
+   * for reasons recorded below that still hold: it invites the player to optimise the
+   * grader, and a meter-greedy policy drove it to 100/100/100 without reading a word.
+   *
+   * The client has since asked for gamification, and this is the shape that survives that
+   * objection. "11 of 17 done" cannot be gamed, because the only way to move it is to play
+   * the beats; it says where you are rather than how good you are. Duolingo's streak and
+   * lesson count work the same way. A quality number in invariant furniture would be the
+   * deleted score wearing a different label.
+   */
+  progress?: { done: number; total: number };
+  /** Badges earned. Recognition for specific behaviour, not a performance figure. */
+  badgeCount?: number;
+  onJourney?: () => void;
+  onRecognition?: () => void;
 }) {
   return (
     <>
@@ -602,7 +628,42 @@ export function TopBar({
             Profitability at 34, and it was the surface a meter-greedy policy optimised to
             100/100/100 without reading a word. Invariant furniture should be invariant,
             and a grader should not be the thing that never leaves the screen. */}
-        <div className="ml-auto flex shrink-0 items-center gap-4">
+        {/* Navigation beyond "next". Until now the only way through the game was the
+            primary action in the bottom bar, seventeen times — so the player could never
+            step out to see the shape of the run or what they had earned. These are the two
+            doors out, and they are in the one piece of furniture that never leaves. */}
+        <div className="ml-auto flex shrink-0 items-center gap-3">
+          {progress && (
+            <span className="hidden items-center gap-1.5 text-[13px] lg:flex">
+              <span className="font-bold text-(--color-ink) tabular-nums">
+                {progress.done}
+                <span className="text-(--color-muted)">/{progress.total}</span>
+              </span>
+              <span className="text-(--color-muted)">{UI_LABEL.done}</span>
+            </span>
+          )}
+          {onJourney && (
+            <button
+              onClick={onJourney}
+              className="m-press flex min-h-[32px] items-center gap-1.5 rounded-lg border border-(--color-border-control) px-2.5 text-[13px] font-semibold text-(--color-accent)"
+            >
+              <Icon name="flag" size={14} />
+              {UI_LABEL.journey}
+            </button>
+          )}
+          {onRecognition && (
+            <button
+              onClick={onRecognition}
+              className="m-press flex min-h-[32px] items-center gap-1.5 rounded-lg border border-(--color-border-control) px-2.5 text-[13px] font-semibold text-(--color-accent)"
+            >
+              <Icon name="trophy" size={14} />
+              {typeof badgeCount === "number" ? (
+                <span className="tabular-nums">{badgeCount}</span>
+              ) : (
+                UI_LABEL.recognition
+              )}
+            </button>
+          )}
           <StartOver onRestart={onRestart} />
         </div>
       </header>

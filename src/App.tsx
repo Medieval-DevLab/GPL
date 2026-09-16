@@ -66,6 +66,9 @@ import {
 const STORAGE_KEY = saveKey();
 const content = story;
 
+/** How many beats there are to do, derived so it cannot drift from the content. */
+const missionTotal = Object.values(content.nodes).filter((n) => isMission(n)).length;
+
 function chapterFor(number: number): Chapter {
   return (
     content.chapters.find((c) => c.number === number) ?? content.chapters[0]
@@ -333,6 +336,11 @@ export default function App() {
       chapters={content.chapters}
       currentChapter={currentChapter}
       onRestart={doRestart}
+      /* Progress, not a score. The mean-of-meters figure that used to live in this bar
+         was deleted because it invited the player to optimise the grader; "n of 17
+         done" cannot be gamed, because the only way to move it is to play the beats. */
+      progress={{ done: state.completed.length, total: missionTotal }}
+      badgeCount={state.badges.length}
     />
   );
 
