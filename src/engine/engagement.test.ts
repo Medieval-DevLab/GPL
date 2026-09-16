@@ -63,19 +63,23 @@ describe("the engagement gate", () => {
     /*
      * TARGET: 0. A non-reader must not reach the best verdict in the game.
      *
-     * This went 12 → 14 when the losable award beat landed, and the direction is worth
-     * recording rather than tidying away. Three of the eighteen non-reader runs now lose
-     * the award outright, which is the point — but the ones that survive it collect m9a's
-     * winning deltas on top, and that pushed two more over the "deal worth having"
-     * threshold. The loss branch made the distribution wider at both ends, not just the
-     * bottom. Closing this clause needs the two items still outstanding: no option is
-     * gated on knowledge (0 of 45), and the cost pips correlate with payoff at r = 0.110,
-     * so a non-reader still has nothing to get wrong.
+     * 12 → 14 → 13, and the shape of that is worth keeping rather than tidying away.
+     *
+     * The losable award beat took it *up*, because three of the eighteen non-reader runs
+     * now lose outright but the ones that survive collect m9a's winning deltas on top. The
+     * content work then took it back down: charging for the crunch, naming the
+     * concealment, aligning `o-broaden`'s cold branch with its own prose, and gating three
+     * options on knowledge. So the loss branch widened the distribution and the economy
+     * work is narrowing it, which is the right order.
+     *
+     * Closing this clause needs the outcome economy itself — a reviewer measured the mean
+     * summed delta as positive on 14 of 16 missions — and the cost pips, which correlate
+     * with payoff at r = 0.110, so a non-reader still has nothing on the card to get wrong.
      */
     const topVerdictReachedBy = report.nonReaders.filter(
       (r) => r.verdict === "A deal worth having",
     ).length;
-    expect(topVerdictReachedBy).toBe(14);
+    expect(topVerdictReachedBy).toBe(13);
 
     // The award beat is doing its job on the policies that never differentiate.
     const lostTheAward = report.nonReaders.filter(
@@ -83,8 +87,16 @@ describe("the engagement gate", () => {
     ).length;
     expect(lostTheAward).toBe(3);
 
-    // TARGET: fewer than 6. Every verdict in the game is reachable without reading,
-    // including the two written to describe a specific kind of misjudgement.
+    /*
+     * TARGET: fewer than 6. Still 6, and worth being precise about why.
+     *
+     * It briefly measured 5 mid-way through the content work — "A workable deal" dropped
+     * out — and came back to 6 when `o-prove-fast` was given a real upside so it stopped
+     * being a trap. That is the correct trade and it should be recorded as one: a verdict
+     * being *unreachable* is not the same as it being *earned*, and the fix that restored
+     * it also removed a fake choice. This clause closes on the outcome economy, not on
+     * clever gating.
+     */
     expect(report.verdictsWithoutReading).toHaveLength(6);
 
     // TARGET: best non-reader well below 88. Today it is the ceiling.

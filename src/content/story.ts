@@ -606,7 +606,7 @@ const nodes: GameNode[] = [
     chapter: 2,
     stage: "opportunity",
     title: "Is this real?",
-    eyebrow: "Opportunity assessment",
+    eyebrow: "Worth chasing?",
     objective: "Decide how much of your team to commit.",
     minutes: 4,
     hero: "hero-retail-exterior",
@@ -780,7 +780,7 @@ const nodes: GameNode[] = [
     chapter: 2,
     stage: "opportunity",
     title: "Someone else moves",
-    eyebrow: "Market response",
+    eyebrow: "They are not alone",
     objective: "React to a competitor changing the race.",
     minutes: 4,
     hero: "hero-client-meeting",
@@ -965,7 +965,7 @@ const nodes: GameNode[] = [
     chapter: 3,
     stage: "solution",
     title: "What are we actually solving?",
-    eyebrow: "Define the problem",
+    eyebrow: "What is actually wrong",
     objective: "Choose the problem your proposal answers.",
     minutes: 4,
     hero: "hero-retail-interior",
@@ -1097,7 +1097,7 @@ const nodes: GameNode[] = [
     chapter: 3,
     stage: "solution",
     title: "What goes in the proposal",
-    eyebrow: "Assemble the offer",
+    eyebrow: "What you are selling",
     objective: "Pick three components. You cannot afford six.",
     minutes: 5,
     hero: "solution-workshop",
@@ -1247,7 +1247,7 @@ const nodes: GameNode[] = [
     chapter: 4,
     stage: "deal",
     title: "The number is too high",
-    eyebrow: "Commercial pressure",
+    eyebrow: "The number",
     objective: "Answer the price without giving away the margin.",
     minutes: 4,
     hero: "hero-negotiation",
@@ -1289,8 +1289,14 @@ const nodes: GameNode[] = [
             // You can only hold a premium if the client can SEE the difference.
             // Proposing the same thing as the competitor removes that difference,
             // whatever else you have going for you.
+            /* `knows:rivals` used to be in this list, and it is granted by the
+               "Challengers" pick on the first screen of the game — so a posture chosen
+               before the player had met the client was enough to hold a 30% premium at
+               mission 11, for the largest profit delta of the four options. Knowing a
+               market is not knowing where this particular competitor is weak, which is
+               what `knows:rival_gap` records. */
             when: {
-              any: ["evidenced", "ops_onside", "reframed", "knows:rival_gap", "knows:rivals"],
+              any: ["evidenced", "ops_onside", "reframed", "knows:rival_gap"],
               none: ["scope:storefront"],
             },
             tone: "strong",
@@ -1428,6 +1434,28 @@ const nodes: GameNode[] = [
       "The finding: the programme changes systems other teams depend on, and the proposal never says how those changes reach production.",
     ],
     variants: [
+      /**
+       * The liability finding, first because it outranks the others.
+       *
+       * All four findings below are FEASIBILITY findings — can we do this. A real
+       * pre-signature review has two halves, and the second is the one that ends careers:
+       * what happens to us if we don't. The content had zero occurrences of liability,
+       * indemnity, cap, service credit, penalty, warranty or IP, so the game taught that
+       * half does not exist — and `m9b`'s own `o-modify` offers to reopen "the two clauses
+       * you are least comfortable with" without ever naming either, which is the content
+       * conceding the gap.
+       *
+       * It fires on `outcome_based`, set when the player wins the award by committing to a
+       * payback figure. That is the honest trigger: a number in a contract is an exposure,
+       * and it is one they chose.
+       */
+      {
+        when: { all: ["outcome_based"] },
+        situation: [
+          "Before signature it goes to internal quality and risk review.",
+          "The finding is not whether you can build it. It is the payback figure you put in the proposal, which legal reads as a commitment and has attached a service credit to. Miss it and the fee reduces automatically, whatever the reason.",
+        ],
+      },
       {
         when: { all: ["scope:heavy"], none: ["has:ops_workstream"] },
         situation: [
@@ -1628,7 +1656,7 @@ const nodes: GameNode[] = [
     chapter: 5,
     stage: "delivery",
     title: "Month five",
-    eyebrow: "Delivery reality",
+    eyebrow: "Month five",
     objective: "Deal with a decision you made months ago.",
     minutes: 4,
     hero: "solution-in-store-tech",
@@ -1708,6 +1736,65 @@ const nodes: GameNode[] = [
         ],
       },
       {
+        /**
+         * The option the game did not have, and the most actionable gap the domain review
+         * found.
+         *
+         * Zero occurrences of "change request", "statement of work", "MSA" or "framework"
+         * anywhere in the content. At month five the four answers were: absorb the cost,
+         * push the team, reset expectations, or quietly trim — and the real first answer,
+         * *price the change and let them buy it*, was absent. So a learner left this game
+         * believing delivery scope pressure is something you ABSORB rather than something
+         * you TRANSACT, and that is how a new joiner gives work away for free, every time.
+         *
+         * It is not a free win. Raising a change request is the correct move and it is a
+         * commercial conversation with a client who is already unhappy, which is why the
+         * outcome turns on whether you documented the original scope — `descoped` and
+         * `evidenced` — rather than on whether you were brave.
+         */
+        id: "o-change",
+        title: "Raise it as a change",
+        icon: "scale",
+        description: "What they are asking for is not in the contract. Price it and let them decide.",
+        commits: "A commercial conversation with a client who is already unhappy.",
+        pros: ["Paid for the work", "Scope stays honest"],
+        cons: ["Reads as opportunism", "Needs the original scope in writing"],
+        cost: { time: 2, investment: 1 },
+        outcomes: [
+          {
+            id: "m10-change-clean",
+            when: { all: ["evidenced"], any: ["ops_onside", "reviewed", "knows:criteria"] },
+            tone: "strong",
+            headline: "They buy it, because you can show it was never in scope.",
+            detail:
+              "You bring the original scope, the dated note where the extra ask first appeared, and a price. Sarah does not enjoy it and she approves it, because the alternative is asking you to work for nothing and she knows it. The programme gets bigger and the margin holds.",
+            changed: ["Extra work funded", "Scope boundary now established in writing"],
+            effect: { dims: { profit: 9, deliver: 4, win: -2 }, flags: ["changed_scope"], badge: "smart_tradeoff" },
+            lesson: {
+              principle: "Scope pressure is a transaction, not a favour. The only question is who pays for it.",
+              because:
+                "The work was always going to be done. Raising it as a change decided whether your margin paid or their budget did — and you could only raise it because the original boundary was written down.",
+              watchFor: "When delivery is asked for something extra, ask first whether it was ever in the contract.",
+            },
+          },
+          {
+            id: "m10-change-thin",
+            tone: "mixed",
+            headline: "The conversation is harder than the arithmetic.",
+            detail:
+              "You are right that it is out of scope, and you cannot point to where you said so. It becomes a negotiation about memory rather than about money. They part-fund it and the relationship cools a degree.",
+            changed: ["Extra work part-funded", "An argument you should not have had to have"],
+            effect: { dims: { profit: 4, win: -5, deliver: 2 }, flags: ["changed_scope"] },
+            lesson: {
+              principle: "A change request is only as strong as the scope it changes.",
+              because:
+                "Nobody disputes a boundary that was written down at the time. Without it you were asking them to accept your account of a conversation from four months ago, which is a weaker position than being wrong would have been.",
+              watchFor: "Write the boundary down when it is uncontroversial, not when it is contested.",
+            },
+          },
+        ],
+      },
+      {
         id: "o-absorb",
         title: "Put more people on it",
         icon: "people",
@@ -1774,8 +1861,18 @@ const nodes: GameNode[] = [
             headline: "It is tight, and it lands.",
             detail:
               "The programme is well enough built that pressure alone gets it over the line. It costs goodwill inside the team, and you will need to spend time repairing that, but the client gets what they were promised.",
-            changed: ["Date met", "The delivery team is worn down"],
-            effect: { dims: { deliver: 2, profit: 3, win: 1 } },
+            changed: ["Date met", "The delivery team is worn down", "Two people ask to roll off at the next gate"],
+            /* Was `deliver +2, profit +3, win +1` -- net +6 for a choice whose own cons say
+               "Paid by the team", with nothing anywhere charging for it. Attrition is the
+               cost, and it lands on Deliverability, because the people who know the
+               programme are the ones who leave. */
+            effect: { dims: { deliver: -4, profit: 3, win: 1 }, flags: ["crunched"] },
+            lesson: {
+              principle: "A date held by goodwill is borrowed, and the people who lend it decide the terms.",
+              because:
+                "The programme was sound enough that pressure worked. What it cost is two people who know how it was built, and you will feel that at the next gate rather than this one.",
+              watchFor: "Before holding a date by effort, ask who is paying and whether they agreed to.",
+            },
           },
         ],
       },
@@ -1800,7 +1897,13 @@ const nodes: GameNode[] = [
               "Short-term pressure relieved",
               "Operations is carrying an explanation you did not give",
             ],
-            effect: { dims: { deliver: 3, win: -4, profit: 4 } },
+            effect: { dims: { deliver: 3, win: -4, profit: 4 }, flags: ["undisclosed"] },
+            lesson: {
+              principle: "Cover is not the same as candour. Somebody is still explaining your decision for you.",
+              because:
+                "It held because Operations absorbed the question you chose not to answer. That works exactly as long as their goodwill lasts, and you have spent some of it without asking.",
+              watchFor: "If a decision needs somebody else to explain it, ask why you are not explaining it.",
+            },
           },
           {
             id: "m10-quiet",
@@ -1848,7 +1951,7 @@ const nodes: GameNode[] = [
     chapter: 2,
     stage: "opportunity",
     title: "Where the team actually goes",
-    eyebrow: "Prioritisation",
+    eyebrow: "Two of five",
     objective: "Fund two of five before the proposal.",
     minutes: 4,
     hero: "solution-workshop",
@@ -2770,7 +2873,7 @@ const nodes: GameNode[] = [
     chapter: 5,
     stage: "delivery",
     title: "Two people short",
-    eyebrow: "Capacity",
+    eyebrow: "Two people short",
     objective: "Resource the programme you actually sold.",
     minutes: 3,
     hero: "solution-workshop",
@@ -2917,6 +3020,31 @@ const nodes: GameNode[] = [
       "Your sponsor, your budget holder and the person who believed in this are all the same person.",
     ],
     variants: [
+      /* How month five was handled now reaches the sponsor-succession beat. These three
+         also make `crunched`, `undisclosed` and `changed_scope` genuinely READ, rather
+         than being declared narrative-only — which was the cheap option and the wrong
+         one, since each records a real position the player's successor inherits. */
+      {
+        when: { all: ["crunched"] },
+        situation: [
+          "Sarah is leaving. She finishes in three weeks, and she was your sponsor, your budget holder and your advocate.",
+          "And the two people who held the date in month five put their roll-off requests in the same week. The programme is losing its sponsor and its memory together.",
+        ],
+      },
+      {
+        when: { all: ["undisclosed"] },
+        situation: [
+          "Sarah is leaving. She finishes in three weeks, and she was your sponsor, your budget holder and your advocate.",
+          "Whoever replaces her will read the original proposal rather than the version that shipped, and nobody has written down why those differ.",
+        ],
+      },
+      {
+        when: { all: ["changed_scope"] },
+        situation: [
+          "Sarah is leaving. She finishes in three weeks, and she was your sponsor, your budget holder and your advocate.",
+          "One thing is in your favour: the change you priced in month five is signed and dated, so her successor inherits a boundary rather than an argument.",
+        ],
+      },
       {
         when: { all: ["ops_onside"] },
         situation: [
@@ -2948,7 +3076,7 @@ const nodes: GameNode[] = [
       "What would a new sponsor cancel first?",
       "What can we prove in three weeks?",
     ],
-    tip: "Marcus is not going anywhere. Whether that helps depends on what you did in chapter three.",
+    tip: "Marcus is staying. Whether that is a rope or a wall depends on whether he has people on this.",
     prompt: "Three weeks before the room changes.",
     question: "What do you do with the three weeks?",
     options: [
@@ -2985,8 +3113,15 @@ const nodes: GameNode[] = [
             headline: "You find two names. Neither of them is invested.",
             detail:
               "Three weeks of introductions produces two people who will not block the programme. That is not the same as two people who will defend it, and you are starting those relationships from nothing at the worst possible moment.",
-            changed: ["Two more names attached", "Neither of them owns it"],
-            effect: { dims: { win: 3, deliver: 1 } },
+            changed: ["Two more names attached", "Neither of them owns it", "Three weeks spent on introductions"],
+            /* Was `win +3, deliver +1`, which does not match its own prose: three weeks
+               spent producing two people who will not block the programme, relationships
+               started from nothing at the worst possible moment. That is a poor result and
+               the numbers said it was a decent one — which is how `o-broaden` came to beat
+               `o-prove-fast` on all three dimensions in 91% of reachable states. The
+               correction is to the number, not to the option that lost to it: you got two
+               names, and you spent your last three weeks not shipping anything. */
+            effect: { dims: { win: 1, deliver: -2 } },
           },
         ],
       },
@@ -3002,13 +3137,20 @@ const nodes: GameNode[] = [
         outcomes: [
           {
             id: "m10c-prove-ready",
-            when: { any: ["has:data", "promised:fast"] },
+            when: { any: ["has:data", "promised:fast", "ops_onside", "changed_scope"] },
             tone: "strong",
             headline: "Something real goes live, and it outlives her.",
             detail:
               "You had the foundations to move quickly, so three weeks was enough to put a working thing in front of the business. A new sponsor can cancel a plan easily. Cancelling something that already works is a much harder meeting.",
             changed: ["A live result on the record", "The team is tired"],
-            effect: { dims: { win: 10, deliver: 2, profit: -3 } },
+            /* Winability well above the handover memo's +6, because this is the only
+               option that converts belief into evidence while the believer is still in
+               post — her successor arrives to a thing that works rather than a document
+               arguing that it will. Deliverability pays for the rush, which is honest,
+               and the cost stays in profit. It was +10/+2/-3 against the memo's
+               +6/+3/+2, i.e. beaten on two dimensions of three and dominated in 91% of
+               reachable states. */
+            effect: { dims: { win: 15, deliver: -2, profit: -3 } },
           },
           {
             id: "m10c-prove-thin",
@@ -3017,7 +3159,14 @@ const nodes: GameNode[] = [
             detail:
               "Three weeks was not enough to stand anything up properly, so what goes in front of Sarah is a prototype with the difficult parts stubbed out. Her successor reads it as a programme with nothing to show after five months.",
             changed: ["Something shipped", "It made the programme look weaker, not stronger"],
-            effect: { dims: { win: -8, deliver: -5, profit: -2 } },
+            /* Deliverability POSITIVE even on the thin branch, which is the point of
+               the option: something exists and runs. It is unimpressive and it is real,
+               and a successor arriving to a working increment is in a better delivery
+               position than one arriving to a plan — whatever they think of the increment.
+               At -4/-5/-1 this branch was beaten on all three by `o-broaden`'s cold
+               branch (+3/0/+1) in 94% of reachable states, which made the whole option a
+               trap rather than a choice. */
+            effect: { dims: { win: -4, deliver: 3, profit: -1 } },
           },
         ],
       },

@@ -267,6 +267,11 @@ describe("no fake choices, in the states that occur", () => {
       );
       console.log(["", "dominance relations in the 75-90% band:", ...lines, ""].join("\n"));
     }
-    expect(findings.length).toBeLessThanOrEqual(6);
+    /* 6 → 8. Two of the additions are the new change-control option beating the two
+       answers it is *meant* to beat — absorbing the cost yourself, and quietly trimming
+       the scope — which is the lesson rather than a defect. Both sit at 83–88%, below the
+       90% bar, and they are watched here precisely so that claim does not have to be
+       taken on trust. */
+    expect(findings.length).toBeLessThanOrEqual(8);
   });
 });
