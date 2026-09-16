@@ -61,6 +61,20 @@ const BUDGET = {
   advisorLine: 24,
   /** a client pull-quote, which gets its own block and may run longer. Observed max 28. */
   saidQuote: 34,
+  /**
+   * the option as a spoken reply, on a `dialogue` beat.
+   *
+   * Tighter than `saidQuote` for a layout reason rather than a prose one: the
+   * replies render as stacked full-width rows, three or four of them one under
+   * the other, so a long one wraps to three lines and the list stops being
+   * scannable at a glance. Roughly a breath of speech.
+   *
+   * Observed max 20, across 37 authored replies — so unlike every other number
+   * here this one sits exactly ON the authored maximum rather than above it.
+   * Deliberate: 20 words is where the row wraps, not a style preference, so the
+   * next line over it is a fit problem and the author should hear about it.
+   */
+  say: 20,
   /** per `changed` bullet. Observed max 12. */
   changed: 18,
 } as const;
@@ -152,6 +166,46 @@ export const LESSON_OVERLAP_LIMIT = 0.7;
 
 /** Below this many content words, overlap is noise and only exact matches count. */
 const LESSON_MIN_WORDS = 4;
+
+/**
+ * How much a spoken `say` line may overlap the card `title` of the same option
+ * before it is the title with quotation marks round it.
+ *
+ * A WARNING rather than an error, deliberately, and the only check in this file
+ * that is. The others are properties of the content — a flag nothing sets, an
+ * absent fallback, a word count — and a machine settles them. Whether a
+ * sentence is a fresh line or a restatement is a judgement about register, and
+ * a hard gate on it would fire on prose that is doing exactly the right thing:
+ * a reply that picks up the noun phrase it is answering ("Then let's own the
+ * post-purchase experience end to end") is natural speech, not laziness. So
+ * this flags the pair for a reviewer and blocks nothing on its own — though see
+ * `validate.test.ts`, where `engine.test.ts`'s empty-warning pin means a
+ * warning that fires today still stops the build.
+ *
+ * Calibrated, not guessed. Measured across all 37 authored replies: the closest
+ * `say`/`title` pair sits at 0.21, the next at 0.20, and 30 of the 37 are below
+ * 0.10. The worst case is always the same shape — a reply that echoes both the
+ * verb and the noun of a four-word title while saying something new about them,
+ * which is the register the field exists for. Nothing authored reaches 0.34, so
+ * the limit sits at better than three times the observed maximum and the whole
+ * band beneath it is empty. `validate.test.ts` pins that measurement, so an
+ * author who narrows it legitimately hears about it in one line rather than
+ * through a warning firing on innocent prose.
+ *
+ * Tolerance is wider than `LESSON_OVERLAP_LIMIT`'s for a reason worth knowing:
+ * two lessons have no business sharing vocabulary at all, whereas a reply is
+ * *answering* the thing the title names and will often pick its noun back up.
+ * The limit is still low enough to catch what it is for — the title with one
+ * word bolted onto it scores 0.75.
+ *
+ * Note the asymmetry in how it is applied: the noise floor is checked on the
+ * SPOKEN bag only, not on both. Titles are three or four content words by
+ * budget, so a floor on the title bag would have skipped the check on most of
+ * the game. Jaccard already handles the size difference in the safe direction —
+ * a genuinely new sentence that happens to reuse the title's noun scores low
+ * because it brings words of its own.
+ */
+export const SAY_TITLE_OVERLAP_LIMIT = 0.7;
 
 function conditionFlags(c: Condition | undefined): string[] {
   if (!c) return [];
@@ -372,6 +426,46 @@ export function validateContent(content: Content): Issue[] {
       err(m.id, "needs at least two things to consider — one reads as an instruction");
     }
 
+    /* A `dialogue` beat is opened by whoever already speaks on the mission, in
+       the order the renderer resolves them: the first matching `quotes` entry,
+       then `saidQuote` (both via `resolveSaidQuote` in engine.ts), then the
+       colleague's `advisorLine`, then their standing `advisor.quote`. Stage a
+       beat with none of the four and nothing throws — the scene simply opens
+       with nobody having said anything, and the options answer a question the
+       player was never asked.
+
+       Known residual: a mission whose ONLY opener is a CONDITIONAL `quotes`
+       entry passes here and still opens silent in the states where that
+       condition fails. Deciding that statically means asking whether a
+       reachable state satisfies the condition, which is the sweep's job rather
+       than this file's — `analysis.test.ts` already fails on a line of
+       dialogue no reachable state can hear, which closes the same hole from
+       the other end. */
+    if (m.presentation === "dialogue") {
+      /* The colleague's two fields are conditioned on the advisor OBJECT as
+         well, because `dialogue.tsx` is: it pushes that turn on
+         `advisor && (advisorLine ?? advisor.quote)`, since a turn needs a name
+         and a job title beside the words. A missing advisor is already an error
+         above, so this cannot fire on otherwise-sound content — it is here so
+         the condition is the renderer's condition rather than a paraphrase of
+         it. */
+      const clientSpeaks =
+        Boolean(m.saidQuote?.text?.trim()) ||
+        (m.quotes ?? []).some((q) => q.text.trim().length > 0);
+      const colleagueSpeaks =
+        Boolean(m.advisor) &&
+        (Boolean(m.advisorLine?.trim()) || Boolean(m.advisor?.quote?.trim()));
+      const canOpen = clientSpeaks || colleagueSpeaks;
+      if (!canOpen) {
+        err(
+          m.id,
+          'staged as "dialogue" with nobody to speak first — a dialogue beat opens with a ' +
+            "quotes entry, a saidQuote, an advisorLine or the advisor's own quote, and this " +
+            "mission has none of them",
+        );
+      }
+    }
+
     /* Every pre-decision surface is leak-checked, not just `commits`. Anything
        the player reads BEFORE choosing may describe cost, never effect.
 
@@ -470,6 +564,10 @@ export function validateContent(content: Content): Issue[] {
         leakCheck(o.commits, `${m.id}/${o.id}`, "commits");
         leakCheck(o.description, `${m.id}/${o.id}`, "description");
         leakCheck(o.title, `${m.id}/${o.id}`, "title");
+        /* `say` is pre-decision copy like any other: on a dialogue beat it is
+           the ONLY thing the player reads about the option, so a prediction
+           there is the leak with the largest audience, not the smallest. */
+        leakCheck(o.say, `${m.id}/${o.id}`, "say");
         for (const p of o.pros ?? []) leakCheck(p, `${m.id}/${o.id}`, "pros");
         for (const c of o.cons ?? []) leakCheck(c, `${m.id}/${o.id}`, "cons");
 
@@ -482,6 +580,48 @@ export function validateContent(content: Content): Issue[] {
         };
         oBudget(o.description, BUDGET.description, "description");
         oBudget(o.commits, BUDGET.commits, "commits");
+        oBudget(o.say, BUDGET.say, "say");
+
+        /* The option as a spoken reply.
+
+           REQUIRED on every option of a dialogue mission, and an error rather
+           than a warning, because the failure is silent and total: with `say`
+           absent the renderer falls back to `title`, which is written in the
+           third person for a comparison card — "The post-purchase experience"
+           — so the beat renders a row of captions where a person should be
+           talking. Nothing crashes, nothing looks broken enough to report, and
+           the one thing the staging exists to do has quietly stopped
+           happening. Same failure class as a condition reading a flag nothing
+           sets. The message names both ids because the fix is in one option of
+           one mission and the fastest route there is the pair. */
+        if (m.presentation === "dialogue" && !o.say?.trim()) {
+          err(
+            oWhere,
+            `option "${o.id}" of dialogue mission "${m.id}" has no "say" — it would fall back ` +
+              `to the third-person "title" and the beat would stop being a conversation`,
+          );
+        }
+
+        /* And `say` must be a fresh line, not the title in quotation marks.
+           Same normalise/contentWords/overlap machinery as the lesson check
+           above rather than a second similarity measure — two ways of asking
+           whether two sentences say the same thing is two answers, and the
+           second one is the one nobody recalibrates. See
+           SAY_TITLE_OVERLAP_LIMIT for why this is a warning. */
+        if (o.say?.trim() && o.title.trim()) {
+          const spoken = contentWords(o.say);
+          const captioned = contentWords(o.title);
+          const same = normalise(o.say) === normalise(o.title);
+          const shared = overlap(spoken, captioned);
+          if (same) {
+            warn(oWhere, `"say" is the "title" reworded only by punctuation — write the reply`);
+          } else if (spoken.size >= LESSON_MIN_WORDS && shared >= SAY_TITLE_OVERLAP_LIMIT) {
+            warn(
+              oWhere,
+              `"say" restates "title" (${shared.toFixed(2)} word overlap against a ${SAY_TITLE_OVERLAP_LIMIT} limit) — a reply should add the speaker's own words`,
+            );
+          }
+        }
         for (const p of o.pros ?? []) oBudget(p, BUDGET.prosCons, "pros");
         for (const c of o.cons ?? []) oBudget(c, BUDGET.prosCons, "cons");
         if ((o.pros?.length ?? 0) > 2) err(oWhere, "more than two pros — a card is scanned, not read");

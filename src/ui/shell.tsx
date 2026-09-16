@@ -71,6 +71,33 @@ export const UI_LABEL = {
   /** the investigate consequence's disclosure. Third printing of the same paragraphs
       — see the block it wraps in `consequence.tsx`. */
   foundOut: "What you found out",
+  /**
+   * The conversation surfaces — see `ui/dialogue.tsx`.
+   *
+   * Every one of these is interface state, which is exactly why it is here and not in
+   * content: "Camera off" reports a fact about the call window, not about the pursuit.
+   * The two that name a person do it by template — `${name} ${UI_LABEL.isSpeaking}` —
+   * so the attribution stays content's and only the verb is ours.
+   */
+  live: "Live",
+  teamChat: "Team chat",
+  onCall: "on the call",
+  inChat: "in this chat",
+  cameraOff: "Camera off",
+  speaking: "Speaking",
+  /** the same ring, once the floor is the player's — it has not been used yet, honestly */
+  yourTurn: "Your turn",
+  you: "You",
+  /** the typing affordance, and the one control that exists because text is animated */
+  showWholeLine: "Show the whole line",
+  /** a line from somebody who is not in the room — see `Room` in engine/types.ts */
+  relayed: "Relayed",
+  /** the colleague's open questions, on the beat before the replies are offered */
+  openQuestionsFrom: "Open questions from",
+  /** a reply that is chosen but not yet committed. The chat surface shows it as a bubble. */
+  draft: "Not sent yet",
+  /** the prediction gate's question, asked in two places and therefore written in one */
+  predictQuestion: "Which of the three will move least?",
   /** the closing debrief's section headings and its one disclosure */
   standing: "Where you ended up",
   account: "The account",
@@ -101,6 +128,50 @@ export function Hidden({ children }: { children: React.ReactNode }) {
  */
 export function quoted(text: string): string {
   return `“${text}”`;
+}
+
+/* ───────────────────────────── the monogram ─────────────────────────────
+   One device, three call sites. It was written for the client pull-quote in
+   `ui/mission.tsx`, and the call surface needs exactly the same thing for exactly the
+   same reason, so it moved here rather than being typed a second time.               */
+
+/** "Marcus Reed" → "MR". First and last, so a middle name cannot make three. */
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "";
+  return (first + last).toUpperCase();
+}
+
+/**
+ * A face for the people who have no photograph, and on a call it is not a fallback.
+ *
+ * Four colleagues have portraits because they brief the player directly. Sarah Lim,
+ * Marcus Reed and Declan Foyle have none, and `docs/ART-BRIEF.md` priced the missing set
+ * at 21 painted sprites. A call window answers it for nothing: when somebody's camera is
+ * off, every conferencing product on earth draws their initials in a circle. So the
+ * device the client pull-quote already used is now the authentic state rather than a
+ * substitute for one — the tile says "camera off" and means it.
+ *
+ * `aria-hidden`, always: the name it abbreviates is rendered beside it in every caller.
+ */
+export function Monogram({ name, size = 24 }: { name: string; size?: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="flex shrink-0 items-center justify-center rounded-full font-bold leading-none text-white"
+      style={{
+        width: size,
+        height: size,
+        /* The type step is chosen from the scale, never derived from the size — a
+           computed `size * 0.42` is how a 9px and an 11px font got into the build. */
+        fontSize: size >= 56 ? 24 : size >= 40 ? 18 : size >= 28 ? 15 : 12,
+        background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-deep))",
+      }}
+    >
+      {initials(name)}
+    </span>
+  );
 }
 
 /* ───────────────────────────── motion, in JavaScript ─────────────────────────────
@@ -1331,6 +1402,59 @@ export function InsightRail({
  */
 export const PREDICTION_QUESTION_ID = "gpl-prediction-question";
 
+/**
+ * The three chips, and the one thing about them that is not negotiable: their accessible
+ * names are "Winability", "Profitability" and "Deliverability" and nothing else.
+ *
+ * Shared by the action bar's strip and by the dialogue surface's vertical gate, because
+ * they are the same control in two places and the day they drifted apart is the day the
+ * gate behaved differently depending on how the beat was staged. `size` is the only
+ * difference: the bar has 66px of height to spend and the composer has room for a target
+ * that clears 2.5.8 comfortably.
+ */
+export function PredictionChips({
+  prediction,
+  onPredict,
+  size = "bar",
+}: {
+  prediction: DimensionId | null;
+  onPredict: (d: DimensionId) => void;
+  size?: "bar" | "block";
+}) {
+  return (
+    <div className={`flex ${size === "block" ? "flex-wrap gap-2" : "gap-1.5"}`}>
+      {DIMENSIONS.map((d) => {
+        const meta = DIMENSION_META[d];
+        const on = prediction === d;
+        return (
+          <button
+            key={d}
+            onClick={() => onPredict(d)}
+            aria-pressed={on}
+            className={`m-press flex items-center gap-1.5 rounded-lg border font-bold ${
+              size === "block"
+                ? "min-h-[32px] px-3 py-1.5 text-[13px]"
+                : "px-2.5 py-1 text-[12px]"
+            }`}
+            style={{
+              /* Selected is a tint fill with the dark text token, never white on the
+                 solid: win and profit solids are 3.63:1 and 3.90:1 on white, which is
+                 a fill ratio, not a type ratio. */
+              borderColor: on ? `var(${meta.fillVar})` : "var(--color-border-control)",
+              background: on ? `var(--color-${d}-tint)` : "var(--color-surface)",
+              color: `var(${meta.textVar})`,
+            }}
+          >
+            {/* The pictogram, so the chip carries identity without relying on hue. */}
+            <Icon name={meta.icon} size={size === "block" ? 15 : 13} />
+            {meta.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function PredictionStrip({
   prediction,
   onPredict,
@@ -1346,34 +1470,9 @@ export function PredictionStrip({
         id={PREDICTION_QUESTION_ID}
         className="text-[13px] font-semibold text-(--color-ink-soft)"
       >
-        Which of the three will move least?
+        {UI_LABEL.predictQuestion}
       </span>
-      <div className="flex gap-1.5">
-        {DIMENSIONS.map((d) => {
-          const meta = DIMENSION_META[d];
-          const on = prediction === d;
-          return (
-            <button
-              key={d}
-              onClick={() => onPredict(d)}
-              aria-pressed={on}
-              className="m-press flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-bold"
-              style={{
-                /* Selected is a tint fill with the dark text token, never white on the
-                   solid: win and profit solids are 3.63:1 and 3.90:1 on white, which is
-                   a fill ratio, not a type ratio. */
-                borderColor: on ? `var(${meta.fillVar})` : "var(--color-border-control)",
-                background: on ? `var(--color-${d}-tint)` : "var(--color-surface)",
-                color: `var(${meta.textVar})`,
-              }}
-            >
-              {/* The pictogram, so the chip carries identity without relying on hue. */}
-              <Icon name={meta.icon} size={13} />
-              {meta.label}
-            </button>
-          );
-        })}
-      </div>
+      <PredictionChips prediction={prediction} onPredict={onPredict} />
     </div>
   );
 }

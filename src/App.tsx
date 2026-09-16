@@ -35,6 +35,7 @@ import {
   ResolvingScreen,
   resolutionAnnouncement,
 } from "./ui/consequence";
+import { DialogueScene, isDialogue } from "./ui/dialogue";
 import { BriefBody, DecideBody } from "./ui/mission";
 import {
   EndingScreen,
@@ -316,6 +317,16 @@ export default function App() {
   const need = mission ? requiredCount(mission) : 0;
   const ready = canCommit(state, content);
   const selected = selectionComplete(state, content);
+  /**
+   * Is this beat staged as a conversation?
+   *
+   * One flag, read in two places: it swaps the work area for the call surface, and it
+   * moves the prediction gate off the action bar and into the composer. Nothing else in
+   * this file changes — same phases, same `canCommit`, same rails, same primary action.
+   * See `ui/dialogue.tsx`.
+   */
+  const conversation = mission !== null && isDialogue(mission) ? mission : null;
+  const dialogue = conversation !== null;
 
   const bars = (
     <TopBar
@@ -374,7 +385,12 @@ export default function App() {
             : undefined
         }
       >
-        {selected ? (
+        {/* On a conversation beat the gate is NOT here. It sits indented under the reply
+            the player has just chosen, which is the fix for the reported "cannot get past
+            Commit to this" — the requirement was legible as a legend and not as a
+            control. `PREDICTION_QUESTION_ID` moves with it, so the button still points at
+            whichever copy of the question is on screen and there is only ever one. */}
+        {selected && !dialogue ? (
           <PredictionStrip
             prediction={state.prediction}
             onPredict={doPredict}
@@ -472,9 +488,33 @@ export default function App() {
         ) : undefined
       }
     >
-      {onBrief && mission && <BriefBody mission={mission} state={state} />}
+      {/**
+       * A conversation beat is ONE screen across two phases, and that is why it is one
+       * slot in this list rather than two.
+       *
+       * `brief` and `decide` are two phases in the engine — they have to be, because the
+       * whole game gates a commit on a selection that only the second one offers. But a
+       * call does not end and restart when you are ready to answer. Keeping the element
+       * in a single position keeps React's instance alive across the phase change, so the
+       * window, the participants and the caption are literally the same DOM: the floor
+       * passes to the player and the region under the transcript becomes the composer.
+       * Splitting it into two slots would unmount and remount the call, which is a cut
+       * dressed as a conversation and would retype the line the player just read.
+       */}
+      {(onBrief || onDecide) && conversation && (
+        <DialogueScene
+          key={conversation.id}
+          mission={conversation}
+          state={state}
+          phase={onDecide ? "reply" : "listen"}
+          onToggle={doToggle}
+          onPredict={doPredict}
+        />
+      )}
 
-      {onDecide && mission && (
+      {onBrief && mission && !dialogue && <BriefBody mission={mission} state={state} />}
+
+      {onDecide && mission && !dialogue && (
         <DecideBody mission={mission} state={state} onToggle={doToggle} />
       )}
 

@@ -394,6 +394,24 @@ export type Presentation = "console" | "dialogue";
  */
 export type Surface = "call" | "chat" | "thread";
 
+/**
+ * Whose room this is — which decides who the player's replies are addressed to.
+ *
+ * Not cosmetic. The renderer's default is to open a conversation with whoever already
+ * speaks on the beat, preferring the client's `saidQuote`/`quotes` over the colleague's
+ * `advisorLine`, and on nine of the ten conversation beats that is exactly right. On m10
+ * it is exactly wrong: the situation puts the player in thirty minutes with the delivery
+ * lead, so the replies are addressed to her and refer to the client in the third person
+ * — "what THEY are asking for was never in the contract". Opening that beat with the
+ * client on screen would have the player discussing them as though they were not there.
+ *
+ * So the room is authored rather than inferred. `internal` also earns the client's quote
+ * a better job than being dropped: it becomes context arriving from outside the room
+ * while your own colleague is in front of you, which is nearer to how month five
+ * actually feels.
+ */
+export type Room = "client" | "internal";
+
 export type FactorLevel = "low" | "medium" | "high" | "strong";
 
 /** Semantic colour for an icon. Assigned by meaning in content, never by position. */
@@ -442,6 +460,13 @@ interface MissionBase {
   presentation?: Presentation;
   /** Which conversation surface, when `presentation` is `dialogue`. Defaults to `call`. */
   surface?: Surface;
+  /**
+   * Whose room it is. Defaults to `client` when a client quote resolves, else `internal`.
+   *
+   * Set it explicitly to override that inference — the replies have to be addressed to
+   * somebody, and only the author knows who.
+   */
+  room?: Room;
   /** state-dependent rewrites of the scenario, checked before `situation` */
   variants?: SituationVariant[];
   /** known facts, shown as chips */

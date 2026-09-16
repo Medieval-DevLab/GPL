@@ -6,6 +6,76 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-051 · The dialogue staging is enforced, and one of the five rules is a warning
+`Presentation` makes a beat a conversation by changing one word, which is the property that
+makes it affordable — and also the property that makes it fail silently. With
+`presentation: "dialogue"` set and `option.say` absent, the renderer falls back to `title`,
+which is written in the third person for a comparison card: *"The post-purchase
+experience"*. Nothing crashes, nothing looks broken enough to report, and the beat quietly
+renders a row of captions where a person should be talking. Same failure class as a
+condition reading `knows:ops_constriant` — the check that earns its place in this file.
+
+Five rules, four of them errors:
+
+1. **Every option of a dialogue mission needs a non-empty `say`**, and the message names the
+   mission and the option, because the fix is in one option of one mission. Not evaded by
+   `""` or `"   "`, which is the evasion `pros: [""]` used until it was closed per entry.
+2. **`say` is leak-checked** on the same surface as `commits` — and *regardless of staging*.
+   Parking a prediction in `say` while the beat is `console`, where no screen shows it and
+   no reviewer reads it, then restaging the beat later with one word, is a leak with a
+   delayed fuse. G3 is a property of the content, not of what is currently on screen.
+3. **`say` is budgeted at 20 words.** Observed max across the 37 authored replies: **20**. So
+   unlike every other number in `BUDGET` this one sits exactly ON the authored maximum
+   rather than above it — deliberate, because 20 words is where the stacked full-width row
+   wraps to a third line. The next line over it is a fit problem, not a style preference.
+4. **A dialogue beat must have somebody to speak first**, checked in the renderer's own
+   resolution order: a `quotes` entry, then `saidQuote`, then `advisorLine`, then
+   `advisor.quote`. Blank-but-present openers count as silence. **Known residual:** a beat
+   whose ONLY opener is a *conditional* quote passes and still opens silent in the states
+   where the condition fails. Deciding that statically means asking whether a reachable
+   state satisfies the condition, which is the sweep's job — `analysis.test.ts` already
+   fails on a line of dialogue no reachable state can hear, so the hole is closed from the
+   other end rather than guessed at from this one.
+
+5. **`say` must not merely restate `title`** — and this one is a **warning**, the only one
+   this pass adds. Judging paraphrase is a reviewer's job: a reply is *answering* the thing
+   the title names and will often pick the noun phrase back up, so a hard gate would fire on
+   prose doing exactly the right thing. It reuses the existing
+   `normalise`/`contentWords`/`overlap` machinery rather than introducing a second
+   similarity measure, because two ways of asking whether two sentences match is two
+   answers, and the second one is the one nobody recalibrates.
+
+**The threshold was measured, not picked**, on the authored replies rather than on a guess
+about them. Across all 37: the closest `say`/`title` pair sits at **0.21**, the next at 0.20,
+and **30 of the 37 below 0.10**. The worst case is always the same shape — a reply that
+echoes the verb and the noun of a four-word title while saying something new about them,
+which is exactly the register the field exists for. Nothing authored reaches 0.34, so
+`SAY_TITLE_OVERLAP_LIMIT = 0.7` sits at better than **three times** the observed maximum with
+the whole band beneath it empty, and still catches what it is for: the title with one word
+bolted onto it scores 0.75. `validate.test.ts` pins the measurement against half the limit,
+as it does for `LESSON_OVERLAP_LIMIT`. Tolerance is wider than that check's because two
+lessons have no business sharing vocabulary at all, whereas a reply answers the thing the
+title names.
+
+Note what "warning" costs here, because it is not free: `engine.test.ts` pins the set of
+non-flag warnings to empty, so a warning that fires on *today's* content stops the build
+exactly as an error does. The severity is soft only for the author of the next mission, who
+gets told rather than blocked.
+
+One more thing the gate is worth: the noise floor is applied to the **spoken** bag only, not
+to both. Titles are three or four content words by budget, so a floor on the title bag would
+have skipped the check on most of the game. Jaccard already handles the size difference in
+the safe direction — a genuinely new sentence that happens to reuse the title's noun scores
+low because it brings words of its own.
+
+**Cost:** 140 lines in `validate.ts`, most of them the calibration comments rather than the
+checks, and 358 in `validate.test.ts` — 23 tests, including the vacuity guard, because five
+rules enforced against zero beats staged would be the `watchFor` failure in reverse. No
+existing gate retuned or weakened. **Reversible:** yes, per rule; rule 1 is the only one
+whose removal would matter, and what it protects is the reason the staging exists at all.
+
+---
+
 ## D-050 · `maxWorkers: 4` was an incomplete diagnosis, and the failure came back
 The suite has exited 1 with every test passing, on and off, for a fortnight:
 `[vitest-worker]: Timeout calling "onTaskUpdate"`. D-043 read that as a main thread too

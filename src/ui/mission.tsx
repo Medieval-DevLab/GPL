@@ -30,6 +30,7 @@ import { Bullet, Icon, IconTile, Pill, SectionTitle } from "./icons";
 import {
   BEAT_TITLE_ID,
   Hidden,
+  Monogram,
   RadioGroup,
   UI_LABEL,
   artUrl,
@@ -39,14 +40,6 @@ import {
 } from "./shell";
 
 /* ───────────────────────── header ───────────────────────── */
-
-/** "Marcus Reed" → "MR". First and last, so a middle name cannot make three. */
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "";
-  return (first + last).toUpperCase();
-}
 
 function Header({
   mission,
@@ -108,16 +101,14 @@ function Header({
            *
            * So: the monogram device the client card already uses, drawn from the name in
            * content. `aria-hidden`, because the name it abbreviates is the next element.
+           *
+           * It lives in `ui/shell.tsx` now, because the call surface needs the same device
+           * for the same three people — see `Monogram` there, and `ui/dialogue.tsx` for
+           * the reason a camera-off tile makes it authentic rather than a substitute.
            */}
           <div className="mt-2.5 flex items-start gap-2 pl-3">
-            <span
-              aria-hidden="true"
-              className="mt-px flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full text-[12px] leading-none font-bold text-white"
-              style={{
-                background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-deep))",
-              }}
-            >
-              {initials(said.speaker)}
+            <span className="mt-px">
+              <Monogram name={said.speaker} size={24} />
             </span>
             <span className="min-w-0">
               <span className="block text-[12px] font-bold leading-tight text-(--color-ink)">

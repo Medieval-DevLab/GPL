@@ -18,6 +18,16 @@
  * Outcome prose is deliberately NOT budgeted — the consequence screen has nothing else
  * on it, and that text is the actual teaching.
  *
+ * ON STAGING. Ten beats are `presentation: "dialogue"` — m3, m5, m6, m7b, m8, m9, m9a,
+ * m9b, m10, m10c — because on each of them the player is ANSWERING somebody who has just
+ * spoken: a sponsor with a board, a procurement lead with a scorecard, a delivery lead who
+ * inherits the sentences. Those carry a `say` line per option, which is the same choice
+ * written as a reply, first person, twenty words at most, and it may describe what you are
+ * doing but never what it will achieve. The other seven stay `console` on purpose: m1, m2,
+ * m4, m5b, m6b, m7 and m10b are beats where the player is COMPARING — three clients, two
+ * questions out of six, five workstreams and room for two — and columns that line up are
+ * genuinely the right tool for that.
+ *
  * THE SPINE OF COMPOUNDING — what the player learns early changes what happens late:
  *    knows:ops_constraint  → M6 credibility, M7 the workstream that saves delivery, M9, M10
  *    knows:real_pain       → M3 lands, M6 defensible rather than lucky
@@ -458,6 +468,7 @@ const nodes: GameNode[] = [
     situation: [
       "Orion is open to talking to partners. You get roughly one shot at a first impression worth following up.",
     ],
+    presentation: "dialogue",
     client: ORION,
     advisorLine: "First contact sets what they think we are. It is very hard to move afterwards.",
     advisor: PRIYA,
@@ -476,6 +487,7 @@ const nodes: GameNode[] = [
         icon: "spark",
         facsimile: "proposal",
         description: "A short, specific piece on what is going wrong for retailers like them.",
+        say: "Then I want the first thing they read to be about their problem, not our capabilities.",
         commits: "Real preparation time before anything happens.",
         pros: ["Shows you know their world", "Reaches several people"],
         cons: ["Limited by what you know", "Slowest to land"],
@@ -518,6 +530,8 @@ const nodes: GameNode[] = [
         icon: "talk",
         facsimile: "org",
         description: "A warm introduction, thirty minutes with the sponsor, the case made in person.",
+        say:
+          "Then I use the warm introduction now and make the case to Sarah myself. Thirty minutes, one shot.",
         commits: "Spends a relationship you cannot spend twice.",
         pros: ["Fastest to the budget holder", "A real conversation"],
         cons: ["Burns your introduction", "One stakeholder's view"],
@@ -556,6 +570,7 @@ const nodes: GameNode[] = [
         icon: "megaphone",
         facsimile: "market",
         description: "Put a retail transformation campaign into the market and let interest come.",
+        say: "I would rather not bet it all on one meeting. Put it in the market and see who answers.",
         commits: "Reaches many people, few of whom decide anything.",
         pros: ["Cheapest by far", "Senior people stay free"],
         cons: ["Impersonal", "Few will be buyers"],
@@ -796,6 +811,7 @@ const nodes: GameNode[] = [
       "A rival announces a partnership with a well-known retail technology vendor. Press release, launch event, glossy storefront demo.",
       "Your sponsor forwards it with four words: “should we be worried?”",
     ],
+    presentation: "dialogue",
     saidQuote: {
       text: "We like your perspective, but this looks impressive and my board has already seen it. Help me understand how you are different.",
       ...SARAH,
@@ -821,6 +837,7 @@ const nodes: GameNode[] = [
         title: "Find out what they offered",
         icon: "search",
         description: "Understand what is really on the table before reacting.",
+        say: "I would rather not answer that today. Let me find out what they have actually sold you.",
         commits: "Several days while the client waits.",
         pros: ["Respond to facts", "Finds the gap"],
         cons: ["Client is waiting", "Days you cannot recover"],
@@ -855,6 +872,7 @@ const nodes: GameNode[] = [
         title: "Get in front of them now",
         icon: "rocket",
         description: "Book the meeting and make your case before the story settles.",
+        say: "Give me thirty minutes this week and I will answer that in person, not in a document.",
         commits: "Presenting before your thinking is finished.",
         pros: ["Speed reads as confidence", "Keeps you in play"],
         cons: ["Arguing against the unexamined"],
@@ -876,6 +894,8 @@ const nodes: GameNode[] = [
         title: "Change the question",
         icon: "scale",
         description: "Move the conversation to the part of the experience their offer cannot reach.",
+        say:
+          "Their demo is a shopfront. Ask them what happens to your customer three weeks after she buys something.",
         commits: "Moves away from what the client asked for.",
         pros: ["Contest on your ground", "Neutralises their asset"],
         cons: ["Contradicts their brief", "Needs evidence"],
@@ -910,6 +930,7 @@ const nodes: GameNode[] = [
         title: "Hold your plan",
         icon: "shield",
         description: "One announcement is not a decision. Carry on.",
+        say: "Nothing has actually shipped yet. I am not going to redraw our plan around a press release.",
         commits: "The client hears nothing while the story is live.",
         pros: ["Costs nothing", "Steadiness can reassure"],
         cons: ["Needs existing standing", "Their story goes unanswered"],
@@ -981,6 +1002,7 @@ const nodes: GameNode[] = [
       "The brief still says “improve the customer experience across our stores”.",
       "Everything follows from how you read that sentence. Get it wrong and every good decision after it serves the wrong goal.",
     ],
+    presentation: "dialogue",
     client: ORION,
     /*
      * The first time Marcus Reed says anything, in nineteen beats of being the reason
@@ -1011,6 +1033,7 @@ const nodes: GameNode[] = [
         icon: "check",
         facsimile: "proposal",
         description: "A store and digital experience redesign. What the brief says.",
+        say: "We answer the brief as written — stores and app. I am not going to tell Sarah she is wrong.",
         commits: "A direct comparison against a vendor partnership.",
         pros: ["Nobody can say you missed", "Easy to approve"],
         cons: ["Directly comparable", "Decision moves to price"],
@@ -1040,6 +1063,8 @@ const nodes: GameNode[] = [
         icon: "target",
         facsimile: "complaints",
         description: "Argue the damage happens after the sale — deliveries, returns, support.",
+        say:
+          "The damage is after the sale, not in the store. I would rather say so than flatter their brief.",
         commits: "Contradicts the client's own brief in writing.",
         pros: ["Nobody else proposing it", "Hits the real problem"],
         cons: ["Contradicts their brief", "Needs evidence"],
@@ -1086,6 +1111,8 @@ const nodes: GameNode[] = [
         icon: "search",
         facsimile: "timeline",
         description: "A short diagnostic to establish which of the two problems is costing them.",
+        say:
+          "I am not betting this on my instinct. Six weeks to find out which problem is actually costing them.",
         commits: "Delays the real decision by six weeks.",
         pros: ["Low risk", "Buys the evidence"],
         cons: ["Six weeks of nothing", "Can read as indecision"],
@@ -1276,6 +1303,7 @@ const nodes: GameNode[] = [
       "Orion comes back. You are thirty percent above the alternative, and procurement has said so in writing.",
       "Sarah still wants you. She needs something she can take to her board.",
     ],
+    presentation: "dialogue",
     saidQuote: {
       text: "I am not asking you to be the cheapest. I am asking for something I can defend in a board meeting that has already seen a smaller number.",
       ...SARAH,
@@ -1300,6 +1328,8 @@ const nodes: GameNode[] = [
         title: "Hold the price",
         icon: "shield",
         description: "Explain what the difference buys them, and do not move.",
+        say:
+          "I am not moving. Give your board the two proposals side by side and let them see the difference.",
         commits: "Nothing left to offer if it does not land.",
         pros: ["Full margin protected", "No race to the bottom"],
         cons: ["Needs a visible difference", "Nothing left to concede"],
@@ -1343,6 +1373,7 @@ const nodes: GameNode[] = [
         title: "Meet them on price",
         icon: "coins",
         description: "Come down, close the gap, get it signed.",
+        say: "I will come down to their number. That money was our cushion, and I am spending it here.",
         commits: "The margin does not come back later.",
         pros: ["Objection gone", "Best chance of signature"],
         cons: ["Spends your contingency", "Sets phase two expectation"],
@@ -1370,6 +1401,8 @@ const nodes: GameNode[] = [
         title: "Take something out",
         icon: "cross",
         description: "Hold your rate and reduce what is included to reach their number.",
+        say:
+          "I can reach their number by taking work out. You would be defending a smaller programme, not a discount.",
         commits: "Something you thought necessary leaves the contract.",
         pros: ["Price falls honestly", "Rate preserved"],
         cons: ["What leaves is load-bearing"],
@@ -1400,6 +1433,8 @@ const nodes: GameNode[] = [
         title: "Restructure it into phases",
         icon: "layers",
         description: "Smaller first phase, rest contingent on it working. Same total, different risk.",
+        say:
+          "Give your board a smaller first cheque. Same rate, same total — they commit to less in this meeting.",
         commits: "Re-planning, and phase two must be earned.",
         pros: ["Smaller board decision", "Rate and scope intact"],
         cons: ["Significant re-planning", "Phase two at risk"],
@@ -1454,6 +1489,7 @@ const nodes: GameNode[] = [
       "Before signature it goes to internal quality and risk review, whose job is to ask what the deal team has stopped asking.",
       "The finding: the programme changes systems other teams depend on, and the proposal never says how those changes reach production.",
     ],
+    presentation: "dialogue",
     variants: [
       /**
        * The liability finding, first because it outranks the others.
@@ -1521,6 +1557,8 @@ const nodes: GameNode[] = [
         title: "Accept the risk and sign",
         icon: "warning",
         description: "Note it formally, carry on, deal with it if it happens.",
+        say:
+          "We record it and sign. If it arrives, it arrives in your month, and I am not pretending otherwise.",
         commits: "It lands in delivery with no plan behind it.",
         pros: ["Keeps momentum", "Costs nothing today"],
         cons: ["Arrives later, larger", "On record that you knew"],
@@ -1552,6 +1590,7 @@ const nodes: GameNode[] = [
         title: "Build in a mitigation",
         icon: "shield",
         description: "Add the contingency, people or integration work needed to cover it.",
+        say: "Tell me what covering it properly needs and I will find the money in the commercial case.",
         commits: "Costs margin you may not have.",
         pros: ["Cheap while it is early", "Delivery gets a plan"],
         cons: ["Straight out of margin", "Needs money to exist"],
@@ -1593,6 +1632,7 @@ const nodes: GameNode[] = [
         title: "Take the risky part out",
         icon: "cross",
         description: "Remove what creates the exposure and deliver the rest well.",
+        say: "Then I pull that piece rather than hand you something nobody can run. Sarah hears it from me.",
         commits: "The client loses something they were promised.",
         pros: ["Exposure gone", "A programme you can run"],
         cons: ["Withdrawing a promise", "They will remember"],
@@ -1620,6 +1660,7 @@ const nodes: GameNode[] = [
         title: "Go back and re-price it",
         icon: "scale",
         description: "Tell them the risk is real and covering it properly costs more.",
+        say: "I meant all of it. So I go back and ask them to pay for covering it properly.",
         commits: "Reopens a conversation you had closed.",
         pros: ["Funds the fix", "Honest, and they know it"],
         cons: ["Reopens the negotiation", "Can look like under-quoting"],
@@ -1678,6 +1719,11 @@ const nodes: GameNode[] = [
     stage: "delivery",
     title: "Month five",
     eyebrow: "Month five",
+    /* Internal, despite a client quote resolving here. The player is in thirty minutes
+       with the delivery lead, and every reply on this beat refers to the client in the
+       third person, so opening on Marcus or Sarah would have the player discussing them
+       while they are on screen. Their line becomes context from outside the room. */
+    room: "internal",
     objective: "Deal with a decision you made months ago.",
     minutes: 4,
     hero: "solution-in-store-tech",
@@ -1685,6 +1731,7 @@ const nodes: GameNode[] = [
       "Delivery is underway and something has given. The delivery lead wants thirty minutes.",
       "Two Orion specialists the plan depends on have been pulled onto another priority. You are three weeks behind and the gap is widening.",
     ],
+    presentation: "dialogue",
     variants: [
       {
         when: { any: ["unanchored", "risk_accepted"], all: ["scope:heavy"] },
@@ -1745,6 +1792,8 @@ const nodes: GameNode[] = [
         title: "Reset expectations",
         icon: "talk",
         description: "Go to the sponsor early, explain honestly, re-plan together.",
+        say:
+          "I want the real dates in front of Sarah this week, with a re-plan already drafted. No surprises.",
         commits: "Saying out loud that a promise will not hold.",
         pros: ["Client inside the problem", "Cheapest if trust exists"],
         cons: ["You have to admit it", "Invites scrutiny"],
@@ -1826,6 +1875,7 @@ const nodes: GameNode[] = [
          */
         requires: { any: ["evidenced", "reviewed"] },
         description: "What they are asking for is not in the contract. Price it and let them decide.",
+        say: "What they are asking for was never in the contract. I will price it and let them decide.",
         commits: "A commercial conversation with a client who is already unhappy.",
         pros: ["Paid for the work", "Scope stays honest"],
         cons: ["Reads as opportunism", "Needs the original scope in writing"],
@@ -1869,6 +1919,7 @@ const nodes: GameNode[] = [
         title: "Put more people on it",
         icon: "people",
         description: "Hold the promise by adding capacity and absorbing the cost.",
+        say: "We add people and carry the cost ourselves. They get the date, and our margin pays for it.",
         commits: "Straight out of the margin on this contract.",
         pros: ["Client sees delivery", "Buys a reference"],
         cons: ["Straight out of margin", "Needs margin to exist"],
@@ -1906,6 +1957,7 @@ const nodes: GameNode[] = [
         title: "Push the team to hit it",
         icon: "clock",
         description: "The commitment was made. Hold everyone to it.",
+        say: "The date stands. Tell the team I am asking them to find three weeks that are not there.",
         commits: "Whatever it costs the people doing the work.",
         pros: ["Date is met", "No concession"],
         cons: ["Paid by the team", "Quality goes first"],
@@ -1951,6 +2003,7 @@ const nodes: GameNode[] = [
         title: "Quietly reduce what ships",
         icon: "block",
         description: "Trim the scope without making it a formal conversation.",
+        say: "Trim what the team can from the release and do not make an agenda item of it.",
         commits: "The client finds out on their own terms.",
         pros: ["Pressure disappears", "No hard meeting"],
         cons: ["They will find out", "Becomes a trust problem"],
@@ -2329,6 +2382,7 @@ const nodes: GameNode[] = [
       "Your own people read the proposal before the client does. They are not impressed by it and they are not trying to be.",
       "One of the three is visibly weaker than the others. You can spend a week fixing it.",
     ],
+    presentation: "dialogue",
     variants: [
       {
         when: { all: ["scope:heavy"], none: ["has:ops_workstream"] },
@@ -2373,6 +2427,7 @@ const nodes: GameNode[] = [
         requires: { any: ["knows:ops_constraint", "ops_onside", "has:ops_workstream"] },
         icon: "shield",
         description: "Add the integration detail, the named people, the testing plan.",
+        say: "You are right about the integration. Give me the week and it comes back with names and dates.",
         commits: "A longer, less exciting document.",
         pros: ["Survives the review", "Delivery inherits a plan"],
         cons: ["Reads as cautious", "Costs a week of selling"],
@@ -2394,6 +2449,8 @@ const nodes: GameNode[] = [
         title: "Sharpen the argument",
         icon: "spark",
         description: "Spend the week making the case land harder with Sarah's board.",
+        say:
+          "Then argue with me about the pitch, because that is where the week goes. Sarah's board decides this.",
         commits: "The weaknesses stay where they are.",
         pros: ["Better chance of winning", "Sponsor gets ammunition"],
         cons: ["Nothing underneath improves", "Reviewers stay unhappy"],
@@ -2425,6 +2482,7 @@ const nodes: GameNode[] = [
         title: "Protect the margin",
         icon: "coins",
         description: "Rework the commercial case so the numbers survive a bad month.",
+        say: "I would rather hand you a smaller job with room in it than a big one with none.",
         commits: "A smaller, more careful offer.",
         pros: ["Contingency restored", "Survives a surprise"],
         cons: ["Less to offer the client", "Reads as small"],
@@ -2446,6 +2504,7 @@ const nodes: GameNode[] = [
         title: "Defend it as it stands",
         icon: "block",
         description: "Tell the review you have weighed this and you are comfortable.",
+        say: "I have heard the objections. It goes out as it is, and that is on me.",
         commits: "You own the objections from here.",
         pros: ["Keeps the week", "Goes out on your terms"],
         cons: ["You own every gap", "Only right if you are right"],
@@ -2538,6 +2597,7 @@ const nodes: GameNode[] = [
       "Declan Foyle in procurement has a scorecard, a savings target and two other proposals.",
       "Sarah wants you. Sarah does not score the submissions.",
     ],
+    presentation: "dialogue",
     variants: [
       {
         when: { none: ["evidenced", "ops_onside", "reframed", "knows:rival_gap"] },
@@ -2584,6 +2644,7 @@ const nodes: GameNode[] = [
            player who never got it cannot write one. */
         requires: { any: ["knows:real_pain", "evidenced", "ops_onside"] },
         description: "Returns cost Orion a known amount. Show what half of it is worth.",
+        say: "Then let me write that box out of your own numbers — what half the returns problem is worth.",
         commits: "You are held to an arithmetic you wrote down.",
         pros: ["Scores on value", "Hard to argue with"],
         cons: ["Needs their data", "A number you must hit later"],
@@ -2632,6 +2693,8 @@ const nodes: GameNode[] = [
         title: "Ask for the criteria and re-cut",
         icon: "search",
         description: "Find out how it is being scored, then answer that.",
+        say:
+          "Send me the weightings and I will answer the test you are actually setting, not the one I imagined.",
         commits: "A week spent answering their form rather than your pitch.",
         pros: ["Answers the real test", "Cheap to do"],
         cons: ["A week gone", "Reads as tactical"],
@@ -2670,6 +2733,7 @@ const nodes: GameNode[] = [
         title: "Put the delivery lead in the room",
         icon: "people",
         description: "Aisha answers their questions instead of you.",
+        say: "I will bring the person who has to deliver it. Ask her anything — she will not dress it up.",
         commits: "She will say what she actually thinks.",
         pros: ["Credible on delivery", "Nothing oversold"],
         cons: ["You lose control of the room", "She will not embellish"],
@@ -2718,6 +2782,7 @@ const nodes: GameNode[] = [
         title: "Submit it and let it be scored",
         icon: "clock",
         description: "The proposal is good. Stop selling and let procurement work.",
+        say: "Everything I have is in the submission. Score it — I am not going to keep selling at you.",
         commits: "Whatever is in the document is your whole case.",
         pros: ["No new commitments", "Respects their process"],
         cons: ["You find out with everyone else", "No reason to prefer you"],
@@ -2800,6 +2865,7 @@ const nodes: GameNode[] = [
       "Everything is agreed. Nothing is signed.",
       "Sarah’s board has the date. Your reviewers have their concerns in writing.",
     ],
+    presentation: "dialogue",
     variants: [
       {
         when: { any: ["discounted", "thin_mitigation"], all: ["risk_accepted"] },
@@ -2841,6 +2907,7 @@ const nodes: GameNode[] = [
         title: "Proceed as agreed",
         icon: "flag",
         description: "Sign it as it stands and get on with the work.",
+        say: "There is nothing I am holding back. Sign it, and every sentence in there becomes mine to keep.",
         commits: "Everything in the document becomes a commitment.",
         pros: ["Momentum kept", "Relationship intact"],
         cons: ["Every gap is now contractual"],
@@ -2872,6 +2939,8 @@ const nodes: GameNode[] = [
         title: "Modify before signing",
         icon: "scale",
         description: "Reopen the two clauses you are least comfortable with.",
+        say:
+          "Two clauses, then. I am not comfortable with them, and I would rather say so before the signature.",
         commits: "A fortnight of delay and a slightly cooler client.",
         pros: ["Fixes it while it is cheap", "Honest about the risk"],
         cons: ["Delays the start", "Reopens a settled deal"],
@@ -2907,6 +2976,7 @@ const nodes: GameNode[] = [
         title: "Walk away",
         icon: "block",
         description: "Tell them honestly that this one is not worth signing.",
+        say: "Then here is the problem — I would not put my own people on this. I am not signing.",
         commits: "No contract, and the pursuit cost is gone for good.",
         pros: ["Protects your people", "They will remember the honesty"],
         cons: ["Nothing to show for the quarter", "The relationship cools"],
@@ -3123,6 +3193,7 @@ const nodes: GameNode[] = [
       "Sarah is leaving. She has taken a bigger role elsewhere and finishes in three weeks.",
       "Your sponsor, your budget holder and the person who believed in this are all the same person.",
     ],
+    presentation: "dialogue",
     variants: [
       /* How month five was handled now reaches the sponsor-succession beat. These three
          also make `crunched`, `undisclosed` and `changed_scope` genuinely READ, rather
@@ -3189,6 +3260,8 @@ const nodes: GameNode[] = [
         title: "Broaden the base",
         icon: "people",
         description: "Get the programme owned by three people instead of one.",
+        say:
+          "Then I need more than one person who cares. Three weeks getting Marcus and his peers to own this.",
         commits: "Three weeks of politics instead of delivery.",
         pros: ["Survives any one departure", "Builds real advocates"],
         cons: ["Three weeks not delivering", "Slower decisions afterwards"],
@@ -3234,6 +3307,7 @@ const nodes: GameNode[] = [
         title: "Get something live before she goes",
         icon: "rocket",
         description: "Ship whatever is demonstrable while the sponsor is still there.",
+        say: "Then I want something live before you go. Three weeks, one region, a thing that actually runs.",
         commits: "Three weeks of pressure on the delivery team.",
         pros: ["A result on the record", "Hard to cancel a working thing"],
         cons: ["Rushed and partial", "Costs the team"],
@@ -3282,6 +3356,7 @@ const nodes: GameNode[] = [
         requires: { any: ["evidenced", "outcome_based", "knows:criteria"] },
         icon: "layers",
         description: "Give Sarah the document that makes the case without her in the room.",
+        say: "Then I write the case down properly, in your own data, so the argument does not depend on you.",
         commits: "It works only if somebody reads it.",
         pros: ["Cheap and honest", "Survives on its own terms"],
         cons: ["Only as good as its reader", "No advocate behind it"],

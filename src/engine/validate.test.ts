@@ -20,6 +20,7 @@ import { describe, expect, it } from "vitest";
 import { story } from "../content/story";
 import {
   LESSON_OVERLAP_LIMIT,
+  SAY_TITLE_OVERLAP_LIMIT,
   contentWords,
   overlap,
   validateContent,
@@ -71,6 +72,56 @@ const brokeIt = (c: Content): string =>
 
 const longText = (n: number): string => Array.from({ length: n }, () => "filler").join(" ");
 
+/* ── harness · warnings ──────────────────────────────────────────────
+ * The say/title paraphrase check is the one rule in this pass that reports
+ * rather than blocks, so the delta has to be taken over warnings as well.
+ * Same baseline discipline and for the same reason as `BASELINE`: `story.ts`
+ * legitimately carries two classes of warning today. */
+
+const warningsOf = (c: Content): Issue[] =>
+  validateContent(c).filter((i) => i.severity === "warning");
+
+const BASELINE_WARNINGS = new Set(warningsOf(story).map(key));
+
+const warnedIt = (c: Content): string =>
+  warningsOf(c)
+    .map(key)
+    .filter((k) => !BASELINE_WARNINGS.has(k))
+    .join("\n");
+
+/** Any flag the content actually sets, for building a condition that is not a typo. */
+const someFlag = (c: Content): string => {
+  for (const m of missionsOf(c)) {
+    const outcomes = m.kind === "choice" ? m.options.flatMap((o) => o.outcomes) : m.outcomes;
+    for (const o of outcomes) {
+      const f = o.effect.flags?.[0];
+      if (f) return f;
+    }
+  }
+  throw new Error("no flag in the content to condition on");
+};
+
+/**
+ * A choice mission restaged as a conversation, with a spoken reply on every
+ * option — that is, a VALID `dialogue` beat, built here rather than borrowed.
+ *
+ * Deliberately not `missionsOf(story).find(m => m.presentation === "dialogue")`.
+ * The staging is being authored in `story.ts` while this file is written, so a
+ * fixture that waited for it would make every test below report on whether
+ * somebody else had finished rather than on whether the validator works — the
+ * same reason `BASELINE` exists. It also keeps each test's deliberate break the
+ * only broken thing, which is the shape of this whole file.
+ */
+const REPLY = "Right, let me tell you where I would put our weight.";
+
+const asDialogue = (c: Content): ChoiceMission => {
+  const m = firstChoice(c);
+  m.presentation = "dialogue";
+  m.advisorLine = "Your call. I will back whichever way you go.";
+  for (const o of m.options) o.say = REPLY;
+  return m;
+};
+
 /* ── baseline ────────────────────────────────────────────────────── */
 
 /**
@@ -104,9 +155,33 @@ const NEW_CHECKS: RegExp[] = [
   /overrides the lesson with the mission's own lesson/,
 ];
 
+/**
+ * Every message the dialogue-staging checks can emit, errors and warning alike.
+ *
+ * Same claim as `NEW_CHECKS` one pass later: these rules close doors, they do
+ * not report breaches on the content as it stands.
+ */
+const DIALOGUE_CHECKS: RegExp[] = [
+  /has no "say"/,
+  /"say" predicts the outcome/,
+  /"say" is \d+ words/,
+  /nobody to speak first/,
+  /"say" (restates|is the) "title"/,
+];
+
 describe("the content as authored", () => {
   it("trips none of the checks added in this pass", () => {
     const tripped = [...BASELINE].filter((k) => NEW_CHECKS.some((r) => r.test(k)));
+    expect(tripped).toEqual([]);
+  });
+
+  it("trips none of the dialogue-staging checks either", () => {
+    /* Warnings included, because the paraphrase check reports rather than
+       blocks and would otherwise be the one rule in this file nothing holds to
+       the authored content. */
+    const tripped = [...BASELINE, ...BASELINE_WARNINGS].filter((k) =>
+      DIALOGUE_CHECKS.some((r) => r.test(k)),
+    );
     expect(tripped).toEqual([]);
   });
 
@@ -525,5 +600,288 @@ describe("advisor.steer", () => {
       .filter((m) => m.advisor?.steer)
       .map((m) => m.id);
     expect(using).toEqual([]);
+  });
+});
+
+/* ── door 7 · a dialogue beat must actually speak ─────────────────── */
+
+describe("every option of a dialogue mission carries a spoken reply", () => {
+  it("passes when every option speaks and somebody opens the scene", () => {
+    /* The fixture itself, unbroken. Without this the tests below could all be
+       passing on the restaging rather than on the thing each one breaks. */
+    const c = clone();
+    asDialogue(c);
+    expect(brokeIt(c)).toBe("");
+    expect(warnedIt(c)).toBe("");
+  });
+
+  it("fails, naming both ids, when one option has no say", () => {
+    /* An error and not a warning: with `say` absent the renderer falls back to
+       the third-person `title` and the beat silently stops being a
+       conversation. Nothing crashes and nothing looks broken enough to
+       report. */
+    const c = clone();
+    const m = asDialogue(c);
+    delete m.options[1].say;
+    expect(brokeIt(c)).toMatch(
+      new RegExp(`option "${m.options[1].id}" of dialogue mission "${m.id}" has no "say"`),
+    );
+  });
+
+  it("is not evaded by an empty string, which satisfies a presence check", () => {
+    const c = clone();
+    const m = asDialogue(c);
+    m.options[0].say = "";
+    expect(brokeIt(c)).toMatch(/has no "say"/);
+  });
+
+  it("is not evaded by whitespace, which even has a length", () => {
+    /* The same evasion `pros: [""]` used until it was closed per entry. */
+    const c = clone();
+    const m = asDialogue(c);
+    m.options[0].say = "   ";
+    expect(brokeIt(c)).toMatch(/has no "say"/);
+  });
+
+  it("catches every silent option, not just the first", () => {
+    const c = clone();
+    const m = asDialogue(c);
+    for (const o of m.options) delete o.say;
+    const fired = brokeIt(c)
+      .split("\n")
+      .filter((l) => /has no "say"/.test(l));
+    expect(fired).toHaveLength(m.options.length);
+  });
+
+  it("asks nothing of a console beat, which renders title and description", () => {
+    /* The complement, so the rule is shown to be scoped rather than merely
+       unfired. A console option with no `say` is not missing anything. */
+    const c = clone();
+    const m = firstChoice(c);
+    delete m.presentation;
+    for (const o of m.options) delete o.say;
+    expect(brokeIt(c)).toBe("");
+  });
+});
+
+describe("say is leak-checked on the same surface as commits", () => {
+  it("fails on an outcome prediction in a spoken reply", () => {
+    const c = clone();
+    const m = asDialogue(c);
+    m.options[0].say = "Let us take the optimal route and be done with it.";
+    expect(brokeIt(c)).toMatch(/"say" predicts the outcome/);
+  });
+
+  it("checks it on a console beat too, where nothing renders it yet", () => {
+    /* The evasion this closes: park a prediction in `say` while the beat is
+       staged `console`, where no screen shows it and no reviewer reads it, then
+       restage the beat later with one word and the leak goes live. G3 is a
+       property of the content, not of what is currently on screen. */
+    const c = clone();
+    const m = firstChoice(c);
+    delete m.presentation;
+    m.options[0].say = "This is the recommended way in.";
+    expect(brokeIt(c)).toMatch(/"say" predicts the outcome/);
+  });
+});
+
+describe("say is on the tightest briefing budget", () => {
+  it("fails over twenty words, because the replies are stacked full-width rows", () => {
+    const c = clone();
+    const m = asDialogue(c);
+    m.options[0].say = longText(21);
+    expect(brokeIt(c)).toMatch(/"say" is 21 words, budget is 20 — cut it/);
+  });
+
+  it("allows exactly twenty, so the boundary is where it is documented", () => {
+    const c = clone();
+    const m = asDialogue(c);
+    m.options[0].say = longText(20);
+    expect(brokeIt(c)).toBe("");
+  });
+
+  it("budgets it on a console beat as well", () => {
+    const c = clone();
+    const m = firstChoice(c);
+    delete m.presentation;
+    m.options[0].say = longText(30);
+    expect(brokeIt(c)).toMatch(/"say" is 30 words/);
+  });
+});
+
+describe("a dialogue beat needs somebody to speak first", () => {
+  /** Strip every opener the renderer would resolve, in its order. */
+  const silence = (m: ChoiceMission) => {
+    delete m.saidQuote;
+    delete m.quotes;
+    delete m.advisorLine;
+    if (m.advisor) m.advisor.quote = "";
+  };
+
+  it("fails when none of the four openers is present", () => {
+    const c = clone();
+    const m = asDialogue(c);
+    silence(m);
+    expect(brokeIt(c)).toMatch(/nobody to speak first/);
+  });
+
+  it("is not evaded by openers that are present but blank", () => {
+    /* All four authored, all four saying nothing. A presence check passes this
+       and the scene still opens on silence. */
+    const c = clone();
+    const m = asDialogue(c);
+    m.saidQuote = { text: "  ", speaker: "Sarah Lim", role: "CTO" };
+    m.quotes = [{ text: "", speaker: "Sarah Lim", role: "CTO" }];
+    m.advisorLine = "   ";
+    if (m.advisor) m.advisor.quote = " ";
+    expect(brokeIt(c)).toMatch(/nobody to speak first/);
+  });
+
+  it("accepts the advisor's standing quote, the last link in the chain", () => {
+    /* The link most likely to be dropped from a hand-written check, because it
+       is the fallback of a fallback — and `mission.tsx` really does resolve
+       `advisorLine ?? advisor.quote`. */
+    const c = clone();
+    const m = asDialogue(c);
+    silence(m);
+    if (m.advisor) m.advisor.quote = "Whatever we write down, somebody has to build.";
+    expect(brokeIt(c)).not.toMatch(/nobody to speak first/);
+  });
+
+  it("accepts a conditional quotes entry, as the renderer does", () => {
+    /* Documented residual, pinned here so it is a known limit rather than a
+       surprise: a beat whose ONLY opener is conditional passes this check and
+       still opens silent in the states where the condition fails. Deciding that
+       statically means asking whether a reachable state satisfies the
+       condition, which is the sweep's job — `analysis.test.ts` fails on a line
+       of dialogue no reachable state can hear. */
+    const c = clone();
+    const m = asDialogue(c);
+    silence(m);
+    m.quotes = [
+      {
+        when: { all: [someFlag(c)] },
+        text: "Then we are agreed on the sequence, at least.",
+        speaker: "Sarah Lim",
+        role: "CTO",
+      },
+    ];
+    expect(brokeIt(c)).not.toMatch(/nobody to speak first/);
+  });
+
+  it("wants the advisor object too, not just a line attributed to nobody", () => {
+    /* `dialogue.tsx` pushes the colleague's turn on `advisor && (advisorLine ??
+       advisor.quote)`, because a turn needs a name and a job title beside the
+       words. So a line with no advisor to say it is silence, and this check
+       reads the renderer's condition rather than a paraphrase of it. */
+    const c = clone();
+    const m = asDialogue(c);
+    delete m.saidQuote;
+    delete m.quotes;
+    delete m.advisor;
+    m.advisorLine = "Your call. I will back whichever way you go.";
+    expect(brokeIt(c)).toMatch(/nobody to speak first/);
+  });
+
+  it("asks nothing of a console beat with no quotes and no advisor line", () => {
+    const c = clone();
+    const m = firstChoice(c);
+    delete m.presentation;
+    silence(m);
+    expect(brokeIt(c)).not.toMatch(/nobody to speak first/);
+  });
+});
+
+describe("say must be a reply, not the title in quotation marks", () => {
+  /**
+   * A warning, not an error, and the only one this pass adds.
+   *
+   * Judging paraphrase is a reviewer's job: a reply that picks up the noun
+   * phrase it is answering is natural speech, and a hard gate would fire on
+   * prose doing exactly the right thing. Note that a warning is not a soft
+   * landing — `engine.test.ts` pins the non-flag warning set to empty, so one
+   * that fires on today's content still stops the build. It is soft only for
+   * the author of the next mission, who gets told rather than blocked.
+   */
+  it("warns when the spoken line is the title reworded by punctuation alone", () => {
+    const c = clone();
+    const m = asDialogue(c);
+    const o = m.options[0];
+    o.say = `"${o.title}!"`;
+    expect(warnedIt(c)).toMatch(/"say" is the "title" reworded only by punctuation/);
+    expect(brokeIt(c)).toBe("");
+  });
+
+  it("is not evaded by adding a word, which defeats a normalised check", () => {
+    /* The same two-step evasion the lesson check documents: punctuation beats
+       an exact-string comparison, one extra word beats normalising. Hence the
+       overlap measure, and hence the SAME overlap measure — two ways of asking
+       whether two sentences match is two answers, and the second one is the one
+       nobody recalibrates. */
+    const c = clone();
+    const m = asDialogue(c);
+    const o = m.options[0];
+    o.title = "Phase the rollout by region";
+    o.say = "Let us phase the rollout by region.";
+    expect(warnedIt(c)).toMatch(/"say" restates "title"/);
+  });
+
+  it("leaves a reply that merely picks up the title's noun phrase alone", () => {
+    /* Calibration in the other direction, as the `changed` checks have for
+       numbers. A gate that cannot tell speech from restatement gets deleted by
+       the first author it annoys. */
+    const c = clone();
+    const m = asDialogue(c);
+    const o = m.options[0];
+    o.title = "The post-purchase experience";
+    o.say = "Then let us fix what happens after somebody has paid us. Returns, refunds, the lot.";
+    expect(warnedIt(c)).toBe("");
+    expect(brokeIt(c)).toBe("");
+  });
+});
+
+describe("the dialogue rules are not vacuous", () => {
+  const stagedDialogue = missionsOf(story).filter((m) => m.presentation === "dialogue");
+
+  const authoredReplies = (): { where: string; say: string; title: string }[] =>
+    missionsOf(story)
+      .filter((m): m is ChoiceMission => m.kind === "choice")
+      .flatMap((m) =>
+        m.options
+          .filter((o) => (o.say ?? "").trim().length > 0)
+          .map((o) => ({ where: `${m.id}/${o.id}`, say: o.say as string, title: o.title })),
+      );
+
+  it("govern beats that exist, and every option of those beats speaks", () => {
+    /* The vacuity guard, and the `watchFor` failure in reverse: that was 32
+       lines authored and 0 rendered; this would be five rules enforced and 0
+       beats staged. Either the staging is in use or it is dead API. */
+    expect(stagedDialogue.map((m) => m.id).length).toBeGreaterThan(0);
+    const silent = stagedDialogue
+      .filter((m): m is ChoiceMission => m.kind === "choice")
+      .flatMap((m) => m.options.filter((o) => !(o.say ?? "").trim()).map((o) => `${m.id}/${o.id}`));
+    expect(silent).toEqual([]);
+  });
+
+  it("keep real headroom between the closest authored say/title pair and the limit", () => {
+    /* `SAY_TITLE_OVERLAP_LIMIT` is only defensible if there is measured
+       headroom under it, exactly as `LESSON_OVERLAP_LIMIT` is. Measured on
+       arrival: see the comment on the constant. A future author who
+       legitimately narrows the gap finds out in this one line, rather than in a
+       warning that fires on innocent prose and gets loosened in irritation. */
+    const replies = authoredReplies();
+    expect(replies.length).toBeGreaterThan(0);
+    let worst = 0;
+    let worstWhere = "";
+    for (const r of replies) {
+      const o = overlap(contentWords(r.say), contentWords(r.title));
+      if (o > worst) {
+        worst = o;
+        worstWhere = r.where;
+      }
+    }
+    expect(worst, `closest authored say/title pair: ${worstWhere}`).toBeLessThan(
+      SAY_TITLE_OVERLAP_LIMIT / 2,
+    );
   });
 });
