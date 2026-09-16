@@ -317,11 +317,40 @@ const CARD_ROWS = 6;
 const titleId = (id: string) => `opt-${id}-title`;
 const bodyIds = (id: string) => `opt-${id}-desc opt-${id}-trade opt-${id}-cost`;
 
+/**
+ * FIVE COLUMNS IS A DIFFERENT CARD, and it has to be.
+ *
+ * At four options a card is 205px wide; at five it is **163px**, and the poster was
+ * authored for the wider one. Measured on m10 ("Month five"), which content made a
+ * five-option beat so that "price the change" could exist as an answer: the card needed
+ * 620px of a 568px row and the primary label was **clipped mid-word** — "Select this /
+ * option" with the second line cut off by the console's bottom edge. That is not a fit
+ * failure, it is an unreadable control on the object the whole screen exists for.
+ *
+ * Three things change, and none of them is a smaller type step chosen to win pixels:
+ *
+ *  · **The body drops 15px → 13px.** DESIGN-SYSTEM.md assigns 15px to "the situation —
+ *    the one thing they must read" at a **≤66ch** measure, and 13px to "card body" at
+ *    ≤46ch. A 163px column is **22ch**. 15px there is not the specified size being
+ *    shaved, it is the wrong step being used: below Bringhurst's 45ch floor and a third
+ *    of the measure the step was chosen for. 13px is what the spec already says to use.
+ *  · **The medallion goes 60px → 48px.** A 60px disc is 37% of a 163px card's width; the
+ *    smaller one is the same proportion of the narrower card that 60px was of the wide one.
+ *  · **"Select this option" becomes "Select".** Three words do not fit on one 163px line
+ *    and the second was the one being clipped.
+ *
+ * Together: 620px → 560px, inside the row, nothing clipped. The 18px title, the checklist,
+ * the cost rows and every word of content are untouched, and at three or four options the
+ * card is exactly what it was.
+ */
+const NARROW_COLUMNS = 5;
+
 function OptionCard({
   option,
   selected,
   anySelected,
   index,
+  narrow,
   onToggle,
 }: {
   option: Option;
@@ -329,6 +358,8 @@ function OptionCard({
   /** roving tabindex: the group is one tab stop, not four */
   anySelected: boolean;
   index: number;
+  /** five columns or more, so the card is 163px rather than 205px */
+  narrow: boolean;
   onToggle: () => void;
 }) {
   return (
@@ -366,11 +397,15 @@ function OptionCard({
           )
         )}
         <div
-          className={`flex justify-center px-3 ${option.facsimile || option.image ? "-mt-8" : "pt-4"}`}
+          className={`flex justify-center px-3 ${
+            option.facsimile || option.image ? (narrow ? "-mt-7" : "-mt-8") : narrow ? "pt-3" : "pt-4"
+          }`}
         >
           <span
             aria-hidden="true"
-            className="flex h-[60px] w-[60px] items-center justify-center rounded-full border-[3px] border-(--color-surface)"
+            className={`flex items-center justify-center rounded-full border-[3px] border-(--color-surface) ${
+              narrow ? "h-[48px] w-[48px]" : "h-[60px] w-[60px]"
+            }`}
             style={{ background: "var(--color-accent-tint)", color: "var(--color-accent)" }}
           >
             {/* `flag` is the fallback, not `target`. An option with no authored icon was
@@ -380,7 +415,7 @@ function OptionCard({
                 thing "Where you stand" means, so it adds no fifth meaning to the set.
                 Twelve options DO author a reserved pictogram; those are content, listed in
                 the report. */}
-            <Icon name={option.icon ?? "flag"} size={28} />
+            <Icon name={option.icon ?? "flag"} size={narrow ? 23 : 28} />
           </span>
         </div>
       </div>
@@ -397,7 +432,7 @@ function OptionCard({
       {/* 3 · what it is */}
       <p
         id={`opt-${option.id}-desc`}
-        className="px-4 pt-2 text-[15px] leading-snug text-(--color-muted)"
+        className={`px-4 pt-2 leading-snug text-(--color-muted) ${narrow ? "text-[13px]" : "text-[15px]"}`}
       >
         {option.description}
       </p>
@@ -452,9 +487,17 @@ function OptionCard({
         )}
       </div>
 
-      {/* 6 · the card's own button carries the selected state */}
-      <div className="self-end px-4 pb-4 pt-4">
-        <CardButton selected={selected} on="Selected" off="Select this option" />
+      {/* 6 · the card's own marker carries the selected state.
+             "Select this option" is three words and needs two lines in a 163px column —
+             and the second line was the one being clipped by the console's bottom edge on
+             the five-option beat. One word fits, and the card it sits in is the object it
+             refers to, so "this option" was doing nothing the position did not. */}
+      <div className={`self-end px-4 ${narrow ? "pb-3 pt-3" : "pb-4 pt-4"}`}>
+        <CardButton
+          selected={selected}
+          on="Selected"
+          off={narrow ? UI_LABEL.selectShort : UI_LABEL.select}
+        />
       </div>
     </button>
   );
@@ -539,6 +582,9 @@ function ChoiceList({
   const options = availableOptions(mission, state);
   const chosen = state.selection[0];
   const anySelected = options.some((o) => o.id === chosen);
+  /* `availableOptions`, not `mission.options`: a `requires` gate can take the fifth card
+     away, and a card sized for five columns rendered in four would be needlessly small. */
+  const narrow = options.length >= NARROW_COLUMNS;
 
   return (
     <RadioGroup
@@ -556,6 +602,7 @@ function ChoiceList({
           selected={chosen === o.id}
           anySelected={anySelected}
           index={i}
+          narrow={narrow}
           onToggle={() => onToggle(o.id)}
         />
       ))}

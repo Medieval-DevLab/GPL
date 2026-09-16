@@ -105,6 +105,23 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.test.ts"],
     /**
+     * Leave the scheduler room to breathe.
+     *
+     * The suite kept exiting 1 with every one of its 158 tests passing:
+     * `[vitest-worker]: Timeout calling "onTaskUpdate"`. That call goes FROM a worker TO
+     * the main thread, and birpc's timeout is hardcoded at 60s — so the failure is not a
+     * slow test, it is a main thread too busy to answer one. No individual test here
+     * exceeds 35s, and the suite still failed, because eight workers on eight cores
+     * running the exhaustive state-space sweeps left nothing to reply with.
+     *
+     * Capping the pool fixes it without weakening a single assertion, which is the whole
+     * appeal — the alternative on the table was making the determinism check cheaper, and
+     * that one compares two independent sweeps of the entire reachable state space and is
+     * the most important guarantee in the project.
+     */
+    maxWorkers: 4,
+    minWorkers: 1,
+    /**
      * Vitest blanks every `.css` request so a component import cannot drag a stylesheet
      * into a node environment. That also blanks `index.css?raw`, which is how
      * `tokens.test.ts` reads the token declarations. Re-enable the raw query only:

@@ -6,6 +6,94 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-047 · The decide screen has no reading stations, and that is the finding
+`DENSITY-FRAMEWORK.md` §B specifies a five-station reading order and ranks the devices
+that enforce it, strongest first: **a shared rule**, a container border, an air step, a
+size step, one accent fill. The instrument only ever counted the last two — prominent type
+and saturated fills — and `DESIGN-SYSTEM.md` permits exactly one C\*>60 fill per screen
+while the type step above the 18px option title is 24px, the question's own size. So
+stations 1 to 3 were structurally invisible and every screen scored 1 of a 5–6 band.
+
+That looked like an instrument artefact, so the probe now counts separators too, which is
+the device the spec ranks **first**. It then found **none**. Measured directly on the
+decide screen: zero elements spanning ≥55% of the 1,414px work area carry a top border or
+render as a hairline. The borders in this design are all on the option cards, which are
+163–205px wide.
+
+**So the screen genuinely has one station: a 24px heading, then a row of cards.** There is
+nothing dividing it into reading stops. That is the most literal available form of the
+complaint that started this work — "no system to read the flow" — and it survived four
+rounds of fixes aimed at colour, copy length, the brief/decide split and a density rubric.
+
+Kept rather than reverted, because the instrument now matches its own specification and
+will count a rule the day one exists. **Cost:** stations scores 0/10 honestly instead of
+10/10 dishonestly. **Not fixed here:** adding the separators is a layout change, and it is
+the next thing this screen needs.
+
+## D-046 · Declaration is not resolution, for the third time — `@theme static`
+Tailwind v4 emits only the `@theme` variables it can find, by scanning source for the
+literal token name. Half this palette is named from a template literal —
+`var(--color-${d}-tint)` for the meter tracks, `var(${meta.fillVar})` for their fills — and
+a scanner cannot follow that. Resolved in a real browser, **21 of 114 declared tokens were
+the empty string**, and two were load-bearing: `--color-profit-tint` and
+`--color-deliver-tint` were blank, so **two of the three meter tracks had no fill on any of
+the 31 beats** while `DESIGN-SYSTEM.md` documents the tinted track as deliberate.
+`--color-win-tint` survived only because the string appears in a **code comment** about an
+earlier bug in the same file.
+
+Nothing could see it. `tokens.test.ts` parses `index.css` and asserts each tint is declared
+exactly once and is not self-referential — both true, and both beside the point. This is
+the same failure as D-010 and D-037 and the self-referential tints of D-036: **a test that
+checks a name is not a test that checks a value.**
+
+`@theme static` makes the palette's documentation and its runtime agree. **Cost**, measured
+by building both ways: the 19 genuinely unused tokens it also emits take the stylesheet
+from 7.98 to 8.15 kB gzipped, **+0.17 kB**. **Reversible** in one word, at the price of a
+palette that cannot be trusted.
+
+## D-045 · The closing debrief is two views of one data source; the ring is deleted
+The debrief overflowed its box by **2,700px** at 1440×900 and by 1,967–2,782px depending on
+the path, and by 2,576px at 1440×1024 where the fit rule is actually enforced — a hard
+build failure. 598–657 words in one column, one declared region, 10–12 distinct fills, and
+a concentric gauge that drew Winability 100 as a **408px** arc and Deliverability 100 as a
+**283px** one: a 31% error in the last image the game leaves anyone with, animated over
+1.1 seconds, the longest motion in the product.
+
+Concentric arcs cannot compare, because circumference is a function of radius, so equal
+values are drawn unequal **by construction**. The ring is replaced by the same three-panel
+small multiple the resolving beat already uses — equal tracks on a shared baseline, where
+100 and 100 are the same length to the pixel — and the established `target`/`coins`/`layers`
+pictograms return in place of `◆ ● ▲`.
+
+The audit trail a facilitator needs stays in the DOM and is revealed by `@media print`,
+which also opens the disclosure: every decision, every outcome headline, every colleague's
+`watchFor`, the ledger detail, and the run code at the foot. Measured at A4's 688px content
+width it is 3 pages / 50 kB. On screen: **254 words, 6 regions, 8 fills, 0px of overflow.**
+
+This is also where `watchFor` finally renders — 32 lines authored, 0 shown, 471 words of the
+only conditional knowledge in the game — attributed to the colleague who said it, and
+guarded so it can never appear unattributed. 21 of the 30 imperatives in the content live in
+that field, and an unattributed imperative is the lecture this project keeps deleting.
+**Cost:** the dense form needs a printer or a click. **Reversible**, but not without
+re-deriving the geometry: the previous form failed the fit gate at every enforced height.
+
+## D-044 · Five columns is a different card
+m10 became a five-option beat so that "price the change" could exist as an answer at all
+(backlog 5.1 — the game had no change-control answer at all). At four options a card is 205px wide; at five it is 163px, and the poster was
+authored for the wider one — the card needed 620px of a 568px row and the primary label was
+**clipped mid-word** by the console's bottom edge, which is worse than an overflow: an
+unreadable control on the object the screen exists for.
+
+Three changes, scoped to five columns or more: body 15px → 13px, medallion 60px → 48px,
+"Select this option" → "Select". The type step is not a concession — `DESIGN-SYSTEM.md`
+assigns 15px at a ≤66ch measure and 13px to card body at ≤46ch, and a 163px column is
+**22ch**, below Bringhurst's 45ch floor. 15px there was the wrong step, not the right step
+shaved. 620px → 545px, nothing clipped, no content cut, and at 3–4 options the card is
+byte-identical to before. **The alternative was cutting one of the five options**, and two
+of them are the ways to pay for a change and two the ways not to — the beat's whole lesson
+is the contrast.
+
+
 ## D-041 · Below 1024px the game says so, rather than reflowing into a layout nobody designed
 At 390px the console rendered as a 2,700px vertical stack with the primary action **250px
 clipped** inside an `overflow-hidden` shell, and focusing a prediction chip scrolled the

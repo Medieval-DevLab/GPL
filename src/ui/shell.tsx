@@ -64,6 +64,10 @@ export const UI_LABEL = {
   inPlayOne: "thing in play",
   inPlayMany: "things in play",
   show: "— show",
+  /** the option card's own marker. The short form is for a 163px column — see
+      `NARROW_COLUMNS` in `ui/mission.tsx`. */
+  select: "Select this option",
+  selectShort: "Select",
   /** the closing debrief's section headings and its one disclosure */
   standing: "Where you ended up",
   account: "The account",
@@ -1437,8 +1441,23 @@ export function ActionBar({
      sideways. `gap-y-2` was already here, so wrapping was always the intent. */
   return (
     <div data-region="commit" className="flex min-h-[66px] shrink-0 flex-wrap items-center gap-x-5 gap-y-2 border-t border-(--color-line) bg-(--color-surface) px-5 py-2.5 print:hidden">
+      {/**
+       * 360px from `xl` up, and this is a fit fix rather than a taste one.
+       *
+       * At 300px the colleague's steer wrapped to four lines on the missions with the
+       * longest one, which made the action bar 115px tall against 97px elsewhere — and
+       * the bar is the only thing between the working area and the bottom of the console,
+       * so those 18px come straight off every screen that beat can show. Mission 7
+       * overflowed by 24px with an 18px-taller bar underneath it.
+       *
+       * Widening the card by 60px takes the same sentence to two lines, which makes the
+       * bar the same height on every beat — §10's "shared regions moving <24px" — and
+       * hands the height back to the desk. Held to `xl` because below 1280px the bar's
+       * three children do not have 1,010px of room and `flex-wrap` would take a second
+       * line, which is the defect this is fixing, from the other direction.
+       */}
       {aside && (
-        <div className="flex w-[300px] shrink-0 items-center gap-3 rounded-xl border border-(--color-line) px-3.5 py-2.5">
+        <div className="flex w-[300px] shrink-0 items-center gap-3 rounded-xl border border-(--color-line) px-3.5 py-2.5 xl:w-[360px]">
           {aside.photo ? (
             <img
               src={artUrl(aside.photo)}
@@ -1578,6 +1597,3 @@ export function BadgeChip({
   );
 }
 
-export function scoreOf(dims: Record<DimensionId, number>): number {
-  return Math.round((dims.win + dims.profit + dims.deliver) / 3);
-}

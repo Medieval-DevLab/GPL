@@ -438,7 +438,11 @@ describe("the score rule lives in the engine", () => {
    * entry. That handshake is deliberate — the alternative is an allowlist that outlives
    * the thing it excuses.
    */
-  const PENDING = ["shell.tsx"];
+  /* Empty, and it should stay that way. `shell.tsx` carried a duplicate `scoreOf` with
+     zero callers after the top-bar Score was deleted — the readout went and the rule was
+     left behind. Both are gone now, in one commit, because this assertion goes red the
+     moment the export does. */
+  const PENDING: string[] = [];
 
   it("loaded the UI sources", () => {
     expect(uiFiles.length).toBeGreaterThan(4);

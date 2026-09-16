@@ -105,8 +105,19 @@ function suffixReadFlags(content: Content): Map<string, Set<string>> {
  * content, one gated dimension at ten-point buckets takes the walk from 176k states to
  * 506k and from 6s to 22s. Unbucketed all three is not an option — an exhaustive walk over
  * full dimension state exhausts 2 GB and dies.
+ *
+ * Twenty rather than ten, and the reason is a hard limit rather than taste. Vitest's
+ * worker RPC timeout is **hardcoded at 60s** in birpc, and at ten-point buckets a single
+ * sweep of this content became ~50s of unbroken synchronous CPU the moment the first
+ * dimension gate landed — close enough that one more authored outcome would have failed
+ * the run with `Timeout calling "onTaskUpdate"` while every test passed.
+ *
+ * Coarser is only legal while every gate threshold still sits on a boundary, which
+ * `assertGatesOnBoundaries` enforces rather than assumes: the one gate in the content is
+ * `min: { deliver: 60 }`, and 60 is a multiple of 20. Raise this again and that guard is
+ * what will stop you, not a comment.
  */
-const DIM_BUCKET = 10;
+const DIM_BUCKET = 20;
 
 /**
  * How the sweep keys its states, and therefore what it can and cannot see.

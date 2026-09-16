@@ -54,9 +54,26 @@ export const PROBE = (opts = {}) => {
   const root = document.querySelector("[data-work-area]") ?? document.body;
   const rootRectOf = (el) => el.getBoundingClientRect();
   const all = [...root.querySelectorAll("*")];
+  /**
+   * Visible means a player can read it.
+   *
+   * The `closest("details:not([open]))` clause is the one that matters. A CLOSED
+   * disclosure's children still report a non-zero `getBoundingClientRect()` — measured at
+   * 1374×651 on the ending and 766×24 on a decide screen — so without it every hidden
+   * word counted as visible. The same words were then counted twice over: once as
+   * visible, by factors 2 and 4, and once as hidden, by factor 9. Evidence: the ending's
+   * work area reports 254 words of `innerText` and this probe reported 737.
+   *
+   * It made the continuity work look like a regression. Deferring the ledger's `detail`
+   * lines behind an affordance that was already on screen is a change of ZERO visible
+   * words, and `decisionShare` fell 6/12 → 0/12 because the probe read the deferred text
+   * as though it were on the screen.
+   */
+  const hiddenByDisclosure = (el) => el.closest("details:not([open])") !== null;
   const visible = all.filter((el) => {
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) return false;
+    if (hiddenByDisclosure(el)) return false;
     const cs = getComputedStyle(el);
     return cs.visibility !== "hidden" && cs.display !== "none" && cs.opacity !== "0";
   });
@@ -400,6 +417,45 @@ export const PROBE = (opts = {}) => {
     const contains = (other) => other.el !== candidate.el && candidate.el.contains(other.el);
     if (marks.some(contains) || fillCandidates.some(contains)) continue;
     marks.push(candidate);
+  }
+
+  /**
+   * §B's own devices, which the mark-based count was missing.
+   *
+   * §B ranks its enforcement devices explicitly, and the order is: **a shared rule**,
+   * then a container border, then an air step, then a size step, then one accent fill.
+   * The detector above counts only the last two — prominent type and saturated fills —
+   * and `DESIGN-SYSTEM.md` caps a screen at exactly one C*>60 fill while the type scale's
+   * next step above the 18px option title is 24px, the question's own size. So stations 1
+   * to 3 were structurally invisible to it and every screen scored 1, on 17 of 17.
+   *
+   * That reported as a finding about the design and was mostly a finding about the probe.
+   * A separator IS a station boundary: it is the device the spec ranks first, and a band
+   * bounded by a rule the eye can see is a stop whether or not it contains 24px type.
+   *
+   * Counted as a mark so the 24px clustering below applies unchanged — a rule and the
+   * heading directly beneath it are one station, not two.
+   */
+  for (const el of visible) {
+    const cs = getComputedStyle(el);
+    const r = el.getBoundingClientRect();
+    const rootR = rootRectOf(root);
+    // A rule spans most of the width and is one to three pixels tall.
+    const wide = r.width >= rootR.width * 0.55;
+    if (!wide) continue;
+    const topBorder = parseFloat(cs.borderTopWidth) || 0;
+    const isHairline = r.height <= 3 && r.height >= 1;
+    if (topBorder >= 1 || isHairline) {
+      /* A rule is a LINE at the top edge, not the box beneath it. Using the element's
+         full height made each separator's band 400px deep, which then absorbed the next
+         separator 24px below it, and every screen collapsed back to one band. */
+      marks.push({
+        el,
+        top: r.top,
+        bottom: r.top + Math.max(topBorder, 1),
+        label: `rule ${Math.round(r.width)}px`,
+      });
+    }
   }
 
   marks.sort((a, b) => a.top - b.top);
