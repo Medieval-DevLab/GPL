@@ -507,6 +507,10 @@ export default function App() {
           mission={conversation}
           state={state}
           phase={onDecide ? "reply" : "listen"}
+          /* The same counter the live region uses to re-speak the requirement. Here it
+             re-lands the gate under the chosen reply, because on this surface that is
+             where the requirement is — the action bar has nothing to flash. */
+          nudge={gateNudge}
           onToggle={doToggle}
           onPredict={doPredict}
         />

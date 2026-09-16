@@ -1415,14 +1415,12 @@ export const PREDICTION_QUESTION_ID = "gpl-prediction-question";
 export function PredictionChips({
   prediction,
   onPredict,
-  size = "bar",
 }: {
   prediction: DimensionId | null;
   onPredict: (d: DimensionId) => void;
-  size?: "bar" | "block";
 }) {
   return (
-    <div className={`flex ${size === "block" ? "flex-wrap gap-2" : "gap-1.5"}`}>
+    <div className="flex flex-wrap gap-1.5">
       {DIMENSIONS.map((d) => {
         const meta = DIMENSION_META[d];
         const on = prediction === d;
@@ -1431,11 +1429,18 @@ export function PredictionChips({
             key={d}
             onClick={() => onPredict(d)}
             aria-pressed={on}
-            className={`m-press flex items-center gap-1.5 rounded-lg border font-bold ${
-              size === "block"
-                ? "min-h-[32px] px-3 py-1.5 text-[13px]"
-                : "px-2.5 py-1 text-[12px]"
-            }`}
+            /**
+             * 32px tall and 13px of type, up from 22px and 12px.
+             *
+             * These were 12px labels in a hairline border, and the reported bug is that
+             * they read as a legend rather than as three things to press: the player
+             * selected an option, clicked "Commit to this", nothing happened, and the
+             * only explanation on screen was a caption-sized row beside a colleague's
+             * photograph. A control has to look pressable at a glance — so the target
+             * clears 2.5.8 on the short axis with room to spare, the border is 1.5px,
+             * and the chosen one carries a tick as well as a fill.
+             */
+            className="m-press flex min-h-[32px] items-center gap-1.5 rounded-[10px] border-[1.5px] px-3 py-1.5 text-[13px] font-bold"
             style={{
               /* Selected is a tint fill with the dark text token, never white on the
                  solid: win and profit solids are 3.63:1 and 3.90:1 on white, which is
@@ -1446,8 +1451,9 @@ export function PredictionChips({
             }}
           >
             {/* The pictogram, so the chip carries identity without relying on hue. */}
-            <Icon name={meta.icon} size={size === "block" ? 15 : 13} />
+            <Icon name={meta.icon} size={15} />
             {meta.label}
+            {on && <Icon name="check" size={14} />}
           </button>
         );
       })}
@@ -1465,11 +1471,11 @@ export function PredictionStrip({
   return (
     /* Appears the moment a selection completes, so it fades in at the speed of the click
        that summoned it rather than at the speed of a page transition. */
-    <div className="m-swap flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
-      <span
-        id={PREDICTION_QUESTION_ID}
-        className="text-[13px] font-semibold text-(--color-ink-soft)"
-      >
+    <div className="m-swap flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+      {/* 15px and ink, up from 13px and ink-soft. It is the only thing standing between
+          the player and the rest of the game, so it is not allowed to be the quietest
+          text in the bar. */}
+      <span id={PREDICTION_QUESTION_ID} className="text-[15px] font-bold text-(--color-ink)">
         {UI_LABEL.predictQuestion}
       </span>
       <PredictionChips prediction={prediction} onPredict={onPredict} />
@@ -1535,6 +1541,42 @@ export function ActionBar({
 }) {
   const gated = Boolean(disabled);
   const describedBy = hint ? ACTION_HINT_ID : hintId;
+
+  /**
+   * THE REPORTED BUG, and it was never in the rules.
+   *
+   * `canCommit` needs a selection *and* a prediction, which is the game's whole "before"
+   * and is not up for negotiation. What was wrong is that the second requirement was
+   * unreadable: a 13px question and three 12px chips wedged between a 360px photographed
+   * quote and a 280px button, at the far edge of a 1,440px bar. A player on mission one
+   * selected an option, pressed "Commit to this", got nothing, and had no way to find out
+   * why — `onBlocked` announced the reason to a live region and drew nothing.
+   *
+   * Three changes, none of which touches the gate itself:
+   *
+   *  1. **The requirement comes first in the bar** and sits in a bordered lavender panel,
+   *     so it is an object rather than a caption. It is also the first thing in the DOM
+   *     here, which is the reading order a screen reader gets.
+   *  2. **The colleague's steer stands down while the requirement is up.** It is good
+   *     content competing with the one thing the player has to do, and at 1280px the two
+   *     of them plus the button do not fit on one line — which would wrap the bar and eat
+   *     the working area's height. It returns on the resolving beat, where it is the only
+   *     thing in the bar and is still their read on the decision just made.
+   *  3. **A blocked press is drawn, not only spoken.** Re-keying the panel restarts its
+   *     entrance, so pressing a gated button makes the requirement land again — the
+   *     mechanism `m-gate` already uses in the other direction when the gate opens.
+   */
+  const [nudge, setNudge] = useState(0);
+  const press = () => {
+    if (!gated) {
+      onAction?.();
+      return;
+    }
+    setNudge((n) => n + 1);
+    onBlocked?.();
+  };
+  const showAside = aside && !children;
+  const gateUp = Boolean(children) || Boolean(hint);
   /* `flex-wrap` matters more than it looks. Three children with fixed widths — a 300px
      advisor card, the prediction strip and a 280px button — give this bar a ~640px hard
      minimum, and the console shell is `overflow-hidden`. Below about 660px the primary
@@ -1558,7 +1600,7 @@ export function ActionBar({
        * three children do not have 1,010px of room and `flex-wrap` would take a second
        * line, which is the defect this is fixing, from the other direction.
        */}
-      {aside && (
+      {showAside && aside && (
         <div className="flex w-[300px] shrink-0 items-center gap-3 rounded-xl border border-(--color-line) px-3.5 py-2.5 xl:w-[360px]">
           {aside.photo ? (
             <img
@@ -1577,16 +1619,59 @@ export function ActionBar({
           </p>
         </div>
       )}
-      {children}
-      {hint && (
-        <span id={ACTION_HINT_ID} className="text-[13px] text-(--color-muted)">
-          {hint}
-        </span>
+      {/* What is still missing, and it sits AGAINST the primary action. An object with a
+          border and a fill while it is outstanding, plain text once it is satisfied,
+          because a confirmation does not need to shout. Re-keyed on `nudge` so a blocked
+          press restarts the entrance and the requirement lands again.
+
+          It follows the colleague's card in the DOM rather than leading it, because the
+          card is at the far left of the bar and the requirement is at the far right —
+          and because the button's `aria-describedby` points here, so a screen-reader
+          user meets the requirement when they reach the control it blocks, whichever
+          order these two are in. */}
+      {gateUp && (
+        <div
+          key={nudge}
+          /* `ml-auto`, so the requirement sits against the primary action rather than at
+             the opposite end of a 1,400px bar. The eye travelling to "Commit to this"
+             now passes through the thing that is stopping it; the first version of this
+             fix put the panel where the colleague's card used to be, which is the corner
+             the original report says nobody looks at. */
+          className={`ml-auto flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 ${
+            nudge > 0 ? "m-land" : ""
+          } ${gated ? "rounded-[12px] border px-3.5 py-2" : ""}`}
+          style={
+            gated
+              ? {
+                  borderColor: "var(--color-accent-ring)",
+                  background: "var(--color-accent-tint)",
+                }
+              : undefined
+          }
+        >
+          {children}
+          {hint && (
+            <span
+              id={ACTION_HINT_ID}
+              className={
+                gated
+                  ? "text-[15px] font-bold text-(--color-ink)"
+                  : "text-[13px] text-(--color-muted)"
+              }
+            >
+              {hint}
+            </span>
+          )}
+        </div>
       )}
+
+      {/* The button keeps `ml-auto` only when nothing precedes it that has already claimed
+          the free space — two auto margins SPLIT it, which is why the first attempt left
+          the gate panel floating in the middle of the bar instead of against the button. */}
       {label && (
-        <div className="ml-auto shrink-0">
+        <div className={gateUp ? "shrink-0" : "ml-auto shrink-0"}>
           <button
-            onClick={() => (gated ? onBlocked?.() : onAction?.())}
+            onClick={press}
             aria-disabled={gated || undefined}
             aria-describedby={describedBy}
             /* `data-ready` is what fires the gate-opening scale: the attribute appearing

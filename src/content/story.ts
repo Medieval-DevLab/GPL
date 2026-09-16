@@ -469,6 +469,13 @@ const nodes: GameNode[] = [
       "Orion is open to talking to partners. You get roughly one shot at a first impression worth following up.",
     ],
     presentation: "dialogue",
+    /* Surface, mission by mission, and the split is not decorative: a `call` is live,
+       multi-person and cannot be taken back, a `chat` is quick, internal and
+       low-ceremony. Client-facing beats are calls — m5, m6, m8, m9a, m10c. The
+       internal ones are chats — this beat, m7b, m9, m9b and month five, where the
+       sponsor's line arrives relayed rather than in the room. `thread` is authored
+       nowhere and rendered nowhere; see src/ui/dialogue.tsx. */
+    surface: "chat",
     client: ORION,
     advisorLine: "First contact sets what they think we are. It is very hard to move afterwards.",
     advisor: PRIYA,
@@ -812,6 +819,7 @@ const nodes: GameNode[] = [
       "Your sponsor forwards it with four words: “should we be worried?”",
     ],
     presentation: "dialogue",
+    surface: "call",
     saidQuote: {
       text: "We like your perspective, but this looks impressive and my board has already seen it. Help me understand how you are different.",
       ...SARAH,
@@ -1003,6 +1011,7 @@ const nodes: GameNode[] = [
       "Everything follows from how you read that sentence. Get it wrong and every good decision after it serves the wrong goal.",
     ],
     presentation: "dialogue",
+    surface: "call",
     client: ORION,
     /*
      * The first time Marcus Reed says anything, in nineteen beats of being the reason
@@ -1304,6 +1313,7 @@ const nodes: GameNode[] = [
       "Sarah still wants you. She needs something she can take to her board.",
     ],
     presentation: "dialogue",
+    surface: "call",
     saidQuote: {
       text: "I am not asking you to be the cheapest. I am asking for something I can defend in a board meeting that has already seen a smaller number.",
       ...SARAH,
@@ -1490,6 +1500,7 @@ const nodes: GameNode[] = [
       "The finding: the programme changes systems other teams depend on, and the proposal never says how those changes reach production.",
     ],
     presentation: "dialogue",
+    surface: "chat",
     variants: [
       /**
        * The liability finding, first because it outranks the others.
@@ -1732,6 +1743,7 @@ const nodes: GameNode[] = [
       "Two Orion specialists the plan depends on have been pulled onto another priority. You are three weeks behind and the gap is widening.",
     ],
     presentation: "dialogue",
+    surface: "chat",
     variants: [
       {
         when: { any: ["unanchored", "risk_accepted"], all: ["scope:heavy"] },
@@ -2383,6 +2395,7 @@ const nodes: GameNode[] = [
       "One of the three is visibly weaker than the others. You can spend a week fixing it.",
     ],
     presentation: "dialogue",
+    surface: "chat",
     variants: [
       {
         when: { all: ["scope:heavy"], none: ["has:ops_workstream"] },
@@ -2598,6 +2611,7 @@ const nodes: GameNode[] = [
       "Sarah wants you. Sarah does not score the submissions.",
     ],
     presentation: "dialogue",
+    surface: "call",
     variants: [
       {
         when: { none: ["evidenced", "ops_onside", "reframed", "knows:rival_gap"] },
@@ -2866,6 +2880,7 @@ const nodes: GameNode[] = [
       "Sarah’s board has the date. Your reviewers have their concerns in writing.",
     ],
     presentation: "dialogue",
+    surface: "chat",
     variants: [
       {
         when: { any: ["discounted", "thin_mitigation"], all: ["risk_accepted"] },
@@ -3194,6 +3209,7 @@ const nodes: GameNode[] = [
       "Your sponsor, your budget holder and the person who believed in this are all the same person.",
     ],
     presentation: "dialogue",
+    surface: "call",
     variants: [
       /* How month five was handled now reaches the sponsor-succession beat. These three
          also make `crunched`, `undisclosed` and `changed_scope` genuinely READ, rather

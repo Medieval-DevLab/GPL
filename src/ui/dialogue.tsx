@@ -44,11 +44,11 @@
  * so in this comment rather than in a half-drawn screen.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { availableOptions, resolveSaidQuote } from "../engine/engine";
+import { availableOptions, resolveSaidQuote, resolveSituation } from "../engine/engine";
 import type { ChoiceMission, DimensionId, GameState, Mission, Option } from "../engine/types";
-import { Icon, Pill, SectionTitle } from "./icons";
+import { Bullet, Icon, Pill, SectionTitle } from "./icons";
 import {
   BEAT_TITLE_ID,
   Monogram,
@@ -249,6 +249,90 @@ function TypedLine({
   );
 }
 
+/**
+ * The skip, as a control rather than as a click anywhere.
+ *
+ * The surfaces both let a pointer click the transcript to finish the line, and a pointer
+ * is not everybody: 2.1.1 wants the same action from the keyboard, which means a real
+ * button with a real name. One component so the two surfaces cannot drift into having
+ * one each.
+ */
+function SkipTyping({ onSkip }: { onSkip: () => void }) {
+  return (
+    <button
+      onClick={onSkip}
+      className="shrink-0 rounded-lg px-1.5 py-0.5 text-[12px] font-bold text-(--color-accent)"
+    >
+      {UI_LABEL.showWholeLine}
+    </button>
+  );
+}
+
+/**
+ * What this conversation is about — the one thing a conversation surface would otherwise
+ * delete.
+ *
+ * `situation` is the largest thing on a console brief and there is no room for it beside a
+ * transcript, so it takes the device the console's own decide beat already uses: one line,
+ * with the rest behind a disclosure that costs no layout when closed
+ * (`Continuity` in `ui/mission.tsx`, backlog 4.1). `concerns` comes with it, because four
+ * of the ten conversation beats have them.
+ *
+ * Open on the listening beat and closed once the replies are up, which is both the right
+ * default — reading first, answering second — and what hands the composer its height.
+ * `key` on the phase so the change of default actually takes effect; the `open` prop is
+ * not re-applied between renders, so a player who closes or opens it is left alone.
+ */
+function Subject({
+  mission,
+  state,
+  phase,
+}: {
+  mission: Mission;
+  state: GameState;
+  phase: "listen" | "reply";
+}) {
+  const situation = resolveSituation(mission, state);
+  const lead = mission.prompt ?? situation[0];
+  const rest = mission.prompt ? situation : situation.slice(1);
+  const concerns = mission.concerns ?? [];
+  if (!lead) return null;
+
+  return (
+    <details
+      key={phase}
+      open={phase === "listen"}
+      className="shrink-0 border-b border-(--color-line) bg-(--color-surface) px-5 py-2"
+    >
+      <summary className="flex min-h-[24px] cursor-pointer list-none items-baseline gap-1.5 text-[13px] text-(--color-muted)">
+        <span className="line-clamp-1">
+          {lead} <span className="font-medium text-(--color-accent)">{UI_LABEL.showBrief}</span>
+        </span>
+      </summary>
+      <div className="mt-1.5 space-y-1">
+        {rest.map((p, i) => (
+          <p key={i} className="max-w-[92ch] text-[13px] leading-[1.5] text-(--color-ink-soft)">
+            {p}
+          </p>
+        ))}
+        {concerns.length > 0 && (
+          <ul className="flex flex-wrap gap-x-6 gap-y-1 pt-0.5">
+            {concerns.map((c) => (
+              <li
+                key={c}
+                className="flex gap-2 text-[13px] leading-snug text-(--color-ink-soft)"
+              >
+                <Bullet className="mt-[7px] text-(--color-bad)" />
+                {c}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </details>
+  );
+}
+
 /* ───────────────────────── the call ───────────────────────── */
 
 /**
@@ -391,17 +475,15 @@ function Captions({
       <div className={`flex items-baseline gap-2.5 ${previous ? "mt-2" : ""}`}>
         <span className="text-[13px] font-bold text-(--color-ink)">{live.speaker}</span>
         <span className="min-w-0 flex-1 truncate text-[12px] text-(--color-muted)">{live.role}</span>
-        {!typed.done && (
-          <button
-            onClick={typed.skip}
-            className="shrink-0 rounded-lg px-1.5 py-0.5 text-[12px] font-bold text-(--color-accent)"
-          >
-            {UI_LABEL.showWholeLine}
-          </button>
-        )}
+        {!typed.done && <SkipTyping onSkip={typed.skip} />}
       </div>
+      {/* NOT `quoted()` here, and the bug that taught me why is worth naming: the typed
+          run is a slice of the raw string, so quoting only the ruler copy made the two
+          disagree — the opening mark was in the layout and never in the text. A caption
+          is attributed by the name above it anyway, which is what quotation marks are for
+          in the pull-quote and are not needed for here. */}
       <TypedLine
-        text={quoted(live.text)}
+        text={live.text}
         shown={typed.shown}
         done={typed.done}
         className="mt-1 max-w-[76ch] text-[15px] leading-[1.5] text-(--color-ink-soft)"
@@ -429,10 +511,41 @@ function ChatThread({
   draft?: string;
 }) {
   const last = turns.length - 1;
+  const box = useRef<HTMLDivElement>(null);
+
+  /**
+   * Stay with the newest message.
+   *
+   * Top-anchoring is right until the thread is taller than its region — which happens on
+   * month five, where five replies leave the thread about 180px and the draft bubble was
+   * simply clipped off the bottom edge. A message list that does not follow its own
+   * newest message is broken in the one way every player will recognise, so it scrolls,
+   * on the same two things that change its height: the line being typed and the draft
+   * arriving.
+   */
+  useEffect(() => {
+    const el = box.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [draft, typed.shown]);
+
   return (
+    /**
+     * Top-anchored, and it does NOT claim the surplus height.
+     *
+     * A two-message thread is 150px of content. Stretched to fill a 700px region it is a
+     * hole with a bubble stuck to one edge of it — which is what both of the first two
+     * attempts looked like, one with the hole above and one below. So the thread is sized
+     * to its content and the window simply ends where the conversation does; the surplus
+     * becomes desk, which is a surface this design language already uses everywhere.
+     *
+     * It still SHRINKS, which is the other half: month five has five replies and three
+     * messages, and there the thread gives way and scrolls instead of pushing the
+     * composer off the bottom of the console.
+     */
     <div
+      ref={box}
       onClick={typed.done ? undefined : typed.skip}
-      className="flex min-h-0 flex-1 flex-col justify-end gap-3 overflow-y-auto px-5 py-4"
+      className="flex min-h-0 shrink flex-col gap-3 overflow-y-auto px-5 py-4"
     >
       {turns.map((t, i) => (
         <div key={`${t.speaker}-${i}`} className="flex items-start gap-2.5">
@@ -459,14 +572,19 @@ function ChatThread({
                   {UI_LABEL.relayed}
                 </Pill>
               )}
+              {i === last && !typed.done && <SkipTyping onSkip={typed.skip} />}
             </p>
+            {/* The bubble is a TINT, not white with a border. On white with a hairline and
+                a caret at the end of the line it read as a text input the player was
+                expected to type into — on the one screen whose whole subject is that
+                somebody else is talking. */}
             <div
-              className="mt-1 max-w-[70ch] rounded-[12px] rounded-tl-[4px] border px-3.5 py-2.5"
+              className="mt-1 max-w-[70ch] rounded-[12px] rounded-tl-[4px] px-3.5 py-2.5"
               style={{
-                borderColor: "var(--color-line)",
-                /* A relayed message sits on the panel tint — the same device the rails use
-                   to mean "supporting information", so the thread reads in two levels. */
-                background: t.outside ? "var(--color-panel)" : "var(--color-surface)",
+                /* A relayed message sits a step further back again, with a hairline, so
+                   the thread reads in two levels: in the room, and passed into it. */
+                background: t.outside ? "var(--color-surface)" : "var(--color-panel)",
+                border: t.outside ? "1px solid var(--color-line)" : undefined,
               }}
             >
               {i === last ? (
@@ -522,20 +640,32 @@ function ChatThread({
 function PredictionGate({
   prediction,
   onPredict,
+  nudge,
 }: {
   prediction: DimensionId | null;
   onPredict: (d: DimensionId) => void;
+  /**
+   * How many times the player has pressed a commit button that was not ready.
+   *
+   * Pressing it must answer, and on this surface the answer cannot be in the action bar
+   * because the requirement is not there — it is here, under the reply. Re-keying on the
+   * count restarts the entrance, so the gate lands again where the player is looking.
+   * The same mechanism as `ActionBar`'s own panel, driven by the same counter in
+   * `App.tsx`.
+   */
+  nudge: number;
 }) {
   return (
     <div
-      className="m-swap ml-9 mt-2 rounded-[12px] border px-3.5 py-2.5"
+      key={nudge}
+      className={`ml-9 mt-2 rounded-[12px] border px-3.5 py-2.5 ${nudge > 0 ? "m-land" : "m-swap"}`}
       style={{ borderColor: "var(--color-accent-ring)", background: "var(--color-accent-tint)" }}
     >
       <p id={PREDICTION_QUESTION_ID} className="text-[13px] font-bold text-(--color-ink)">
         {UI_LABEL.predictQuestion}
       </p>
       <div className="mt-2">
-        <PredictionChips prediction={prediction} onPredict={onPredict} size="block" />
+        <PredictionChips prediction={prediction} onPredict={onPredict} />
       </div>
     </div>
   );
@@ -562,6 +692,7 @@ function Composer({
   options,
   chosen,
   prediction,
+  nudge,
   onToggle,
   onPredict,
 }: {
@@ -569,6 +700,7 @@ function Composer({
   options: Option[];
   chosen?: string;
   prediction: DimensionId | null;
+  nudge: number;
   onToggle: (id: string) => void;
   onPredict: (d: DimensionId) => void;
 }) {
@@ -611,7 +743,9 @@ function Composer({
                   </span>
                 )}
               </button>
-              {selected && <PredictionGate prediction={prediction} onPredict={onPredict} />}
+              {selected && (
+                <PredictionGate prediction={prediction} onPredict={onPredict} nudge={nudge} />
+              )}
             </div>
           );
         })}
@@ -666,6 +800,7 @@ export function DialogueScene({
   mission,
   state,
   phase,
+  nudge,
   onToggle,
   onPredict,
 }: {
@@ -673,6 +808,8 @@ export function DialogueScene({
   state: GameState;
   /** `listen` is the brief beat, `reply` is the decide beat */
   phase: "listen" | "reply";
+  /** blocked presses of the primary action, so the gate can answer one */
+  nudge: number;
   onToggle: (id: string) => void;
   onPredict: (d: DimensionId) => void;
 }) {
@@ -728,8 +865,10 @@ export function DialogueScene({
         </span>
       </header>
 
+      <Subject mission={mission} state={state} phase={phase} />
+
       {/* The conversation. Everything above the composer, and the only flexible region on
-          the screen — so a five-option composer takes its space from here rather than
+          the screen — so a four-option composer takes its space from here rather than
           from the bottom of the console. */}
       {chat ? (
         <ChatThread turns={turns} typed={typed} draft={reply ? draft?.say ?? draft?.title : undefined} />
@@ -742,13 +881,14 @@ export function DialogueScene({
 
       {/* Station 4 — what you say. Bordered and flush against the region above it, not a
           detached card with a gap: that is the mockups' own construction. */}
-      <div className="shrink-0 border-t border-(--color-line) bg-(--color-surface) px-5 py-3">
+      <div className="shrink-0 border-y border-(--color-line) bg-(--color-surface) px-5 py-3">
         {reply ? (
           <Composer
             mission={mission}
             options={options}
             chosen={chosen}
             prediction={state.prediction}
+            nudge={nudge}
             onToggle={onToggle}
             onPredict={onPredict}
           />
@@ -756,6 +896,10 @@ export function DialogueScene({
           <OpenQuestions from={mission.advisor.name} questions={mission.consider} />
         ) : null}
       </div>
+
+      {/* The desk, where a short thread leaves room over. Only the chat surface can have
+          any: the call's tile wall is the flexible region and takes the surplus itself. */}
+      {chat && <div className="min-h-0 flex-1" />}
     </div>
   );
 }

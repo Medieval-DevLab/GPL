@@ -6,6 +6,99 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-053 · The commit gate was a legend, not a control — and the bug was on mission one
+The reported defect is "cannot get past Commit to this". `canCommit` needs a selection AND
+a prediction, and the second requirement was a 13px question with three 12px chips wedged
+into the action bar between a 360px photographed quote and a 280px button, at the far edge
+of a 1,440px bar. Select an option, press the button, nothing happens, nothing on screen
+says why: `onBlocked` announced the reason to a live region and drew nothing. The ten new
+conversation beats do not include m1 or m2, so fixing it only in the new staging would have
+left the bug exactly where it does the most damage — on a first-time player's first
+decision.
+
+Four changes, none of which touches the gate:
+
+1. **The requirement is an object, against the button.** A bordered lavender panel with the
+   question at 15px/bold, `ml-auto` so it sits beside the control it is blocking. The first
+   attempt put it where the colleague's card used to be, at the far left — which is the
+   corner the report says nobody looks at. (Two `ml-auto` items SPLIT the free space, so the
+   button's own auto margin is now conditional; that is why the panel first landed floating
+   in the middle of the bar.)
+2. **The chips look pressable**: 32px tall, 13px type, 1.5px border, and the chosen one
+   carries a tick as well as a tint. They were 22px and 12px in a hairline.
+3. **A blocked press is drawn, not only spoken.** Re-keying the panel restarts its
+   entrance, so the requirement lands again — measured in the browser as `gpl-land`, 260ms,
+   on the element containing the question, on both stagings.
+4. **The colleague's steer stands down while the requirement is up.** Good content
+   competing with the one thing the player must do — and at 1280px the two of them plus the
+   button do not fit on one line, so keeping both would wrap the bar and take height off the
+   working area. It still appears on every decide beat before a selection is made, and on
+   the resolving beat.
+
+**Cost:** `mission.tip` is off screen for the second half of a console decide beat. That is
+the trade I would revisit first. **Not paid:** `canCommit` is untouched — the prediction is
+the game's "before" and removing it would delete the learning loop, so the fix is
+legibility only. **Reversible:** yes, all four are local to `ActionBar`/`PredictionStrip`.
+
+---
+
+## D-052 · Conversation beats are staged in the artefacts of the work, not on a painted stage
+Seventeen missions rendered as one shape, and the complaint was that "the screens are almost
+the same". They were, so no transition could fix it: animating between two identical shapes
+is the same shape. `presentation: "dialogue"` (D-051) makes ten of them a conversation, and
+this is what a conversation looks like.
+
+**A visual novel was built and thrown away.** Blurred hero, bottom-anchored character bust,
+textbox across the bottom — the shipped Ren'Py geometry. Two things were wrong with it: it
+is a genre transplant onto a consulting game, and it needs the 21 sprites and 9 painted
+rooms `docs/ART-BRIEF.md` prices and nobody has drawn. Consultants live in calls and chat
+threads, so the interface becomes the fiction instead of illustrating it — and that needs
+no art at all, because **a call with the cameras off is a grid of initials in circles**, and
+the monogram built for the three client voices who have no photograph stops being a
+fallback and becomes the authentic state. The tile is labelled "Camera off" and means it.
+
+What the surfaces are:
+
+- **`call`** — a window header (Live, the mission title, the participant count), a tile
+  wall, live captions, a composer. The **active-speaker ring** is the load-bearing state:
+  it says who is talking without a word being read, and it **moves to the player's own tile
+  the moment the replies open**, which is the floor passing to them. Ring + chip +
+  attribution, so it never rests on hue (E6).
+- **`chat`** — same frame, same composer, bubbles instead of tiles, and your chosen reply
+  lands as a right-aligned draft marked *Not sent yet*, which is exactly what it is.
+- **`thread`** is deliberately not built. One surface done properly plus a light variant
+  beats three half-done ones.
+
+Four things that are not obvious and were each got wrong once first:
+
+1. **One component, both phases.** `brief` and `decide` stay two engine phases — the gate
+   requires it — but they are one screen and one mounted instance, so the window, the
+   participants and the typed caption survive the phase change. Two slots in `App.tsx`
+   would unmount and remount the call, which is a cut dressed as a conversation and would
+   retype the line the player just read.
+2. **The typed line is three copies of the string**: `sr-only` in full for assistive
+   technology from the first frame, a `visibility: hidden` ruler so the box cannot change
+   size mid-sentence (the tile wall is the flexible region — it would have resized twice per
+   line), and the animated run. Reduced motion shows it whole — replacement, not removal.
+3. **Nothing is deleted from the beat.** `situation` and `concerns` sit behind the same
+   one-line disclosure the console decide beat uses, open while listening and closed once
+   the replies are up; the colleague's `consider` questions occupy the composer's slot on
+   the beat before there are replies, so the click that opens the replies changes what that
+   region is *for*. `room: "internal"` keeps the client's line as a **Relayed** message and
+   keeps them off the tile wall — they are quoted, not present.
+4. **A short thread does not stretch.** Sized to content with the surplus left as desk; it
+   shrinks and scrolls on month five, where five replies and three messages do not fit. Both
+   of the first two attempts — bottom-anchored, then top-anchored and stretched — were a
+   500px hole with a bubble stuck to one edge of it.
+
+**Cost:** the hero photograph is unused on these ten beats, and a chat beat with one message
+leaves 270px of empty desk at 1440×900 (390px at 1024). The 160px portraits are never
+upscaled — they sit in a 104px circle — which is why no tile carries video. **Reversible:**
+entirely. `presentation` is one word per mission and `isDialogue()` renders the console for
+anything it cannot stage as a conversation.
+
+---
+
 ## D-051 · The dialogue staging is enforced, and one of the five rules is a warning
 `Presentation` makes a beat a conversation by changing one word, which is the property that
 makes it affordable — and also the property that makes it fail silently. With
