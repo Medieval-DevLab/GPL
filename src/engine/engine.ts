@@ -423,6 +423,8 @@ export function commit(state: GameState, content: Content): GameState {
     lesson,
     dimsBefore,
     dimsAfter: afterOutcome.dims,
+    /* Carried into permanent history so mastery is stable after the beat ends. */
+    predictionCorrect: resolution.predictionCorrect,
   };
 
   return {

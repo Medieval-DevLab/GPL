@@ -650,6 +650,18 @@ export interface HistoryEntry {
   lesson: Lesson;
   dimsBefore: Record<DimensionId, number>;
   dimsAfter: Record<DimensionId, number>;
+  /**
+   * Whether the player read the trade correctly, kept permanently.
+   *
+   * It already existed on `Resolution`, but `enterNode` clears that on leaving the
+   * mission, so it was knowable for the current beat and unknowable a minute later. That
+   * made a mastery rating unstable: `progress.ts` would award three stars on the
+   * consequence screen and two for the same mission seen from the hub. A mastery figure
+   * that changes when you walk away from it is not a mastery figure.
+   *
+   * So it is recorded here, where history is permanent. Costs one boolean per beat.
+   */
+  predictionCorrect: boolean | null;
 }
 
 export interface Resolution {
