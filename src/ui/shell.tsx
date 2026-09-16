@@ -68,6 +68,9 @@ export const UI_LABEL = {
       `NARROW_COLUMNS` in `ui/mission.tsx`. */
   select: "Select this option",
   selectShort: "Select",
+  /** the investigate consequence's disclosure. Third printing of the same paragraphs
+      — see the block it wraps in `consequence.tsx`. */
+  foundOut: "What you found out",
   /** the closing debrief's section headings and its one disclosure */
   standing: "Where you ended up",
   account: "The account",

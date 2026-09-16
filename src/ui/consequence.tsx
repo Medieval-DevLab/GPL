@@ -402,17 +402,41 @@ export function ConsequenceScreen({
 
         <Impact dims={resolution.dimsAfter} deltas={resolution.deltas} />
 
+        {/**
+         * The evidence, deferred rather than printed a third time.
+         *
+         * This block is the whole of the investigate consequence's overflow: 113px at
+         * 1440x900 on the first-option path, 64px and 70px on the other two. It reprinted
+         * the FULL reveal text of every card the player opened — paragraphs they had
+         * already read once when they opened them, and which are permanently in "Your
+         * file" in the left rail on every screen for the rest of the run. So it was the
+         * third printing, and what it pushed off the bottom of the screen was the
+         * colleague's read: the only part of a consequence that teaches anything.
+         *
+         * Deferring it hides nothing decision-critical, because there is nothing left to
+         * decide on this beat. The labels stay visible so the player can see WHAT they
+         * found without re-reading it, which is the part with recall value.
+         */}
         {resolution.revealed.length > 0 && (
-          <div className="card overflow-hidden">
-            {resolution.revealed.map((e) => (
-              <div key={e.id} className="border-b border-(--color-line) px-5 py-3 last:border-b-0">
-                <SectionTitle icon="search" className="mb-1">
-                  {e.label}
-                </SectionTitle>
-                <p className="text-[13px] leading-relaxed text-(--color-ink-soft)">{e.reveals}</p>
-              </div>
-            ))}
-          </div>
+          <details className="card overflow-hidden px-5 py-3">
+            <summary className="flex min-h-[24px] cursor-pointer list-none flex-wrap items-center gap-x-2 text-[13px]">
+              <SectionTitle icon="search">{UI_LABEL.foundOut}</SectionTitle>
+              <span className="text-(--color-ink-soft)">
+                {resolution.revealed.map((e) => e.label).join(" \u00b7 ")}
+              </span>
+              <span className="text-(--color-accent)">{UI_LABEL.show}</span>
+            </summary>
+            <div className="mt-2 space-y-2.5 border-t border-(--color-line) pt-2.5">
+              {resolution.revealed.map((e) => (
+                <div key={e.id}>
+                  <p className="text-[13px] font-bold text-(--color-ink)">{e.label}</p>
+                  <p className="text-[13px] leading-relaxed text-(--color-ink-soft)">
+                    {e.reveals}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </details>
         )}
 
         <div className="card px-5 py-4">

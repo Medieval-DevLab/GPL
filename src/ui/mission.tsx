@@ -434,10 +434,17 @@ function OptionCard({
           132px photograph of a generic office cannot carry a fact. Behind a heading it is
           also, exactly, the visual grammar of a slide deck. The facsimile carries the
           option's own point instead: the complaint volumes, the scorecard, the man who
-          can stop you. See `src/ui/facsimile.tsx`. */}
+          can stop you. See `src/ui/facsimile.tsx`.
+
+          124px, not 132. The decide screen for m6 overflowed the working area by exactly
+          7px on all three paths — structural, not content. The facsimile has no
+          `preserveAspectRatio`, so the SVG default letterboxes it: a 320x96 canvas fitted
+          to a 258px-wide card draws 77px tall and centres it, leaving ~27px of EMPTY
+          panel above and below. Trimming 8px takes it from the letterbox and never
+          touches the drawing, which is why this is not the usual shaving. */}
       <div className="relative">
         {option.facsimile ? (
-          <Facsimile kind={option.facsimile} className="h-[132px] w-full" />
+          <Facsimile kind={option.facsimile} className="h-[124px] w-full" />
         ) : (
           option.image && (
             <img
@@ -445,7 +452,7 @@ function OptionCard({
               alt=""
               loading="lazy"
               decoding="async"
-              className="h-[132px] w-full object-cover"
+              className="h-[124px] w-full object-cover"
             />
           )
         )}
