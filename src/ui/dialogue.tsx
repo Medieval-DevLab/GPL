@@ -587,23 +587,33 @@ function ChatThread({
 
   return (
     /**
-     * Top-anchored, and it does NOT claim the surplus height.
+     * The thread takes every spare pixel, and its messages sit at the BOTTOM of it.
      *
-     * A two-message thread is 150px of content. Stretched to fill a 700px region it is a
-     * hole with a bubble stuck to one edge of it — which is what both of the first two
-     * attempts looked like, one with the hole above and one below. So the thread is sized
-     * to its content and the window simply ends where the conversation does; the surplus
-     * becomes desk, which is a surface this design language already uses everywhere.
+     * Three attempts, and the first two were the same mistake from opposite ends. Sizing
+     * the thread to its content left the slack below the replies — ~190px on m9 and 420px
+     * on m3 — which reads as a screen somebody did not finish, and it moved the composer
+     * up and down between beats. Stretching the thread and top-aligning the messages put
+     * the same hole between the last message and the composer.
      *
-     * It still SHRINKS, which is the other half: month five has five replies and three
-     * messages, and there the thread gives way and scrolls instead of pushing the
-     * composer off the bottom of the console.
+     * No client lays out either way. The thread owns the height, the messages hug the
+     * composer, and the slack collects ABOVE the first message — where it reads as the
+     * start of a conversation rather than as something missing. The composer is then
+     * pinned to the bottom of the work area on all five chat beats, whatever the thread
+     * does.
+     *
+     * The slack is a real SPACER element rather than `justify-end` or `mt-auto`, and that
+     * is deliberate: content-distribution and auto margins in a scroll container put the
+     * overflow past the *start* edge, which is historically unreachable — so on month
+     * five, the one beat whose thread does overflow, the relayed message would have been
+     * unscrollable. A `grow basis-0` child takes the slack when there is any and collapses
+     * to nothing when there is not, and the scroll stays ordinary.
      */
     <div
       ref={box}
       onClick={typed.done ? undefined : typed.skip}
-      className="flex min-h-0 shrink flex-col gap-3 overflow-y-auto px-5 py-4"
+      className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 py-4"
     >
+      <div aria-hidden="true" className="grow basis-0" />
       {/* The thread's subject line. A hairline under it rather than a bubble around it,
           because it is the channel's topic and not something anybody said. */}
       {topic && (
@@ -989,7 +999,10 @@ export function DialogueScene({
 
       {/* Station 4 — what you say. Bordered and flush against the region above it, not a
           detached card with a gap: that is the mockups' own construction. */}
-      <div className="shrink-0 border-y border-(--color-line) bg-(--color-surface) px-5 py-3">
+      <div
+        data-region="reply"
+        className="shrink-0 border-t border-(--color-line) bg-(--color-surface) px-5 py-3"
+      >
         {reply ? (
           <Composer
             mission={mission}
@@ -1005,9 +1018,9 @@ export function DialogueScene({
         ) : null}
       </div>
 
-      {/* The desk, where a short thread leaves room over. Only the chat surface can have
-          any: the call's tile wall is the flexible region and takes the surplus itself. */}
-      {chat && <div className="min-h-0 flex-1" />}
+      {/* No spacer under the composer. There used to be one, for the surplus a
+          content-sized thread left over; the thread claims it now. The call never needed
+          one — its tile wall is the flexible region and is above the captions. */}
     </div>
   );
 }

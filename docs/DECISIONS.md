@@ -6,6 +6,46 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-055 · The blank floor was a layout fault, and I had diagnosed it as a content shortage
+Three times I moved that empty space around the chat surface and three times I described it
+as "not enough content to fill a beat" — ~190px below the replies on m9, ~420px on m3,
+recorded in D-052 and D-054 as a cost worth paying. It was not a content problem. **The
+whole block was top-aligned inside a taller container, so every spare pixel collected at
+the bottom, underneath the replies**, which is the one place it reads as a screen somebody
+did not finish.
+
+No client lays out that way, and the fix is the shape every one of them uses: the thread
+takes all the height, its messages sit at the BOTTOM of it against the composer, and the
+slack collects ABOVE the first message — where the same pixels read as *the start of the
+conversation*. Measured floor, bottom of the last region to the bottom of the working
+area: **m3, m9 and m10 are all 0px, at 1440×900 and at 1440×1024**, on the listening beat
+and on all three states of the gate. The composer now also sits in the same place on every
+chat beat instead of floating up and down with the length of the thread.
+
+**The slack is a real spacer element, not `justify-end` and not `mt-auto`.** Content
+distribution and auto margins in a scroll container put the overflow past the *start* edge,
+which is historically unreachable — so on month five, the one beat whose thread genuinely
+overflows, the relayed message would have become unscrollable. A `grow basis-0` child takes
+the slack when there is any and collapses to nothing when there is not, and the scrollbar
+stays ordinary.
+
+**The call needed nothing**, and it is worth saying why rather than leaving it as an
+omission: its flexible region is the tile wall, which sits ABOVE the captions and the
+composer, so the slack was already collecting in the middle of the window where a call
+window's slack belongs. Measured at 0px floor on both viewports before this change.
+Stretching the tiles to eat the remaining air would make them portrait at three
+participants, which is not what a tile is.
+
+**What this supersedes:** D-052's "a chat beat with one message leaves 270px of empty desk"
+and D-054's "the thread is sized to its content and the surplus becomes desk". Both were
+descriptions of a bug I had rationalised. `data-region="reply"` is on the composer now, so
+the floor is measurable rather than eyeballed.
+
+**Cost:** none paid in content, type or padding — the same words in the same sizes.
+**Reversible:** yes, one class on the thread and one child element.
+
+---
+
 ## D-054 · On a chat surface the situation IS the thread — and two smaller corrections
 Three refinements to D-052, the first of which supersedes part of it.
 
