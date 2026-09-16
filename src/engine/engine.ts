@@ -169,6 +169,25 @@ export function resolveSituation(mission: Mission, state: GameState): string[] {
   return mission.situation;
 }
 
+/**
+ * Who is quoted on this brief, given what the player has found out.
+ *
+ * First matching `quotes` entry wins; `saidQuote` is the unconditional fallback. See
+ * `Mission.quotes` for why the conditional list exists at all — the short version is that
+ * Marcus Reed must not introduce himself to a player who never asked who he was.
+ */
+export function resolveSaidQuote(
+  mission: Mission,
+  state: GameState,
+): { text: string; attribution: string } | undefined {
+  for (const q of mission.quotes ?? []) {
+    if (evaluateCondition(q.when, state.flags, state.dims)) {
+      return { text: q.text, attribution: q.attribution };
+    }
+  }
+  return mission.saidQuote;
+}
+
 /** Options whose `requires` condition passes. Others are not shown at all. */
 export function availableOptions(mission: Mission, state: GameState): Option[] {
   if (mission.kind !== "choice") return [];

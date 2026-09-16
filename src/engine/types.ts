@@ -305,6 +305,19 @@ export interface ClientProfile {
   image?: string;
 }
 
+/**
+ * A client-side line of dialogue, shown only when `when` passes.
+ *
+ * Same shape as `Mission.saidQuote` plus a condition, so the two are interchangeable
+ * where they are rendered and an author can promote an unconditional quote to a
+ * conditional one without touching the UI.
+ */
+export interface ConditionalQuote {
+  when?: Condition;
+  text: string;
+  attribution: string;
+}
+
 export type FactorLevel = "low" | "medium" | "high" | "strong";
 
 /** Semantic colour for an icon. Assigned by meaning in content, never by position. */
@@ -352,6 +365,22 @@ interface MissionBase {
   assessment?: AssessmentFactor[];
   /** something the client actually said */
   saidQuote?: { text: string; attribution: string };
+  /**
+   * Client-side voices that only speak once the player knows they exist.
+   *
+   * `saidQuote` is unconditional, which was fine while every one of them was the sponsor
+   * — she introduces herself in chapter one. It is not fine for the two client people who
+   * actually decide the outcome. Marcus Reed owns every system that would have to change
+   * and is the reason the programme can be stopped; finding him is the *reward* for asking
+   * who owns the systems at m2, and an unconditional quote would have handed his name to
+   * players who never asked, which is the discovery this game is built on.
+   *
+   * So: first entry whose `when` passes wins, and `saidQuote` is the fallback. Orthogonal
+   * to `variants` on purpose — a person speaking up is not the same event as the scene
+   * being rewritten, and coupling them would force an author to fork the prose to add a
+   * line of dialogue.
+   */
+  quotes?: ConditionalQuote[];
   /** what is worrying them */
   concerns?: string[];
   /** a colleague's steer */

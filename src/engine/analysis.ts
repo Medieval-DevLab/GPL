@@ -423,6 +423,8 @@ export interface SweepResult {
   endings: number;
   /** situation variants that matched at least once, by mission */
   firedVariants: Set<string>;
+  /** `missionId#i` for each conditional client quote some reachable state would hear. */
+  firedQuotes: Set<string>;
 }
 
 function emptyRange(): Record<DimensionId, DimRange> {
@@ -451,6 +453,7 @@ export function sweep(content: Content, opts: SweepOptions = {}): SweepResult {
     finalRange: emptyRange(),
     endings: 0,
     firedVariants: new Set(),
+    firedQuotes: new Set(),
   };
 
   const start = openingState(content);
@@ -509,6 +512,16 @@ export function sweep(content: Content, opts: SweepOptions = {}): SweepResult {
         for (let i = 0; i < variants.length; i++) {
           if (evaluateCondition(variants[i]?.when, state.flags, state.dims)) {
             result.firedVariants.add(`${mission.id}#${i}`);
+            break;
+          }
+        }
+
+        /* And which client voice. Same first-match-wins rule as `resolveSaidQuote`, so an
+           entry shadowed by a broader one above it reports as dead rather than as fine. */
+        const quotes = mission.quotes ?? [];
+        for (let i = 0; i < quotes.length; i++) {
+          if (evaluateCondition(quotes[i]?.when, state.flags, state.dims)) {
+            result.firedQuotes.add(`${mission.id}#${i}`);
             break;
           }
         }

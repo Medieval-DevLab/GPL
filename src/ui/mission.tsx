@@ -11,7 +11,12 @@
  */
 
 import { story } from "../content/story";
-import { availableOptions, requiredSelectionCount, resolveSituation } from "../engine/engine";
+import {
+  availableOptions,
+  requiredSelectionCount,
+  resolveSaidQuote,
+  resolveSituation,
+} from "../engine/engine";
 import type {
   AssessmentFactor,
   ClientProfile,
@@ -34,7 +39,17 @@ import {
 
 /* ───────────────────────── header ───────────────────────── */
 
-function Header({ mission, situation }: { mission: Mission; situation: string[] }) {
+function Header({
+  mission,
+  situation,
+  said,
+}: {
+  mission: Mission;
+  situation: string[];
+  /* Resolved by the engine, not read off the mission: which client voice speaks here
+     depends on what the player has found out. See `resolveSaidQuote`. */
+  said?: { text: string; attribution: string };
+}) {
   return (
     <div className="flex items-stretch gap-5">
       {/**
@@ -67,13 +82,13 @@ function Header({ mission, situation }: { mission: Mission; situation: string[] 
         </div>
       </div>
 
-      {mission.saidQuote && (
+      {said && (
         <div className="hidden w-[186px] shrink-0 py-4 pr-5 lg:block">
           <blockquote className="border-l-[3px] border-(--color-accent) pl-3 text-[13px] italic leading-snug text-(--color-ink-soft) text-pretty">
-            {quoted(mission.saidQuote.text)}
+            {quoted(said.text)}
           </blockquote>
           <p className="mt-2 pl-3 text-[12px] font-bold text-(--color-ink)">
-            {mission.saidQuote.attribution}
+            {said.attribution}
           </p>
         </div>
       )}
@@ -85,7 +100,7 @@ function Header({ mission, situation }: { mission: Mission; situation: string[] 
           alt=""
           loading="eager"
           decoding="async"
-          className={`hidden h-[212px] shrink-0 object-cover md:block ${mission.saidQuote ? "w-[30%]" : "w-[40%]"}`}
+          className={`hidden h-[212px] shrink-0 object-cover md:block ${said ? "w-[30%]" : "w-[40%]"}`}
           style={{
             maskImage: "linear-gradient(to right, transparent, #000 22%)",
             WebkitMaskImage: "linear-gradient(to right, transparent, #000 22%)",
@@ -814,7 +829,7 @@ export function BriefBody({ mission, state }: { mission: Mission; state: GameSta
      */
     <div key={mission.id} className="m-enter flex min-h-full flex-col">
       <div data-region="situation" className="bg-(--color-surface)">
-        <Header mission={mission} situation={situation} />
+        <Header mission={mission} situation={situation} said={resolveSaidQuote(mission, state)} />
         {mission.client && (
           <ClientStrip client={mission.client} compact={Boolean(mission.assessment)} />
         )}

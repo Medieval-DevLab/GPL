@@ -6,6 +6,73 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-049 · Conditional client dialogue, because Marcus must not introduce himself
+`saidQuote` renders unconditionally, which was fine while all four of them were the
+sponsor — she is on screen in chapter one and owns the budget. It is not fine for the two
+client people who actually decide the outcome. **Marcus Reed owns every system that would
+have to change**, and finding that out is the reward for spending a question on "who can
+stop this?" at m2. An unconditional quote from him would have handed his name, his job and
+his scepticism to a player who never asked, which is the single discovery the first two
+chapters are built around.
+
+Per `CLAUDE.md` this is a missing engine capability rather than something to work around,
+so: `Mission.quotes` — a first-match-wins list of `ConditionalQuote`, with `saidQuote` as
+the unconditional fallback. **Kept orthogonal to `variants`** on purpose. A person speaking
+up is not the same event as the scene being rewritten, and coupling them would force an
+author to fork three paragraphs of prose to add one line of dialogue.
+
+The gate that matters is the coverage one. A shadowed entry — a broad `when` sitting above
+a narrow one — silences the narrow quote permanently, and because the fallback still
+renders, **the brief looks completely normal**. So `sweep` tracks `firedQuotes` exactly as
+it tracks `firedVariants`, and `analysis.test.ts` fails the build on a line of dialogue no
+reachable state can hear. `validate.ts` also leak-checks, word-budgets and
+unset-flag-checks the new field, because a conditional surface that skips those is three
+known bug classes re-opened.
+
+**Cost:** one engine function, one tracked set, ~20 lines. **Reversible:** yes — delete the
+field and the three authored entries fall back to `saidQuote`.
+
+---
+
+## D-048 · The teaching was attributed and still read like a wall poster
+The original complaint about this game was that it sounded condescending. Every previous
+pass attacked the *framing*: an unattributed "Tip." box became a named colleague with a
+job, a photograph and a stake. That was correct and it shipped. What it exposed is that
+**framing was only half the problem**, and the remaining half was measurable.
+
+Each advisor speaks in two places. Their `quote` and `advisorLine` were written as speech —
+*"Whatever we write down, somebody has to build. I'd rather promise less and mean it."*
+Their `lesson.principle` was written as a proverb — *"Price is not a number, it is a
+position."* Both render under the same name and the same photograph, inside quotation
+marks, on the same screen. Measured by `tools/voice.mjs`:
+
+| | first person | unsituated maxim |
+|---|---|---|
+| `quote` / `advisorLine` | 73% | 1 of 15 |
+| `principle` | **0 of 41** | **30 of 41** |
+
+So the defect was never that the teaching lacked an author. It is that **one named person
+spoke in two registers depending on which field the words were stored in** — 3 of 4
+advisors had zero first-person teaching lines against majority-first-person speech. Putting
+a proverb in a real person's mouth and a photograph beside it arguably made it worse.
+
+All 41 rewritten in the voice of whoever says them, teaching unchanged: *"A price is a
+position I have to hold for months, not a number we fill in tonight."* Split speakers 3 of
+4 → **0 of 4**; unsituated maxims 30 of 41 → **0 of 41**.
+
+Two things learned the hard way. The overlap gate's stopword filter drops words of ≤2
+characters, so `we`/`us`/`my`/`I` are free but **`our` counts as a content word** — leaning
+on "our" in all 41 would have walked every pair toward `LESSON_OVERLAP_LIMIT`. And the
+maxim detector over-reported badly on its own: *"A price is a position I have to hold"*
+matches the copula shape, so the honest test is tenseless AND impersonal AND **containing
+nothing that points at the event**. The grammatical shape was never the defect; being
+unsituated was.
+
+**Cost:** 41 lines rewritten, ~1.1 kB of content. **Reversible:** yes, but the old lines
+are only in git — the measurement is the reason not to go back.
+
+---
+
 ## D-047 · The decide screen has no reading stations, and that is the finding
 `DENSITY-FRAMEWORK.md` §B specifies a five-station reading order and ranks the devices
 that enforce it, strongest first: **a shared rule**, a container border, an air step, a

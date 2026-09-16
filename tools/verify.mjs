@@ -329,7 +329,18 @@ async function runPath(browser, policy) {
       const isNew = !seenHeadings.has(`brief:${heading}`);
       seenHeadings.add(`brief:${heading}`);
       if (policy.shotAll) {
-        if (run.briefs <= 3 || run.briefs === 11) await shot(page, `brief-${run.briefs}`);
+        /**
+         * Which briefs get photographed, decided by what is on them.
+         *
+         * This was `run.briefs <= 3 || run.briefs === 11` — the first three for the
+         * onboarding shape, and 11 because that is where the sponsor's pull-quote was the
+         * day the list was written. Index 11 is not a property of anything; it is a
+         * snapshot of the content order, and the content order has changed twice since,
+         * once by inserting a whole beat at m9a. Conditional client dialogue now exists
+         * and the brief that carries it is the brief worth looking at, so ask the DOM.
+         */
+        const hasQuote = (await page.locator("blockquote").count()) > 0;
+        if (run.briefs <= 3 || hasQuote) await shot(page, `brief-${run.briefs}`);
       } else {
         await shotIf(`${policy.id}-brief-${run.briefs}`, since, isNew);
       }

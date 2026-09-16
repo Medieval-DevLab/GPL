@@ -184,6 +184,27 @@ describe("every path is playable", () => {
     const dead = declared.filter((id) => !result.firedVariants.has(id));
     expect(dead).toEqual([]);
   });
+
+  /**
+   * The same guarantee for the conditional client voices, which are new and therefore
+   * exactly the thing most likely to be authored wrong.
+   *
+   * `Mission.quotes` is first-match-wins, so a broad entry above a narrow one silences the
+   * narrow one permanently — and because the fallback `saidQuote` still renders, the brief
+   * looks completely normal. A line of dialogue nobody can ever hear is the quietest
+   * possible content bug, and Marcus Reed's two are gated on flags set by a single
+   * optional question in chapter two.
+   */
+  it("lets someone hear every conditional client quote", () => {
+    const declared: string[] = [];
+    for (const node of Object.values(content.nodes)) {
+      if (!isMission(node)) continue;
+      (node.quotes ?? []).forEach((_, i) => declared.push(`${node.id}#${i}`));
+    }
+    expect(declared.length, "no conditional quotes authored — is the walk still right?").toBeGreaterThan(0);
+    const dead = declared.filter((id) => !result.firedQuotes.has(id));
+    expect(dead).toEqual([]);
+  });
 });
 
 /**

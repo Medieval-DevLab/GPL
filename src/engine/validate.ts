@@ -294,6 +294,7 @@ export function validateContent(content: Content): Issue[] {
     };
 
     for (const v of node.variants ?? []) noteRead(v.when, `${node.id}/variant`);
+    for (const q of node.quotes ?? []) noteRead(q.when, `${node.id}/quote`);
     if (node.kind === "choice") {
       for (const o of node.options) {
         noteRead(o.requires, `${node.id}/${o.id}/requires`);
@@ -326,6 +327,7 @@ export function validateContent(content: Content): Issue[] {
   for (const node of nodes) {
     if (!isMission(node)) continue;
     for (const v of node.variants ?? []) checkDimGate(v.when, `${node.id}/variant`);
+    for (const q of node.quotes ?? []) checkDimGate(q.when, `${node.id}/quote`);
     if (node.kind === "choice") {
       for (const o of node.options) {
         checkDimGate(o.requires, `${node.id}/${o.id}/requires`);
@@ -391,6 +393,7 @@ export function validateContent(content: Content): Issue[] {
     leakCheck(m.advisor?.quote, m.id, "advisor.quote");
     leakCheck(m.advisor?.steer, m.id, "advisor.steer");
     leakCheck(m.saidQuote?.text, m.id, "saidQuote");
+    (m.quotes ?? []).forEach((q, i) => leakCheck(q.text, m.id, `quotes[${i}]`));
     for (const c of m.concerns ?? []) leakCheck(c, m.id, "concerns");
     leakCheck(m.client?.blurb, m.id, "client.blurb");
     for (const f of m.assessment ?? []) leakCheck(f.note, m.id, `assessment/${f.label}`);
@@ -448,6 +451,7 @@ export function validateContent(content: Content): Issue[] {
     budget(m.advisor?.quote, BUDGET.advisorLine, m.id, "advisor.quote");
     budget(m.advisor?.steer, BUDGET.advisorLine, m.id, "advisor.steer");
     budget(m.saidQuote?.text, BUDGET.saidQuote, m.id, "saidQuote");
+    (m.quotes ?? []).forEach((q, i) => budget(q.text, BUDGET.saidQuote, m.id, `quotes[${i}]`));
 
     if (m.kind === "choice") {
       if (m.options.length < 2) err(m.id, "a choice needs at least two options");

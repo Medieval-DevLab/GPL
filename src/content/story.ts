@@ -54,7 +54,7 @@ const RIYA: Advisor = {
   name: "Riya Kapoor",
   role: "Engagement Director",
   photo: "portrait-riya",
-  quote: "Not every lead is the right opportunity. Decide early where your people go.",
+  quote: "Not every lead is worth the same to us. I decide early where my people go.",
 };
 
 const ARJUN: Advisor = {
@@ -77,6 +77,11 @@ const AISHA: Advisor = {
   photo: "portrait-aisha",
   quote: "My team inherits every sentence in that proposal. Which ones did you mean?",
 };
+
+/* Client-side attributions, written once. Four copies of Sarah's drifted apart before. */
+const SARAH = "Sarah Lim · Chief Transformation Officer, Orion Retail";
+const MARCUS = "Marcus Reed · Operations Director, Orion Retail";
+const FOYLE = "Declan Foyle · Procurement, Orion Retail";
 
 const ORION: ClientProfile = {
   name: "Orion Retail Group",
@@ -261,7 +266,7 @@ const nodes: GameNode[] = [
               flags: ["client:northwind", "late_start", "knows:rivals"],
             },
             lesson: {
-              principle: "The biggest opportunity is not automatically the best one.",
+              principle: "The biggest number on the table is not automatically the one I would send us after.",
               because:
                 "Apex was worth more than Orion on paper. But value you cannot credibly go after is not value available to you.",
               watchFor:
@@ -301,7 +306,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "Fit is where what they need overlaps what you can prove.",
+      principle: "I look for the overlap between what they need and what we can prove. That is all fit means.",
       because:
         "Every one of those three was a real opportunity. They were not equally real for your team, with your people, this quarter.",
       watchFor: "When something looks too good to pass up, check whether you could actually win it.",
@@ -420,7 +425,7 @@ const nodes: GameNode[] = [
         ],
         effect: { dims: { win: 1 } },
         lesson: {
-          principle: "The most valuable question is usually the one nobody has asked yet.",
+          principle: "The question worth asking is usually the one nobody in that room has asked yet.",
           because:
             "Competitive and budget information tells you about the race. It does not tell you what is actually wrong, or who has to agree before anything can change.",
           watchFor: "Ask yourself who has not been in the room — and why.",
@@ -428,7 +433,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "Decide what you need to know before you decide what to do.",
+      principle: "I settle what I need to know before I settle what to do. It saves a lot of reversing later.",
       because:
         "You were never going to get all five. Choosing which two mattered was the real decision, and you made it before you knew the answers.",
       watchFor:
@@ -566,7 +571,7 @@ const nodes: GameNode[] = [
             ],
             effect: { dims: { win: 1, profit: 3 } },
             lesson: {
-              principle: "Reach and relevance are not the same thing.",
+              principle: "Reach is easy to count, which is why we keep mistaking it for relevance.",
               because:
                 "You reached more people than either alternative would have. None of them was the person who decides.",
               watchFor:
@@ -577,7 +582,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "Match the approach to what you are trying to achieve.",
+      principle: "How we go in has to match what we want out of it. That is one decision, not two.",
       because:
         "Broad reach, direct access and a sharp point of view are three different tools. Which one is right depends on whether you need attention, a decision, or credibility.",
       watchFor: "Ask what you actually need from the next conversation before choosing how to start it.",
@@ -756,7 +761,7 @@ const nodes: GameNode[] = [
             ],
             effect: { dims: { profit: 7, deliver: 3, win: -7 }, flags: ["landed_small"] },
             lesson: {
-              principle: "Saying no to the wrong shape of work is a real option.",
+              principle: "Turning down the wrong shape of work is a decision I have had to defend, and I would defend it again.",
               because:
                 "Declining cost you momentum and bought you a better-defined problem. Whether that trade was right depends on how badly you needed the win.",
               watchFor: "Notice when you are bidding on something nobody has actually defined yet.",
@@ -766,7 +771,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "Not every lead deserves the same amount of your team.",
+      principle: "I cannot give every lead the same amount of my team, so I decide early which one gets it.",
       because:
         "Qualifying is deciding how much to risk before you know whether you will win. Commit too early and you spend your best people on a guess; commit too late and someone else is already in front of the client.",
       watchFor: "Six weeks of your best people is the most expensive thing you can spend without approval.",
@@ -790,7 +795,7 @@ const nodes: GameNode[] = [
     ],
     saidQuote: {
       text: "We like your perspective, but this looks impressive and my board has already seen it. Help me understand how you are different.",
-      attribution: "Sarah Lim · Chief Transformation Officer, Orion Retail",
+      attribution: SARAH,
     },
     concerns: [
       "A recognisable vendor name attached",
@@ -926,7 +931,7 @@ const nodes: GameNode[] = [
             changed: ["The rival's framing is now the client's framing", "You are arguing uphill"],
             effect: { dims: { win: -9 } },
             lesson: {
-              principle: "Not reacting is a decision, and it costs something.",
+              principle: "Sitting still was a decision too. I have watched that cost as much as moving.",
               because:
                 "Holding your plan is right when you have the standing to absorb the hit. Without that, silence hands your competitor the definition of the problem.",
               watchFor: "Ask whether you are holding your nerve or simply hoping.",
@@ -936,9 +941,9 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "When the situation changes, you have to decide whether your plan still fits it.",
+      principle: "When the ground moves, somebody has to say out loud whether the plan still fits it.",
       because:
-        "A competitor's move is information. Reacting to all of it makes you thrash; reacting to none of it makes you irrelevant.",
+        "A competitor's move is information, and this one was. Reacting to all of it makes you thrash; reacting to none of it makes you irrelevant.",
       watchFor: "A press release is a claim about the future. It is not evidence that anything shipped.",
     },
     next: "m5b",
@@ -974,6 +979,19 @@ const nodes: GameNode[] = [
       "Everything follows from how you read that sentence. Get it wrong and every good decision after it serves the wrong goal.",
     ],
     client: ORION,
+    /*
+     * The first time Marcus Reed says anything, in nineteen beats of being the reason
+     * this programme can be stopped. Gated on `knows:ops_constraint`, which is set only
+     * by asking who owns the systems at m2 — so the player who did the work hears from
+     * the man himself, and the player who did not still does not know he exists.
+     */
+    quotes: [
+      {
+        when: { all: ["knows:ops_constraint"] },
+        text: "Every programme like this arrives with a plan for my systems and none for my people. I have agreed to two of them. Ask me how those went.",
+        attribution: MARCUS,
+      },
+    ],
     advisor: ARJUN,
     consider: [
       "Is the ask where the money is leaking?",
@@ -1004,7 +1022,7 @@ const nodes: GameNode[] = [
             changed: ["You are comparable to your competitor", "Price becomes the deciding factor"],
             effect: { dims: { win: 1, profit: -4 }, flags: ["scope:storefront"] },
             lesson: {
-              principle: "Answering the question exactly as asked makes you easy to compare.",
+              principle: "Answer exactly what was asked and we become easy to compare. Easy to compare is where price wins.",
               because:
                 "Proposing what everyone else is proposing moves the decision onto the one dimension where you have least control: price.",
               watchFor:
@@ -1050,7 +1068,7 @@ const nodes: GameNode[] = [
             changed: ["The right idea, poorly supported", "You are asked to come back with proof"],
             effect: { dims: { win: 2, deliver: -2 }, flags: ["scope:postpurchase"] },
             lesson: {
-              principle: "Being right is not the same as being persuasive.",
+              principle: "We were right. I have been right and lost anyway, so I stopped treating that as enough.",
               because:
                 "You reached the correct conclusion without the evidence to defend it, so it landed as an opinion competing with theirs rather than as a finding.",
               watchFor:
@@ -1083,7 +1101,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "What a client asks for and what a client needs are often two different things.",
+      principle: "What they asked for and what they need are two different things here. Noticing that gap is our job.",
       because:
         "Their brief described a symptom they could see. The job is to work out whether that is where the damage actually is — and then to be able to show it.",
       watchFor: "A client who wrote the brief has usually already suspected it was wrong.",
@@ -1188,7 +1206,7 @@ const nodes: GameNode[] = [
         changed: ["A large, attractive promise", "No route through Operations"],
         effect: { dims: { deliver: -6 }, flags: ["unanchored"] },
         lesson: {
-          principle: "Every promise in a proposal is a commitment someone else has to keep.",
+          principle: "Every promise in there is a commitment somebody else has to keep, and it is usually Aisha's team.",
           because:
             "The most impressive element you included is also the one that has to pass through the team you have not involved.",
           watchFor: "For each thing you propose, name who delivers it and check they know.",
@@ -1218,7 +1236,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "A solution is what you can deliver, not what you can describe.",
+      principle: "I would rather argue about what we can build than what we can describe. Describing is cheap.",
       because:
         "Every component made the proposal more attractive, harder to deliver, or less profitable. Three of six was the constraint; which three was the decision.",
       watchFor: "The parts that win a proposal and the parts that survive it are rarely the same three.",
@@ -1257,7 +1275,7 @@ const nodes: GameNode[] = [
     ],
     saidQuote: {
       text: "I am not asking you to be the cheapest. I am asking for something I can defend in a board meeting that has already seen a smaller number.",
-      attribution: "Sarah Lim · Chief Transformation Officer, Orion Retail",
+      attribution: SARAH,
     },
     concerns: [
       "Procurement has the comparison in writing",
@@ -1336,7 +1354,7 @@ const nodes: GameNode[] = [
             changed: ["Price objection removed", "No financial slack left in the programme"],
             effect: { dims: { win: 6, profit: -14 }, flags: ["discounted"] },
             lesson: {
-              principle: "A discount is spent twice — once to win, and again when delivery needs it.",
+              principle: "We spend a discount twice — once to win the work, and again when delivery comes asking where the money went.",
               because:
                 "The money you gave away was the same money that would have absorbed a problem later. Nothing about the work got cheaper.",
               watchFor: "Before discounting, ask what that contingency was for.",
@@ -1411,7 +1429,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "Price is not a number, it is a position.",
+      principle: "A price is a position I have to hold for months, not a number we fill in tonight.",
       because:
         "Every route to their number costs you something — margin, scope, or the work of restructuring. The only one that costs nothing is a difference the client can actually see.",
       watchFor: "When pushed on price, ask what specifically they are comparing you to.",
@@ -1550,7 +1568,7 @@ const nodes: GameNode[] = [
             effect: { dims: { deliver: 3, profit: -9 }, flags: ["thin_mitigation"] },
             lesson: {
               principle:
-                "Commercial decisions and delivery decisions are the same decision, made at different times.",
+                "What you settle commercially, my team lives with operationally. Same decision, different month.",
               because:
                 "The discount that won the deal is the reason you cannot properly fix the risk that threatens it.",
               watchFor: "When you concede on price, note what you are giving up the ability to do later.",
@@ -1627,7 +1645,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "Risk is cheapest to deal with before you sign.",
+      principle: "Everything on that list is cheaper to deal with today than it will be the morning after we sign.",
       because:
         "Every option here cost something — margin, scope, or goodwill. All of them cost less now than the same problem will cost in month five of delivery.",
       watchFor: "When a review flags something, notice whether you are solving it or just recording it.",
@@ -1694,6 +1712,21 @@ const nodes: GameNode[] = [
         ],
       },
     ],
+    /* Two voices, and which one you get is the whole of chapter two arriving late. If
+       Operations was brought onside, the man whose people are three weeks into this says
+       so himself; if it was not, the sponsor is the one carrying it, and she is carrying
+       it to a board. */
+    quotes: [
+      {
+        when: { all: ["ops_onside"] },
+        text: "My people are re-planning around this for the second time. I backed you in that room, and I would rather not have to explain why.",
+        attribution: MARCUS,
+      },
+    ],
+    saidQuote: {
+      text: "The board has asked for one more thing and I said I would put it to you. I am aware of what I am asking.",
+      attribution: SARAH,
+    },
     advisor: AISHA,
     consider: [
       "Which decision created this?",
@@ -1805,7 +1838,7 @@ const nodes: GameNode[] = [
             changed: ["Extra work funded", "Scope boundary now established in writing"],
             effect: { dims: { profit: 9, deliver: 3, win: -2 }, flags: ["changed_scope"], badge: "smart_tradeoff" },
             lesson: {
-              principle: "Scope pressure is a transaction, not a favour. The only question is who pays for it.",
+              principle: "That was a transaction, not a favour. Somebody pays for extra scope, and this time we said who.",
               because:
                 "The work was always going to be done. Raising it as a change decided whether your margin paid or their budget did — and you could only raise it because the original boundary was written down.",
               watchFor: "When delivery is asked for something extra, ask first whether it was ever in the contract.",
@@ -1820,7 +1853,7 @@ const nodes: GameNode[] = [
             changed: ["Extra work part-funded", "An argument you should not have had to have"],
             effect: { dims: { profit: 4, win: -5, deliver: 1 }, flags: ["changed_scope"] },
             lesson: {
-              principle: "A change request is only as strong as the scope it changes.",
+              principle: "I can only raise a change against a scope somebody wrote down properly, and this one was thin.",
               because:
                 "Nobody disputes a boundary that was written down at the time. Without it you were asking them to accept your account of a conversation from four months ago, which is a weaker position than being wrong would have been.",
               watchFor: "Write the boundary down when it is uncontroversial, not when it is contested.",
@@ -1848,7 +1881,7 @@ const nodes: GameNode[] = [
             changed: ["Partial cover", "Date missed regardless", "The contract is now loss-making"],
             effect: { dims: { profit: -13, deliver: 2 } },
             lesson: {
-              principle: "Delivery inherits every commercial decision made before it started.",
+              principle: "We inherit every commercial decision made before we started, and this one reached us with no room in it.",
               because:
                 "The flexibility you needed in month five was sold in the pricing conversation, months earlier, to close a gap.",
               watchFor: "When you give something up to win, write down what you have made impossible.",
@@ -1902,7 +1935,7 @@ const nodes: GameNode[] = [
                programme are the ones who leave. */
             effect: { dims: { deliver: -4, profit: 3, win: 1 }, flags: ["crunched"] },
             lesson: {
-              principle: "A date held by goodwill is borrowed, and the people who lend it decide the terms.",
+              principle: "We held that date on goodwill. Goodwill is borrowed, and the people lending it set the terms.",
               because:
                 "The programme was sound enough that pressure worked. What it cost is two people who know how it was built, and you will feel that at the next gate rather than this one.",
               watchFor: "Before holding a date by effort, ask who is paying and whether they agreed to.",
@@ -1933,7 +1966,7 @@ const nodes: GameNode[] = [
             ],
             effect: { dims: { deliver: 2, win: -4, profit: 4 }, flags: ["undisclosed"] },
             lesson: {
-              principle: "Cover is not the same as candour. Somebody is still explaining your decision for you.",
+              principle: "Somebody covered for us, which is not the same as us being straight with them. They know the difference.",
               because:
                 "It held because Operations absorbed the question you chose not to answer. That works exactly as long as their goodwill lasts, and you have spent some of it without asking.",
               watchFor: "If a decision needs somebody else to explain it, ask why you are not explaining it.",
@@ -1952,7 +1985,7 @@ const nodes: GameNode[] = [
             effect: { dims: { deliver: 1, win: -14, profit: 4 } },
             lesson: {
               principle:
-                "Delivery problems become relationship problems the moment you stop talking about them.",
+                "A delivery problem turns into a relationship problem the moment we stop talking about it.",
               because:
                 "Reducing scope is often correct. Reducing it quietly turns a manageable delivery decision into a question about whether you can be trusted.",
               watchFor: "If you would not want the client to read the decision log, reconsider the decision.",
@@ -1962,7 +1995,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "Everything you promise becomes somebody's problem later.",
+      principle: "Everything promised back then is somebody's Monday morning now, and mostly it is mine.",
       because:
         "What went wrong in month five was not a delivery mistake. It was the arithmetic of choices made during qualification, solutioning and pricing, arriving on schedule.",
       watchFor: "When you make a commitment, ask who has to keep it and whether they know yet.",
@@ -2089,7 +2122,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "Deciding what not to do is the harder half of prioritising.",
+      principle: "Choosing what we drop is the harder half of this, and it is the half people skip.",
       because:
         "Every one of those five was worth doing. Choosing two meant deciding which three gaps you were willing to carry into a contract.",
       watchFor: "When you cannot do everything, name what you are choosing to be ignorant about.",
@@ -2172,7 +2205,7 @@ const nodes: GameNode[] = [
             changed: ["Strong margin", "A solution that fits imperfectly"],
             effect: { dims: { profit: 10, deliver: 3, win: -5 }, flags: ["reused_asset"] },
             lesson: {
-              principle: "Reuse is leverage until it becomes a substitute for thinking.",
+              principle: "Reuse is leverage right up to the point where it replaces thinking. I have shipped that mistake.",
               because:
                 "The asset was real and the saving was real. It answered a question this client had not asked.",
               watchFor: "Check whether you are reusing the solution or reusing the diagnosis.",
@@ -2238,7 +2271,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "The shape of a deal is a design decision, not a given.",
+      principle: "We design the shape of a deal. Nobody hands it to us finished.",
       because:
         "Who delivers it, what you reuse, and how you get paid are all choices — and each one changes what you are competing on.",
       watchFor: "When every firm is answering the same question, look at what else could be moved.",
@@ -2408,7 +2441,7 @@ const nodes: GameNode[] = [
             changed: ["A week saved", "Every flagged gap is now yours"],
             effect: { dims: { deliver: -9, win: 1 }, flags: ["overrode_review"] },
             lesson: {
-              principle: "Take the free advice from the people with nothing to sell you.",
+              principle: "Those people had nothing to sell us. I would have taken the advice.",
               because:
                 "The deal team wanted to win it and the reviewers did not care whether you did. That is precisely what made them worth listening to.",
               watchFor: "When you overrule a review, write down what you are betting will not happen.",
@@ -2418,7 +2451,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "A week before signature buys more than a month after it.",
+      principle: "A week of this before signature buys more than a month of it afterwards.",
       because:
         "Whatever you spent the week on, it was cheap. The same fix during delivery costs a renegotiation, and the same gap left open costs a client.",
       watchFor: "The reviewers do not care whether you win. That is the whole value of them.",
@@ -2492,6 +2525,14 @@ const nodes: GameNode[] = [
         ],
       },
     ],
+    /* He has been named in this brief since the beat was written and has never once
+       spoken. The lesson here is that they pick the bid somebody can defend picking — so
+       the person who has to defend it should be audible while the player still has a
+       decision to make. */
+    saidQuote: {
+      text: "I have three proposals, a scorecard and a savings target. Give me something to write in the box that explains why I did not take the cheapest.",
+      attribution: FOYLE,
+    },
     advisorLine: "Foyle is not the obstacle. He has a number to hit and nobody has helped him hit it.",
     advisor: RIYA_DEAL,
     consider: [
@@ -2530,7 +2571,7 @@ const nodes: GameNode[] = [
             effect: { dims: { win: -30, profit: -8 }, flags: ["lost"] },
             next: "end",
             lesson: {
-              principle: "A value case built from your assumptions is a brochure. Built from theirs, it is an argument.",
+              principle: "We built that case out of assumptions we made up, so it read as a brochure. Built from theirs it would have been an argument.",
               because:
                 "You never had their complaint data, so every figure in the case was yours to defend and theirs to doubt. The cheaper bid did not have to be better, only harder to fault.",
               watchFor: "Before promising a payback, ask whose number the baseline is.",
@@ -2578,7 +2619,7 @@ const nodes: GameNode[] = [
             effect: { dims: { win: -28, profit: -4 }, flags: ["lost", "knows:criteria"] },
             next: "end",
             lesson: {
-              principle: "Evaluation criteria are public if you ask. They are decisive whether you ask or not.",
+              principle: "Those criteria were there for the asking. They decided this whether we asked or not.",
               because:
                 "Asking in the last week told you what asking in the first week would have changed. Nothing about the weightings was secret; you simply bid against an imagined test.",
               watchFor: "Ask how it will be scored before you decide what to write.",
@@ -2616,7 +2657,7 @@ const nodes: GameNode[] = [
             effect: { dims: { win: -26, deliver: 3 }, flags: ["lost"] },
             next: "end",
             lesson: {
-              principle: "Honesty in the room is only an asset if the homework behind it is done.",
+              principle: "Being straight in the room only helps us when the homework behind it is done. This time it was not.",
               because:
                 "Aisha could only describe the position you had actually built. Putting your most truthful person in front of the client is a strength when there is something to be truthful about, and an admission when there is not.",
               watchFor: "Before bringing delivery in, ask what they will have to admit.",
@@ -2664,7 +2705,7 @@ const nodes: GameNode[] = [
             effect: { dims: { win: -32, profit: -6 }, flags: ["lost"] },
             next: "end",
             lesson: {
-              principle: "If nothing distinguishes the bids, price decides. Price always decides by default.",
+              principle: "Nothing separated the bids, so price decided. It always does when we give it nothing else to work with.",
               because:
                 "Every week of this pursuit was a chance to build a reason to be preferred, and the submission records how many of them you took. Respecting the process is not a substitute for giving it something to score.",
               watchFor: "Ask what is in the proposal that a competitor could not write.",
@@ -2698,7 +2739,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "A client does not choose the best proposal. They choose the one they can defend choosing.",
+      principle: "They do not pick the best proposal. They pick the one somebody can defend picking, in a room we are not in.",
       because:
         "Somebody has to justify this in writing to people who were never in the room. Everything that makes that easy for them — their own numbers, a named owner for every change, a criterion you score first on — is worth more than another page about your capability.",
       watchFor: "Ask who has to defend this decision internally, and what you have given them.",
@@ -2748,7 +2789,7 @@ const nodes: GameNode[] = [
     ],
     saidQuote: {
       text: "We are ready to sign. I would rather hear a problem from you now than in six months.",
-      attribution: "Sarah Lim · Chief Transformation Officer, Orion Retail",
+      attribution: SARAH,
     },
     concerns: [
       "Everything after this is expensive to change",
@@ -2860,7 +2901,7 @@ const nodes: GameNode[] = [
               badge: "held_nerve",
             },
             lesson: {
-              principle: "Walking away is a decision, not a failure to decide.",
+              principle: "We walked. I want that written down as a decision, not as a failure to make one.",
               because:
                 "By the time you looked at this honestly it had a discount, an unfunded risk and no route into production. Signing it would have been the easy call and the wrong one.",
               watchFor:
@@ -2881,7 +2922,7 @@ const nodes: GameNode[] = [
             ],
             effect: { dims: { win: -22, profit: -6, deliver: 5 }, flags: ["walked_away"] },
             lesson: {
-              principle: "Discipline and timidity look identical until you check the position.",
+              principle: "Discipline and nerves look identical from outside. The only way to tell them apart is to check the position we left.",
               because:
                 "Walking away is right when the deal has become bad. This one had not — you refused work you could have delivered well.",
               watchFor: "Before you decline, name the specific thing you are unwilling to carry.",
@@ -2892,7 +2933,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "Signing is a decision, and so is not signing.",
+      principle: "Signing is a decision. So is not signing, and I have had to make that one in front of a partner.",
       because:
         "Everything before this was reversible. The signature is the line after which the promises belong to somebody else.",
       watchFor: "A pursuit accumulates concessions. Nobody ever decides to end up where you ended up.",
@@ -3030,7 +3071,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "A plan is a set of assumptions about people.",
+      principle: "Every plan I am handed is a set of assumptions about people. I would like them to be named people.",
       because:
         "The programme was scoped as though the right people would be free. Whether that was optimism or an oversight, the delivery team is the one that finds out.",
       watchFor: "When you commit to a date, ask who specifically is going to be sitting there.",
@@ -3096,7 +3137,7 @@ const nodes: GameNode[] = [
     ],
     saidQuote: {
       text: "I have told them this programme matters. After that it is not in my hands, and my successor will make their own mind up.",
-      attribution: "Sarah Lim · Chief Transformation Officer, Orion Retail",
+      attribution: SARAH,
     },
     concerns: [
       "The budget holder is leaving",
@@ -3240,7 +3281,7 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "Relationships are infrastructure, and single points of failure are real.",
+      principle: "Relationships are infrastructure. We had one route into this client, and she is leaving.",
       because:
         "Nothing about the work changed. One person left, and the programme's future changed with them — because its future was attached to that one person.",
       watchFor: "Sponsors move roughly every eighteen months. Programmes rarely finish faster than that.",
