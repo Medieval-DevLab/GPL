@@ -238,6 +238,22 @@ export interface Option {
    * recolours with the palette. See `src/ui/facsimile.tsx`.
    */
   facsimile?: FacsimileId;
+  /**
+   * The same choice, as a sentence the player SAYS.
+   *
+   * `title` and `description` are written in the third person for the comparison cards
+   * — "The post-purchase experience", "Argue the damage happens after the sale". That is
+   * the right register for weighing four approaches side by side, and the wrong one for
+   * a conversation: nobody in a meeting says "the post-purchase experience" at another
+   * person. So a mission staged as `dialogue` reads this instead, in the first person
+   * and in quotes, and the option becomes a reply rather than a row.
+   *
+   * REQUIRED on every option of a `dialogue` mission; the validator enforces it, because
+   * a missing one silently falls back to `title` and the beat quietly stops being a
+   * conversation. Same leak rules as `commits`: it may describe what you are doing, never
+   * what it will achieve.
+   */
+  say?: string;
   /** option is hidden unless this passes */
   requires?: Condition;
   outcomes: Outcome[];
@@ -330,6 +346,54 @@ export interface ConditionalQuote extends SaidQuote {
   when?: Condition;
 }
 
+/**
+ * How a mission is staged. The engine does not care; only the renderer does.
+ *
+ * Seventeen missions all rendered as `console` — a brief, a row of comparison cards, a
+ * consequence — and the complaint that produced this type was that the game "doesn't feel
+ * dynamic because the screens are almost the same". They were: same rails, same card row,
+ * same geometry, seventeen times. Transitions cannot fix that, because animating between
+ * two identical shapes is still the same shape. Variety has to come from RHYTHM.
+ *
+ * So some beats are staged as a conversation instead. Deliberately a presentation flag and
+ * nothing more: identical options, identical outcomes, identical branching, identical
+ * state. A beat can be restaged by changing one word, and no analysis, sweep or test that
+ * reasons about the game's structure needs to know this field exists.
+ *
+ * `console` is right where the player is COMPARING — evidence to buy, a proposal to
+ * assemble, five workstreams and room for two. Columns that line up are genuinely the
+ * best tool for that and are not the problem.
+ * `dialogue` is right where the player is ANSWERING somebody.
+ */
+export type Presentation = "console" | "dialogue";
+
+/**
+ * Which conversation surface a `dialogue` beat is staged on.
+ *
+ * The first draft of this staged dialogue as a visual novel: a painted room, a character
+ * bust, a textbox across the bottom. That is a GENRE TRANSPLANT. Consultants do not stand
+ * in front of painted backdrops; they live in video calls, chat threads and email. Staging
+ * the beat in the artefacts of the actual work makes the interface diegetic — it stops
+ * representing the fiction and becomes it.
+ *
+ * Three things follow, and the first is why this replaced the earlier plan outright:
+ *
+ *  1. It needs almost no art. A tile is a headshot in a rounded rect, and a real call
+ *     shows INITIALS IN A CIRCLE when someone's camera is off — so the monogram already
+ *     built for the three client voices stops being a fallback and becomes authentic.
+ *     `docs/ART-BRIEF.md` asked for 21 sprites and 9 painted rooms; this needs neither.
+ *  2. Dynamism becomes information rather than decoration, which was the actual
+ *     complaint. An active-speaker ring, a participant joining mid-call, a camera off, a
+ *     typing indicator: all of them tell the player something.
+ *  3. The choice mechanic is native. A composer offering three things you could say is
+ *     simply how anyone answers in this medium.
+ *
+ * Choosing the surface is itself a statement about the beat's formality and stakes: a
+ * `call` is live and multi-person and you cannot take it back; a `chat` is quick, internal
+ * and low-ceremony; a `thread` is written, slow and on the record.
+ */
+export type Surface = "call" | "chat" | "thread";
+
 export type FactorLevel = "low" | "medium" | "high" | "strong";
 
 /** Semantic colour for an icon. Assigned by meaning in content, never by position. */
@@ -367,6 +431,17 @@ interface MissionBase {
   hero?: string;
   /** the scenario, as paragraphs — used when no variant matches */
   situation: string[];
+  /**
+   * How this beat is staged. Defaults to `console`.
+   *
+   * The spoken opening needs no new content: a `dialogue` beat is opened by whoever
+   * already talks on it — the client's `saidQuote`/`quotes` if one resolves, otherwise the
+   * colleague's `advisorLine`. Both are authored already, which is why restaging a beat
+   * costs one word here plus a `say` line per option.
+   */
+  presentation?: Presentation;
+  /** Which conversation surface, when `presentation` is `dialogue`. Defaults to `call`. */
+  surface?: Surface;
   /** state-dependent rewrites of the scenario, checked before `situation` */
   variants?: SituationVariant[];
   /** known facts, shown as chips */

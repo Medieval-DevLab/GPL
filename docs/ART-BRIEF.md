@@ -1,5 +1,31 @@
 # GPL — art generation brief
 
+> ## ⚠ SUPERSEDED — do not generate from this yet
+>
+> **The art ask dropped from 30 files to 3.** Written for a visual-novel staging: painted
+> rooms, character sprites, a textbox across the bottom. That direction was replaced hours
+> later by staging dialogue on **the artefacts of the work** — a call surface and a chat
+> surface in our own design language — because a visual novel is a genre transplant onto a
+> consulting game, and because a call tile needs a headshot in a rounded rect rather than a
+> bottom-anchored sprite with three expressions.
+>
+> **What is still wanted (optional, 3 files):** headshots for **Sarah Lim**, **Marcus
+> Reed** and **Declan Foyle**, matched to the four existing colleague portraits in
+> `public/art/portrait-*.webp`. Square-ish, head-and-shoulders, same lighting and grade as
+> those four. Filenames `portrait-sarah.webp`, `portrait-marcus.webp`,
+> `portrait-foyle.webp`.
+>
+> Use §1's style string and §3's locked attributes for those three people — those parts are
+> still good. **Ignore §2's sprite specs, §4's nine backgrounds, and the three-expression
+> set entirely.**
+>
+> And they are genuinely optional: a real call shows **initials in a circle when the camera
+> is off**, which the game already renders for these three. Absent portraits read as
+> camera-off, not as missing art.
+
+---
+
+
 **For the person generating these assets.** Everything here is a spec you can paste into
 an image model. Park the finished files in `public/art/` using the exact filenames in the
 tables; the code picks them up by name, so a wrong filename is the one mistake that costs
