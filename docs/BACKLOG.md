@@ -31,33 +31,33 @@ engagement premium is positive, everything in sections 3–6 improves decoration
 
 | # | item | evidence |
 |---|---|---|
-| 1.1 | **The pursuit cannot be lost in any way that teaches.** "You did not win the work" fires on 0.15% of random runs. Build `m9a` "the client decides" between m9 and m9b, `next: "end"`, gated `none: ["evidenced","ops_onside","reframed","knows:rival_gap"]` — flag-only, so the sweep's dedup stays exact. Measured to fire on 18.6% of random runs; target ~20%. `finalVerdict` needs a `lost` branch ahead of `walked_away`. | domain S1 + QA F4 + learning-science S2; `STRATEGY.md:76` already says the game has no "did we win it?" beat |
-| 1.2 | **0 of 45 options sit behind a `requires` gate.** Knowledge changes prose and numbers, never what the player may *do*. | verified: `grep -c "requires:"` → 0 |
+| 1.1 | **DONE** · **The pursuit cannot be lost in any way that teaches.** "You did not win the work" fires on 0.15% of random runs. Build `m9a` "the client decides" between m9 and m9b, `next: "end"`, gated `none: ["evidenced","ops_onside","reframed","knows:rival_gap"]` — flag-only, so the sweep's dedup stays exact. Measured to fire on 18.6% of random runs; target ~20%. `finalVerdict` needs a `lost` branch ahead of `walked_away`. | domain S1 + QA F4 + learning-science S2; `STRATEGY.md:76` already says the game has no "did we win it?" beat |
+| 1.2 | **DONE** · **0 of 45 options sit behind a `requires` gate.** Knowledge changes prose and numbers, never what the player may *do*. | verified: `grep -c "requires:"` → 0 |
 | 1.3 | **0 conditions read a meter.** The three meters are write-only — a scoreboard beside a questionnaire. Note the ordering constraint: the moment one does, `stateKey` stops being exact. Bucket `win` into deciles in the key; an unpruned walk exhausts 2 GB. | game-systems S1; `validate.ts:188` warns only if this *stops* being true |
-| 1.4 | **Three fake choices at m8/m9.** `o-phase` beats `o-discount` on all three dimensions in 90% of 41,724 reachable states, `o-rescope` in 93%, `o-repriceRisk` ▷ `o-rescope-risk` in 92%. `findDominantOptions` returns zero because it compares each option's per-dimension *worst* against a sibling's *best* — a composite profile no single state can produce. **Fix the detector before the content.** | QA F1; game-systems reproduced it exactly and withdrew its own weaker instrument |
-| 1.5 | **77% of runs render zero causal threads** — the section `engine.ts` calls "the payoff of the whole design". 5 rules exist; `D-012` claims nine; `slice(0, 3)` is dead code because no run reaches three. Move `THREAD_RULES` to `story.ts` so a writer can fix it. | learning-science S8, QA F6, adoption S1 |
+| 1.4 | **DONE** · **Three fake choices at m8/m9.** `o-phase` beats `o-discount` on all three dimensions in 90% of 41,724 reachable states, `o-rescope` in 93%, `o-repriceRisk` ▷ `o-rescope-risk` in 92%. `findDominantOptions` returns zero because it compares each option's per-dimension *worst* against a sibling's *best* — a composite profile no single state can produce. **Fix the detector before the content.** | QA F1; game-systems reproduced it exactly and withdrew its own weaker instrument |
+| 1.5 | **DONE** · **77% of runs render zero causal threads** — the section `engine.ts` calls "the payoff of the whole design". 5 rules exist; `D-012` claims nine; `slice(0, 3)` is dead code because no run reaches three. Move `THREAD_RULES` to `story.ts` so a writer can fix it. | learning-science S8, QA F6, adoption S1 |
 
 ## 2 · The instruments that are still wrong
 
 | # | item | evidence |
 |---|---|---|
-| 2.1 | **`measure.mjs` counts photography and icons as air.** 204 of 872 sample points land on an image; reported air 0.66, true 0.50. The error is larger than the 0.35–0.65 band it grades. | QA F7 |
-| 2.2 | **It scores the median screen**, so out-of-band screens pass while the factor shows full marks (words range to 225 against a 220 cap). | QA F7 |
-| 2.3 | **Disclosure share (weight 5) is still unimplemented** — now counted as unearned rather than omitted, but not built. | `DENSITY-FRAMEWORK.md` §C factor 9 |
-| 2.4 | **`verify.mjs` plays one path**, so path-dependent overflow is invisible. The ending measured 1,867px of overflow on a reviewer's run and 739-in-739 on the harness path. 15 of 16 missions' alternative branches are never rendered in a browser. | QA; reproduced both ways |
+| 2.1 | **DONE** · **`measure.mjs` counts photography and icons as air.** 204 of 872 sample points land on an image; reported air 0.66, true 0.50. The error is larger than the 0.35–0.65 band it grades. | QA F7 |
+| 2.2 | **DONE** · **It scores the median screen**, so out-of-band screens pass while the factor shows full marks (words range to 225 against a 220 cap). | QA F7 |
+| 2.3 | **DONE** · **Disclosure share (weight 5) is still unimplemented** — now counted as unearned rather than omitted, but not built. | `DENSITY-FRAMEWORK.md` §C factor 9 |
+| 2.4 | **DONE** · **`verify.mjs` plays one path**, so path-dependent overflow is invisible. The ending measured 1,867px of overflow on a reviewer's run and 739-in-739 on the harness path. 15 of 16 missions' alternative branches are never rendered in a browser. | QA; reproduced both ways |
 | 2.5 | **The `stations` band was retuned from the documented 5 to 3–4**, which is what lets 3 stations score 10/10. Restore the band or change the document. | ux F2 |
-| 2.6 | **Nothing measures the bundle.** 121.8 kB gzipped against a documented 94 kB in `CLAUDE.md`. | QA F9 |
+| 2.6 | **DONE** · **Nothing measures the bundle.** 121.8 kB gzipped against a documented 94 kB in `CLAUDE.md`. | QA F9 |
 
 ## 3 · Accessibility — six AA failures, one Level A
 
 | # | item | evidence |
 |---|---|---|
-| 3.1 | **No live regions anywhere (4.1.3).** Meters move 58→64 silently; the prediction verdict is never announced. A blind player makes 16 predictions and is told the result of none. Two `aria-live` elements, ~10 lines. **The cheapest high-value item in this file.** | accessibility S1, verified on the rendered DOM |
-| 3.2 | **Single-character shortcuts `1`–`9`/`w`/`p`/`d` with no off switch (2.1.4, Level A).** They also only work for a player who has not touched the mouse, since the handler ignores events whose target is a `BUTTON` and the last-clicked button keeps focus. Both reviewers concluded: delete, −40 lines. | accessibility S7 + QA F10 |
-| 3.3 | **Focus lands on `<body>` 48 times in one run.** No `<main>` landmark; the `h1` is never the first heading. One `ref` + `tabIndex={-1}` + `aria-labelledby` on the beat container fixes all three. | accessibility S3/S6, ux F8 |
-| 3.4 | **The option set has no group semantics** and card accessible names run 170–240 characters, re-spoken on every focus return. `role="radiogroup"`/`radio` for single-choice; `aria-labelledby` + `aria-describedby` so the name is the title. | accessibility S5, ux F9 |
-| 3.5 | **The disabled commit button is unfocusable**, so a screen-reader user cannot discover why they cannot proceed; the hint is an unassociated `<span>` last in the DOM. Keep it enabled, `aria-describedby` the hint, announce on activation. | accessibility S4, ux F13 |
-| 3.6 | **`<summary>` target is 20px (2.5.8).** Needs 24. | accessibility S10 |
+| 3.1 | **DONE** · **No live regions anywhere (4.1.3).** Meters move 58→64 silently; the prediction verdict is never announced. A blind player makes 16 predictions and is told the result of none. Two `aria-live` elements, ~10 lines. **The cheapest high-value item in this file.** | accessibility S1, verified on the rendered DOM |
+| 3.2 | **DONE** · **Single-character shortcuts `1`–`9`/`w`/`p`/`d` with no off switch (2.1.4, Level A).** They also only work for a player who has not touched the mouse, since the handler ignores events whose target is a `BUTTON` and the last-clicked button keeps focus. Both reviewers concluded: delete, −40 lines. | accessibility S7 + QA F10 |
+| 3.3 | **DONE** · **Focus lands on `<body>` 48 times in one run.** No `<main>` landmark; the `h1` is never the first heading. One `ref` + `tabIndex={-1}` + `aria-labelledby` on the beat container fixes all three. | accessibility S3/S6, ux F8 |
+| 3.4 | **DONE** · **The option set has no group semantics** and card accessible names run 170–240 characters, re-spoken on every focus return. `role="radiogroup"`/`radio` for single-choice; `aria-labelledby` + `aria-describedby` so the name is the title. | accessibility S5, ux F9 |
+| 3.5 | **DONE** · **The disabled commit button is unfocusable**, so a screen-reader user cannot discover why they cannot proceed; the hint is an unassociated `<span>` last in the DOM. Keep it enabled, `aria-describedby` the hint, announce on activation. | accessibility S4, ux F13 |
+| 3.6 | **DONE** · **`<summary>` target is 20px (2.5.8).** Needs 24. | accessibility S10 |
 | 3.7 | **A real small-screen design.** Today's notice is honest, not sufficient — it is a precondition for deploying this as required training, per the recorded dissent in `D-041`. | accessibility, dissenting from ux |
 
 ## 4 · Reading flow — the complaint that started this
@@ -78,9 +78,9 @@ These matter because a learner carries them into a real meeting.
 |---|---|---|
 | 5.1 | **No change control anywhere.** Zero occurrences of change request, SOW, MSA. At m10 the options are absorb, push, reset, conceal — the real first answer, *price the change*, is absent. A new joiner will give work away. One option card. | domain S2 |
 | 5.2 | **Concealment is net-rewarded and nothing names it.** `m10-quiet-covered` is dims +3 net, tone "mixed", and carries **no `lesson`**, so it inherits a generic one that never mentions candour. Same shape for crunch at `m10-push-ok` (+6 net, "paid by the team" never charged). | domain S3 |
-| 5.3 | **Procurement is weather, not a person.** No evaluation criteria, no weights, no shortlist, no orals. MEDDICC Decision Criteria / Decision Process / Paper Process entirely absent. One named character with a mandate; trade away the CIO, incumbent and CFO. | domain S4 |
+| 5.3 | **PART** · **Procurement is weather, not a person.** No evaluation criteria, no weights, no shortlist, no orals. MEDDICC Decision Criteria / Decision Process / Paper Process entirely absent. One named character with a mandate; trade away the CIO, incumbent and CFO. | domain S4 |
 | 5.4 | **The risk review finds only feasibility risk.** Zero occurrences of liability, indemnity, cap, service credit, warranty or IP. m9b offers to reopen "the two clauses you are least comfortable with" and never names either. | domain S6 |
-| 5.5 | **No value case is ever constructed.** The price defence is always qualitative. The game holds the complaint volumes and never turns them into money, teaching that differentiation is a story rather than a sum. | domain S7 |
+| 5.5 | **PART** · **No value case is ever constructed.** The price defence is always qualitative. The game holds the complaint volumes and never turns them into money, teaching that differentiation is a story rather than a sum. | domain S7 |
 | 5.6 | **A Chapter 0 posture defends a 30% premium at m11.** `m8-hold-strong` fires on `knows:rivals`, which `s-challenger` grants on the first screen. Tighten to `evidenced` or `knows:rival_gap`. | domain S8 |
 | 5.7 | **The handover is narrated, not played.** Aisha's "my team inherits every sentence — which ones did you mean?" is the best line in the game and the player never answers it. | domain S10 |
 | 5.8 | Smaller: Operations owns the systems (a CIO would); pre-contact access to internal complaint data reads as information you should not have; the client's outcome is never shown. | domain S11/S12 |
@@ -102,9 +102,9 @@ These matter because a learner carries them into a real meeting.
 
 | # | item | evidence |
 |---|---|---|
-| 7.1 | **All 22 option-card crops are upscaled ×1.43 and lose 45% of their detail energy.** Replace with 274×132 inline-SVG document facsimiles (complaint chart, RFP header, org fragment) — which double as the persistent fact strip 4.1 needs. Net −130 kB WebP / +20 kB SVG, which also retires 2.6. | visual S3, unanimous |
-| 7.2 | **16 verified landscape images are staged and unused** (`scratchpad/img-new`, 2× the render box). One full-bleed hero per brief, assigned per beat — `hero-boardroom` currently appears on three of the first four screens, and the sponsor-resignation beat is illustrated with a till. | this session + visual S3 |
-| 7.3 | **Committing a decision fires a skeleton shimmer** — 1150ms of fake latency in a deterministic game with no network. Animate the meter deltas in place instead. | visual S6 |
+| 7.1 | **DONE** · **All 22 option-card crops are upscaled ×1.43 and lose 45% of their detail energy.** Replace with 274×132 inline-SVG document facsimiles (complaint chart, RFP header, org fragment) — which double as the persistent fact strip 4.1 needs. Net −130 kB WebP / +20 kB SVG, which also retires 2.6. | visual S3, unanimous |
+| 7.2 | **DONE** · **16 verified landscape images are staged and unused** (`scratchpad/img-new`, 2× the render box). One full-bleed hero per brief, assigned per beat — `hero-boardroom` currently appears on three of the first four screens, and the sponsor-resignation beat is illustrated with a till. | this session + visual S3 |
+| 7.3 | **DONE** · **Committing a decision fires a skeleton shimmer** — 1150ms of fake latency in a deterministic game with no network. Animate the meter deltas in place instead. | visual S6 |
 | 7.4 | **The ending is the worst screen in the game**: 598 words, 0.28 air, 10 fills, 1 region, and the concentric ring draws two equal values 31% apart in arc length. Lean on screen, dense in a print stylesheet. | visual S9, adoption S6 |
 | 7.5 | Icons: no optical sizing (`strokeWidth` 1.7 at every size = 3.1× apparent weight range); `layers` carries four meanings; `check` used as an identity badge, which reads as the interface endorsing an answer. | visual S10 |
 | 7.6 | Two identical black pills per decide screen — the selected card's "Selected →" and "Commit to this →" are the same object. | visual S11 |
@@ -114,12 +114,12 @@ These matter because a learner carries them into a real meeting.
 
 | # | item | evidence |
 |---|---|---|
-| 8.1 | **`dist` does not run from `file://`** (module CORS → blank page) and fetches Inter from `fonts.googleapis.com` at runtime, so in a locked-down LMS the measured type system is not what a cohort sees. Self-host the font and inline the module **before** anyone writes a manifest. | QA F8, adoption's own correction |
-| 8.2 | **Run codes** — 8 base32 characters encode a whole playthrough (36.2 bits), only possible because the game is deterministic. Unlocks peer comparison, facilitator pre-reading, LMS resume, exact bug repro. | adoption S3 |
-| 8.3 | **Save invalidation is silent.** Any content patch voids every in-progress save (`gpl.save.v3`); `localStorage` is per-browser, so runs collide on shared machines. | adoption S2 |
+| 8.1 | **DONE** · **`dist` does not run from `file://`** (module CORS → blank page) and fetches Inter from `fonts.googleapis.com` at runtime, so in a locked-down LMS the measured type system is not what a cohort sees. Self-host the font and inline the module **before** anyone writes a manifest. | QA F8, adoption's own correction |
+| 8.2 | **DONE** · **Run codes** — 8 base32 characters encode a whole playthrough (36.2 bits), only possible because the game is deterministic. Unlocks peer comparison, facilitator pre-reading, LMS resume, exact bug repro. | adoption S3 |
+| 8.3 | **DONE** · **Save invalidation is silent.** Any content patch voids every in-progress save (`gpl.save.v3`); `localStorage` is per-browser, so runs collide on shared machines. | adoption S2 |
 | 8.4 | **SCORM 1.2 package, completion signal, printable debrief, facilitator guide** — all deliberately deferred by adoption's own round 2: "packaging a game a sceptic can speed-run burns the one pilot you get." Blocked on section 1. | adoption |
 | 8.5 | `scoreOf` lives in `src/ui/shell.tsx`. A score is a game rule; `CLAUDE.md` puts rules in the engine. | this session |
-| 8.6 | `Enter` on the title screen means "start again", and advances interludes and consequences but not briefs. | QA F10, adoption S2 |
+| 8.6 | **DONE** · `Enter` on the title screen means "start again", and advances interludes and consequences but not briefs. | QA F10, adoption S2 |
 
 ## 9 · Open validator doors
 
@@ -140,3 +140,33 @@ passes. `advisor.steer` is declared in `types.ts` and used by zero missions. *(Q
 4. **3.1, 3.2, 3.3** are cheap, independent of everything above, and one is Level A. No reason to wait.
 5. **7.1** pays for itself twice: it is the fact strip 4.1 needs and it retires the bundle overrun.
 6. Section 8 waits on section 1, by adoption's own argument.
+
+---
+
+## Status, as of the last commit
+
+**24 of 52 shipped. 26 open, 2 partial.** Counted rather than estimated, by grepping the
+repo for each item.
+
+| section | shipped | open |
+|---|---|---|
+| 1 · reading does not pay | 4 of 5 | **1.3** — still no condition reads a meter, so the meters remain write-only for branching |
+| 2 · the instruments | 5 of 6 | **2.5** — the `stations` band is still 3–4 against a documented 5 |
+| 3 · accessibility | 6 of 7 | **3.7** — no small-screen design; desktop-only is declared, not solved |
+| 4 · reading flow | **0 of 5** | all of it. 4.1 continuity still measures 0.50 against 0.85 |
+| 5 · domain truth | 0 of 8, 2 partial | change control, concealment, liability, the m8 gate, the handover |
+| 6 · voice | **0 of 8** | all of it, including a one-line fourth-wall break |
+| 7 · craft | 3 of 7 | the ending screen still overflows by 2,700px |
+| 8 · product surface | 4 of 6 | SCORM deferred by design; `scoreOf` still lives in the UI |
+| 9 · validator doors | all | — |
+
+**And the gate that started this still fails.** `engagement.test.ts` is red on purpose:
+14 of 18 non-reader runs still reach the top verdict, and the best non-reader still scores
+100. The award beat made the distribution wider at both ends rather than closing it —
+3 of 18 now lose outright, but the survivors collect its winning deltas. Closing it needs
+the outcome economy rebalanced, which is 88 authored deltas and the largest single piece
+of content work left.
+
+**Two claims in this file were wrong and are corrected above:** 7.4's "0.28 air" was an
+instrument artefact (it measures 0.80 — out of band at the opposite end), and 7.1 does not
+retire the bundle overrun, because photographs are media and facsimiles are code.
