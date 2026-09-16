@@ -85,6 +85,39 @@ export function Icon({
 }
 
 /**
+ * A single person, and deliberately not an `IconId`.
+ *
+ * The player has no name in this game, so their own tile on a call showed a monogram
+ * built from the word "You" — a circle containing the letter **Y**, which reads as an
+ * unfinished placeholder rather than as a deliberate choice, on every conversation beat.
+ *
+ * It is not in the `Icon` set for two reasons. `IconId` lives in `engine/types.ts`, which
+ * content and the engine own and a rendering detail has no business widening. And `people`
+ * — the nearest existing glyph — already means "participants" in the call window's own
+ * header, eight inches away, with a number beside it; this codebase has been through what
+ * happens when one pictogram accumulates four meanings (see `Bullet` below).
+ */
+export function PersonGlyph({ size = 18 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeFor(size)}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M12 11.5a4.25 4.25 0 1 0 0-8.5 4.25 4.25 0 0 0 0 8.5Z" />
+      <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
+    </svg>
+  );
+}
+
+/**
  * A bullet, and deliberately not an icon.
  *
  * `layers` was carrying four meanings, three of them on one screen — Deliverability's

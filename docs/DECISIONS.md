@@ -6,6 +6,63 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-054 · On a chat surface the situation IS the thread — and two smaller corrections
+Three refinements to D-052, the first of which supersedes part of it.
+
+**1 · The empty floor was a symptom, and the disclosure was the cause.** D-052 put
+`situation` behind the console's one-line "— the brief" disclosure on both surfaces and
+left ~270px of empty desk on a sparse chat beat. Shrinking or padding that floor would
+have been treating the symptom: a thread whose entire history is one line, with the actual
+context hidden behind a "show" link, is *a thread pretending to have no history*. So on the
+chat surface the paragraphs are the history — earlier messages from whoever is speaking,
+above their closing line — and the disclosure is gone. The call keeps it, because a
+transcript can only hold what was actually said and scrollback we invented would be
+putting words in somebody's mouth.
+
+The split is dictated by the prose, not chosen: in all five chat beats the **first**
+paragraph is the narrator setting the scene — "Everything is agreed. Nothing is signed." —
+and on month five it says *"the delivery lead wants thirty minutes"* while the delivery
+lead is the person talking. So paragraph one becomes the thread's unattributed subject and
+everything after it becomes hers. A single-paragraph beat (m3) has no narrator line, so it
+becomes a message. Capped at three, oldest first; nothing authored reaches it today, but a
+five-paragraph variant would otherwise bury the line the replies answer. Consecutive
+messages from one person group under one avatar — how every client renders it, and 22px per
+message handed back to a thread that has to sit above a five-reply composer. Measured:
+m9 and m10 are **0px over at both 1440×900 and 1440×1024**, and month five still shrinks
+and scrolls rather than pushing the composer off.
+
+**2 · The player's own tile said "Y".** A monogram of the word "You" is a letter in a
+circle, and it read as a placeholder somebody forgot to finish — on every conversation
+beat. It is now a person silhouette, `PersonGlyph` in `ui/icons.tsx`, deliberately NOT an
+`IconId`: that union lives in `engine/types.ts`, which a rendering detail has no business
+widening, and `people` already means "participants" in the same window's header with a
+number beside it. `Monogram` split into `Disc` + initials so there is one gradient circle
+in the build rather than two.
+
+**3 · The steer could not come back, and here is the number.** D-053 dropped
+`mission.tip` for the second half of a console decide beat and flagged it as the trade to
+revisit. Revisited, measured, and reverted: bringing the card back the moment the gate is
+satisfied wraps the action bar to **two rows — 137px against 73px** — at 1440×900 on
+mission one, and the 64px it costs overflows a decide screen that fits to the pixel, by
+15px. Holding the return to `xl` fixed 1024 and did nothing for the viewport that matters.
+The measurement is now a comment at the site, so the next person does not retry it blind.
+
+**One real bug fell out of measuring this.** The chosen prediction chip grew by ~20px when
+its tick appeared — the chip the player had just clicked shoving its neighbours — and at
+1024px wide that wrapped the row and measured as a 35px overflow on the beat where the gate
+opens. The tick's space is now reserved with `invisible`, so the box is constant in both
+states.
+
+**Cost:** m3, the shortest mission in the game, still leaves ~420px of desk on its
+listening beat — one paragraph of situation and one line of dialogue is all the content
+there is, and inventing more would be worse. At the minimum supported window (1024×768) a
+conversation beat needs 35px of inner scroll, against 420px for a console decide beat at
+the same size; below 1000px tall the working area is allowed to scroll inside the console
+(D-024). **Reversible:** yes — `history()` is one function and the call surface never
+calls it.
+
+---
+
 ## D-053 · The commit gate was a legend, not a control — and the bug was on mission one
 The reported defect is "cannot get past Commit to this". `canCommit` needs a selection AND
 a prediction, and the second requirement was a 13px question with three 12px chips wedged

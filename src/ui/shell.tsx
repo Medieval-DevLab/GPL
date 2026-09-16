@@ -156,6 +156,17 @@ export function initials(name: string): string {
  * `aria-hidden`, always: the name it abbreviates is rendered beside it in every caller.
  */
 export function Monogram({ name, size = 24 }: { name: string; size?: number }) {
+  return <Disc size={size}>{initials(name)}</Disc>;
+}
+
+/**
+ * The circle itself, without the initials.
+ *
+ * Split out for exactly one caller: the player's own call tile, which has no name to
+ * abbreviate and takes a person glyph instead (`PersonGlyph` in `ui/icons.tsx`, and see
+ * there for why it is not an `Icon`). Two ways of drawing this circle would drift.
+ */
+export function Disc({ size = 24, children }: { size?: number; children: React.ReactNode }) {
   return (
     <span
       aria-hidden="true"
@@ -169,7 +180,7 @@ export function Monogram({ name, size = 24 }: { name: string; size?: number }) {
         background: "linear-gradient(135deg, var(--color-accent), var(--color-accent-deep))",
       }}
     >
-      {initials(name)}
+      {children}
     </span>
   );
 }
@@ -1453,7 +1464,14 @@ export function PredictionChips({
             {/* The pictogram, so the chip carries identity without relying on hue. */}
             <Icon name={meta.icon} size={15} />
             {meta.label}
-            {on && <Icon name="check" size={14} />}
+            {/* The tick's space is RESERVED, not conditional. Adding 20px to the chosen
+                chip made the chip the player had just clicked grow and shove its
+                neighbours — and at 1024px wide it wrapped the row, which measured as a
+                35px overflow of the working area on the beat where the gate opens.
+                `invisible` keeps the box and is not exposed to assistive technology. */}
+            <span className={on ? "" : "invisible"}>
+              <Icon name="check" size={14} />
+            </span>
           </button>
         );
       })}
@@ -1575,6 +1593,21 @@ export function ActionBar({
     setNudge((n) => n + 1);
     onBlocked?.();
   };
+  /**
+   * The colleague's steer stands down for the rest of a console decide beat, and this is
+   * the second attempt at that — the first tried to bring it back and could not.
+   *
+   * Bringing it back the moment the gate was satisfied is the obvious refinement, so here
+   * is the measurement that killed it, at 1440×900 on mission 1: the bar's three children
+   * are a 360px card, a ~660px requirement and a 280px button, which **wraps to two rows
+   * — 137px against 73px** — and the 64px it takes off the working area overflows a decide
+   * screen that already fits to the pixel, by 15px. Holding the return to `xl` fixed 1024
+   * and did nothing for the viewport that matters, because the wrap is at 1440 too.
+   *
+   * So the bar carries the steer until the player starts answering, and from then on it is
+   * about committing. It returns on the resolving beat, where it is the only thing in the
+   * bar and is still their read on the decision just made.
+   */
   const showAside = aside && !children;
   const gateUp = Boolean(children) || Boolean(hint);
   /* `flex-wrap` matters more than it looks. Three children with fixed widths — a 300px

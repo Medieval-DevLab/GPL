@@ -48,9 +48,10 @@ import { useEffect, useRef, useState } from "react";
 
 import { availableOptions, resolveSaidQuote, resolveSituation } from "../engine/engine";
 import type { ChoiceMission, DimensionId, GameState, Mission, Option } from "../engine/types";
-import { Bullet, Icon, Pill, SectionTitle } from "./icons";
+import { Bullet, Icon, PersonGlyph, Pill, SectionTitle } from "./icons";
 import {
   BEAT_TITLE_ID,
+  Disc,
   Monogram,
   PREDICTION_QUESTION_ID,
   PredictionChips,
@@ -148,6 +149,42 @@ interface Person {
   photo?: string;
   /** the player's own tile. Always last, as it is in every conferencing product. */
   self?: boolean;
+}
+
+/**
+ * On a chat surface the situation IS the thread's history.
+ *
+ * The first version put `situation` behind the console's one-line disclosure on both
+ * surfaces. That is right on a call — a transcript can only contain what was said — and
+ * wrong in a thread: a channel whose entire history is one line, with the actual context
+ * hidden behind a "show" link, is a thread pretending to have no history. It also left
+ * 270px of empty floor, which is the symptom that found the mistake.
+ *
+ * The split is the same in all five chat beats, because the prose has one shape: the
+ * FIRST paragraph is the narrator setting the scene — "Before signature it goes to
+ * internal quality and risk review", "Everything is agreed. Nothing is signed." — and on
+ * month five it says "the delivery lead wants thirty minutes" while the delivery lead is
+ * the person talking. So the first paragraph becomes the thread's subject, unattributed,
+ * and everything after it becomes messages from whoever is speaking. Nothing is rewritten
+ * and nothing is invented; the same strings land in a different place.
+ *
+ * Capped at three, oldest first. No authored beat has more than one message's worth
+ * today, but a five-paragraph variant would otherwise bury the line the replies answer.
+ */
+const HISTORY_LIMIT = 3;
+
+function history(situation: string[], speaker: Turn | undefined): { topic?: string; earlier: Turn[] } {
+  if (!speaker || situation.length === 0) return { topic: situation[0], earlier: [] };
+  /* One paragraph is the speaker's own message and the thread has no separate subject:
+     m3's single line — "Orion is open to talking to partners. You get roughly one shot" —
+     is a colleague talking, not a narrator. */
+  if (situation.length === 1) return { earlier: [{ ...speaker, text: situation[0] as string }] };
+  return {
+    topic: situation[0],
+    earlier: situation
+      .slice(1, 1 + HISTORY_LIMIT)
+      .map((text) => ({ ...speaker, text })),
+  };
 }
 
 /** Who has a tile. Relayed voices do not: they are quoted, not present. */
@@ -372,6 +409,13 @@ function CallTile({ person, speaking, floor }: { person: Person; speaking: boole
             className="h-[104px] w-[104px] rounded-full object-cover"
             style={{ objectPosition: "50% 28%" }}
           />
+        ) : person.self ? (
+          /* The player has no name, so there are no initials to draw. A monogram built
+             from the word "You" is the letter Y in a circle, which reads as a placeholder
+             somebody forgot to finish. */
+          <Disc size={104}>
+            <PersonGlyph size={44} />
+          </Disc>
         ) : (
           <Monogram name={person.name} size={104} />
         )}
@@ -503,10 +547,23 @@ function Captions({
  */
 function ChatThread({
   turns,
+  topic,
+  concerns,
   typed,
   draft,
 }: {
   turns: Turn[];
+  /**
+   * The thread's subject — the scene-setting first line of `situation`, unattributed.
+   *
+   * It is the one paragraph that cannot be anybody's message: every conversation beat's
+   * opening line is written in the narrator's voice, and on month five it says "the
+   * delivery lead wants thirty minutes" while the delivery lead is the person talking.
+   * Everything after it is hers, and arrives as `turns`. See `history()`.
+   */
+  topic?: string;
+  /** what is worrying them, which the call surface shows in its subject strip */
+  concerns?: string[];
   typed: { shown: string; done: boolean; skip: () => void };
   draft?: string;
 }) {
@@ -547,9 +604,36 @@ function ChatThread({
       onClick={typed.done ? undefined : typed.skip}
       className="flex min-h-0 shrink flex-col gap-3 overflow-y-auto px-5 py-4"
     >
-      {turns.map((t, i) => (
-        <div key={`${t.speaker}-${i}`} className="flex items-start gap-2.5">
-          {t.photo ? (
+      {/* The thread's subject line. A hairline under it rather than a bubble around it,
+          because it is the channel's topic and not something anybody said. */}
+      {topic && (
+        <div className="border-b border-(--color-line) pb-3">
+          <p className="max-w-[92ch] text-[13px] leading-[1.5] text-(--color-muted)">{topic}</p>
+          {concerns && concerns.length > 0 && (
+            <ul className="mt-1 flex flex-wrap gap-x-6 gap-y-1">
+              {concerns.map((c) => (
+                <li key={c} className="flex gap-2 text-[13px] leading-snug text-(--color-ink-soft)">
+                  <Bullet className="mt-[7px] text-(--color-bad)" />
+                  {c}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {turns.map((t, i) => {
+        /* Consecutive messages from one person group under one avatar, as they do in
+           every client — and here it is also 22px of height per message given back to a
+           thread that has to fit above a five-reply composer. */
+        const before = turns[i - 1];
+        const grouped =
+          i > 0 && before?.speaker === t.speaker && Boolean(before?.outside) === Boolean(t.outside);
+        return (
+        <div key={`${t.speaker}-${i}`} className={`flex items-start gap-2.5 ${grouped ? "-mt-2" : ""}`}>
+          {grouped ? (
+            <span aria-hidden="true" className="w-[32px] shrink-0" />
+          ) : t.photo ? (
             <img
               src={artUrl(t.photo)}
               alt=""
@@ -562,7 +646,7 @@ function ChatThread({
             <Monogram name={t.speaker} size={32} />
           )}
           <div className="min-w-0">
-            <p className="flex items-baseline gap-2">
+            <p className={`flex items-baseline gap-2 ${grouped ? "sr-only" : ""}`}>
               <span className="text-[13px] font-bold text-(--color-ink)">{t.speaker}</span>
               <span className="truncate text-[12px] text-(--color-muted)">{t.role}</span>
               {/* Forwarded into the thread rather than written in it. */}
@@ -572,7 +656,6 @@ function ChatThread({
                   {UI_LABEL.relayed}
                 </Pill>
               )}
-              {i === last && !typed.done && <SkipTyping onSkip={typed.skip} />}
             </p>
             {/* The bubble is a TINT, not white with a border. On white with a hairline and
                 a caret at the end of the line it read as a text input the player was
@@ -598,9 +681,18 @@ function ChatThread({
                 <p className="text-[15px] leading-[1.5] text-(--color-ink-soft)">{t.text}</p>
               )}
             </div>
+            {/* The skip sits under the message being typed, not in the name row — the
+                name row is `sr-only` on a grouped message, which is exactly the message
+                that is usually the one still arriving. */}
+            {i === last && !typed.done && (
+              <span className="mt-1 flex">
+                <SkipTyping onSkip={typed.skip} />
+              </span>
+            )}
           </div>
         </div>
-      ))}
+        );
+      })}
 
       {draft && (
         <div className="m-swap flex items-start justify-end gap-2.5">
@@ -621,7 +713,9 @@ function ChatThread({
               <p className="text-[15px] leading-[1.5] text-(--color-ink)">{quoted(draft)}</p>
             </div>
           </div>
-          <Monogram name={UI_LABEL.you} size={32} />
+          <Disc size={32}>
+            <PersonGlyph size={17} />
+          </Disc>
         </div>
       )}
     </div>
@@ -832,6 +926,13 @@ export function DialogueScene({
   const chat = mission.surface === "chat";
   const draft = options.find((o) => o.id === chosen);
 
+  /* The thread's history, on the chat surface only — see `history()` for why a call does
+     not get one: a transcript can only hold what was said, and scrollback we invented
+     would be putting words in somebody's mouth. */
+  const past = chat
+    ? history(resolveSituation(mission, state), live)
+    : { topic: undefined, earlier: [] as Turn[] };
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* The window's own header: what this is, what it is called, who is on it. Thin on
@@ -865,13 +966,20 @@ export function DialogueScene({
         </span>
       </header>
 
-      <Subject mission={mission} state={state} phase={phase} />
+      {/* Call only. On a chat beat this content is the thread itself. */}
+      {!chat && <Subject mission={mission} state={state} phase={phase} />}
 
       {/* The conversation. Everything above the composer, and the only flexible region on
           the screen — so a four-option composer takes its space from here rather than
           from the bottom of the console. */}
       {chat ? (
-        <ChatThread turns={turns} typed={typed} draft={reply ? draft?.say ?? draft?.title : undefined} />
+        <ChatThread
+          turns={[...past.earlier, ...turns]}
+          topic={past.topic}
+          concerns={mission.concerns}
+          typed={typed}
+          draft={reply ? draft?.say ?? draft?.title : undefined}
+        />
       ) : (
         <>
           <TileWall people={people} speakerName={speakerName} />
