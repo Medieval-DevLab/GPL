@@ -124,7 +124,7 @@ const nodes: GameNode[] = [
         strengths: ["Trusted early", "Doors open"],
         tradeoff: "You are better at getting in the room than at proving what you can build.",
         flags: ["start:connector", "credibility"],
-        dims: { win: 8 },
+        dims: { win: 5 },
       },
       {
         id: "s-builder",
@@ -135,7 +135,7 @@ const nodes: GameNode[] = [
         strengths: ["Evidence to hand", "Delivery is real"],
         tradeoff: "You are better at showing the work than at selling it.",
         flags: ["start:builder", "has:data"],
-        dims: { deliver: 8 },
+        dims: { deliver: 5 },
       },
       {
         id: "s-challenger",
@@ -212,7 +212,7 @@ const nodes: GameNode[] = [
             detail:
               "Orion takes the meeting. Your previous work is close enough to what they are asking for that you do not have to explain why you are in the room.",
             changed: ["Orion is now your active pursuit", "You are early, not chasing"],
-            effect: { dims: { win: 6, profit: 2 }, flags: ["client:northwind"] },
+            effect: { dims: { win: 4, profit: 2 }, flags: ["client:northwind"] },
           },
         ],
       },
@@ -241,7 +241,7 @@ const nodes: GameNode[] = [
               "Apex will take your call next cycle",
             ],
             effect: {
-              dims: { win: -4, profit: -2, deliver: 6 },
+              dims: { win: -4, profit: -2, deliver: 4 },
               flags: ["client:northwind", "late_start", "knows:rivals"],
             },
           },
@@ -257,7 +257,7 @@ const nodes: GameNode[] = [
               "The team came back knowing the competitive field far better",
             ],
             effect: {
-              dims: { win: -8, profit: -3, deliver: 6 },
+              dims: { win: -8, profit: -3, deliver: 4 },
               flags: ["client:northwind", "late_start", "knows:rivals"],
             },
             lesson: {
@@ -293,7 +293,7 @@ const nodes: GameNode[] = [
               "Orion becomes your pursuit, with your capacity intact",
             ],
             effect: {
-              dims: { profit: -5, win: -2, deliver: 4 },
+              dims: { profit: -5, win: -2, deliver: 3 },
               flags: ["client:northwind", "spent_effort"],
             },
           },
@@ -386,7 +386,7 @@ const nodes: GameNode[] = [
         detail:
           "You know the pain is post-purchase, not in-store. And you know that whatever gets proposed has to survive an Operations Director who has not been asked yet. Neither of those is in the brief.",
         changed: ["You can talk about their real problem", "You know who can quietly kill this"],
-        effect: { dims: { win: 8, deliver: 6 }, badge: "good_question" },
+        effect: { dims: { win: 5, deliver: 4 }, badge: "good_question" },
       },
       {
         id: "m2-ops",
@@ -396,7 +396,7 @@ const nodes: GameNode[] = [
         detail:
           "Sarah holds the budget, but Operations holds the systems. Most teams pitching this account will not discover that until they are already committed to a shape of solution.",
         changed: ["You know where the real constraint sits"],
-        effect: { dims: { deliver: 7, win: 3 }, badge: "good_question" },
+        effect: { dims: { deliver: 5, win: 2 }, badge: "good_question" },
       },
       {
         id: "m2-pain",
@@ -406,7 +406,7 @@ const nodes: GameNode[] = [
         detail:
           "They asked about the store experience. The evidence says the damage is happening after the sale. That gap between the stated request and the actual problem is where the work is.",
         changed: ["You know what is actually hurting them"],
-        effect: { dims: { win: 7, profit: 2 }, badge: "good_question" },
+        effect: { dims: { win: 5, profit: 2 }, badge: "good_question" },
       },
       {
         id: "m2-surface",
@@ -418,7 +418,7 @@ const nodes: GameNode[] = [
           "You know more than you did",
           "You are still describing the problem in their words",
         ],
-        effect: { dims: { win: 2 } },
+        effect: { dims: { win: 1 } },
         lesson: {
           principle: "The most valuable question is usually the one nobody has asked yet.",
           because:
@@ -485,7 +485,7 @@ const nodes: GameNode[] = [
               "Operations is now in the room",
             ],
             effect: {
-              dims: { win: 10, deliver: 4 },
+              dims: { win: 6, deliver: 3 },
               flags: ["ops_engaged", "credibility"],
               badge: "connected_dots",
             },
@@ -500,7 +500,7 @@ const nodes: GameNode[] = [
               "You have a first meeting",
               "You have not said anything they did not already think",
             ],
-            effect: { dims: { win: 4 } },
+            effect: { dims: { win: 3 } },
           },
         ],
       },
@@ -523,7 +523,7 @@ const nodes: GameNode[] = [
             detail:
               "Halfway through you ask who owns the systems that would have to change. Sarah pauses, and says that is a fair question. You leave with a second meeting that includes Operations.",
             changed: ["You are trusted early", "Operations is now in the room"],
-            effect: { dims: { win: 8, deliver: 5 }, flags: ["ops_engaged", "credibility"] },
+            effect: { dims: { win: 5, deliver: 3 }, flags: ["ops_engaged", "credibility"] },
           },
           {
             id: "m3-direct-blind",
@@ -536,7 +536,7 @@ const nodes: GameNode[] = [
               "You have discovered a second decision-maker, late",
             ],
             effect: {
-              dims: { win: 6, deliver: -3 },
+              dims: { win: 4, deliver: -3 },
               flags: ["knows:ops_constraint", "learned_late"],
             },
           },
@@ -678,7 +678,7 @@ const nodes: GameNode[] = [
               "You set the terms of the conversation",
               "Your best people are now fully committed",
             ],
-            effect: { dims: { win: 8, profit: -4 } },
+            effect: { dims: { win: 5, profit: -4 } },
           },
           {
             id: "m4-pursue-blind",
@@ -687,7 +687,7 @@ const nodes: GameNode[] = [
             detail:
               "The team is working hard on a proposal built from a one-line brief. Every assumption in it is yours, not theirs, and several of them are going to be wrong.",
             changed: ["Significant effort committed", "Built on assumptions you have not tested"],
-            effect: { dims: { win: 4, profit: -6, deliver: -3 } },
+            effect: { dims: { win: 3, profit: -6, deliver: -3 } },
           },
         ],
       },
@@ -710,7 +710,7 @@ const nodes: GameNode[] = [
               "A paid discovery is the right instrument. Pointed at a business you have not examined at all, the first week goes on questions you could have answered from the outside, and the second on the ones that actually mattered.",
             changed: ["A smaller, safer first commitment", "Half the discovery spent catching up"],
             effect: {
-              dims: { profit: 3, deliver: 4, win: -2 },
+              dims: { profit: 3, deliver: 3, win: -2 },
               flags: ["landed_small", "has_access"],
             },
           },
@@ -726,7 +726,7 @@ const nodes: GameNode[] = [
               "Your assumptions get tested before they go in a contract",
             ],
             effect: {
-              dims: { profit: 6, deliver: 8, win: -2 },
+              dims: { profit: 6, deliver: 5, win: -2 },
               flags: ["landed_small", "has_access"],
               badge: "smart_tradeoff",
             },
@@ -754,7 +754,7 @@ const nodes: GameNode[] = [
               "A narrower, better-defined opportunity",
               "You lost ground to a faster competitor",
             ],
-            effect: { dims: { profit: 7, deliver: 5, win: -7 }, flags: ["landed_small"] },
+            effect: { dims: { profit: 7, deliver: 3, win: -7 }, flags: ["landed_small"] },
             lesson: {
               principle: "Saying no to the wrong shape of work is a real option.",
               because:
@@ -826,7 +826,7 @@ const nodes: GameNode[] = [
             detail:
               "The partnership is a storefront platform. It is genuinely good at what it does, and it does nothing about deliveries, returns or support. You can say so precisely, because you did the work earlier.",
             changed: ["You can name exactly what their offer does not cover"],
-            effect: { dims: { win: 7 }, flags: ["knows:rival_gap"], badge: "connected_dots" },
+            effect: { dims: { win: 5 }, flags: ["knows:rival_gap"], badge: "connected_dots" },
           },
           {
             id: "m5-inv-new",
@@ -838,7 +838,7 @@ const nodes: GameNode[] = [
               "You understand the rival's offer",
               "You looked slow at a moment that needed conviction",
             ],
-            effect: { dims: { win: 2 }, flags: ["knows:rival_gap"] },
+            effect: { dims: { win: 1 }, flags: ["knows:rival_gap"] },
           },
         ],
       },
@@ -859,7 +859,7 @@ const nodes: GameNode[] = [
             detail:
               "Speed reads as confidence, and Sarah appreciates it. But you are arguing against something you have not examined, and twice you have to say you will come back with detail.",
             changed: ["You held the relationship", "You spent credibility to do it"],
-            effect: { dims: { win: 4, deliver: -2 } },
+            effect: { dims: { win: 3, deliver: -2 } },
           },
         ],
       },
@@ -884,7 +884,7 @@ const nodes: GameNode[] = [
               "The evaluation is now on ground you chose",
               "The rival's strongest asset matters less",
             ],
-            effect: { dims: { win: 12, profit: 3 }, flags: ["reframed"], badge: "adapt" },
+            effect: { dims: { win: 8, profit: 3 }, flags: ["reframed"], badge: "adapt" },
           },
           {
             id: "m5-reframe-weak",
@@ -915,7 +915,7 @@ const nodes: GameNode[] = [
             detail:
               "You already have enough standing with this client that a competitor's press release does not move them. Steadiness reads as confidence rather than absence.",
             changed: ["You spent nothing and lost nothing"],
-            effect: { dims: { win: 2, profit: 3 }, badge: "held_nerve" },
+            effect: { dims: { win: 1, profit: 3 }, badge: "held_nerve" },
           },
           {
             id: "m5-hold-risky",
@@ -1002,7 +1002,7 @@ const nodes: GameNode[] = [
             detail:
               "Nobody can accuse you of missing the brief. You are also now one of two firms proposing broadly the same thing, and the other one has a demo and a vendor logo. The decision will come down to price.",
             changed: ["You are comparable to your competitor", "Price becomes the deciding factor"],
-            effect: { dims: { win: 2, profit: -4 }, flags: ["scope:storefront"] },
+            effect: { dims: { win: 1, profit: -4 }, flags: ["scope:storefront"] },
             lesson: {
               principle: "Answering the question exactly as asked makes you easy to compare.",
               because:
@@ -1036,7 +1036,7 @@ const nodes: GameNode[] = [
               "The sponsor now has the argument she needed internally",
             ],
             effect: {
-              dims: { win: 12, profit: 5 },
+              dims: { win: 8, profit: 5 },
               flags: ["scope:postpurchase", "evidenced"],
               badge: "connected_dots",
             },
@@ -1048,7 +1048,7 @@ const nodes: GameNode[] = [
             detail:
               "It is the correct read. But you are asking them to abandon their own brief on the strength of your instinct, and instinct is exactly what they are paying to avoid. They ask for evidence you do not have.",
             changed: ["The right idea, poorly supported", "You are asked to come back with proof"],
-            effect: { dims: { win: 3, deliver: -2 }, flags: ["scope:postpurchase"] },
+            effect: { dims: { win: 2, deliver: -2 }, flags: ["scope:postpurchase"] },
             lesson: {
               principle: "Being right is not the same as being persuasive.",
               because:
@@ -1077,7 +1077,7 @@ const nodes: GameNode[] = [
             detail:
               "They accept, because it is sensible. But you were brought in as people who had seen this before, and asking for six weeks to form a view reads as though you have not. The commercial upside gets pushed out.",
             changed: ["A defensible, low-risk path", "Six weeks before anything substantial happens"],
-            effect: { dims: { deliver: 6, win: -3, profit: -2 }, flags: ["scope:diagnostic"] },
+            effect: { dims: { deliver: 4, win: -3, profit: -2 }, flags: ["scope:diagnostic"] },
           },
         ],
       },
@@ -1120,7 +1120,7 @@ const nodes: GameNode[] = [
         title: "Customer journey redesign",
         description: "Map and rebuild the end-to-end experience. Highly visible, highly sellable.",
         tag: "Visible",
-        dims: { win: 7, deliver: -4 },
+        dims: { win: 5, deliver: -4 },
         flags: ["has:journey"],
       },
       {
@@ -1128,7 +1128,7 @@ const nodes: GameNode[] = [
         title: "Returns and support platform rebuild",
         description: "Replace the systems behind the actual complaints. Large, expensive, slow.",
         tag: "Heavy",
-        dims: { win: 8, profit: -6, deliver: -9 },
+        dims: { win: 5, profit: -6, deliver: -9 },
         flags: ["scope:heavy"],
       },
       {
@@ -1136,7 +1136,7 @@ const nodes: GameNode[] = [
         title: "Operations integration workstream",
         description: "A stream to get changes into Operations' release schedule, with their people.",
         tag: "Unglamorous",
-        dims: { deliver: 13, win: 1, profit: -5 },
+        dims: { deliver: 8, win: 1, profit: -5 },
         flags: ["has:ops_workstream"],
       },
       {
@@ -1144,7 +1144,7 @@ const nodes: GameNode[] = [
         title: "Staff training and adoption",
         description: "Make sure the people who use it every day actually do. Cheap and effective.",
         tag: "Adoption",
-        dims: { deliver: 7, win: 2, profit: -2 },
+        dims: { deliver: 5, win: 1, profit: -2 },
         flags: ["has:training"],
       },
       {
@@ -1152,7 +1152,7 @@ const nodes: GameNode[] = [
         title: "An eight-week pilot",
         description: "Something live and demonstrable inside two months. Boards love this.",
         tag: "Fast",
-        dims: { win: 9, deliver: -5, profit: -2 },
+        dims: { win: 6, deliver: -5, profit: -2 },
         flags: ["promised:fast"],
       },
       {
@@ -1160,7 +1160,7 @@ const nodes: GameNode[] = [
         title: "Data and measurement foundation",
         description: "Instrument everything so improvement can be proven. Nobody pitches this.",
         tag: "Foundation",
-        dims: { profit: 6, deliver: 4, win: -3 },
+        dims: { profit: 6, deliver: 3, win: -3 },
         flags: ["has:data"],
       },
     ],
@@ -1176,7 +1176,7 @@ const nodes: GameNode[] = [
           "Operations is invested rather than resistant",
           "The thing that killed the last programme has an owner this time",
         ],
-        effect: { dims: { deliver: 6, win: 4 }, flags: ["ops_onside"], badge: "connected_dots" },
+        effect: { dims: { deliver: 4, win: 3 }, flags: ["ops_onside"], badge: "connected_dots" },
       },
       {
         id: "m7-overreach",
@@ -1202,7 +1202,7 @@ const nodes: GameNode[] = [
         detail:
           "The eight-week pilot is the most attractive thing in the document. It also assumes access to systems and data that nobody has confirmed, and there is no workstream in the proposal to get it.",
         changed: ["A compelling headline", "A timeline resting on untested assumptions"],
-        effect: { dims: { win: 2, deliver: -3 }, flags: ["fragile_timeline"] },
+        effect: { dims: { win: 1, deliver: -3 }, flags: ["fragile_timeline"] },
       },
       {
         // Fallback. Reaching here means the proposal contains at least one of
@@ -1214,7 +1214,7 @@ const nodes: GameNode[] = [
         detail:
           "It is not the flashiest document in the pile. It includes the parts of the work that make the other parts survive contact with a real organisation, which is rarer than it should be.",
         changed: ["Attractive and deliverable at the same time"],
-        effect: { dims: { deliver: 3, profit: 2 } },
+        effect: { dims: { deliver: 2, profit: 2 } },
       },
     ],
     lesson: {
@@ -1304,7 +1304,7 @@ const nodes: GameNode[] = [
             detail:
               "You are not comparing like with like, and you can show it. The other proposal does not touch the operational work. Procurement does not enjoy it, but Sarah now has a straight answer for her board.",
             changed: ["Full margin protected", "The comparison is neutralised"],
-            effect: { dims: { profit: 10, win: 2 }, badge: "held_nerve" },
+            effect: { dims: { profit: 10, win: 1 }, badge: "held_nerve" },
           },
           {
             id: "m8-hold-weak",
@@ -1334,7 +1334,7 @@ const nodes: GameNode[] = [
             detail:
               "Procurement is satisfied and the deal moves. You have also just funded the discount out of the contingency you were going to need if anything went wrong in delivery — and something usually does.",
             changed: ["Price objection removed", "No financial slack left in the programme"],
-            effect: { dims: { win: 9, profit: -14 }, flags: ["discounted"] },
+            effect: { dims: { win: 6, profit: -14 }, flags: ["discounted"] },
             lesson: {
               principle: "A discount is spent twice — once to win, and again when delivery needs it.",
               because:
@@ -1370,7 +1370,7 @@ const nodes: GameNode[] = [
                is that what left was load-bearing — which is what `descoped` carries into
                month five, not a penalty invented here. Phasing beat this on all three in
                93% of reachable states while the numbers pointed the wrong way. */
-            effect: { dims: { profit: 6, win: -2, deliver: 4 }, flags: ["descoped"] },
+            effect: { dims: { profit: 6, win: -2, deliver: 3 }, flags: ["descoped"] },
           },
         ],
       },
@@ -1396,7 +1396,7 @@ const nodes: GameNode[] = [
               "Smaller decision for the client to make",
               "The rest of the work still ahead of you",
             ],
-            effect: { dims: { profit: 8, win: 7, deliver: 3 }, badge: "smart_tradeoff" },
+            effect: { dims: { profit: 8, win: 5, deliver: 2 }, badge: "smart_tradeoff" },
           },
           {
             id: "m8-phase-thin",
@@ -1405,7 +1405,7 @@ const nodes: GameNode[] = [
             detail:
               "Phasing is the right instinct. But you are asking them to trust that phase two will be worth it, and you have not yet given them much reason to believe that. They agree to phase one and reserve judgement.",
             changed: ["Deal moves forward", "Phase two is genuinely at risk"],
-            effect: { dims: { profit: 5, win: 2 } },
+            effect: { dims: { profit: 5, win: 1 } },
           },
         ],
       },
@@ -1513,7 +1513,7 @@ const nodes: GameNode[] = [
             detail:
               "The review flagged exactly the thing your proposal was thinnest on. Writing it down does not make it smaller. It will now arrive during delivery, on someone else's watch, with a paper trail showing you knew.",
             changed: ["Contract signed", "A known problem walking into delivery"],
-            effect: { dims: { win: 4, deliver: -12 }, flags: ["risk_accepted"] },
+            effect: { dims: { win: 3, deliver: -12 }, flags: ["risk_accepted"] },
           },
           {
             id: "m9-accept-ok",
@@ -1522,7 +1522,7 @@ const nodes: GameNode[] = [
             detail:
               "Your proposal is solid enough that the flagged risk is a manageable one. Accepting it keeps momentum, and you have enough slack elsewhere to absorb it.",
             changed: ["Contract signed", "A documented risk you can probably carry"],
-            effect: { dims: { win: 4, deliver: -4 }, flags: ["risk_accepted"] },
+            effect: { dims: { win: 3, deliver: -4 }, flags: ["risk_accepted"] },
           },
         ],
       },
@@ -1547,7 +1547,7 @@ const nodes: GameNode[] = [
               "Partial mitigation",
               "The programme is now running with no margin for error",
             ],
-            effect: { dims: { deliver: 4, profit: -9 }, flags: ["thin_mitigation"] },
+            effect: { dims: { deliver: 3, profit: -9 }, flags: ["thin_mitigation"] },
             lesson: {
               principle:
                 "Commercial decisions and delivery decisions are the same decision, made at different times.",
@@ -1563,7 +1563,7 @@ const nodes: GameNode[] = [
             detail:
               "You put real work and real money behind the risk before signature, while it is still cheap. It is the least satisfying line in the commercial case and the reason the programme will survive month five.",
             changed: ["Risk properly covered", "Lower margin, by choice"],
-            effect: { dims: { deliver: 11, profit: -6 }, badge: "smart_tradeoff" },
+            effect: { dims: { deliver: 7, profit: -6 }, badge: "smart_tradeoff" },
           },
         ],
       },
@@ -1590,7 +1590,7 @@ const nodes: GameNode[] = [
                three dimensions in 93% of reachable states — a fake choice the authored
                best-versus-worst detector could not see. The cost is unchanged and real:
                a promise withdrawn, and `descoped`, which month five reads. */
-            effect: { dims: { deliver: 14, win: -6, profit: 3 }, flags: ["descoped"] },
+            effect: { dims: { deliver: 9, win: -6, profit: 3 }, flags: ["descoped"] },
           },
         ],
       },
@@ -1612,7 +1612,7 @@ const nodes: GameNode[] = [
             detail:
               "Reopening price after agreement is only survivable if the client believes you. They do. The number goes up slightly, the risk gets covered, and the honesty becomes part of why they picked you.",
             changed: ["Risk funded properly", "Trust strengthened rather than spent"],
-            effect: { dims: { profit: 6, deliver: 9, win: -2 }, badge: "smart_tradeoff" },
+            effect: { dims: { profit: 6, deliver: 6, win: -2 }, badge: "smart_tradeoff" },
           },
           {
             id: "m9-reprice-weak",
@@ -1621,7 +1621,7 @@ const nodes: GameNode[] = [
             detail:
               "From where procurement sits, a firm that raises its price after winning is a firm that under-quoted to get in. You get the increase, and you spend most of the goodwill you had to get it.",
             changed: ["Risk funded", "The relationship is now transactional"],
-            effect: { dims: { profit: 5, deliver: 7, win: -10 } },
+            effect: { dims: { profit: 5, deliver: 5, win: -10 } },
           },
         ],
       },
@@ -1715,14 +1715,32 @@ const nodes: GameNode[] = [
         cost: { time: 1, investment: 1 },
         outcomes: [
           {
+            /**
+             * The one place a meter decides something.
+             *
+             * Going early works when there is trust to spend AND a programme worth
+             * re-planning — `min: { deliver: 60 }` is the second half of that, and it is
+             * the first condition in the game to read a meter rather than a flag. Until
+             * now Winability, Profitability and Deliverability were write-only: three
+             * numbers the player was asked to manage that managed nothing, which is the
+             * mechanical root of "it feels like a form".
+             *
+             * 60 because a gate threshold has to sit on a ten-point bucket boundary or the
+             * sweep's dedup silently stops being able to tell the two sides apart —
+             * `analysis.ts` now throws rather than let that pass quietly. And exactly one
+             * gate, because two consume a third of `MAX_FRONTIER` and three breach it.
+             */
             id: "m10-reset-trust",
-            when: { any: ["ops_onside", "evidenced", "credibility"] },
+            when: {
+              any: ["ops_onside", "evidenced", "credibility"],
+              min: { deliver: 60 },
+            },
             tone: "strong",
             headline: "It is a difficult meeting, and it works.",
             detail:
               "You go early, with a clear account of what changed and a revised plan already drafted. Because you have been accurate with this client from the first conversation, they treat it as management rather than as failure.",
             changed: ["Plan reset with the client's agreement", "The relationship survives intact"],
-            effect: { dims: { deliver: 10, win: 3, profit: -2 }, badge: "recovered" },
+            effect: { dims: { deliver: 6, win: 2, profit: -2 }, badge: "recovered" },
           },
           {
             id: "m10-reset-cold",
@@ -1731,7 +1749,7 @@ const nodes: GameNode[] = [
             detail:
               "Honesty is still the right move, and it still costs you. Without much of a track record to draw on, the client responds by adding governance — weekly reviews, escalation paths, a steering committee.",
             changed: ["Plan reset", "You are now being managed closely"],
-            effect: { dims: { deliver: 6, profit: -5, win: -3 } },
+            effect: { dims: { deliver: 4, profit: -5, win: -3 } },
           },
         ],
       },
@@ -1755,6 +1773,22 @@ const nodes: GameNode[] = [
         id: "o-change",
         title: "Raise it as a change",
         icon: "scale",
+        /**
+         * Gated, and for two reasons that happen to agree.
+         *
+         * The domain one: you cannot price a change against a scope nobody wrote down.
+         * Without `evidenced` or `reviewed` this is not a commercial conversation, it is
+         * an argument about what was said four months ago — which is exactly what the
+         * weak branch below describes, and not a choice worth offering as a fifth card.
+         *
+         * The interface one: adding it unconditionally made m10 a five-option screen and
+         * the working area overflowed by 60px at 1440×900. The panel called this in
+         * advance — "make change control a variant swap, not a permanent fifth card;
+         * accessibility is right about five columns". Gating it keeps m10 at four options
+         * for players who cannot use it and offers a fourth knowledge gate to players who
+         * can, which is backlog 1.2 rather than a workaround.
+         */
+        requires: { any: ["evidenced", "reviewed"] },
         description: "What they are asking for is not in the contract. Price it and let them decide.",
         commits: "A commercial conversation with a client who is already unhappy.",
         pros: ["Paid for the work", "Scope stays honest"],
@@ -1769,7 +1803,7 @@ const nodes: GameNode[] = [
             detail:
               "You bring the original scope, the dated note where the extra ask first appeared, and a price. Sarah does not enjoy it and she approves it, because the alternative is asking you to work for nothing and she knows it. The programme gets bigger and the margin holds.",
             changed: ["Extra work funded", "Scope boundary now established in writing"],
-            effect: { dims: { profit: 9, deliver: 4, win: -2 }, flags: ["changed_scope"], badge: "smart_tradeoff" },
+            effect: { dims: { profit: 9, deliver: 3, win: -2 }, flags: ["changed_scope"], badge: "smart_tradeoff" },
             lesson: {
               principle: "Scope pressure is a transaction, not a favour. The only question is who pays for it.",
               because:
@@ -1784,7 +1818,7 @@ const nodes: GameNode[] = [
             detail:
               "You are right that it is out of scope, and you cannot point to where you said so. It becomes a negotiation about memory rather than about money. They part-fund it and the relationship cools a degree.",
             changed: ["Extra work part-funded", "An argument you should not have had to have"],
-            effect: { dims: { profit: 4, win: -5, deliver: 2 }, flags: ["changed_scope"] },
+            effect: { dims: { profit: 4, win: -5, deliver: 1 }, flags: ["changed_scope"] },
             lesson: {
               principle: "A change request is only as strong as the scope it changes.",
               because:
@@ -1812,7 +1846,7 @@ const nodes: GameNode[] = [
             detail:
               "Adding people is the obvious fix and you cannot fund it. The commercial decisions made before signature have removed the option, so you add two people instead of five and the date slips anyway.",
             changed: ["Partial cover", "Date missed regardless", "The contract is now loss-making"],
-            effect: { dims: { profit: -13, deliver: 3 } },
+            effect: { dims: { profit: -13, deliver: 2 } },
             lesson: {
               principle: "Delivery inherits every commercial decision made before it started.",
               because:
@@ -1827,7 +1861,7 @@ const nodes: GameNode[] = [
             detail:
               "The client sees a programme delivering what it said it would. Your margin takes the hit quietly, which is a legitimate choice — it buys a reference and a relationship. It is not free.",
             changed: ["Promise kept", "Profitability materially reduced"],
-            effect: { dims: { deliver: 8, profit: -10, win: 4 } },
+            effect: { dims: { deliver: 5, profit: -10, win: 3 } },
           },
         ],
       },
@@ -1897,7 +1931,7 @@ const nodes: GameNode[] = [
               "Short-term pressure relieved",
               "Operations is carrying an explanation you did not give",
             ],
-            effect: { dims: { deliver: 3, win: -4, profit: 4 }, flags: ["undisclosed"] },
+            effect: { dims: { deliver: 2, win: -4, profit: 4 }, flags: ["undisclosed"] },
             lesson: {
               principle: "Cover is not the same as candour. Somebody is still explaining your decision for you.",
               because:
@@ -1915,7 +1949,7 @@ const nodes: GameNode[] = [
               "Short-term pressure relieved",
               "Trust damaged in a way that is hard to repair",
             ],
-            effect: { dims: { deliver: 2, win: -14, profit: 4 } },
+            effect: { dims: { deliver: 1, win: -14, profit: 4 } },
             lesson: {
               principle:
                 "Delivery problems become relationship problems the moment you stop talking about them.",
@@ -1976,7 +2010,7 @@ const nodes: GameNode[] = [
         title: "A workshop with Operations",
         description: "Get Marcus Reed and his leads in a room before anything is written down.",
         tag: "Unglamorous",
-        dims: { deliver: 8, win: 2, profit: -2 },
+        dims: { deliver: 5, win: 1, profit: -2 },
         flags: ["ops_engaged"],
       },
       {
@@ -1984,7 +2018,7 @@ const nodes: GameNode[] = [
         title: "Benchmark the competition",
         description: "Work out precisely what the rival's platform does and does not cover.",
         tag: "Intelligence",
-        dims: { win: 6, profit: -1 },
+        dims: { win: 4, profit: -1 },
         flags: ["knows:rival_gap"],
       },
       {
@@ -1992,7 +2026,7 @@ const nodes: GameNode[] = [
         title: "A reference visit",
         description: "Take Sarah to a retailer where you have already done this.",
         tag: "Proof",
-        dims: { win: 7, profit: -3 },
+        dims: { win: 5, profit: -3 },
         flags: ["credibility"],
       },
       {
@@ -2000,7 +2034,7 @@ const nodes: GameNode[] = [
         title: "Audit their data",
         description: "Find out whether the order and returns data is usable at all.",
         tag: "Foundation",
-        dims: { deliver: 6, profit: 3, win: -2 },
+        dims: { deliver: 4, profit: 3, win: -2 },
         flags: ["has:data"],
       },
       {
@@ -2008,7 +2042,7 @@ const nodes: GameNode[] = [
         title: "Pull their complaint data",
         description: "Get the actual post-purchase contact volumes out of their systems.",
         tag: "Evidence",
-        dims: { win: 5, deliver: 2, profit: -2 },
+        dims: { win: 3, deliver: 1, profit: -2 },
         flags: ["knows:real_pain"],
       },
       {
@@ -2016,7 +2050,7 @@ const nodes: GameNode[] = [
         title: "Map the stakeholders",
         description: "Who signs, who blocks, who has to live with it afterwards.",
         tag: "Political",
-        dims: { deliver: 5, win: 3 },
+        dims: { deliver: 3, win: 2 },
         flags: ["knows:ops_constraint"],
       },
     ],
@@ -2032,7 +2066,7 @@ const nodes: GameNode[] = [
           "Operations has met you before the proposal lands",
           "You know what the data can and cannot do",
         ],
-        effect: { dims: { deliver: 4 }, badge: "smart_tradeoff" },
+        effect: { dims: { deliver: 3 }, badge: "smart_tradeoff" },
       },
       {
         id: "m5b-persuasion",
@@ -2042,7 +2076,7 @@ const nodes: GameNode[] = [
         detail:
           "Sarah has seen the work in a real store and you can name exactly where the rival falls short. You are going to win the room. Nobody has yet checked whether you can deliver what you are about to promise.",
         changed: ["A strong case with the sponsor", "Nothing tested about delivery"],
-        effect: { dims: { win: 5, deliver: -3 } },
+        effect: { dims: { win: 3, deliver: -3 } },
       },
       {
         id: "m5b-spread",
@@ -2051,7 +2085,7 @@ const nodes: GameNode[] = [
         detail:
           "Both pieces of work land. What matters now is the three you did not fund — because the proposal has to be written as though you know those things anyway.",
         changed: ["Two things you now know", "Three assumptions still standing"],
-        effect: { dims: { win: 2, deliver: 1 } },
+        effect: { dims: { win: 1, deliver: 1 } },
       },
     ],
     lesson: {
@@ -2106,7 +2140,7 @@ const nodes: GameNode[] = [
             detail:
               "You know the pain is operational, and now the operational answer comes from people who do it for a living. Sarah stops asking whether you can deliver it and starts asking when.",
             changed: ["Delivery capability is no longer a question", "Margin shared with a partner"],
-            effect: { dims: { win: 9, deliver: 8, profit: -6 }, flags: ["has:partner"] },
+            effect: { dims: { win: 6, deliver: 5, profit: -6 }, flags: ["has:partner"] },
           },
           {
             id: "m6b-partner-loose",
@@ -2115,7 +2149,7 @@ const nodes: GameNode[] = [
             detail:
               "They are good and they are expensive. Without a clear read on what is actually broken, you are paying a specialist to solve a problem you have described in general terms.",
             changed: ["Capability bought", "Margin shared before the problem is clear"],
-            effect: { dims: { win: 4, deliver: 4, profit: -7 }, flags: ["has:partner"] },
+            effect: { dims: { win: 3, deliver: 3, profit: -7 }, flags: ["has:partner"] },
           },
         ],
       },
@@ -2136,7 +2170,7 @@ const nodes: GameNode[] = [
             detail:
               "It works, and it costs a fraction of building new. It also solves the last client's problem rather than this one, and Sarah notices the gap between what it does and what she asked for.",
             changed: ["Strong margin", "A solution that fits imperfectly"],
-            effect: { dims: { profit: 10, deliver: 5, win: -5 }, flags: ["reused_asset"] },
+            effect: { dims: { profit: 10, deliver: 3, win: -5 }, flags: ["reused_asset"] },
             lesson: {
               principle: "Reuse is leverage until it becomes a substitute for thinking.",
               because:
@@ -2165,7 +2199,7 @@ const nodes: GameNode[] = [
               "An outcome deal is only honest if both sides trust the number. You audited their data, so there is a baseline everyone believes. Sarah's board finds it very hard to say no to.",
             changed: ["A proposal nobody can compare", "A third of the fee now depends on results"],
             effect: {
-              dims: { win: 13, profit: -3, deliver: 2 },
+              dims: { win: 8, profit: -3, deliver: 1 },
               flags: ["outcome_based"],
               badge: "connected_dots",
             },
@@ -2177,7 +2211,7 @@ const nodes: GameNode[] = [
             detail:
               "The idea is genuinely strong. But there is no trusted baseline for support contacts, so the first argument of the delivery will be about what the measurement means — and you will be having it with your own money on the table.",
             changed: ["A distinctive offer", "A third of the fee tied to an undefined number"],
-            effect: { dims: { win: 6, profit: -10, deliver: -4 }, flags: ["outcome_based"] },
+            effect: { dims: { win: 4, profit: -10, deliver: -4 }, flags: ["outcome_based"] },
           },
         ],
       },
@@ -2198,7 +2232,7 @@ const nodes: GameNode[] = [
             detail:
               "There is nothing wrong with it, which is the problem. Three firms are now offering the same shape of answer, and the only remaining variables are price and who the client likes.",
             changed: ["A defensible proposal", "Nothing that distinguishes it"],
-            effect: { dims: { deliver: 4, profit: 3, win: -4 }, flags: ["conventional"] },
+            effect: { dims: { deliver: 3, profit: 3, win: -4 }, flags: ["conventional"] },
           },
         ],
       },
@@ -2289,7 +2323,7 @@ const nodes: GameNode[] = [
             detail:
               "Nobody wins a pitch on a testing plan. But the reviewers stop objecting, and the people who will deliver this can now see how it is meant to work.",
             changed: ["Delivery risk materially reduced", "A week not spent on the client"],
-            effect: { dims: { deliver: 10, win: -3 }, flags: ["reviewed"] },
+            effect: { dims: { deliver: 6, win: -3 }, flags: ["reviewed"] },
           },
         ],
       },
@@ -2311,7 +2345,7 @@ const nodes: GameNode[] = [
             detail:
               "You have made the document more persuasive without making it more true. The reviewers put their concerns in writing and stop arguing, which is worse than them arguing.",
             changed: ["A stronger pitch", "A documented internal objection you overrode"],
-            effect: { dims: { win: 8, deliver: -7 }, flags: ["overrode_review"] },
+            effect: { dims: { win: 5, deliver: -7 }, flags: ["overrode_review"] },
           },
           {
             id: "m7b-sharpen-ok",
@@ -2320,7 +2354,7 @@ const nodes: GameNode[] = [
             detail:
               "It is a better read than it was, and the underlying proposal has not changed. Since it was reasonably solid to begin with, that is a defensible use of a week.",
             changed: ["A more persuasive proposal", "The same underlying gaps"],
-            effect: { dims: { win: 7, deliver: -2 } },
+            effect: { dims: { win: 5, deliver: -2 } },
           },
         ],
       },
@@ -2341,7 +2375,7 @@ const nodes: GameNode[] = [
             detail:
               "You have put slack back into the commercial case, which is the single most useful thing you can do for a programme that has not started. It also means offering less than the firm across town.",
             changed: ["Contingency restored", "A less ambitious offer"],
-            effect: { dims: { profit: 10, win: -5, deliver: 3 }, flags: ["reviewed"] },
+            effect: { dims: { profit: 10, win: -5, deliver: 2 }, flags: ["reviewed"] },
           },
         ],
       },
@@ -2363,7 +2397,7 @@ const nodes: GameNode[] = [
             detail:
               "The reviewers were being careful, which is their job. Your proposal already has Operations inside it and a commercial case with room in it, so there was nothing to fix and a week to save.",
             changed: ["A week saved", "You backed your own judgement"],
-            effect: { dims: { win: 4, profit: 4 }, badge: "held_nerve" },
+            effect: { dims: { win: 3, profit: 4 }, badge: "held_nerve" },
           },
           {
             id: "m7b-defend-hubris",
@@ -2372,7 +2406,7 @@ const nodes: GameNode[] = [
             detail:
               "The review had no interest in the pitch and no stake in the number. They read the document cold and told you what was wrong with it, and you decided you knew better.",
             changed: ["A week saved", "Every flagged gap is now yours"],
-            effect: { dims: { deliver: -9, win: 2 }, flags: ["overrode_review"] },
+            effect: { dims: { deliver: -9, win: 1 }, flags: ["overrode_review"] },
             lesson: {
               principle: "Take the free advice from the people with nothing to sell you.",
               because:
@@ -2510,7 +2544,7 @@ const nodes: GameNode[] = [
             detail:
               "You show Foyle what the current failure costs from his own complaint data, and what removing half of it is worth. He does not have to like you. He has to justify a choice, and you have just written his justification for him.",
             changed: ["Selected", "A payback number now in the contract"],
-            effect: { dims: { win: 12, profit: 4 }, flags: ["won", "outcome_based"], badge: "connected_dots" },
+            effect: { dims: { win: 8, profit: 4 }, flags: ["won", "outcome_based"], badge: "connected_dots" },
           },
           {
             id: "m9a-value-thin",
@@ -2519,7 +2553,7 @@ const nodes: GameNode[] = [
             detail:
               "The structure is right and the baseline is soft. Foyle scores it above the cheapest bid and below where it could have been, and asks you to stand behind the number in writing.",
             changed: ["Selected", "Committed to a payback you estimated"],
-            effect: { dims: { win: 6, profit: -2 }, flags: ["won", "outcome_based"] },
+            effect: { dims: { win: 4, profit: -2 }, flags: ["won", "outcome_based"] },
           },
         ],
       },
@@ -2557,7 +2591,7 @@ const nodes: GameNode[] = [
             detail:
               "The weightings put more on operational continuity than on price. You already have Operations in the proposal, so the re-cut is a reordering rather than a rewrite. Foyle scores you first on two of four criteria.",
             changed: ["Selected", "You know how you were scored"],
-            effect: { dims: { win: 10, profit: 1 }, flags: ["won", "knows:criteria"], badge: "good_question" },
+            effect: { dims: { win: 6, profit: 1 }, flags: ["won", "knows:criteria"], badge: "good_question" },
           },
         ],
       },
@@ -2579,7 +2613,7 @@ const nodes: GameNode[] = [
             detail:
               "Asked how the changes reach production, Aisha says truthfully that it depends on teams nobody has spoken to yet. It is the correct answer and it is the one Foyle scores down. The award goes to the bid that claimed certainty.",
             changed: ["Not selected", "Nothing was oversold"],
-            effect: { dims: { win: -26, deliver: 4 }, flags: ["lost"] },
+            effect: { dims: { win: -26, deliver: 3 }, flags: ["lost"] },
             next: "end",
             lesson: {
               principle: "Honesty in the room is only an asset if the homework behind it is done.",
@@ -2596,7 +2630,7 @@ const nodes: GameNode[] = [
             detail:
               "Aisha walks through how the changes reach production, which teams sign them off, and what she has already agreed with Marcus. Foyle stops asking about risk. It is the shortest scoring session of the three.",
             changed: ["Selected", "Delivery credibility established before signature"],
-            effect: { dims: { win: 9, deliver: 6 }, flags: ["won"], badge: "held_nerve" },
+            effect: { dims: { win: 6, deliver: 4 }, flags: ["won"], badge: "held_nerve" },
           },
           {
             id: "m9a-deliverer-plain",
@@ -2605,7 +2639,7 @@ const nodes: GameNode[] = [
             detail:
               "She is straight about what is agreed and what is not. Foyle believes her, which is worth more than it looks, and still scores the incumbent higher on price.",
             changed: ["Selected", "Credible but not preferred on price"],
-            effect: { dims: { win: 4, deliver: 3 }, flags: ["won"] },
+            effect: { dims: { win: 3, deliver: 2 }, flags: ["won"] },
           },
         ],
       },
@@ -2649,7 +2683,7 @@ const nodes: GameNode[] = [
                to whatever Aisha said in the room. Delivery starts from a clean sheet. That
                is the honest upside of not selling harder, and without it this option lost
                to the other three on all three dimensions in 76–85% of reachable states. */
-            effect: { dims: { win: 8, profit: 3, deliver: 4 }, flags: ["won"] },
+            effect: { dims: { win: 5, profit: 3, deliver: 3 }, flags: ["won"] },
           },
           {
             id: "m9a-submit-plain",
@@ -2658,7 +2692,7 @@ const nodes: GameNode[] = [
             detail:
               "Foyle scores the bids close to level and Sarah's recommendation carries it. You have the work and you have learned nothing about why, which is a poor position to be in next time.",
             changed: ["Selected", "Won on the sponsor's preference, not the scorecard"],
-            effect: { dims: { win: 3, deliver: 4 }, flags: ["won"] },
+            effect: { dims: { win: 2, deliver: 3 }, flags: ["won"] },
           },
         ],
       },
@@ -2750,7 +2784,7 @@ const nodes: GameNode[] = [
             detail:
               "You are taking on work you understand, with the people who have to deliver it already involved. That is a better position than most teams are in on the day they sign.",
             changed: ["Contract signed", "Delivery starts from a position you built"],
-            effect: { dims: { win: 6, profit: 2 }, flags: ["signed"] },
+            effect: { dims: { win: 4, profit: 2 }, flags: ["signed"] },
           },
           {
             id: "m9b-proceed-loaded",
@@ -2759,7 +2793,7 @@ const nodes: GameNode[] = [
             detail:
               "The deal is real and so are its gaps. Nothing here is fatal on its own; the question is how many of them arrive in the same month.",
             changed: ["Contract signed", "The known gaps are now contractual"],
-            effect: { dims: { win: 7, deliver: -3 }, flags: ["signed"] },
+            effect: { dims: { win: 5, deliver: -3 }, flags: ["signed"] },
           },
         ],
       },
@@ -2782,7 +2816,7 @@ const nodes: GameNode[] = [
               "Reopening a signed-in-principle deal is only survivable if the client believes you are doing it for the programme rather than for the margin. Sarah does not argue. Both clauses move.",
             changed: ["Two real risks removed before signature", "Two weeks lost"],
             effect: {
-              dims: { deliver: 9, profit: 4, win: -2 },
+              dims: { deliver: 6, profit: 4, win: -2 },
               flags: ["signed", "reviewed"],
               badge: "smart_tradeoff",
             },
@@ -2794,7 +2828,7 @@ const nodes: GameNode[] = [
             detail:
               "Procurement treats a late change as an attempt to improve your position. You get the clause that matters most and drop the other to keep the deal moving.",
             changed: ["One risk removed", "The relationship is more transactional"],
-            effect: { dims: { deliver: 5, win: -5 }, flags: ["signed"] },
+            effect: { dims: { deliver: 3, win: -5 }, flags: ["signed"] },
           },
         ],
       },
@@ -2821,7 +2855,7 @@ const nodes: GameNode[] = [
               "Sarah will call you about the next one",
             ],
             effect: {
-              dims: { win: -18, profit: 16, deliver: 20 },
+              dims: { win: -18, profit: 16, deliver: 13 },
               flags: ["walked_away"],
               badge: "held_nerve",
             },
@@ -2845,7 +2879,7 @@ const nodes: GameNode[] = [
               "A quarter of pursuit cost written off",
               "A client who will be slower to call next time",
             ],
-            effect: { dims: { win: -22, profit: -6, deliver: 8 }, flags: ["walked_away"] },
+            effect: { dims: { win: -22, profit: -6, deliver: 5 }, flags: ["walked_away"] },
             lesson: {
               principle: "Discipline and timidity look identical until you check the position.",
               because:
@@ -2909,7 +2943,7 @@ const nodes: GameNode[] = [
             detail:
               "Juniors on a programme with a training workstream and an engaged client team is a development opportunity. On a programme without either it is a risk. You had one.",
             changed: ["Fully staffed", "Your time is committed to reviewing"],
-            effect: { dims: { deliver: 5, profit: 6, win: -1 } },
+            effect: { dims: { deliver: 3, profit: 6, win: -1 } },
           },
           {
             id: "m10b-juniors-thin",
@@ -2949,7 +2983,7 @@ const nodes: GameNode[] = [
             detail:
               "The programme has the people it needs from next week. It also has a cost base the commercial case did not anticipate, and in nine months nothing they learned will still be in the building.",
             changed: ["Properly staffed", "Margin reduced", "Knowledge will leave with them"],
-            effect: { dims: { deliver: 8, profit: -8 } },
+            effect: { dims: { deliver: 5, profit: -8 } },
           },
         ],
       },
@@ -2971,7 +3005,7 @@ const nodes: GameNode[] = [
             detail:
               "Six weeks is a manageable conversation in month two and an impossible one in month five. Because you went early and had the standing to be believed, the plan moves and nothing else does.",
             changed: ["The right team", "The date moved with the client's agreement"],
-            effect: { dims: { deliver: 9, profit: 3, win: -3 }, badge: "recovered" },
+            effect: { dims: { deliver: 6, profit: 3, win: -3 }, badge: "recovered" },
           },
           {
             id: "m10b-slip-cold",
@@ -2981,7 +3015,7 @@ const nodes: GameNode[] = [
             detail:
               "Speed was the most attractive thing in your proposal, and the first thing you have done is ask for six more weeks. Sarah has to go back to a board that approved this on the timeline.",
             changed: ["The right team eventually", "The thing you sold on is gone"],
-            effect: { dims: { win: -12, deliver: 6 } },
+            effect: { dims: { win: -12, deliver: 4 } },
           },
           {
             id: "m10b-slip",
@@ -2990,7 +3024,7 @@ const nodes: GameNode[] = [
             detail:
               "The date moves without much drama. It does establish, in month two, that your plan was written for a team you did not have.",
             changed: ["The right team", "Six weeks late from the start"],
-            effect: { dims: { deliver: 5, win: -6 } },
+            effect: { dims: { deliver: 3, win: -6 } },
           },
         ],
       },
@@ -3102,7 +3136,7 @@ const nodes: GameNode[] = [
               "Operations now sponsors the work it has to run",
             ],
             effect: {
-              dims: { win: 9, deliver: 8 },
+              dims: { win: 6, deliver: 5 },
               flags: ["broad_base"],
               badge: "connected_dots",
             },
@@ -3150,7 +3184,7 @@ const nodes: GameNode[] = [
                and the cost stays in profit. It was +10/+2/-3 against the memo's
                +6/+3/+2, i.e. beaten on two dimensions of three and dominated in 91% of
                reachable states. */
-            effect: { dims: { win: 15, deliver: -2, profit: -3 } },
+            effect: { dims: { win: 10, deliver: -2, profit: -3 } },
           },
           {
             id: "m10c-prove-thin",
@@ -3166,7 +3200,7 @@ const nodes: GameNode[] = [
                At -4/-5/-1 this branch was beaten on all three by `o-broaden`'s cold
                branch (+3/0/+1) in 94% of reachable states, which made the whole option a
                trap rather than a choice. */
-            effect: { dims: { win: -4, deliver: 3, profit: -1 } },
+            effect: { dims: { win: -4, deliver: 2, profit: -1 } },
           },
         ],
       },
@@ -3191,7 +3225,7 @@ const nodes: GameNode[] = [
             detail:
               "Because the programme was argued from Orion's own evidence in the first place, the handover is a page of their data and what has changed since. A new sponsor reading that cold has very little to disagree with.",
             changed: ["A case that survives on paper", "No advocate, but no argument either"],
-            effect: { dims: { win: 6, deliver: 3, profit: 2 } },
+            effect: { dims: { win: 4, deliver: 2, profit: 2 } },
           },
           {
             id: "m10c-handover-thin",

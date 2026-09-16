@@ -266,44 +266,156 @@ export const PROBE = (opts = {}) => {
     0,
   );
 
-  /**
-   * A station is a deliberate stop the layout forces. Counted as the number of distinct
-   * PROMINENCE TIERS present, not the number of elements — three option titles are one
-   * station, not three.
+  /* ── stations ─────────────────────────────────────────────────────────────
+   * §A factor 6: "a deliberate stop the layout forces… about SEQUENCE rather than count",
+   * measured as "elements in the work area with font-size ≥1.4× body (≥19px) **or** a
+   * saturated accent fill >2000px². One per station, no more." §B names the five: what is
+   * true, what is pressing, the question, the options, the commit.
    *
-   * Counted across the whole console, because the commit button is a station and it
-   * lives in the action bar rather than on the desk. The fill test accepts either a
-   * saturated hue or a dark solid: the brand used to be a saturated violet and is now
-   * ink, and a probe that only recognises saturation was measuring the old design.
+   * THE PREVIOUS IMPLEMENTATION COULD NOT REPORT A PASS. It counted distinct PROMINENCE
+   * TIERS — display / title / subtitle / fill — which is a set of four, against a
+   * documented band of 5 (max 6). The band was then moved to 3–4 to fit, which D-038
+   * recorded as the mistake and D-033 had closed by saying "the numbers should not move to
+   * accommodate a screen that fails them". Both halves were wrong: the band had been
+   * retuned, and the instrument it was retuned for was measuring a different quantity with
+   * a ceiling below the target. A factor that cannot score above 0 under its own
+   * documented band is the D-037 family exactly — a gate that cannot see a pass.
+   *
+   * So this counts stations the way §A and §B describe one: prominent marks, grouped into
+   * VERTICAL BANDS. The grouping is what turns "elements" into "stations" — four option
+   * titles side by side are one stop in the reading sequence, not four — and it uses §B's
+   * own separator, the 24px air step ("24px between stations, 8px within"). Two marks
+   * whose boxes overlap, or sit within 24px of each other, are the same station. A design
+   * that does not put the air step between two marks has not made them separate stops,
+   * which is the thing the factor exists to measure.
+   *
+   * Scope: inside the console, excluding `header` and both `aside` rails, because §B is
+   * explicit that "the rails are not stations" and the header is furniture. The commit bar
+   * IS in scope — station 5 lives in the action bar rather than on the desk.
+   *
+   * `stationTiers` keeps the old number beside the new one, exactly as `airLegacy` does for
+   * factor 3: an instrument that cannot reproduce its own history is hard to trust about
+   * its present. `stationLabels` names what was counted, so the number can be checked
+   * against the render rather than believed.
    */
-  const consoleEls = [...document.querySelectorAll("body *")].filter((el) => {
+  const stationScope = document.querySelector("[data-console]") ?? document.body;
+  const scoped = [...stationScope.querySelectorAll("*")].filter((el) => {
+    if (el.closest("header") || el.closest("aside")) return false;
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) return false;
     const cs = getComputedStyle(el);
     return cs.visibility !== "hidden" && cs.display !== "none";
   });
 
-  const tiers = new Set();
-  for (const el of consoleEls) {
-    const cs = getComputedStyle(el);
-    const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
-    if (hasText) {
-      const px = parseFloat(cs.fontSize);
-      if (px >= 30) tiers.add("display");
-      else if (px >= 22) tiers.add("title");
-      else if (px >= 17) tiers.add("subtitle");
-    }
+  /**
+   * The fill test, shared by both counts: a saturated hue or a dark solid over 2000px².
+   *
+   * THE ALPHA CHECK IS THE WHOLE TEST. `getComputedStyle(el).backgroundColor` returns
+   * `rgba(0, 0, 0, 0)` for anything transparent, and the previous pattern —
+   * `/^rgba?\((\d+), (\d+), (\d+)/` with no alpha group — read that as pure black,
+   * computed a luminance of 0, and called every transparent element in the console a dark
+   * accent fill. The old tier count therefore earned its "fill" tier from transparency on
+   * every screen in the game, which is most of the reason it reported 3 on a build whose
+   * decide screen has exactly one accent fill on it.
+   *
+   * A near-opaque threshold rather than a fully opaque one, because a 0.92-alpha ink patch
+   * reads as a patch. Below that it is a tint, and factor 3 is the one that measures tints.
+   */
+  const bigAccentFill = (el, cs) => {
     const r = el.getBoundingClientRect();
-    const m = /^rgba?\((\d+), (\d+), (\d+)/.exec(cs.backgroundColor || "");
-    if (!m || r.width * r.height < 2000) continue;
+    const m = /^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,/\s]+([\d.]+))?/.exec(
+      cs.backgroundColor || "",
+    );
+    if (!m || r.width * r.height < 2000) return false;
+    if (m[4] !== undefined && parseFloat(m[4]) < 0.9) return false;
     const [rr, gg, bb] = [+m[1], +m[2], +m[3]];
     const mx = Math.max(rr, gg, bb);
     const mn = Math.min(rr, gg, bb);
     const lum = (0.2126 * rr + 0.7152 * gg + 0.0722 * bb) / 255;
-    const saturated = mx > 40 && (mx - mn) / mx > 0.45;
-    if (saturated || lum < 0.3) tiers.add("fill");
+    /* Either a saturated hue or a dark solid. The brand used to be a saturated violet and
+       is now ink, and a probe that only recognises saturation was measuring the old
+       design. */
+    return (mx > 40 && (mx - mn) / mx > 0.45) || lum < 0.3;
+  };
+
+  /** §A's threshold, stated there as a number as well as a ratio: ≥1.4× body, ≥19px. */
+  const PROMINENT_PX = 19;
+
+  /** Where a mark is, so the count can be argued with. */
+  const describe = (el) => {
+    const region = el.getAttribute("data-region");
+    const cls = (el.getAttribute("class") ?? "").split(/\s+/).find((c) => c && !c.includes(":"));
+    return `${el.tagName.toLowerCase()}${region ? `[${region}]` : cls ? `.${cls}` : ""}`;
+  };
+
+  const marks = [];
+  const fillCandidates = [];
+  const tiers = new Set();
+  for (const el of scoped) {
+    const cs = getComputedStyle(el);
+    const own = [...el.childNodes]
+      .filter((n) => n.nodeType === 3)
+      .map((n) => n.textContent.trim())
+      .join(" ")
+      .trim();
+    const px = parseFloat(cs.fontSize);
+    const r = el.getBoundingClientRect();
+    if (own) {
+      if (px >= 30) tiers.add("display");
+      else if (px >= 22) tiers.add("title");
+      else if (px >= 17) tiers.add("subtitle");
+      if (px >= PROMINENT_PX) {
+        marks.push({
+          el,
+          top: r.top,
+          bottom: r.bottom,
+          label: `${Math.round(px)}px ${describe(el)} “${own.slice(0, 22)}”`,
+        });
+        continue;
+      }
+    }
+    if (bigAccentFill(el, cs)) {
+      tiers.add("fill");
+      fillCandidates.push({
+        el,
+        top: r.top,
+        bottom: r.bottom,
+        label: `fill ${Math.round(r.width)}×${Math.round(r.height)} ${describe(el)}`,
+      });
+    }
   }
-  const stations = tiers.size;
+
+  /**
+   * A fill that CONTAINS another mark is the ground, not a station.
+   *
+   * Factor 1 already draws this distinction — a region is a filled area "with no
+   * filled-or-bordered ancestor" — and it has to be drawn here too. Without it, one
+   * dark full-bleed container measuring 1414×835 counted as a mark, and because a station
+   * band absorbs every mark within 24px of it, that single element swallowed 42 others and
+   * the whole screen reported **two** stations. The number looked like a finding about the
+   * design and was a finding about the probe: a ground that spans the desk cannot be a
+   * stop in a reading sequence, because there is nowhere for the eye to stop at.
+   */
+  for (const candidate of fillCandidates) {
+    const contains = (other) => other.el !== candidate.el && candidate.el.contains(other.el);
+    if (marks.some(contains) || fillCandidates.some(contains)) continue;
+    marks.push(candidate);
+  }
+
+  marks.sort((a, b) => a.top - b.top);
+  const bands = [];
+  for (const mark of marks) {
+    const last = bands[bands.length - 1];
+    if (last && mark.top < last.bottom + 24) {
+      last.bottom = Math.max(last.bottom, mark.bottom);
+      last.labels.push(mark.label);
+    } else {
+      bands.push({ top: mark.top, bottom: mark.bottom, labels: [mark.label] });
+    }
+  }
+  const stations = bands.length;
+  const stationTiers = tiers.size;
+  const stationLabels = bands.map((b) => `${Math.round(b.top)}: ${b.labels[0]}${b.labels.length > 1 ? ` (+${b.labels.length - 1})` : ""}`);
 
   const targets = [...root.querySelectorAll("button, a[href], summary, [role='button']")].filter(
     (el) => el.getBoundingClientRect().width > 1,
@@ -384,6 +496,8 @@ export const PROBE = (opts = {}) => {
     regionNames,
     nestedPanels,
     stations,
+    stationTiers,
+    stationLabels,
     targets,
     choices,
     air,

@@ -26,8 +26,8 @@ import {
   type OutcomeTone,
   type Resolution,
 } from "../engine/types";
-import { Icon, SectionTitle } from "./icons";
-import { BEAT_TITLE_ID, FactorGrid, UI_LABEL, artUrl, meterDelay } from "./shell";
+import { Bullet, Icon, SectionTitle } from "./icons";
+import { BEAT_TITLE_ID, FactorGrid, UI_LABEL, artUrl, meterDelay, quoted } from "./shell";
 
 /**
  * Tone is carried by the medallion's colour AND its icon — never colour alone (E6).
@@ -305,11 +305,14 @@ function TheRead({ advisor, resolution }: { advisor?: Advisor; resolution: Resol
             {advisor.name}
             <span className="ml-2 font-medium text-(--color-accent)">{advisor.role}</span>
           </p>
-          <p className="mt-1.5 text-[15px] font-semibold leading-snug text-(--color-ink)">
-            “{lesson.principle}”
+          {/* One interpolated string each, not `“` + text + `”` as three sibling nodes.
+              Those were the two orphaned closing quote marks on every consequence screen
+              in the game — see `quoted` in `ui/shell.tsx`. */}
+          <p className="mt-1.5 text-[15px] font-semibold leading-snug text-(--color-ink) text-pretty">
+            {quoted(lesson.principle)}
           </p>
-          <p className="mt-2 text-[15px] leading-relaxed text-(--color-ink-soft)">
-            “{lesson.because}”
+          <p className="mt-2 text-[15px] leading-relaxed text-(--color-ink-soft) text-pretty">
+            {quoted(lesson.because)}
           </p>
         </div>
       </div>
@@ -422,9 +425,11 @@ export function ConsequenceScreen({
                 key={i}
                 className="flex items-start gap-2.5 text-[13px] leading-relaxed text-(--color-ink-soft)"
               >
-                <span className="mt-[3px] shrink-0 text-(--color-accent)">
-                  <Icon name="layers" size={13} />
-                </span>
+                {/* A 3px ink square, not `layers`. This was Deliverability's pictogram
+                    used as a list marker, on a screen that also shows the Deliverability
+                    meter — one of the four meanings that drawing had accumulated. A
+                    bullet has nothing to mean. */}
+                <Bullet className="mt-[8px]" />
                 {c}
               </li>
             ))}

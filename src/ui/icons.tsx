@@ -31,6 +31,28 @@ const PATHS: Record<IconId, string> = {
 
 const FILLED: Partial<Record<IconId, boolean>> = {};
 
+/**
+ * Optical sizing — the stroke is a constant apparent weight, not a constant number.
+ *
+ * Every icon in the game is drawn on a 24-unit grid and rendered at 9 to 38px. A fixed
+ * `strokeWidth={1.7}` is therefore not one weight: it is `1.7 × size / 24` device pixels,
+ * which measured **0.64px on the 9px cross inside an option's trade-off row and 1.98px on
+ * the 28px option medallion** — a 3.1× range of apparent weight inside a single card. The
+ * small ones read as hairlines about to disappear and the large ones as a heavier family.
+ *
+ * Inverting the scale fixes it with arithmetic rather than with taste: at
+ * `1.5 × 24 / size` the rendered stroke is 1.5px at every size, which is the weight the
+ * 18px default was already drawing. Rounded to two places only so the DOM stays readable.
+ *
+ * 1.5 rather than 1.7 because 1.7 was measured at the 18px default — `1.7 × 18 / 24` is
+ * 1.28px — and matching the *rendered* weight of the icons the game already ships would
+ * have kept the hairline. 1.5px is the weight of the type's stem at 13px, which is what
+ * these sit beside.
+ */
+const APPARENT_STROKE_PX = 1.5;
+const strokeFor = (size: number) =>
+  Math.round(((APPARENT_STROKE_PX * 24) / Math.max(1, size)) * 100) / 100;
+
 export function Icon({
   name,
   size = 18,
@@ -49,7 +71,7 @@ export function Icon({
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.7}
+      strokeWidth={strokeFor(size)}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -59,6 +81,27 @@ export function Icon({
     >
       <path d={PATHS[name]} fill={FILLED[name] ? "currentColor" : "none"} />
     </svg>
+  );
+}
+
+/**
+ * A bullet, and deliberately not an icon.
+ *
+ * `layers` was carrying four meanings, three of them on one screen — Deliverability's
+ * identity, a section heading, and the bullet marker in "What is now different" — so a
+ * pictogram that means "can we deliver it?" was also being used to mean "item in a list".
+ * A list marker has no meaning to carry: it is punctuation. 3px of ink says "item" and
+ * cannot be mistaken for a dimension.
+ *
+ * Square rather than round because every round mark in this interface is a state — a
+ * stepper node, a cost dot, a tone medallion — and a bullet is not a state.
+ */
+export function Bullet({ className }: { className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`h-[3px] w-[3px] shrink-0 bg-current ${className ?? ""}`}
+    />
   );
 }
 

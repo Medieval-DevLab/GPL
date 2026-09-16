@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest";
 
 import { story } from "../content/story";
 import { playMission, possibleSelections } from "./analysis";
-import { chooseSetup, getNode } from "./engine";
+import { chooseSetup, getNode, scoreOf } from "./engine";
 import {
   codeFromState,
   decodeRun,
@@ -383,5 +383,95 @@ describe("engine purity", () => {
       }
     }
     expect(found).toEqual([]);
+  });
+});
+
+/**
+ * The other half of the same rule: `src/ui` holds no game rules.
+ *
+ * `scoreOf` — collapse three meters into the one number the game has ever called a score —
+ * shipped in `src/ui/shell.tsx`, and `engagement.ts` carried a private `meanOfMeters`
+ * duplicating it with a comment saying so, because the engine may not import from the UI.
+ * Two implementations of one rule, one of them the thing every policy in the engagement
+ * gate is marked against. It now lives in `engine.ts` and the engine has one copy.
+ *
+ * This sweep is structural rather than a check that the identifier exists somewhere,
+ * because D-037's second lesson is that declaration is not resolution: a test asserting
+ * `scoreOf` is declared in the engine would have passed the whole time it was declared
+ * twice. So it looks for the *shape* of the rule — the three meter names averaged — in any
+ * UI source, and the arithmetic is asserted directly rather than by reading a name.
+ *
+ * What this would still miss, written down because the exercise is worthless otherwise:
+ * a UI copy that averages the meters through a helper defined in another file, or one
+ * that weights them instead of averaging (`win * 0.5 + …`), matches neither pattern. The
+ * glob is `../**` rather than `../ui/*` for D-037's third lesson — the one bug a glob
+ * hid was in the file the glob excluded.
+ */
+describe("the score rule lives in the engine", () => {
+  const uiModules = import.meta.glob("../**/*.tsx", {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }) as Record<string, string>;
+
+  const uiFiles = Object.entries(uiModules).map(([path, text]) => ({
+    name: path.split("/").pop() as string,
+    text: text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, ""),
+  }));
+
+  /** Either spelling of "average the three meters": named, or reduced over DIMENSIONS. */
+  const SHAPES = [
+    /win[\s\S]{0,160}?profit[\s\S]{0,160}?deliver[\s\S]{0,160}?\/\s*(?:3\b|DIMENSIONS\.length)/,
+    /DIMENSIONS[\s\S]{0,200}?reduce[\s\S]{0,200}?\/\s*(?:3\b|DIMENSIONS\.length)/,
+  ];
+
+  /**
+   * Known, dead, and owned by someone else.
+   *
+   * `src/ui/shell.tsx` still exports the original `scoreOf` with zero callers — the top-bar
+   * Score that used it was deleted and the rule was left behind. The file belongs to the UI
+   * worker, so this pins the state instead of asserting the state I want, exactly as
+   * `engagement.test.ts` pins its own failing numbers (D-038): a band quietly widened to
+   * fit the build measures the build's opinion of itself.
+   *
+   * When that export goes, the second assertion below fails and tells you to delete this
+   * entry. That handshake is deliberate — the alternative is an allowlist that outlives
+   * the thing it excuses.
+   */
+  const PENDING = ["shell.tsx"];
+
+  it("loaded the UI sources", () => {
+    expect(uiFiles.length).toBeGreaterThan(4);
+    expect(uiFiles.every((f) => f.text.length > 200)).toBe(true);
+  });
+
+  it("computes the mean of the three meters", () => {
+    expect(scoreOf({ win: 50, profit: 50, deliver: 50 })).toBe(50);
+    expect(scoreOf({ win: 0, profit: 0, deliver: 0 })).toBe(0);
+    expect(scoreOf({ win: 100, profit: 100, deliver: 100 })).toBe(100);
+    // 61.67 — the rounding is part of the rule, and it is the half of it that can drift.
+    expect(scoreOf({ win: 70, profit: 40, deliver: 75 })).toBe(62);
+  });
+
+  it("is not re-implemented anywhere in src/ui", () => {
+    const carriers = uiFiles.filter((f) => SHAPES.some((p) => p.test(f.text))).map((f) => f.name);
+    expect(carriers.filter((n) => !PENDING.includes(n))).toEqual([]);
+    const stale = PENDING.filter((n) => !carriers.includes(n));
+    expect(
+      stale,
+      `${stale.join(", ")} no longer carries a score rule — delete it from PENDING above`,
+    ).toEqual([]);
+  });
+
+  /**
+   * And the copy that is still there is dead, which is what makes the engine's the only
+   * rule in play. One occurrence is the declaration; a second would be a call site.
+   */
+  it("leaves no caller behind in src/ui", () => {
+    const calls = uiFiles.flatMap((f) => {
+      const hits = f.text.match(/\bscoreOf\b/g) ?? [];
+      return hits.length > 1 ? [`${f.name}: ${hits.length} mentions of scoreOf`] : [];
+    });
+    expect(calls).toEqual([]);
   });
 });

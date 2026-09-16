@@ -713,6 +713,28 @@ export const ENGINE_READ_FLAGS: ReadonlySet<string> = new Set([
      right place for it: it is the only thing that holds both sides. */
 ]);
 
+/**
+ * The mean of the three meters — the single number the game has ever called "Score".
+ *
+ * It lived in `src/ui/shell.tsx`, which `CLAUDE.md` forbids in one line: "`src/ui` holds
+ * no game rules… a component that computes a consequence or decides a branch is a bug."
+ * Collapsing three meters into one figure is a rule, and a consequential one: it decides
+ * what the player is told they achieved, and it is the number the engagement gate marks
+ * every policy against.
+ *
+ * Two copies existed. `engagement.ts` carried a private `meanOfMeters` with a comment
+ * saying exactly this, because the engine may not import from the UI — so the rule the
+ * gate measured against was a *reimplementation* of the rule the screen showed, and
+ * nothing would have failed had the two drifted. The rounding alone is enough to part
+ * them: `Math.round(sum / 3)` and `Math.round(a/3 + b/3 + c/3)` disagree on real inputs.
+ *
+ * Kept as a mean rather than the weighted read the ledger implies, because that is what
+ * shipped and this move is not the place to change what a number means.
+ */
+export function scoreOf(dims: Record<DimensionId, number>): number {
+  return Math.round(DIMENSIONS.reduce((total, d) => total + dims[d], 0) / DIMENSIONS.length);
+}
+
 /** Overall read on the engagement, from the final dimensions and how it ended. */
 export function finalVerdict(
   dims: Record<DimensionId, number>,
@@ -745,7 +767,6 @@ export function finalVerdict(
     };
   }
   const lowest = DIMENSIONS.reduce((a, b) => (dims[a] <= dims[b] ? a : b));
-  const avg = Math.round((win + profit + deliver) / 3);
 
   if (win < 40) {
     return {
@@ -768,7 +789,21 @@ export function finalVerdict(
         "You have the logo and very little else. Work that cannot be run at a sensible margin crowds out work that can.",
     };
   }
-  if (avg >= 62) {
+  /**
+   * "All three at once is unusual" — so it must actually require all three.
+   *
+   * This was `avg >= 62`, and an average is exactly the wrong test for a verdict whose
+   * own summary claims all three held. A run at 100 / 45 / 45 averages 63 and was told it
+   * was a deal worth having, while its margin and its deliverability were both a
+   * coin-flip from the failure branches twelve lines above. It is also why uniform-random
+   * play earned this ending 46% of the time: with three meters starting at 50 and 17
+   * mostly-positive beats, an average is nearly free, whereas a floor on the WORST meter
+   * is not.
+   *
+   * 58 rather than 62 on each: a lower bar per meter, a much harder bar to clear on all
+   * three. Measured effect on random play is in D-043.
+   */
+  if (Math.min(win, profit, deliver) >= 58) {
     return {
       title: "A deal worth having",
       summary:

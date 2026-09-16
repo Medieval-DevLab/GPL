@@ -64,9 +64,24 @@ describe("content validity", () => {
       .filter((f): f is string => Boolean(f));
     expect(dead.sort()).toEqual([...NARRATIVE_ONLY_FLAGS].sort());
 
+    /*
+     * Exactly one warning is expected and is not a defect: one condition in the game now
+     * gates on a dimension value. That is backlog 1.3 — until it landed, all three meters
+     * were write-only, three numbers the player was asked to manage that managed nothing,
+     * which is the mechanical root of "it feels like a form".
+     *
+     * It is allowed rather than silenced, and only one of it, because the gate has real
+     * constraints: the threshold must sit on a ten-point bucket boundary or two states
+     * either side of it collapse in the sweep's dedup, and three such gates would breach
+     * `MAX_FRONTIER`.
+     */
     const other = warnings.filter((w) => !/is set but never read/.test(w.message));
-    if (other.length) console.log("\ncontent warnings:\n" + formatIssues(other) + "\n");
-    expect(other).toEqual([]);
+    const dimGates = other.filter((w) => /gates on a dimension value/.test(w.message));
+    expect(dimGates).toHaveLength(1);
+
+    const unexpected = other.filter((w) => !/gates on a dimension value/.test(w.message));
+    if (unexpected.length) console.log("content warnings:\n" + formatIssues(unexpected));
+    expect(unexpected).toEqual([]);
   });
 
   it("has seventeen missions", () => {
@@ -303,9 +318,18 @@ describe("the game teaches what it claims to teach", () => {
     });
 
     it("gives the loss its own verdict rather than inferring one from the meters", () => {
-      // Winability is 57 here, so the old `win < 40` branch could never have carried it.
-      expect(lost.dims.win).toBeGreaterThan(40);
+      /*
+       * The flag decides this, not the number.
+       *
+       * This used to assert Winability was above 40, to show the old `win < 40` branch
+       * could not have carried the verdict. After the economy rescale it lands at 37, so
+       * that branch would now fire too — but for a different reason and with different
+       * words ("the client went elsewhere", which guesses at why). So assert the thing
+       * that actually matters instead: the same three numbers WITHOUT the flag get a
+       * different verdict, which is only true because the flag is what is being read.
+       */
       expect(finalVerdict(lost.dims, lost.flags).title).toBe("They chose someone else");
+      expect(finalVerdict(lost.dims, []).title).not.toBe("They chose someone else");
     });
 
     it("is caused: the same run with one differentiator is not lost", () => {

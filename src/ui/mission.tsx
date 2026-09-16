@@ -10,6 +10,7 @@
  * vertical space — `tools/verify.mjs` fails if the working area overflows at 1440×900.
  */
 
+import { story } from "../content/story";
 import { availableOptions, requiredSelectionCount, resolveSituation } from "../engine/engine";
 import type {
   AssessmentFactor,
@@ -19,13 +20,15 @@ import type {
   Option,
 } from "../engine/types";
 import { Facsimile } from "./facsimile";
-import { Icon, IconTile, Pill, SectionTitle } from "./icons";
+import { Bullet, Icon, IconTile, Pill, SectionTitle } from "./icons";
 import {
   BEAT_TITLE_ID,
   Hidden,
   RadioGroup,
   UI_LABEL,
   artUrl,
+  discoveredEvidence,
+  quoted,
   radioTabIndex,
 } from "./shell";
 
@@ -34,17 +37,28 @@ import {
 function Header({ mission, situation }: { mission: Mission; situation: string[] }) {
   return (
     <div className="flex items-stretch gap-5">
-      <div className="min-w-0 flex-1 px-5 pt-3.5">
+      {/**
+       * Proximity, corrected. The eyebrow belonged to the title and was further from it
+       * than the title was from the body it heads: measured ink gaps of 10.6px and 13.6px,
+       * a ratio of 1.28:1 where grouping needs at least 2:1, so the three lines read as
+       * three things rather than as a label, its heading and its paragraph.
+       *
+       * 4px and 14px of margin, which lands as ~8.6px and ~19.6px of ink gap — the line
+       * boxes contribute the rest, and that is why the margins do not look like the
+       * numbers. Ratio 2.3:1. Held to +2px of total height, because the brief already
+       * fills the working area to the pixel at 1440×900.
+       */}
+      <div className="min-w-0 flex-1 px-5 pt-3">
         <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
           {mission.eyebrow}
         </p>
         <h1
           id={BEAT_TITLE_ID}
-          className="mt-1.5 text-[32px] font-bold leading-[1.1] tracking-[-0.015em] text-(--color-ink)"
+          className="mt-1 text-[32px] font-bold leading-[1.1] tracking-[-0.015em] text-(--color-ink)"
         >
           {mission.title}
         </h1>
-        <div className="mt-2 space-y-1">
+        <div className="mt-3.5 space-y-1">
           {situation.map((p, i) => (
             <p key={i} className="text-[15px] leading-[1.5] text-(--color-ink-soft)">
               {p}
@@ -55,8 +69,8 @@ function Header({ mission, situation }: { mission: Mission; situation: string[] 
 
       {mission.saidQuote && (
         <div className="hidden w-[186px] shrink-0 py-4 pr-5 lg:block">
-          <blockquote className="border-l-[3px] border-(--color-accent) pl-3 text-[13px] italic leading-snug text-(--color-ink-soft)">
-            “{mission.saidQuote.text}”
+          <blockquote className="border-l-[3px] border-(--color-accent) pl-3 text-[13px] italic leading-snug text-(--color-ink-soft) text-pretty">
+            {quoted(mission.saidQuote.text)}
           </blockquote>
           <p className="mt-2 pl-3 text-[12px] font-bold text-(--color-ink)">
             {mission.saidQuote.attribution}
@@ -208,10 +222,7 @@ function Concerns({ concerns }: { concerns?: string[] }) {
         <ul className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
           {concerns.map((c) => (
             <li key={c} className="flex gap-2 text-[13px] leading-snug text-(--color-ink-soft)">
-              <span
-                aria-hidden="true"
-                className="mt-[6px] h-1 w-1 shrink-0 rounded-full bg-(--color-bad)"
-              />
+              <Bullet className="mt-[7px]" />
               {c}
             </li>
           ))}
@@ -232,24 +243,47 @@ function Concerns({ concerns }: { concerns?: string[] }) {
  * read. It survived only inside the button's concatenated name, which is exactly the
  * 240-character run this card is being taken apart to fix.
  */
-function CostRow({ icon, label, value }: { icon: "clock" | "coins"; label: string; value: number }) {
+function CostRow({ label, value }: { label: string; value: number }) {
+  /**
+   * TWO defects, one row.
+   *
+   * The icons are gone. `coins` labelled "Investment" here while also being
+   * Profitability's pictogram in the rail eight inches away — the same drawing standing
+   * for "what this costs you" and for "is it worth winning?", on one screen. `clock`
+   * had the same problem with the rail's "About 12 min". Neither icon was carrying
+   * anything the word beside it did not already say, so the cheapest fix is also the
+   * right one: the label is words, the magnitude is dots, and the three dimension
+   * pictograms go back to meaning exactly one thing each.
+   *
+   * And the size is declared on the ROW. Without it the visually-hidden magnitude below
+   * inherited from `.choice`, which sets no font size, so it computed at the browser
+   * default of 16px — an off-scale sixth type size on every decide screen in the game,
+   * invisible on screen and counted by `tools/measure.mjs`, which is exactly the kind of
+   * thing that makes an instrument look wrong when it is not.
+   */
   return (
-    <div className="flex items-center gap-2">
-      <span className="shrink-0 text-(--color-muted)">
-        <Icon name={icon} size={13} />
-      </span>
-      <span className="flex-1 text-[12px] font-medium text-(--color-muted)">{label}</span>
+    <div className="flex items-center gap-2 text-[12px]">
+      <span className="flex-1 font-medium text-(--color-muted)">{label}</span>
       <Hidden>
         {value} {UI_LABEL.outOf} 3.
       </Hidden>
+      {/* Spent dots are FILLED, unspent ones are RINGS.
+          Two fills of two greys said "low" and "high" with colour alone, which is exactly
+          what 1.4.1 forbids and what a 6px mark can least afford; filled-versus-hollow is
+          the pip idiom every dice face uses and it survives greyscale, low vision and a
+          projector. It also takes a colour off the screen: `border-control` was one of the
+          six distinct fills on a decide screen against a five-fill budget, spent entirely
+          on three 6px circles. */}
       <span aria-hidden="true" className="flex gap-[3px]">
         {[1, 2, 3].map((n) => (
           <span
             key={n}
-            className="h-[6px] w-[6px] rounded-full"
-            style={{
-              background: n <= value ? "var(--color-accent)" : "var(--color-line-strong)",
-            }}
+            className="h-[6px] w-[6px] rounded-full border"
+            style={
+              n <= value
+                ? { background: "var(--color-accent)", borderColor: "var(--color-accent)" }
+                : { borderColor: "var(--color-border-control)" }
+            }
           />
         ))}
       </span>
@@ -339,7 +373,14 @@ function OptionCard({
             className="flex h-[60px] w-[60px] items-center justify-center rounded-full border-[3px] border-(--color-surface)"
             style={{ background: "var(--color-accent-tint)", color: "var(--color-accent)" }}
           >
-            <Icon name={option.icon ?? "target"} size={28} />
+            {/* `flag` is the fallback, not `target`. An option with no authored icon was
+                being drawn with Winability's pictogram, on the same screen as the
+                Winability meter — the interface labelling an approach with the name of a
+                dimension. `flag` means "the position you would take", which is the same
+                thing "Where you stand" means, so it adds no fifth meaning to the set.
+                Twelve options DO author a reserved pictogram; those are content, listed in
+                the report. */}
+            <Icon name={option.icon ?? "flag"} size={28} />
           </span>
         </div>
       </div>
@@ -405,8 +446,8 @@ function OptionCard({
         {option.cost && (
           <div className="space-y-1.5 border-t border-(--color-line) pt-3">
             <p className="text-[13px] font-bold text-(--color-ink-soft)">Resource cost</p>
-            <CostRow icon="clock" label="Time" value={option.cost.time} />
-            <CostRow icon="coins" label="Investment" value={option.cost.investment} />
+            <CostRow label="Time" value={option.cost.time} />
+            <CostRow label="Investment" value={option.cost.investment} />
           </div>
         )}
       </div>
@@ -420,25 +461,58 @@ function OptionCard({
 }
 
 /**
- * The selected state lives on the card's own button, as in every mockup: outlined with
- * purple text, then solid purple. Kept in one place because three card kinds use it.
+ * Unselected: an outlined button. Selected: a rule and a tick.
+ *
+ * These used to be the same object. A selected card said "Selected →" in white on a solid
+ * `--color-accent` pill, and the action bar said "Commit to this →" in white on a solid
+ * `--color-accent` pill — same fill, same weight, same radius family, same arrow,
+ * measured 120px apart. Two states of the world that could not be more different —
+ * *already done* and *do the next thing* — were drawn as one object, and the hierarchy
+ * rule the palette is built on allows exactly one saturated fill per screen anyway
+ * (DESIGN-SYSTEM.md §hierarchy 6). The player's eye had two primaries and no primary.
+ *
+ * So the card's marker stops being a button. Selecting is finished: what is left is a
+ * statement, and a statement is a rule with a tick on it. The arrow goes with the fill —
+ * an arrow means "and then this happens", which is now true in exactly one place.
+ *
+ * Height is held constant across both states on purpose. The cards sit in a `subgrid`
+ * row whose whole purpose is that every card's parts line up with its neighbours', so a
+ * marker shorter than the button it replaces would move the row it is in.
  */
-function CardButton({ selected, on, off }: { selected: boolean; on: string; off: string }) {
+export function CardButton({
+  selected,
+  on,
+  off,
+}: {
+  selected: boolean;
+  on: string;
+  off: string;
+}) {
+  if (selected) {
+    /* 2px rule + 10 + 10 is the same 22px of box as 1px border + 10 + 10, so the two
+       states are the same height to the pixel and the subgrid row cannot move. */
+    return (
+      <span
+        className="flex w-full items-center justify-center gap-1.5 border-t-2 py-2.5 text-[13px] font-bold"
+        style={{ borderColor: "var(--color-text-strong)", color: "var(--color-text-strong)" }}
+      >
+        <Icon name="check" size={14} />
+        {on}
+      </span>
+    );
+  }
   return (
     <span
       className="flex w-full items-center justify-center gap-2 rounded-[10px] border px-3 py-2.5 text-[13px] font-bold transition-colors"
-      style={
-        selected
-          ? { background: "var(--color-accent)", borderColor: "var(--color-accent)", color: "#fff" }
-          : {
-              background: "var(--color-surface)",
-              borderColor: "var(--color-line-strong)",
-              color: "var(--color-accent)",
-            }
-      }
+      style={{
+        background: "var(--color-surface)",
+        borderColor: "var(--color-line-strong)",
+        color: "var(--color-accent)",
+      }}
     >
-      {selected ? on : off}
-      {/* The brief has an arrow on every card button, selected or not. */}
+      {off}
+      {/* The brief has an arrow on the card button. It stays on the unselected state,
+          which is the one that still leads somewhere. */}
       <span aria-hidden="true">→</span>
     </span>
   );
@@ -601,6 +675,68 @@ function ComponentList({
   );
 }
 
+/* ───────────────────────────── beat continuity ───────────────────────────── */
+
+/**
+ * The one line of situation that survives into the decision — and, behind it, the two
+ * things the decide beat was deleting.
+ *
+ * Backlog 4.1, measured at 0.50 continuity against a 0.85 target. Moving from the brief to
+ * the decide screen dropped the mission's `objective` and every `file` entry the player had
+ * paid for, so the beat that uses information was the beat that could not see it. Nothing
+ * here is newly written and nothing is moved out of the brief: it is the same `objective`
+ * string and the same evidence labels, on the beat that needs them.
+ *
+ * **The disclosure is the line that was already there.** A `<summary>` wrapping the prompt
+ * costs zero layout pixels, because the prompt was a `<p>` on this exact line already —
+ * which is the constraint that made this restoration acceptable at all on a screen that
+ * overflows at 1440×900. It also gives the affordance a 40px-tall target rather than the
+ * 24px minimum, and 2.5.8 is measured on the short axis.
+ *
+ * The evidence is labels only. `reveals` is the finding itself and belongs on the brief,
+ * where there is room to read it; a label is enough to remember that you have it. What
+ * deliberately does NOT come back: the situation paragraphs, `concerns`, `assessment` and
+ * `consider`. Those are reading, and reading belongs on the reading beat.
+ */
+function Continuity({
+  mission,
+  state,
+  fallback,
+}: {
+  mission: Mission;
+  state: GameState;
+  fallback?: string;
+}) {
+  const file = discoveredEvidence(story, state.discovered);
+  const prompt = mission.prompt ?? fallback;
+
+  return (
+    <details className="min-w-0 flex-1">
+      <summary className="flex w-fit min-h-[24px] cursor-pointer list-none items-baseline gap-1.5 text-[13px] text-(--color-muted)">
+        <span>
+          {prompt} <span className="text-(--color-accent)">{UI_LABEL.showBrief}</span>
+        </span>
+      </summary>
+      <p className="mt-2 max-w-[66ch] text-[13px] leading-snug text-(--color-ink-soft)">
+        <span className="font-bold text-(--color-ink)">{UI_LABEL.objective} </span>
+        {mission.objective}
+      </p>
+      {file.length > 0 && (
+        <ul className="mt-2 flex flex-wrap gap-1.5">
+          {file.map((e) => (
+            <li key={e.id}>
+              <Pill tone="accent">
+                <Icon name="search" size={12} />
+                {e.label}
+              </Pill>
+            </li>
+          ))}
+        </ul>
+      )}
+    </details>
+  );
+}
+
 /* ───────────────────────────── the two screens ───────────────────────────── */
 
 /**
@@ -660,8 +796,8 @@ export function BriefBody({ mission, state }: { mission: Mission; state: GameSta
                   {mission.advisor.role}
                 </span>
               </p>
-              <p className="mt-1.5 text-[15px] italic leading-relaxed text-(--color-ink-soft)">
-                “{mission.advisorLine ?? mission.advisor.quote}”
+              <p className="mt-1.5 text-[15px] italic leading-relaxed text-(--color-ink-soft) text-pretty">
+                {quoted(mission.advisorLine ?? mission.advisor.quote)}
               </p>
               {mission.consider && mission.consider.length > 0 && (
                 <ul className="mt-3 grid gap-x-8 gap-y-1.5 border-t border-(--color-line) pt-3 sm:grid-cols-2">
@@ -722,8 +858,20 @@ export function DecideBody({
      * the arrival the same thing, and the arrival is the half the player is waiting for.
      */
     <div key={mission.id} className="flex min-h-full flex-col">
-      {/* Station 3 — the question, under a rule. Uniform connectedness beats a gap. */}
-      <div data-region="question" className="m-swap border-b border-(--color-line) bg-(--color-surface) px-6 py-4">
+      {/* Station 3 — the question, under a rule. Uniform connectedness beats a gap.
+
+          `px-5`, not `px-6`. The left content edge sat at 285px here and 281px on the
+          brief — a 4px step, invisible on any one screen and taken 32 times a run, in the
+          one place a console cannot afford it: the spine the eye returns to after every
+          beat change. One gutter, both beats. */}
+      {/* `py-2.5`, down from `py-4`. The band grew twice in this change — 6px of proximity
+          correction between the question and the line under it, and 6px because the
+          disclosure's `<summary>` has to clear 24px for 2.5.8 — and two decide screens in
+          the game already overflow at 1440×900. Ten pixels came back out of the band's own
+          padding, which is internal space, rather than out of the 20px air step between
+          this station and the option row, which is what does the grouping. Net: every
+          decide screen is 2px SHORTER than before the change. */}
+      <div data-region="question" className="m-swap border-b border-(--color-line) bg-(--color-surface) px-5 py-2.5">
         <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
           {mission.eyebrow}
         </p>
@@ -733,8 +881,8 @@ export function DecideBody({
         >
           {mission.question}
         </h1>
-        <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-3">
-          <p className="text-[13px] text-(--color-muted)">{mission.prompt ?? situation[0]}</p>
+        <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3">
+          <Continuity mission={mission} state={state} fallback={situation[0]} />
           {mission.kind !== "choice" && (
             <Pill tone={ready ? "good" : "accent"}>
               {mission.kind === "investigate" ? "Choose" : "Pick"} {need} · {have}/{need}
@@ -744,7 +892,7 @@ export function DecideBody({
       </div>
 
       {/* Station 4 — the options. The only place on this screen with real word count. */}
-      <div data-region="options" data-decision className="flex-1 px-6 py-5">
+      <div data-region="options" data-decision className="flex-1 px-5 py-5">
         {mission.kind === "choice" && (
           <ChoiceList mission={mission} state={state} onToggle={onToggle} />
         )}

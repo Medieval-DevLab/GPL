@@ -4,28 +4,33 @@ import { useState } from "react";
 
 import { story } from "../content/story";
 import { causalThreads, finalVerdict, ledger } from "../engine/engine";
+import { codeFromState } from "../engine/runcode";
 import {
-  DIMENSIONS,
-  DIMENSION_META,
   STAGES,
-  type DimensionId,
+  isMission,
+  type Advisor,
   type Chapter,
   type GameState,
+  type IconId,
   type Interlude,
+  type OutcomeTone,
   type Setup,
 } from "../engine/types";
 import { Facsimile } from "./facsimile";
 import { Icon, Pill, SectionTitle } from "./icons";
+import { CardButton } from "./mission";
 import {
   BEAT_TITLE_ID,
   BadgeChip,
   Eyebrow,
   FactorGrid,
   Hidden,
+  LedgerRow,
   PrimaryButton,
   RadioGroup,
   UI_LABEL,
   artUrl,
+  quoted,
   radioTabIndex,
 } from "./shell";
 
@@ -229,13 +234,16 @@ export function SetupScreen({
         <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
           {node.eyebrow}
         </p>
+        {/* 4px to the title it belongs to, 14px to the body it heads — the eyebrow was
+            further from its own title than the title was from the paragraph below it. See
+            the same correction on the mission header in `ui/mission.tsx`. */}
         <h1
           id={BEAT_TITLE_ID}
-          className="mt-2 text-[32px] font-bold leading-[1.1] tracking-[-0.025em] text-(--color-ink)"
+          className="mt-1 text-[32px] font-bold leading-[1.1] tracking-[-0.025em] text-(--color-ink)"
         >
           {node.title}
         </h1>
-        <div className="mt-3 max-w-2xl space-y-1.5">
+        <div className="mt-3.5 max-w-2xl space-y-1.5">
           {node.body.map((p, i) => (
             <p key={i} className="text-[15px] leading-[1.55] text-(--color-ink-soft)">
               {p}
@@ -348,26 +356,13 @@ export function SetupScreen({
                 </ul>
               </div>
 
+              {/* Same object as a mission's option card, so it gets the same marker: a
+                  rule and a tick when chosen, an outlined button when not. It had the
+                  identical defect — a solid `--color-accent` pill saying "This is us" with
+                  a solid `--color-accent` pill saying "Start the pursuit" in the action bar
+                  below it (backlog 7.6). */}
               <div className="self-end p-4">
-                <span
-                  className="flex w-full items-center justify-center gap-1.5 rounded-[10px] border px-2 py-[7px] text-[13px] font-bold"
-                  style={
-                    on
-                      ? {
-                          background: "var(--color-accent)",
-                          borderColor: "var(--color-accent)",
-                          color: "#fff",
-                        }
-                      : {
-                          background: "var(--color-surface)",
-                          borderColor: "var(--color-line-strong)",
-                          color: "var(--color-accent)",
-                        }
-                  }
-                >
-                  {on ? "This is us" : "Pick this team"}
-                  <span aria-hidden="true">→</span>
-                </span>
+                <CardButton selected={on} on="This is us" off="Pick this team" />
               </div>
             </button>
           );
@@ -426,7 +421,7 @@ export function InterludeScreen({
         <p className={`eyebrow ${node.milestone ? "mt-3" : "mt-5"}`}>{node.eyebrow}</p>
         <h1
           id={BEAT_TITLE_ID}
-          className="mt-2.5 text-[32px] font-bold leading-[1.08] tracking-[-0.025em] text-(--color-ink)"
+          className="mt-1 text-[32px] font-bold leading-[1.08] tracking-[-0.025em] text-(--color-ink)"
         >
           {node.title}
         </h1>
@@ -460,255 +455,247 @@ export function InterludeScreen({
 
 /* ─────────────────────────── ending ─────────────────────────── */
 
-const TONE_DOT: Record<string, string> = {
-  strong: "var(--color-good)",
-  mixed: "var(--color-warn)",
-  hard: "var(--color-bad)",
+/**
+ * An outcome's tone, as the SAME medallion vocabulary the consequence beat uses: a tick, a
+ * balance, a warning. It used to be a bare coloured dot here — colour carrying the meaning
+ * on its own (1.4.1) — and `mixed` was drawn in `--color-warn`, which is ΔE 4.2 from
+ * `--color-bad` in normal vision and 3.1 under protanopia. The two most common outcomes in
+ * the game were the same dot.
+ */
+const TONE_MARK: Record<OutcomeTone, { icon: IconId; colour: string }> = {
+  strong: { icon: "check", colour: "var(--color-good)" },
+  mixed: { icon: "scale", colour: "var(--color-text-muted)" },
+  hard: { icon: "warning", colour: "var(--color-bad)" },
 };
 
-const LEDGER_COLOUR = {
-  good: "var(--color-good)",
-  neutral: "var(--color-accent)",
-  bad: "var(--color-bad)",
-} as const;
-
-/**
- * Three arcs, one per dimension, with the run's score in the middle.
- *
- * The mockups put a letter grade in a ring here, and the PRD does too. We keep their
- * geometry and drop the letter: a grade invites the player to optimise the grader, and
- * `docs/ENGAGEMENT-MODEL.md` rejects an end-of-run rank outright. Three arcs say the same
- * thing better anyway — you can see at a glance which one took the strain.
- */
-function BalanceRing({ dims }: { dims: Record<DimensionId, number> }) {
-  const size = 148;
-  const c = size / 2;
-  const rings = DIMENSIONS.map((d, i) => ({
-    d,
-    i,
-    r: 62 - i * 15,
-    colour: `var(${DIMENSION_META[d].fillVar})`,
-    value: dims[d],
-  }));
-  const score = Math.round((dims.win + dims.profit + dims.deliver) / 3);
-
-  return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-        <g transform={`rotate(-90 ${c} ${c})`}>
-          {rings.map(({ d, i, r, colour, value }) => {
-            const circ = 2 * Math.PI * r;
-            const arc = (circ * value) / 100;
-            return (
-              <g key={d}>
-                <circle
-                  cx={c}
-                  cy={c}
-                  r={r}
-                  fill="none"
-                  stroke="var(--color-canvas-deep)"
-                  strokeWidth={9}
-                />
-                {/**
-                 * The three arcs draw themselves, 1,100ms, 120ms apart.
-                 *
-                 * The longest animation in the game and the only screen that can afford
-                 * it: the run is over, there is nothing to do but read, and this is the
-                 * summing-up. It is `stroke-dashoffset`, so the arc is revealed along its
-                 * own path rather than scaled or wiped.
-                 *
-                 * The numbers beside it deliberately do NOT count up from zero, and the
-                 * distinction matters: an arc being drawn reads as the interface drawing a
-                 * summary, whereas a number ticking 0 → 64 reads as a claim that the value
-                 * used to be 0. It never was — every dimension starts the run near 50. A
-                 * count-up here would be a 1.1-second lie about the player's own data.
-                 */}
-                <circle
-                  className="m-draw"
-                  style={
-                    {
-                      "--gpl-arc": arc,
-                      animationDelay: `${i * 120}ms`,
-                    } as React.CSSProperties
-                  }
-                  cx={c}
-                  cy={c}
-                  r={r}
-                  fill="none"
-                  stroke={colour}
-                  strokeWidth={9}
-                  strokeLinecap="round"
-                  strokeDasharray={`${arc} ${circ}`}
-                />
-              </g>
-            );
-          })}
-        </g>
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[24px] font-bold leading-none tabular-nums text-(--color-ink)">
-          {score}
-        </span>
-      </div>
-    </div>
-  );
+/** The colleague who briefed a mission, for attributing what they said to watch for. */
+function advisorFor(missionId: string): Advisor | undefined {
+  const node = story.nodes[missionId];
+  return node && isMission(node) ? node.advisor : undefined;
 }
 
+/**
+ * THE CLOSING DEBRIEF — lean on screen, dense in print. Two views, one data source.
+ *
+ * What was here overflowed the working area by 2,700px at 1440×900 (3,439 in 739) and by
+ * 1,967–2,782px depending on the path taken: 598–657 words, one declared region, 10–12
+ * distinct fills, and a concentric gauge that drew Winability 100 as a 408px arc and
+ * Deliverability 100 as a 283px one — a 31% error in the last image the game leaves
+ * anybody with. It stated the same three numbers twice in two visual languages, swapped
+ * the established target / coins / layers pictograms for `◆ ● ▲` after 46 screens, and on
+ * some paths sliced the ledger mid-word at the fold.
+ *
+ * Four decisions, in the order they matter:
+ *
+ * 1. **The ring is gone.** Concentric arcs cannot compare: equal values are drawn at
+ *    different lengths by construction, because circumference is a function of radius.
+ *    Its replacement is `FactorGrid` — the same three-panel small multiple the resolving
+ *    beat already uses, with three equal-width tracks on a shared baseline, so 100 and 100
+ *    are the same length to the pixel. The three numbers are now stated once.
+ * 2. **The dense artefact moved to `@media print`, not to a deleted state.** The audit
+ *    trail a facilitator needs — every decision, every outcome headline, every
+ *    colleague's watch-for, the ledger's detail lines, the run code — is in the DOM and
+ *    the print stylesheet in `index.css` reveals it. Nothing is lost; it is deferred to
+ *    the medium that has the pages for it.
+ * 3. **Full width, on the spine.** It was `max-w-3xl` centred, so its content edge sat at
+ *    356px while every other beat in the game sits at 281px, and it used half the window
+ *    on the one screen a cohort reads side by side. Two bands and a three-column sheet.
+ * 4. **`watchFor` is rendered at last** — 32 lines authored, 0 rendered, 471 words
+ *    (backlog 4.3) — inside `Your decisions`, in the voice of the colleague who said it.
+ *    Not as an interface caption: 21 of the 30 imperatives in the game live in this field,
+ *    and an interface that tells the player what to notice is the lecture this game keeps
+ *    removing. A named person with a job and a stake saying it about a decision the player
+ *    actually made is a debrief.
+ */
 export function EndingScreen({ state }: { state: GameState }) {
   const verdict = finalVerdict(state.dims, state.flags);
   const threads = causalThreads(state, story);
   const account = ledger(state);
+  const runCode = codeFromState(state, story);
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-8">
-      {/* One gesture for the verdict, and then the page holds still.
-
-          No cascade down the rest of this screen, deliberately. It is ~3,000px long, so
-          most of a mount-time stagger would play where nobody is looking, and a
-          scroll-triggered reveal would leave every section below the fold at opacity 0 —
-          invisible in a full-page screenshot and, worse, in a print. The summing-up motion
-          on this screen is the ring drawing itself, once, at the top. */}
-      <div className="m-enter">
-        <Eyebrow>How it ended</Eyebrow>
-        <h1
-          id={BEAT_TITLE_ID}
-          className="mt-2.5 text-[32px] font-bold leading-[1.1] tracking-[-0.025em] text-(--color-ink)"
-        >
-          {verdict.title}
-        </h1>
-        <p className="mt-4 text-[15px] leading-[1.6] text-(--color-ink-soft)">{verdict.summary}</p>
-      </div>
-
-      <div className="card mt-7 p-6">
-        <div className="flex flex-col items-center gap-6 sm:flex-row">
-          <BalanceRing dims={state.dims} />
-          <div className="min-w-0 flex-1">
-            <FactorGrid dims={state.dims} />
-          </div>
-        </div>
-        <p className="mt-5 border-t border-(--color-line) pt-4 text-[13px] leading-relaxed text-(--color-muted)">
-          No engagement finishes level on all three. The one that gave is the one you decided
-          could.
-        </p>
-      </div>
-
-      {account.length > 0 && (
-        <div className="mt-7">
-          <SectionTitle icon="layers">The account</SectionTitle>
-          <p className="mt-1.5 text-[13px] text-(--color-muted)">
-            What you learned, what you promised, and what you spent to get here.
+    /* One gesture for the whole debrief, and then it holds still. No cascade: the screen
+       now fits, so a stagger would be five animations over one page rather than a sequence
+       the reader follows — and `m-enter` is opacity only, so it survives `reduce` as a
+       dissolve instead of being deleted. */
+    <div className="m-enter flex min-h-full flex-col px-5 py-3">
+      {/* ── band 1 · the verdict, and where it left the three ─────────────────── */}
+      <div data-region="verdict" className="flex flex-wrap items-start gap-x-8 gap-y-4">
+        <div className="min-w-0 flex-1">
+          {/* "How it ended" is load-bearing beyond the copy: `tools/verify.mjs` and
+              `tools/measure.mjs` both identify this beat by this exact string. */}
+          <Eyebrow>How it ended</Eyebrow>
+          <h1
+            id={BEAT_TITLE_ID}
+            className="mt-1 text-[32px] font-bold leading-[1.1] tracking-[-0.025em] text-(--color-ink)"
+          >
+            {verdict.title}
+          </h1>
+          <p className="mt-3.5 max-w-[66ch] text-[15px] leading-[1.6] text-(--color-ink-soft) text-pretty">
+            {verdict.summary}
           </p>
-          <div className="card mt-3 overflow-hidden">
-            {account.map((e) => (
-              <div
-                key={e.label}
-                className="flex gap-3 border-b border-(--color-line) px-5 py-3 last:border-b-0"
-              >
-                <span className="mt-0.5 shrink-0" style={{ color: LEDGER_COLOUR[e.tone] }}>
-                  <Icon
-                    name={e.tone === "good" ? "check" : e.tone === "bad" ? "warning" : "layers"}
-                    size={15}
-                  />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[13px] font-bold text-(--color-ink)">{e.label}</p>
-                  <p className="text-[13px] leading-snug text-(--color-muted)">{e.detail}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
-      {threads.length > 0 && (
-        <div className="mt-8">
-          <SectionTitle icon="target">What led to what</SectionTitle>
-          <p className="mt-1.5 text-[13px] text-(--color-muted)">
-            Each of these starts with something you chose.
-          </p>
-          <div className="mt-3 space-y-3">
-            {threads.map((t, i) => (
-              <div key={i} className="card overflow-hidden">
-                <div className="border-l-[3px] border-(--color-accent) px-5 py-3.5">
-                  <p className="text-[15px] leading-relaxed text-(--color-ink)">{t.because}</p>
-                  <p className="mt-1.5 flex items-start gap-2 text-[15px] leading-relaxed text-(--color-ink-soft)">
-                    <span
-                      aria-hidden="true"
-                      className="mt-0.5 shrink-0 font-bold text-(--color-accent)"
-                    >
-                      →
-                    </span>
-                    {t.soLater}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {state.badges.length > 0 && (
-        <div className="mt-8">
-          <SectionTitle icon="check" tone="good">
-            How you played
-          </SectionTitle>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {state.badges.map((b) => (
-              <BadgeChip key={b} id={b} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="mt-8">
-        <SectionTitle icon="flag">Your decisions</SectionTitle>
-        <ol className="mt-4 space-y-0">
-          {state.history.map((h, i) => {
-            const stage = STAGES.find((s) => s.id === h.stage);
-            return (
-              <li key={h.missionId} className="relative flex gap-4 pb-6">
-                {i < state.history.length - 1 && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute left-[7px] top-5 h-full w-px bg-(--color-line-strong)"
-                  />
-                )}
-                <span
-                  aria-hidden="true"
-                  className="relative z-10 mt-1.5 h-3.5 w-3.5 shrink-0 rounded-full ring-4 ring-(--color-canvas)"
-                  style={{ background: TONE_DOT[h.tone] }}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Pill tone="neutral">{stage?.label}</Pill>
-                    <span className="text-[12px] font-medium text-(--color-faint)">
-                      {h.missionTitle}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-[15px] font-bold text-(--color-ink)">{h.chosenLabel}</p>
-                  <p className="text-[13px] leading-relaxed text-(--color-ink-soft)">
-                    {h.headline}
-                  </p>
-                </div>
+          {state.badges.length > 0 && (
+            <ul className="mt-3.5 flex flex-wrap items-center gap-1.5">
+              <li className="text-[12px] font-bold uppercase tracking-[0.07em] text-(--color-muted)">
+                {UI_LABEL.howYouPlayed}
               </li>
-            );
-          })}
-        </ol>
+              {state.badges.map((b) => (
+                <li key={b}>
+                  <BadgeChip id={b} compact />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* The one card in band 1, and the only chart on the screen. */}
+        <section data-region="standing" className="card w-full shrink-0 px-4 py-3 lg:w-[468px]">
+          <SectionTitle icon="chart" className="mb-2">
+            {UI_LABEL.standing}
+          </SectionTitle>
+          <FactorGrid dims={state.dims} />
+          <p className="mt-2.5 border-t border-(--color-line) pt-2 text-[13px] leading-snug text-(--color-muted) text-pretty">
+            No engagement finishes level on all three. The one that gave is the one you decided
+            could.
+          </p>
+        </section>
       </div>
 
-      <div
-        className="card mt-9 p-6"
-        style={{
-          background: "var(--color-accent-tint)",
-          borderColor: "var(--color-accent-ring)",
-        }}
-      >
-        <p className="text-[18px] font-bold text-(--color-accent-deep)">Run it differently</p>
-        <p className="mt-2 text-[15px] leading-relaxed text-(--color-ink-soft)">
-          Ask different questions at the start and the same decisions later on produce a different
-          engagement. The most interesting version of this is the second one.
+      {/* ── band 2 · the account ──────────────────────────────────────────────────
+          Three columns at this width, so every entry's detail line lands on one line
+          instead of a 660px measure reflowing into two. `flag`, not `layers`: the account
+          is a position, and `layers` belongs to Deliverability. */}
+      {account.length > 0 && (
+        <section data-region="account" className="mt-5">
+          <SectionTitle icon="flag" className="mb-2">
+            {UI_LABEL.account}
+          </SectionTitle>
+          <ul className="grid gap-x-8 gap-y-2.5 sm:grid-cols-2 xl:grid-cols-3">
+            {account.map((e) => (
+              <LedgerRow key={e.label} entry={e} size={15} bare />
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* ── band 3 · what led to what ────────────────────────────────────────────
+          The payoff of the whole design, and empty on 77% of runs (backlog 1.5), so it
+          must cost nothing when it is absent. Three across rather than three down. */}
+      {threads.length > 0 && (
+        <section data-region="threads" className="mt-6">
+          <SectionTitle icon="spark" className="mb-2">
+            {UI_LABEL.ledToWhat}
+          </SectionTitle>
+          <div className="grid gap-x-8 gap-y-3 lg:grid-cols-2 xl:grid-cols-3">
+            {threads.map((t, i) => (
+              <div
+                key={i}
+                className="break-inside-avoid border-l-[3px] border-(--color-accent) pl-3 text-[15px] leading-snug"
+              >
+                <p className="text-(--color-ink) text-pretty">{t.because}</p>
+                <p className="mt-1.5 flex items-start gap-1.5 text-(--color-ink-soft) text-pretty">
+                  <span aria-hidden="true" className="shrink-0 font-bold text-(--color-accent)">
+                    →
+                  </span>
+                  {t.soLater}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── band 4 · the run itself ──────────────────────────────────────────────
+          Collapsed on screen, open in print. The summary carries the SHAPE of the run as
+          one mark per decision, so the collapsed state still says something true: a row of
+          ticks reads differently from a row of warnings across a room. */}
+      <section data-region="decisions" className="mt-6 pb-1">
+        <SectionTitle icon="clock" className="mb-1.5">
+          {UI_LABEL.decisions}
+        </SectionTitle>
+        <details className="only-print-open">
+          {/* The heading is NOT inside the summary: `<summary>` takes phrasing content or
+              one heading element, not both, and the run strip has to sit beside the
+              affordance rather than inside a heading. Same shape as the rail's ledger
+              disclosure, which is the other one in the game. */}
+          {/* `w-fit`, so the focus ring encloses the affordance rather than 1,374px of
+              empty row. A full-width ring around a half-width control reads as a bug. */}
+          <summary className="flex w-fit min-h-[24px] cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1.5">
+            <span aria-hidden="true" className="flex items-center gap-1">
+              {state.history.map((h) => (
+                <span key={h.missionId} style={{ color: TONE_MARK[h.tone].colour }}>
+                  <Icon name={TONE_MARK[h.tone].icon} size={13} />
+                </span>
+              ))}
+            </span>
+            <span className="text-[13px] text-(--color-muted)">
+              <span className="font-bold text-(--color-ink) tabular-nums">
+                {state.history.length}
+              </span>{" "}
+              in order <span className="text-(--color-accent)">{UI_LABEL.decisionsOpen}</span>
+            </span>
+          </summary>
+
+          <ol className="mt-2.5 grid gap-x-8 gap-y-2.5 xl:grid-cols-2">
+            {state.history.map((h) => {
+              const stage = STAGES.find((s) => s.id === h.stage);
+              const mark = TONE_MARK[h.tone];
+              const advisor = advisorFor(h.missionId);
+              return (
+                <li key={h.missionId} className="flex gap-2.5 break-inside-avoid">
+                  <span className="mt-[3px] shrink-0" style={{ color: mark.colour }}>
+                    <Icon name={mark.icon} size={15} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[12px] font-bold uppercase tracking-[0.07em] text-(--color-muted)">
+                      {stage?.label}
+                      <span className="ml-2 font-medium normal-case tracking-normal">
+                        {h.missionTitle}
+                      </span>
+                    </p>
+                    <p className="text-[13px] font-bold text-(--color-ink) text-pretty">
+                      {h.chosenLabel}
+                    </p>
+                    {/* The outcome headline is the one line of this row a player has
+                        already read, on the consequence screen. It is the facilitator's
+                        column, so it prints and does not compete on screen. */}
+                    <p className="only-print text-[13px] leading-snug text-(--color-ink-soft) text-pretty">
+                      {h.headline}
+                    </p>
+                    {/* 4.3 · what the colleague told you to watch for, in their voice.
+                        Never rendered without a name: unattributed, it is the interface
+                        telling the player what to notice. */}
+                    {h.lesson.watchFor && advisor && (
+                      <p className="mt-0.5 text-[13px] leading-snug text-(--color-ink-soft) text-pretty">
+                        <span className="font-bold text-(--color-ink)">{advisor.name}: </span>
+                        {quoted(h.lesson.watchFor)}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </details>
+      </section>
+
+      {/**
+       * The run code, at the one moment it is worth anything.
+       *
+       * Eight base32 characters that replay this exact run, because the game is
+       * deterministic — and until now the only screen that ever showed one was the
+       * failure path where a save could not be read. It is the mechanism behind peer
+       * comparison, facilitator pre-reading and exact bug repro (backlog 8.2), and the
+       * debrief is where a cohort actually wants to swap them. On paper it is the
+       * difference between an artefact and an anecdote.
+       */}
+      {runCode && (
+        <p className="mt-6 border-t border-(--color-line) pt-2.5 text-[13px] text-(--color-muted)">
+          <span className="font-bold text-(--color-ink)">{UI_LABEL.runCode}: </span>
+          <span className="font-bold tracking-[0.04em] text-(--color-accent-deep)">{runCode}</span>
         </p>
-      </div>
+      )}
     </div>
   );
 }

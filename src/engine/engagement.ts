@@ -21,7 +21,7 @@
  * reproducible from its seed. No `Math.random` anywhere in `src/engine`.
  */
 
-import { finalVerdict, getNode, leastMovedSet } from "./engine";
+import { finalVerdict, getNode, leastMovedSet, scoreOf } from "./engine";
 import { pastSetup, playMission, possibleSelections } from "./analysis";
 import {
   DIMENSIONS,
@@ -31,17 +31,6 @@ import {
   type GameState,
   type Mission,
 } from "./types";
-
-/**
- * The mean of the three meters — the number the header calls "Score".
- *
- * Computed here rather than imported, because `scoreOf` lives in `src/ui/shell.tsx` and
- * `src/engine` may not import from the UI. That it lives there at all is a small bug of
- * its own: a score is a game rule, and CLAUDE.md puts rules in the engine.
- */
-function meanOfMeters(dims: Record<DimensionId, number>): number {
-  return Math.round(DIMENSIONS.reduce((total, d) => total + dims[d], 0) / DIMENSIONS.length);
-}
 
 /* ───────────────────────────── policies ───────────────────────────── */
 
@@ -57,8 +46,16 @@ export interface Policy {
   pick: (options: string[][], mission: Mission, state: GameState, rng: () => number) => string[];
 }
 
-/** Deterministic 32-bit PRNG (mulberry32). Seeded, so any failure replays exactly. */
-function seeded(seed: number): () => number {
+/**
+ * Deterministic 32-bit PRNG (mulberry32). Seeded, so any failure replays exactly.
+ *
+ * Exported for `budget.ts`, which samples random play to measure the delta economy, so
+ * that the two instruments draw from the same stream given the same seed and a divergence
+ * between them is a real difference rather than two different coins. `analysis.test.ts`
+ * and `runcode.test.ts` each carry their own copy; those are tests sampling their own
+ * space, and a test that borrows the subject's randomness is testing itself.
+ */
+export function seeded(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -209,7 +206,7 @@ export function runPolicy(
       policy: policy.id,
       reads: policy.reads,
       dims: s.dims,
-      score: meanOfMeters(s.dims),
+      score: scoreOf(s.dims),
       verdict: verdict.title,
       badges: s.badges.length,
       threads: 0,
@@ -233,18 +230,32 @@ export interface EngagementReport {
 }
 
 /**
+ * Every fixed policy, across every starting advantage. Deterministic, and cheap.
+ *
+ * Separated from `engagementReport` because `budget.ts` needs exactly this — the best a
+ * non-reader can do — once per value of k, and the random floor beside it costs three
+ * hundred playthroughs it does not need. Reusing the function rather than copying the loop
+ * means the "best non-reader" in the k table is the same population as the one the
+ * engagement gate fails on, which is the only way the two numbers can be compared.
+ */
+export function nonReaderRuns(content: Content): PolicyResult[] {
+  const advantages = setupOptionIds(content);
+  const results: PolicyResult[] = [];
+  for (const policy of NON_READER_POLICIES) {
+    for (const advantage of advantages) {
+      results.push(runPolicy(content, policy, advantage, 1));
+    }
+  }
+  return results;
+}
+
+/**
  * The full report. `samples` controls only the random floor; the fixed policies are
  * deterministic and run once per starting advantage.
  */
 export function engagementReport(content: Content, samples = 400): EngagementReport {
   const advantages = setupOptionIds(content);
-
-  const nonReaders: PolicyResult[] = [];
-  for (const policy of NON_READER_POLICIES) {
-    for (const advantage of advantages) {
-      nonReaders.push(runPolicy(content, policy, advantage, 1));
-    }
-  }
+  const nonReaders = nonReaderRuns(content);
 
   const verdicts: Record<string, number> = {};
   let totalScore = 0;

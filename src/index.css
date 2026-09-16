@@ -10,7 +10,37 @@
    and carries no data; the three DIMENSION hues carry magnitude the
    player reads. Colour never carries meaning alone.
    ─────────────────────────────────────────────────────────────── */
-@theme {
+/* `static`, and this is not a formality — it fixes a live rendering defect.
+ *
+ * Tailwind v4 tree-shakes `@theme`: it emits only the custom properties it can SEE being
+ * used, by scanning the source for the literal token name. Half this palette is named
+ * from a template literal — `var(--color-${d}-tint)` for the meter tracks,
+ * `var(${meta.fillVar})` for their fills — and a scanner cannot follow that. So of the
+ * 114 tokens this file declares, **21 resolved to the empty string in the browser**, and
+ * two of them were load-bearing:
+ *
+ *     --color-profit-tint     ''      the Profitability meter's track
+ *     --color-deliver-tint    ''      the Deliverability meter's track
+ *
+ * Two of the three meters had no track fill at all, on every one of the 31 beats, while
+ * DESIGN-SYSTEM.md documents the tinted track as deliberate: "a tinted track gives each
+ * dimension a readable band whether its value is 8 or 80". `--color-win-tint` survived —
+ * and the reason is the best argument in this file for `static`: the string appears in a
+ * CODE COMMENT thirty lines below, so Tailwind's scanner found it there. The Winability
+ * track was tinted because of a comment about a bug.
+ *
+ * Nothing could see it. `tokens.test.ts` parses this file and asserts each tint is
+ * declared exactly once and is not self-referential — both true. A screenshot shows a
+ * near-white track where `#d7f5e8` should be, which is a difference of 1.05:1 against the
+ * card. Only resolving the tokens in a real browser finds it, which is the same lesson as
+ * D-010 and the same lesson as the self-referential tints before that: **declaration is
+ * not resolution.**
+ *
+ * The cost of `static` is the 19 genuinely-unused tokens it now also emits — the `-line`
+ * hairlines, the `--text-*` steps the codebase spells as arbitrary values, two shadows.
+ * Measured, by building both ways: **7.98 kB → 8.15 kB gzipped, +0.17 kB**, against the
+ * alternative of a palette whose documentation cannot be trusted. */
+@theme static {
   /* ═══════════════════════════════════════════════════════════════════════════
      L1 · REFERENCE — raw ramps. Never referenced from a component.
 
@@ -446,13 +476,14 @@
     scroll-behavior: auto !important;
   }
 
-  /* Anything whose movement was the point becomes instant rather than slow. */
+  /* Anything whose movement was the point becomes instant rather than slow.
+     `.m-draw` is no longer in this list because it no longer exists: the concentric
+     gauge it animated is deleted (backlog 7.4). */
   .m-deal > *,
   .m-seq > *,
   .m-land,
   .m-gate,
-  .m-settle,
-  .m-draw {
+  .m-settle {
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
   }
@@ -605,6 +636,111 @@
 
 /* Shimmer used on the "resolving" beat */
 
+/* ─── the two views of the closing debrief ──────────────────
+   The debrief is LEAN ON SCREEN and DENSE IN PRINT, from one set of
+   DOM nodes. `.only-print` marks the facilitator's columns — the
+   outcome headline beside each decision, a badge's note, the ledger's
+   detail lines, the run code — which are in the document at all times
+   and shown only on paper. See `EndingScreen` in `ui/screens.tsx`.
+
+   It is `display: none` rather than a visually-hidden clip, and the
+   distinction is deliberate: these are not alternatives to something
+   on screen, so exposing them to a screen reader would read the same
+   run twice. The print stylesheet below reveals them. */
+.only-print {
+  display: none;
+}
+
+}
+
+/* ─── print ─────────────────────────────────────────────────────
+   The facilitator's artefact.
+
+   The closing debrief used to try to be both things at once and was
+   neither: 598–657 words in one column, overflowing the working area
+   by 2,700px at 1440×900 and slicing the ledger mid-word at the fold
+   on some paths. The panel's direction was two views of one data
+   source — lean on screen, dense on paper — and this is the second
+   view. A cohort reads the screen side by side; a facilitator prints
+   the whole account, every decision, every colleague's watch-for and
+   the eight-character run code that reproduces it exactly.
+
+   Nothing here is a second layout. It undoes three things the console
+   does on purpose and reveals what the screen defers:
+
+     1. the console OWNS the viewport and scrolls its own work area,
+        which on paper would print one screenful and clip the rest;
+     2. the chrome — top bar, chapter stepper, action bar — is
+        navigation, and paper has none;
+     3. the disclosures are collapsed, and a printed page cannot be
+        clicked.
+
+   `lg:` and `xl:` variants are width-scoped, so at A4's 794px they
+   already drop out; everything below is stated explicitly anyway,
+   because relying on a page size to undo a layout is a bug waiting
+   for A3.                                                          */
+@media print {
+  html,
+  body {
+    overflow: visible !important;
+    height: auto !important;
+    /* Radial washes over 210mm of paper is somebody's toner. */
+    background: #fff !important;
+  }
+
+  [data-console] {
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  [data-work-area] {
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  .only-print {
+    display: block;
+  }
+
+  /* A closed `<details>` is not clickable on paper, so the one on the
+     debrief opens. Two declarations because the mechanism changed: a
+     closed disclosure used to hide its children with `display: none`
+     and now hides `::details-content` with `content-visibility`, so
+     each line covers a different generation of browser and neither
+     is sufficient on its own. */
+  details.only-print-open::details-content {
+    content-visibility: visible;
+  }
+  details.only-print-open > *:not(summary) {
+    display: block !important;
+  }
+  details.only-print-open > summary {
+    list-style: none;
+  }
+
+  /* The three meters ARE the data on this page, so they print even
+     when the browser is dropping backgrounds. Scoped to the meter, so
+     nothing else forces ink. */
+  [role="meter"],
+  [role="meter"] * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* A decision, its outcome and what a colleague said about it are one
+     record and must not be split across a page. */
+  li,
+  section {
+    break-inside: avoid;
+  }
+
+  @page {
+    margin: 14mm;
+  }
 }
 
 @layer base {

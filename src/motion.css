@@ -28,7 +28,6 @@
  *   m-land      one object arriving with weight.                  scale, slight overshoot.
  *   m-arrive    the same, for a NEGATIVE value. no scale. see below — this asymmetry is
  *               the most deliberate thing in this file.
- *   m-draw      an arc drawing itself.                            stroke-dashoffset.
  *   m-settle    a meter travelling to a new value.                scaleX.
  *   m-press     a control acknowledging a press.                  scale.
  *   m-gate      the primary action becoming available.            scale.
@@ -66,9 +65,14 @@
    * factor bars already used before this file existed, so nothing had to be retuned.
    */
   --gpl-settle: 900ms;
-  /* An arc drawing itself on the closing debrief. The longest thing in the game, and the
-     only screen that can afford it: the run is over and there is nothing to do but read. */
-  --gpl-draw: 1100ms;
+  /* `--gpl-draw: 1100ms` was here, for an arc drawing itself on the closing debrief.
+     Deleted with the concentric gauge it animated (backlog 7.4): the ring drew two equal
+     values as arcs of 408px and 283px, because circumference is a function of radius, so
+     the longest animation in the game was spending 1.1 seconds carefully revealing a 31%
+     error. Its replacement is a small multiple on a shared baseline, which has nothing to
+     reveal along a path — the debrief is now still, and `m-enter` carries its arrival.
+     Kept as a note rather than as a token, because an unused animation is the kind of
+     thing that gets reattached to the next round thing somebody draws. */
 
   /* Steps between members of a set. 80ms across the three meters — inside Kowalski's
      30–80ms band, at the top of it, because these are three consequences rather than
@@ -171,15 +175,6 @@
   }
 }
 
-@keyframes gpl-draw {
-  from {
-    stroke-dashoffset: var(--gpl-arc, 0);
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
 /* ─────────────────────────────── utilities ───────────────────────────────
    In `utilities` because that is the last layer Tailwind declares, so these win against
    `index.css`'s `@layer components` despite this file being `@import`ed at the TOP of it.
@@ -228,10 +223,6 @@
   }
   .m-arrive {
     animation: gpl-in var(--gpl-reveal) var(--gpl-ease-standard) both;
-  }
-
-  .m-draw {
-    animation: gpl-draw var(--gpl-draw) var(--gpl-ease-out) both;
   }
 
   /**

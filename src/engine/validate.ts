@@ -338,7 +338,12 @@ export function validateContent(content: Content): Issue[] {
   for (const where of dimGated) {
     warn(
       where,
-      "condition gates on a dimension value — analysis.ts dedupes on flags only, so sweep coverage is no longer exhaustive. Widen the dedup key or remove the dimension gate.",
+      "condition gates on a dimension value. `analysis.ts` now buckets a gated dimension " +
+        "into the dedup key, so coverage survives this — but at a cost, and with one rule. " +
+        "The cost: one gate takes the sweep from ~162k states to ~520k; two use a third of " +
+        "MAX_FRONTIER and three breach it. The rule: the threshold must sit on a ten-point " +
+        "bucket boundary, or two states either side of it collapse into one and the branch " +
+        "silently stops being reachable. The sweep throws if it does not.",
     );
   }
 

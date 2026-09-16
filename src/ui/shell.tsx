@@ -21,6 +21,7 @@ import {
   type Advisor,
   type BadgeId,
   type Chapter,
+  type Content,
   type DimensionId,
   type IconId,
 } from "../engine/types";
@@ -55,11 +56,44 @@ export const UI_LABEL = {
   /** recovering a run this build can no longer read — see engine/save.ts */
   runCode: "Your run code",
   continueFromCode: "Continue from this code",
+  /** the decide beat's disclosure — backlog 4.1. Both are interface state, not story:
+      one names an affordance, the other labels a field content already authors. */
+  showBrief: "— the brief",
+  objective: "You are trying to:",
+  /** the ledger disclosure, where the count decides the noun */
+  inPlayOne: "thing in play",
+  inPlayMany: "things in play",
+  show: "— show",
+  /** the closing debrief's section headings and its one disclosure */
+  standing: "Where you ended up",
+  account: "The account",
+  decisions: "Your decisions",
+  decisionsOpen: "— and what they told you to watch for",
+  ledToWhat: "What led to what",
+  howYouPlayed: "How you played",
 } as const;
 
 /** Visually-hidden text: what an icon or a dot row says to the eye and to nothing else. */
 export function Hidden({ children }: { children: React.ReactNode }) {
   return <span className="sr-only">{children}</span>;
+}
+
+/**
+ * A quotation, as ONE string.
+ *
+ * `“{advisor.quote}”` looks like one sentence and is three sibling text nodes, so the
+ * browser is free to break between the last word and the closing mark — and it does,
+ * because a 13px italic quote in a 248px rail or a 300px bar is exactly the measure where
+ * the last word lands near the edge. Every consequence screen in the game was rendering an
+ * orphaned `”` alone on its own line, twice.
+ *
+ * Interpolating makes the closing mark part of the final word, so there is nothing for the
+ * line-breaker to separate. `text-pretty` then handles the rest of the ragged edge; on its
+ * own it could not have fixed this, because the orphan was not a bad break, it was a legal
+ * one between two independent nodes.
+ */
+export function quoted(text: string): string {
+  return `“${text}”`;
 }
 
 /* ───────────────────────────── motion, in JavaScript ─────────────────────────────
@@ -448,7 +482,8 @@ export function TopBar({
 }) {
   return (
     <>
-      <header className="flex h-[66px] shrink-0 items-center gap-6 border-b border-(--color-line) px-5">
+      {/* Navigation, and paper has none. */}
+      <header className="flex h-[66px] shrink-0 items-center gap-6 border-b border-(--color-line) px-5 print:hidden">
         <div className="flex shrink-0 items-center gap-2.5">
           <span
             aria-hidden="true"
@@ -483,7 +518,7 @@ export function TopBar({
         </div>
       </header>
 
-      <div className="flex shrink-0 justify-center border-b border-(--color-line) py-2 xl:hidden">
+      <div className="flex shrink-0 justify-center border-b border-(--color-line) py-2 xl:hidden print:hidden">
         <ChapterStepper chapters={chapters} current={currentChapter} compact />
       </div>
     </>
@@ -534,8 +569,12 @@ export function Console({
   }, [focusKey]);
 
   return (
-    <div className="lg:h-screen lg:p-3">
+    <div className="lg:h-screen lg:p-3 print:h-auto print:p-0">
+      {/* `data-console` is the print stylesheet's only hook on the frame. The console
+          owns the viewport and scrolls its own work area, which on paper would print one
+          screenful and clip the rest — see `@media print` in `index.css`. */}
       <div
+        data-console
         className="flex min-h-screen flex-col overflow-hidden border-(--color-line) bg-(--color-surface) lg:min-h-0 lg:h-full lg:rounded-[18px] lg:border"
         style={{ boxShadow: "0 1px 2px rgb(20 18 31/0.04), 0 18px 50px rgb(20 18 31/0.08)" }}
       >
@@ -554,7 +593,7 @@ export function Console({
             data-work-area
             tabIndex={-1}
             aria-labelledby={BEAT_TITLE_ID}
-            className="order-1 min-w-0 flex-1 lg:order-2 lg:overflow-y-auto"
+            className="order-1 min-w-0 flex-1 lg:order-2 lg:overflow-y-auto print:overflow-visible"
             style={{ background: "var(--color-canvas)" }}
           >
             {children}
@@ -593,13 +632,17 @@ export function RailCard({
   region?: string;
   children: React.ReactNode;
 }) {
+  /* 10px above the rule and 10px below it, so a section boundary is 20px of air with a
+     hairline in it, against 6px inside a group. See `RAIL_INTRA` below: the ratio is what
+     does the grouping, and at 14 + 14 = 28px against a 10px intra step the rail was
+     spending more space on its own seams than on the relationships inside them. */
   return (
     <section
       data-region={region}
-      className="border-t border-(--color-line) pt-3.5 first:border-t-0 first:pt-0"
+      className="border-t border-(--color-line) pt-2.5 first:border-t-0 first:pt-0"
     >
       {title && (
-        <SectionTitle icon={icon} tone={tone} className="mb-2.5">
+        <SectionTitle icon={icon} tone={tone} className="mb-1.5">
           {title}
         </SectionTitle>
       )}
@@ -607,6 +650,20 @@ export function RailCard({
     </section>
   );
 }
+
+/**
+ * The rail's two spacing steps, and why there are exactly two.
+ *
+ * Gestalt proximity only groups when the inside of a group is decisively tighter than the
+ * gap to the next one — practitioner rule of thumb and NN/g's own framing is a ratio of at
+ * least 2:1. The rail was running 10px inside a block against 28px between sections in
+ * some places and 2px against 14px in others, which is four steps doing the work of two.
+ *
+ * 6px intra, 20px inter. Stated as constants because three components lay the rail out and
+ * the numbers drifted the moment they were typed separately.
+ */
+export const RAIL_INTRA = "mt-1.5"; /* 6px */
+export const RAIL_INTER = "space-y-2.5"; /* 10px, plus 10px of `pt` under each rule */
 
 /**
  * Left rail: where you are, what you were asked to do, who is talking to you, and the
@@ -640,21 +697,21 @@ export function MissionRail({
   file?: { id: string; label: string; reveals: string }[];
 }) {
   return (
-    <div data-region="orientation" className="space-y-3.5">
+    <div data-region="orientation" className={RAIL_INTER}>
       <div>
         <p className="text-[12px] font-bold text-(--color-accent)">Chapter {chapter.number}</p>
         {/* Not a heading. It names where you are, and as an `h2` it outranked the beat's
             own `h1` in the heading outline while saying less than the chapter stepper
             two inches above it already says. */}
-        <p className="mt-0.5 text-[18px] font-bold leading-tight text-(--color-ink)">
+        <p className={`${RAIL_INTRA} text-[18px] font-bold leading-tight text-(--color-ink)`}>
           {chapter.title}
         </p>
-        <p className="mt-1 text-[12px] font-medium text-(--color-muted) tabular-nums">
+        <p className={`${RAIL_INTRA} text-[12px] font-medium text-(--color-muted) tabular-nums`}>
           Mission {missionNumber} of {totalMissions}
         </p>
       </div>
 
-      <ol className="space-y-0.5 border-t border-(--color-line) pt-3">
+      <ol className="space-y-0.5 border-t border-(--color-line) pt-2.5">
         {chapter.missionIds.map((id, i) => {
           const done = completed.includes(id);
           const active = id === missionId;
@@ -698,13 +755,16 @@ export function MissionRail({
       </ol>
 
       {objective && (
-        <section className="border-t border-(--color-line) pt-3.5">
-          <SectionTitle icon="target" className="mb-2">
+        <section className="border-t border-(--color-line) pt-2.5">
+          {/* `megaphone`, not `target`. "The brief" is what you have been asked to do,
+              and `target` is Winability's pictogram — which is on the same screen, two
+              rails away, with a number beside it. */}
+          <SectionTitle icon="megaphone" className="mb-1.5">
             The brief
           </SectionTitle>
           <p className="text-[13px] leading-relaxed text-(--color-ink-soft)">{objective}</p>
           {minutes !== undefined && (
-            <p className="mt-2.5 flex items-center gap-2 text-[12px] text-(--color-muted)">
+            <p className={`${RAIL_INTRA} flex items-center gap-2 text-[12px] text-(--color-muted)`}>
               <Icon name="clock" size={14} />
               About {minutes} min
             </p>
@@ -715,11 +775,11 @@ export function MissionRail({
       {advisor && <AdvisorCard advisor={advisor} />}
 
       {file && file.length > 0 && (
-        <section className="border-t border-(--color-line) pt-3.5">
-          <SectionTitle icon="search" className="mb-2">
+        <section className="border-t border-(--color-line) pt-2.5">
+          <SectionTitle icon="search" className="mb-1.5">
             Your file
           </SectionTitle>
-          <ul className="space-y-2.5">
+          <ul className="space-y-1.5">
             {file.map((e) => (
               <li key={e.id}>
                 <p className="text-[12px] font-bold text-(--color-accent-deep)">{e.label}</p>
@@ -731,6 +791,29 @@ export function MissionRail({
       )}
     </div>
   );
+}
+
+/**
+ * Everything the player has paid to find out, by label.
+ *
+ * Lives here because two beats need it and neither owns it: the brief's left rail gets it
+ * as a prop, and the decide beat has to derive it — the rail's `file` prop is `undefined`
+ * there, which is the deletion backlog 4.1 is about. Walking the node set is how
+ * `App.tsx` already computes the same list; this is the shared implementation the two
+ * should be sharing, and the `App.tsx` copy should be replaced by a call to it.
+ */
+export function discoveredEvidence(
+  content: Content,
+  discovered: readonly string[],
+): { id: string; label: string; reveals: string }[] {
+  const out: { id: string; label: string; reveals: string }[] = [];
+  for (const node of Object.values(content.nodes)) {
+    if (node.kind !== "investigate") continue;
+    for (const e of node.evidence) {
+      if (discovered.includes(e.id)) out.push({ id: e.id, label: e.label, reveals: e.reveals });
+    }
+  }
+  return out;
 }
 
 /**
@@ -747,7 +830,7 @@ export function AdvisorCard({ advisor }: { advisor: Advisor }) {
     .slice(0, 2);
 
   return (
-    <section className="border-t border-(--color-line) pt-3.5">
+    <section className="border-t border-(--color-line) pt-2.5">
       <div className="flex items-center gap-2.5">
         {advisor.photo ? (
           <img
@@ -776,8 +859,8 @@ export function AdvisorCard({ advisor }: { advisor: Advisor }) {
           <p className="truncate text-[12px] font-medium text-(--color-accent)">{advisor.role}</p>
         </div>
       </div>
-      <p className="mt-3 border-l-2 border-(--color-accent-ring) pl-3 text-[13px] italic leading-relaxed text-(--color-ink-soft)">
-        “{advisor.quote}”
+      <p className="mt-3 border-l-2 border-(--color-accent-ring) pl-3 text-[13px] italic leading-relaxed text-(--color-ink-soft) text-pretty">
+        {quoted(advisor.quote)}
       </p>
     </section>
   );
@@ -987,14 +1070,20 @@ export function FactorGrid({
         const delay = meterDelay(i);
         return (
           <div key={d}>
-            <div className="mb-2 flex items-center gap-2">
+            {/* The dimension's own pictogram — target / coins / layers — and not the
+                `◆ ● ▲` geometric glyphs this used to draw. Those appeared on exactly two
+                screens, after 46 on which the same three quantities had been identified
+                by the same three drawings, so the game changed its mind about what
+                Winability looks like at the moment it summed the run up. A pictogram is
+                one of the three things DESIGN-SYSTEM.md relies on to keep colour from
+                carrying meaning alone; swapping it for a different mark halfway through
+                breaks that redundancy rather than providing it. */}
+            <div className="mb-1.5 flex items-center gap-2">
               <span
                 className="flex items-center gap-1.5 text-[13px] font-bold"
                 style={{ color: ink }}
               >
-                <span aria-hidden="true" className="text-[12px]">
-                  {meta.glyph}
-                </span>
+                <Icon name={meta.icon} size={15} />
                 {meta.label}
               </span>
             </div>
@@ -1035,11 +1124,75 @@ export function FactorGrid({
 
 /* ───────────────────────────── the ledger ───────────────────────────── */
 
-const LEDGER_TONE: Record<LedgerEntry["tone"], { icon: IconId; tone: Tone }> = {
-  good: { icon: "check", tone: "good" },
-  neutral: { icon: "layers", tone: "accent" },
-  bad: { icon: "warning", tone: "bad" },
+/**
+ * Tone → the tile's colour, and nothing else.
+ *
+ * There used to be an `icon` here too, and it was dead: both call sites render
+ * `entry.icon`, which the engine sets per rule precisely so the ledger is not six
+ * identical dots. The dead field named `layers` for every neutral entry, which is one of
+ * the four meanings that pictogram had accumulated.
+ */
+const LEDGER_TONE: Record<LedgerEntry["tone"], Tone> = {
+  good: "good",
+  neutral: "accent",
+  bad: "bad",
 };
+
+/**
+ * One ledger row, rendered the same way everywhere it appears.
+ *
+ * The rail and the closing debrief were two copies of this markup that had already drifted
+ * apart — the debrief ignored `entry.icon` and re-derived a pictogram from the tone, so
+ * every neutral line in the account was drawn with Deliverability's `layers`. One
+ * component, one data source: `detailClass` is the only difference either caller needs,
+ * and it exists so the debrief can defer the detail line to the print stylesheet.
+ */
+export function LedgerRow({
+  entry,
+  size,
+  bare = false,
+  detailClass,
+}: {
+  entry: LedgerEntry;
+  size: number;
+  /**
+   * A bare pictogram instead of a tinted tile.
+   *
+   * The tile is right in a 248px rail, where it is one of four marks and gives a
+   * three-word label something to sit against. On the closing debrief the same list is
+   * ten to twelve rows across three columns, and ten tinted squares is scattered
+   * chroma — which `DESIGN-SYSTEM.md` measures as the thing that separates a screen that
+   * reads as designed from one that reads as a document. It also costs three of the
+   * distinct fills the debrief is over budget on.
+   */
+  bare?: boolean;
+  detailClass?: string;
+}) {
+  return (
+    <li className="flex gap-2 break-inside-avoid">
+      {bare ? (
+        <span
+          className="mt-[2px] shrink-0"
+          style={{ color: `var(--color-${LEDGER_TONE[entry.tone]})` }}
+        >
+          <Icon name={entry.icon} size={size} />
+        </span>
+      ) : (
+        <IconTile name={entry.icon} tone={LEDGER_TONE[entry.tone]} size={size} />
+      )}
+      <span className="min-w-0">
+        <span className="block text-[13px] font-bold leading-snug text-(--color-ink)">
+          {entry.label}
+        </span>
+        <span
+          className={`block text-[12px] leading-snug text-(--color-muted) ${detailClass ?? ""}`}
+        >
+          {entry.detail}
+        </span>
+      </span>
+    </li>
+  );
+}
 
 /**
  * Right rail: what you know, what you have promised, what you have spent.
@@ -1098,7 +1251,9 @@ export function InsightRail({
         </section>
       )}
 
-      <RailCard title="Where you stand" icon="layers" region="ledger">
+      {/* `flag`, not `layers`. "Where you stand" is a position, which is what a flag is,
+          and `layers` belongs to Deliverability. */}
+      <RailCard title="Where you stand" icon="flag" region="ledger">
         {collapsed && entries.length > 0 ? (
           <details>
             {/* 231×20 before, which fails 2.5.8 on the short axis. `min-h` rather than
@@ -1106,19 +1261,34 @@ export function InsightRail({
             <summary className="flex min-h-[24px] cursor-pointer list-none items-center text-[13px] text-(--color-muted)">
               {/* One flex child, so the whitespace between these spans survives — a text
                   run promoted to a flex item loses its leading and trailing spaces. */}
+              {/* "1 things in play" shipped, on the first decision of every run — the
+                  only mission where the ledger has exactly one entry. Caught by looking
+                  at the render, not by any test. */}
               <span>
-                <span className="font-bold text-(--color-ink)">{entries.length}</span> things in
-                play <span className="text-(--color-accent)">— show</span>
+                <span className="font-bold text-(--color-ink)">{entries.length}</span>{" "}
+                {entries.length === 1 ? UI_LABEL.inPlayOne : UI_LABEL.inPlayMany}{" "}
+                <span className="text-(--color-accent)">{UI_LABEL.show}</span>
               </span>
             </summary>
-            <ul className="mt-2.5 space-y-2">
+            {/**
+             * The SAME rows as the expanded rail, `detail` included.
+             *
+             * This branch used to render `e.label` alone while the branch below rendered
+             * label *and* detail, so opening the disclosure on a decision beat did not
+             * defer the ledger — it destroyed half of it. The reason a player consults
+             * the ledger mid-decision is to remember what "Timeline assumes access"
+             * actually commits them to, and that sentence is the `detail`. A label on its
+             * own is a filename.
+             *
+             * Nothing is written here and nothing is moved anywhere: it is the field the
+             * engine already computes, rendered on the beat where it was being dropped.
+             * The cost is zero layout pixels, because it is behind the affordance that
+             * was already on screen — which is also why it is the highest-priority
+             * restoration of the three (backlog 4.1).
+             */}
+            <ul className="mt-1.5 space-y-1.5">
               {entries.map((e) => (
-                <li key={e.label} className="flex gap-2">
-                  <IconTile name={e.icon} tone={LEDGER_TONE[e.tone].tone} size={22} />
-                  <span className="min-w-0 text-[12px] font-bold leading-snug text-(--color-ink)">
-                    {e.label}
-                  </span>
-                </li>
+                <LedgerRow key={e.label} entry={e} size={22} />
               ))}
             </ul>
           </details>
@@ -1127,23 +1297,10 @@ export function InsightRail({
             Nothing committed yet. Everything you learn and promise lands here.
           </p>
         ) : (
-          <ul className="space-y-2">
-            {entries.map((e) => {
-              const t = LEDGER_TONE[e.tone];
-              return (
-                <li key={e.label} className="flex gap-2">
-                  <IconTile name={e.icon} tone={t.tone} size={26} />
-                  <span className="min-w-0">
-                    <span className="block text-[13px] font-bold leading-snug text-(--color-ink)">
-                      {e.label}
-                    </span>
-                    <span className="block text-[12px] leading-snug text-(--color-muted)">
-                      {e.detail}
-                    </span>
-                  </span>
-                </li>
-              );
-            })}
+          <ul className="space-y-1.5">
+            {entries.map((e) => (
+              <LedgerRow key={e.label} entry={e} size={26} />
+            ))}
           </ul>
         )}
       </RailCard>
@@ -1279,7 +1436,7 @@ export function ActionBar({
      with no scrollbar, and focusing a prediction chip scrolled the whole application
      sideways. `gap-y-2` was already here, so wrapping was always the intent. */
   return (
-    <div data-region="commit" className="flex min-h-[66px] shrink-0 flex-wrap items-center gap-x-5 gap-y-2 border-t border-(--color-line) bg-(--color-surface) px-5 py-2.5">
+    <div data-region="commit" className="flex min-h-[66px] shrink-0 flex-wrap items-center gap-x-5 gap-y-2 border-t border-(--color-line) bg-(--color-surface) px-5 py-2.5 print:hidden">
       {aside && (
         <div className="flex w-[300px] shrink-0 items-center gap-3 rounded-xl border border-(--color-line) px-3.5 py-2.5">
           {aside.photo ? (
@@ -1293,9 +1450,9 @@ export function ActionBar({
           ) : (
             <IconTile name="bulb" tone="neutral" size={38} />
           )}
-          <p className="min-w-0 text-[13px] leading-snug text-(--color-ink-soft)">
+          <p className="min-w-0 text-[13px] leading-snug text-(--color-ink-soft) text-pretty">
             <span className="font-bold text-(--color-ink)">{aside.from}: </span>
-            “{aside.text}”
+            {quoted(aside.text)}
           </p>
         </div>
       )}
@@ -1377,8 +1534,34 @@ export function Eyebrow({ children }: { children: React.ReactNode }) {
  * of an event; at the debrief it is one row of a list arriving with the rest of its
  * section, which is what `m-seq` on the ending gives it.
  */
-export function BadgeChip({ id, animate = false }: { id: BadgeId; animate?: boolean }) {
+export function BadgeChip({
+  id,
+  animate = false,
+  compact = false,
+}: {
+  id: BadgeId;
+  animate?: boolean;
+  /**
+   * The debrief's form. `trophy`, because recognition is the one thing that pictogram
+   * means anywhere in this game — the full card used `check`, which by then stood for a
+   * completed chapter, a completed mission, an upside on an option card, a milestone, a
+   * strong outcome and a ledger entry in credit. The note is not dropped: it prints.
+   */
+  compact?: boolean;
+}) {
   const meta = BADGE_META[id];
+  if (compact) {
+    return (
+      <span
+        className="chip"
+        style={{ background: "var(--color-accent-tint)", color: "var(--color-accent-deep)" }}
+      >
+        <Icon name="trophy" size={12} />
+        {meta.label}
+        <span className="only-print font-medium">— {meta.note}</span>
+      </span>
+    );
+  }
   return (
     <div
       className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${animate ? "m-land" : ""}`}

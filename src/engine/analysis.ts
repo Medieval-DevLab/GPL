@@ -98,78 +98,207 @@ function suffixReadFlags(content: Content): Map<string, Set<string>> {
 }
 
 /**
+ * Default bucket width for a dimension that some condition reads.
+ *
+ * A dimension in the key un-collapses the state space: two states differing by one point
+ * of Winability become different states, and the frontier multiplies. Measured on this
+ * content, one gated dimension at ten-point buckets takes the walk from 176k states to
+ * 506k and from 6s to 22s. Unbucketed all three is not an option — an exhaustive walk over
+ * full dimension state exhausts 2 GB and dies.
+ */
+const DIM_BUCKET = 10;
+
+/**
+ * How the sweep keys its states, and therefore what it can and cannot see.
+ *
+ * `dimBucket` exists so a test can reproduce the *wrong* answers as well as the right one,
+ * which is the only way to know the right one is doing any work (D-037):
+ *
+ *   · `1`        exact — every point of a gated dimension is its own state. The reference,
+ *                affordable only on small content.
+ *   · `10`       the default. Tractable, and aligned with thresholds on a multiple of ten.
+ *   · `Infinity` the control: every value lands in one bucket, which is precisely the
+ *                pre-bucketing key that dropped dimensions altogether. Named rather than
+ *                described, so a test asserting what it loses cannot be mistaken for a
+ *                test of production behaviour.
+ */
+export interface SweepOptions {
+  dimBucket?: number;
+}
+
+/**
+ * Everything needed to key a state, computed once per walk.
+ *
+ * Was three positional arguments threaded through two walkers; the third was added for
+ * dimension bucketing and then had to be added again, identically, in
+ * `findRealisedDominance`. One object means the two walks cannot key differently — which
+ * matters, because the dominance detector's `share` is a fraction of the states the key
+ * admits, so a key that differs between the two silently compares different denominators.
+ */
+interface Keying {
+  /** per mission, the flags it or any later mission reads */
+  readFlags: Map<string, Set<string>>;
+  /** per mission, the dimensions it or any later mission gates on */
+  gatedDims: Map<string, DimensionId[]>;
+  /** for nodes outside `missionOrder` — setup, interludes, the ending */
+  defaultGated: DimensionId[];
+  bucket: number;
+}
+
+/**
  * Dedup key for the sweep.
  *
- * Three deliberate exclusions, each of which keeps this exact rather than approximate:
+ * Four deliberate exclusions. The first three keep it sound; the fourth is an
+ * approximation and is the only one that can cost coverage, so it is the one to read:
  *
- *  1. DIMENSIONS NOTHING GATES ON. Including all three unbucketed produced ~4.1M states
- *     and exhausted the heap; an unpruned walk over full dimension state still dies at
- *     2 GB. So only dimensions some condition actually reads enter the key, bucketed —
- *     see `gatedDimensions`. While no condition reads one, this behaves as it always did.
- *  2. FLAGS NOTHING READS. Purely narrative flags (`signed`, `conventional`…) cannot
+ *  1. FLAGS NOTHING READS. Purely narrative flags (`signed`, `conventional`…) cannot
  *     affect any branch.
- *  3. FLAGS NOTHING READS *FROM HERE ON*. `knows:real_pain` matters up to the solution
+ *  2. FLAGS NOTHING READS *FROM HERE ON*. `knows:real_pain` matters up to the solution
  *     missions and is inert afterwards, so carrying it in the key past that point splits
  *     states that can no longer behave differently.
+ *  3. DIMENSIONS NOTHING GATES ON, and dimensions nothing gates on *from here on* — the
+ *     same argument as (2), since a dimension no remaining condition reads can only
+ *     change the closing numbers, never a branch.
+ *  4. THE LOW BITS OF A GATED DIMENSION. Two states in the same bucket collapse. They
+ *     agree on every threshold *now* (given alignment, below) but not necessarily later:
+ *     `win` 50 and 59 are one state here, and after a shared +5 they sit either side of a
+ *     gate at 60. **So bucketing is not exact.** What it is, is one-directional: every
+ *     outcome the sweep reports as fired was fired by a real `playMission` call, so there
+ *     are no false positives — the loss is completeness, and it surfaces as a reachable
+ *     outcome reported DEAD, which is loud. The quiet casualty is
+ *     `findRealisedDominance`, whose `share` is a fraction of the states the key admits.
  *
- * (2) and (3) matter in practice: with the full flag set the frontier hit its ceiling at
+ * (1) and (2) matter in practice: with the full flag set the frontier hit its ceiling at
  * mission 10 of 16, silently truncating coverage and reporting reachable outcomes as dead
  * content. The node id is part of the key because a branch can divert the whole game —
  * walking away from the deal skips delivery — so the frontier holds states at different
  * nodes at the same time.
  */
-function stateKey(
-  s: GameState,
-  read: Set<string> | undefined,
-  gatedDims: readonly DimensionId[] = [],
-): string {
+function stateKey(k: Keying, s: GameState): string {
+  const read = k.readFlags.get(s.nodeId);
   const flags = read ? s.flags.filter((f) => read.has(f)) : [...s.flags];
-  const dims = gatedDims.map((d) => `${d}${Math.floor(s.dims[d] / DIM_BUCKET)}`).join("");
+  const gated = k.gatedDims.get(s.nodeId) ?? k.defaultGated;
+  const dims = gated
+    .map((d) => `${d}${Number.isFinite(k.bucket) ? Math.floor(s.dims[d] / k.bucket) : 0}`)
+    .join("");
   return `${s.nodeId}|${flags.sort().join(",")}|${dims}`;
 }
 
-/**
- * Bucket width for a dimension that some condition reads.
- *
- * A dimension in the key un-collapses the state space: two states differing by one point
- * of Winability become different states, and the frontier multiplies. Ten-point buckets
- * keep it tractable while staying sound for a threshold on a bucket boundary, which is
- * where thresholds should be set for exactly this reason. Unbucketed is not an option —
- * an exhaustive walk over full dimension state exhausts 2 GB and dies.
- */
-const DIM_BUCKET = 10;
-
-/**
- * Which dimensions any condition in the content actually gates on.
- *
- * Today: none, so `stateKey` behaves exactly as it always has and the sweep stays exact
- * for free. The moment a condition carries `min` or `max` — which the losable-pursuit beat
- * needs — that dimension has to enter the key, or two states that branch differently
- * collapse into one and the sweep silently stops being exhaustive while still reporting
- * complete coverage. `validate.ts` warns when this set becomes non-empty; this makes the
- * sweep survive it rather than merely complain.
- */
-function gatedDimensions(content: Content): DimensionId[] {
-  const gated = new Set<DimensionId>();
+/** Gates read by the conditions of one mission, as (dimension, threshold) pairs. */
+function missionGates(node: Mission): { dim: DimensionId; boundary: number }[] {
+  const out: { dim: DimensionId; boundary: number }[] = [];
   const note = (c: Condition | undefined) => {
     if (!c) return;
     for (const d of DIMENSIONS) {
-      if (c.min?.[d] !== undefined || c.max?.[d] !== undefined) gated.add(d);
+      /* Where the partition boundary falls, which is not the same number for the two
+         clauses. `min: 60` splits 59|60, so the boundary is 60. `max: 59` splits the same
+         pair, so its boundary is 60 as well — b + 1. Getting this wrong would put the
+         alignment check half a bucket out and quietly pass a misaligned `max`. */
+      const lo = c.min?.[d];
+      if (lo !== undefined) out.push({ dim: d, boundary: lo });
+      const hi = c.max?.[d];
+      if (hi !== undefined) out.push({ dim: d, boundary: hi + 1 });
     }
   };
+  for (const v of node.variants ?? []) note(v.when);
+  if (node.kind === "choice") {
+    for (const o of node.options) {
+      note(o.requires);
+      for (const oc of o.outcomes) note(oc.when);
+    }
+  } else {
+    for (const oc of node.outcomes) note(oc.when);
+  }
+  return out;
+}
+
+/**
+ * Which dimensions any condition in the content gates on, and where.
+ *
+ * Today: none, so everything below is inert and the sweep behaves exactly as it always
+ * has. The moment a condition carries `min` or `max` — which the losable-pursuit beat
+ * needs — that dimension has to enter the key, or two states that branch differently
+ * collapse into one and a reachable outcome is reported as dead content. `validate.ts`
+ * warns when this set becomes non-empty; this makes the sweep survive it rather than
+ * merely complain.
+ */
+function gatedDimensions(content: Content): DimensionId[] {
+  const gated = new Set<DimensionId>();
   for (const node of Object.values(content.nodes)) {
     if (!isMission(node)) continue;
-    for (const v of node.variants ?? []) note(v.when);
-    if (node.kind === "choice") {
-      for (const o of node.options) {
-        note(o.requires);
-        for (const oc of o.outcomes) note(oc.when);
-      }
-    } else {
-      for (const oc of node.outcomes) note(oc.when);
-    }
+    for (const g of missionGates(node)) gated.add(g.dim);
   }
   return DIMENSIONS.filter((d) => gated.has(d));
+}
+
+/**
+ * Per mission, the dimensions IT or ANY LATER mission gates on.
+ *
+ * The same argument as `suffixReadFlags`, and it matters for the same reason: a dimension
+ * no remaining condition reads cannot change a branch again, so keying on it splits states
+ * that can no longer behave differently. Note what it does *not* buy — a gate on the last
+ * mission is in every mission's suffix, because the value carries forward and accumulates,
+ * so it puts that dimension in the key from mission one. Measured: a `min.win` gate on m10
+ * and the same gate on m1 produce an identical 506k states, because m10's gate is in m1's
+ * suffix either way. The saving only arrives for a gate that is read early and never
+ * again.
+ */
+function suffixGatedDimensions(content: Content): Map<string, DimensionId[]> {
+  const order = content.missionOrder;
+  const out = new Map<string, DimensionId[]>();
+  const acc = new Set<DimensionId>();
+  for (let i = order.length - 1; i >= 0; i--) {
+    const node = content.nodes[order[i] as string];
+    if (node && isMission(node)) for (const g of missionGates(node)) acc.add(g.dim);
+    out.set(order[i] as string, DIMENSIONS.filter((d) => acc.has(d)));
+  }
+  return out;
+}
+
+/**
+ * Refuse to run a walk whose key cannot see a threshold it is supposed to see.
+ *
+ * A gate at `min: { win: 55 }` under ten-point buckets puts 50 and 59 — one side of the
+ * gate each — in the same bucket, so the two states collapse *immediately*, not merely
+ * after some later drift. The sweep then reports complete coverage of a state space it
+ * walked half of, and the test that would have caught it is the one asserting every
+ * outcome fires, which passes as soon as any other path happens to satisfy the gate.
+ *
+ * That is exactly the D-037 family: a gate that cannot see the defect it exists for. The
+ * comment this replaces asserted the soundness condition ("a threshold on a bucket
+ * boundary, which is where thresholds should be set") and nothing enforced it. Now
+ * unaligned content fails loudly, with both remedies named. `Infinity` is exempt because
+ * it *is* the control for the unsound case and says so in its own name.
+ */
+function assertBucketAligned(content: Content, bucket: number): void {
+  if (bucket <= 1 || !Number.isFinite(bucket)) return;
+  const bad: string[] = [];
+  for (const node of Object.values(content.nodes)) {
+    if (!isMission(node)) continue;
+    for (const g of missionGates(node)) {
+      if (g.boundary % bucket !== 0) bad.push(`${node.id}: ${g.dim} boundary at ${g.boundary}`);
+    }
+  }
+  if (bad.length) {
+    throw new Error(
+      `sweep: ${bad.length} dimension gate(s) do not sit on a ${bucket}-point bucket ` +
+        `boundary, so states either side of the threshold share a dedup key and the walk ` +
+        `is no longer exhaustive:\n  ${[...new Set(bad)].join("\n  ")}\n` +
+        `Move the threshold to a multiple of ${bucket}, or pass { dimBucket: 1 } and pay ` +
+        `for an exact walk.`,
+    );
+  }
+}
+
+function keyingFor(content: Content, opts: SweepOptions = {}): Keying {
+  const bucket = opts.dimBucket ?? DIM_BUCKET;
+  assertBucketAligned(content, bucket);
+  return {
+    readFlags: suffixReadFlags(content),
+    gatedDims: suffixGatedDimensions(content),
+    defaultGated: gatedDimensions(content),
+    bucket,
+  };
 }
 
 /**
@@ -300,8 +429,8 @@ function widen(range: Record<DimensionId, DimRange>, dims: Record<DimensionId, n
   }
 }
 
-export function sweep(content: Content): SweepResult {
-  const gatedDims = gatedDimensions(content);
+export function sweep(content: Content, opts: SweepOptions = {}): SweepResult {
+  const keying = keyingFor(content, opts);
   const result: SweepResult = {
     statesAtMission: {},
     firedOutcomes: new Set(),
@@ -313,9 +442,8 @@ export function sweep(content: Content): SweepResult {
     firedVariants: new Set(),
   };
 
-  const suffix = suffixReadFlags(content);
   const start = openingState(content);
-  let frontier = new Map<string, GameState>([[stateKey(start, suffix.get(start.nodeId), gatedDims), start]]);
+  let frontier = new Map<string, GameState>([[stateKey(keying, start), start]]);
   let truncated = false;
 
   /* The frontier can hold states sitting at DIFFERENT nodes, because an outcome may
@@ -345,7 +473,7 @@ export function sweep(content: Content): SweepResult {
               after = advance(after, content);
             }
             for (const f of after.flags) result.reachableFlags.add(f);
-            const key = stateKey(after, suffix.get(after.nodeId), gatedDims);
+            const key = stateKey(keying, after);
             if (!next.has(key)) next.set(key, after);
           }
         }
@@ -383,7 +511,7 @@ export function sweep(content: Content): SweepResult {
           if (fired) result.firedOutcomes.add(fired.outcomeId);
           for (const f of after.flags) result.reachableFlags.add(f);
 
-          const key = stateKey(after, suffix.get(after.nodeId), gatedDims);
+          const key = stateKey(keying, after);
           if (next.has(key)) continue;
           if (next.size >= MAX_FRONTIER) {
             truncated = true;
@@ -542,6 +670,84 @@ export function findDominantOptions(content: Content): DominanceFinding[] {
   return findings;
 }
 
+/* ──────────────── the reachable-state walk, shared ──────────────── */
+
+/**
+ * Every reachable entry state at every mission, with every legal selection priced.
+ *
+ * `sweep` answers "what fires?" and throws its states away as it goes. Two other questions
+ * need the states themselves and the result of each option *from* each state: which options
+ * dominate their siblings in the situations that actually occur, and what the authored
+ * delta budget looks like across those situations. Both walked their own copy of the
+ * frontier, and the second copy was written by copying the first.
+ *
+ * One walk, because the dedup key decides the denominator. `findRealisedDominance` reports
+ * a `share` — "this option is free money in 92% of reachable states" — and a walk that
+ * keyed states even slightly differently would report a share of a different population
+ * while printing the same sentence. Two hand-maintained copies of a key is how that
+ * happens, and it would not show up as a failure anywhere.
+ *
+ * `visit` is called once per (mission, entry state) with every selection already resolved,
+ * rather than once per selection, because both callers need to compare selections against
+ * each other from the same starting point.
+ */
+export function walkReachable(
+  content: Content,
+  visit: (
+    mission: Mission,
+    state: GameState,
+    priced: { selection: string[]; after: GameState }[],
+  ) => void,
+  opts: SweepOptions = {},
+): void {
+  const keying = keyingFor(content, opts);
+  const start = openingState(content);
+  let frontier = new Map<string, GameState>([[stateKey(keying, start), start]]);
+
+  let guard = 0;
+  while (frontier.size > 0 && guard++ < 200) {
+    const next = new Map<string, GameState>();
+    const byNode = new Map<string, GameState[]>();
+    for (const state of frontier.values()) {
+      const list = byNode.get(state.nodeId);
+      if (list) list.push(state);
+      else byNode.set(state.nodeId, [state]);
+    }
+
+    for (const [nodeId, states] of byNode) {
+      const node = getNode(content, nodeId);
+
+      if (node.kind === "setup") {
+        for (const state of states) {
+          for (const option of node.options) {
+            let after = chooseSetup(state, content, option.id);
+            let g = 0;
+            while ((after.phase === "interlude" || after.phase === "brief") && g++ < 20) {
+              after = advance(after, content);
+            }
+            const key = stateKey(keying, after);
+            if (!next.has(key)) next.set(key, after);
+          }
+        }
+        continue;
+      }
+      if (!isMission(node)) continue;
+
+      for (const state of states) {
+        const priced: { selection: string[]; after: GameState }[] = [];
+        for (const selection of possibleSelections(node, state)) {
+          const after = playMission(state, content, selection);
+          priced.push({ selection, after });
+          const key = stateKey(keying, after);
+          if (!next.has(key)) next.set(key, after);
+        }
+        visit(node, state, priced);
+      }
+    }
+    frontier = next;
+  }
+}
+
 /* ──────────────── realised dominance, over states that occur ──────────────── */
 
 export interface RealisedDominance extends DominanceFinding {
@@ -570,85 +776,51 @@ export interface RealisedDominance extends DominanceFinding {
  * `CLAUDE.md`: fix a fake choice by giving the weaker option a genuine compensating
  * upside, never by nerfing the stronger one.
  */
-export function findRealisedDominance(content: Content, threshold = 0.9): RealisedDominance[] {
-  const gatedDims = gatedDimensions(content);
-  const suffix = suffixReadFlags(content);
-  const start = openingState(content);
-  let frontier = new Map<string, GameState>([[stateKey(start, suffix.get(start.nodeId), gatedDims), start]]);
-
+export function findRealisedDominance(
+  content: Content,
+  threshold = 0.9,
+  opts: SweepOptions = {},
+): RealisedDominance[] {
   /** mission → "a>b" → [dominated, compared] */
   const tally = new Map<string, Map<string, [number, number]>>();
 
-  let guard = 0;
-  while (frontier.size > 0 && guard++ < 200) {
-    const next = new Map<string, GameState>();
-    const byNode = new Map<string, GameState[]>();
-    for (const state of frontier.values()) {
-      const list = byNode.get(state.nodeId);
-      if (list) list.push(state);
-      else byNode.set(state.nodeId, [state]);
-    }
-
-    for (const [nodeId, states] of byNode) {
-      const node = getNode(content, nodeId);
-
-      if (node.kind === "setup") {
-        for (const state of states) {
-          for (const option of node.options) {
-            let after = chooseSetup(state, content, option.id);
-            let g = 0;
-            while ((after.phase === "interlude" || after.phase === "brief") && g++ < 20) {
-              after = advance(after, content);
-            }
-            const key = stateKey(after, suffix.get(after.nodeId), gatedDims);
-            if (!next.has(key)) next.set(key, after);
-          }
-        }
-        continue;
-      }
-      if (!isMission(node)) continue;
-
-      const mission = node;
+  walkReachable(
+    content,
+    (mission, state, priced) => {
       const pairs = tally.get(mission.id) ?? new Map<string, [number, number]>();
       tally.set(mission.id, pairs);
+      /* Only the pairwise comparison is choice-only, because "this option dominates that
+         option" is not a question a multi-pick mission asks. The WALK still has to advance
+         for every mission kind — skipping `investigate` and `build` killed it at m2 and
+         made the whole detector report nothing in 13ms. */
+      if (mission.kind !== "choice") return;
 
-      for (const state of states) {
-        /* Price every legal selection once from this state, then compare the results.
-           The frontier must advance for EVERY mission kind — skipping `investigate` and
-           `build` here killed the walk at m2 and made the whole detector report nothing
-           in 13ms. Only the pairwise comparison is choice-only, because "this option
-           dominates that option" is not a question a multi-pick mission asks. */
-        const priced = new Map<string, Record<DimensionId, number>>();
-        for (const selection of possibleSelections(mission, state)) {
-          const after = playMission(state, content, selection);
-          const id = selection[0];
-          if (mission.kind === "choice" && id) {
-            priced.set(id, {
-              win: after.dims.win - state.dims.win,
-              profit: after.dims.profit - state.dims.profit,
-              deliver: after.dims.deliver - state.dims.deliver,
-            });
-          }
-          const key = stateKey(after, suffix.get(after.nodeId), gatedDims);
-          if (!next.has(key)) next.set(key, after);
-        }
+      const deltas = new Map<string, Record<DimensionId, number>>();
+      for (const { selection, after } of priced) {
+        const id = selection[0];
+        if (!id) continue;
+        deltas.set(id, {
+          win: after.dims.win - state.dims.win,
+          profit: after.dims.profit - state.dims.profit,
+          deliver: after.dims.deliver - state.dims.deliver,
+        });
+      }
 
-        for (const [aId, a] of priced) {
-          for (const [bId, b] of priced) {
-            if (aId === bId) continue;
-            const k = `${aId}>${bId}`;
-            const cur = pairs.get(k) ?? [0, 0];
-            cur[1] += 1;
-            const weak = DIMENSIONS.every((d) => a[d] >= b[d]);
-            const strict = DIMENSIONS.some((d) => a[d] > b[d]);
-            if (weak && strict) cur[0] += 1;
-            pairs.set(k, cur);
-          }
+      for (const [aId, a] of deltas) {
+        for (const [bId, b] of deltas) {
+          if (aId === bId) continue;
+          const k = `${aId}>${bId}`;
+          const cur = pairs.get(k) ?? [0, 0];
+          cur[1] += 1;
+          const weak = DIMENSIONS.every((d) => a[d] >= b[d]);
+          const strict = DIMENSIONS.some((d) => a[d] > b[d]);
+          if (weak && strict) cur[0] += 1;
+          pairs.set(k, cur);
         }
       }
-    }
-    frontier = next;
-  }
+    },
+    opts,
+  );
 
   const findings: RealisedDominance[] = [];
   for (const [missionId, pairs] of tally) {

@@ -15,6 +15,8 @@
  *   node tools/measure.mjs                      # against http://localhost:5173
  *   node tools/measure.mjs --json               # machine-readable
  *   node tools/measure.mjs --legacy-air         # score the pre-fix air rule, for contrast
+ *   node tools/measure.mjs --legacy-stations    # score the pre-fix station rule and its
+ *                                               # retuned 3–4 band, likewise
  */
 
 import { chromium } from "playwright";
@@ -23,6 +25,18 @@ import { PROBE } from "./lib/probe.mjs";
 const BASE = process.argv.find((a) => a.startsWith("http")) ?? "http://localhost:5173";
 const AS_JSON = process.argv.includes("--json");
 const LEGACY_AIR = process.argv.includes("--legacy-air");
+/* Reproduces the retuned 3–4 band scored against the prominence-tier count, so the score
+   this rubric used to report is still obtainable from this file rather than only from an
+   old report. Same reason `--legacy-air` exists (QA F7): a measurement that changed and
+   cannot show you what it changed from is asking to be trusted.
+
+   It reproduces the old MEASURE, not the old DEFECT. The tier count also treated every
+   transparent background as pure black — `rgba(0, 0, 0, 0)` matched a pattern with no
+   alpha group — so it scored a "fill" tier on essentially every screen. With that defect
+   in place this build measured tier counts of 2 and 3; with it fixed, 1 and 2. Both are
+   below the retuned band, so the 10/10 that band was introduced to produce is no longer
+   available under either. */
+const LEGACY_STATIONS = process.argv.includes("--legacy-stations");
 const [vw, vh] = (process.env.GPL_VIEWPORT ?? "1440x1024").split("x").map(Number);
 
 async function btn(page, name) {
@@ -157,7 +171,14 @@ async function main() {
     { id: "decisionShare", wt: 12, get: (r) => r.decisionShare, lo: 0.55, hi: 1 },
     { id: "typeSizes", wt: 6, get: (r) => r.typeSizes.length, lo: 3, hi: 5 },
     { id: "weights", wt: 4, get: (r) => r.fontWeights.length, lo: 2, hi: 3 },
-    { id: "stations", wt: 10, get: (r) => r.stations, lo: 3, hi: 4 },
+    /* §C row 6 says 5, hard max 6, and this read 3–4 — retuned after seeing the build,
+       which is the one thing D-038 says not to do. The band is now the document's again.
+       The instrument was also wrong, and in a way that made the band un-passable: it
+       counted four prominence tiers, so its ceiling was below the target. Both are fixed;
+       see the station block in lib/probe.mjs. */
+    LEGACY_STATIONS
+      ? { id: "stations", wt: 10, get: (r) => r.stationTiers, lo: 3, hi: 4 }
+      : { id: "stations", wt: 10, get: (r) => r.stations, lo: 5, hi: 6 },
     { id: "fills", wt: 8, get: (r) => r.fillColours, lo: 1, hi: 5 },
     /* §C factor 8's measure is "`button.choice` count", not "targets − 1". The old proxy
        happened to land near the option count on this build and is not the same number. */
@@ -371,6 +392,23 @@ async function main() {
     for (const r of partial) {
       console.log(`     ${r.screen.slice(0, 43)} — ${Math.round(r.airCoverage * 100)}% sampled`);
     }
+  }
+
+  /* What the station count is made of, on one decide screen and one brief.
+     The count is a judgement about grouping (marks within 24px are one stop), and a
+     grouping judgement printed as a bare integer is not checkable. These lines are the
+     receipt: a reader can put them beside the screenshot and disagree with the specific
+     band rather than with the number. Also printed: the tier count the rubric used to
+     score, so the change of measure is visible rather than implied. */
+  const stationSample = decides[Math.floor(decides.length / 2)];
+  if (stationSample) {
+    console.log(
+      `\n stations on "${stationSample.screen}": ${stationSample.stations}` +
+        ` (old tier count: ${stationSample.stationTiers}) — §B asks for 5, max 6`,
+    );
+    for (const label of stationSample.stationLabels ?? []) console.log(`   ${label}`);
+    const tierRange = [...new Set(decides.map((r) => r.stationTiers))].sort();
+    console.log(`   tier counts across the decide screens: ${tierRange.join(", ")}`);
   }
 
   const allSizes = [...new Set(decides.flatMap((r) => r.typeSizes))].sort((a, b) => a - b);
