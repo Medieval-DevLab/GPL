@@ -229,7 +229,10 @@ async function runPath(browser, policy) {
     briefs: 0,
     consequences: 0,
     interludes: 0,
+    openers: 0,
     rewards: 0,
+    debriefs: 0,
+    reflections: 0,
     total: null,
     chapters: new Set(),
     routedToEnding: false,
@@ -478,11 +481,53 @@ async function runPath(browser, policy) {
       continue;
     }
 
+    /**
+     * The chapter debrief — a stage screen with one action, "Back to the map".
+     *
+     * Counted separately from interludes so the run summary can say whether all five
+     * fired. Without this the harness stopped dead at step 25 with "no recognised control
+     * on screen": the debriefs were in the graph, rendering correctly, and invisible to
+     * the only gate that plays the game.
+     */
+    const toMap = await button(page, "Back to the map");
+    if (toMap) {
+      misses = 0;
+      run.debriefs += 1;
+      if (policy.shotAll && run.debriefs <= 2) await shot(page, `debrief-${run.debriefs}`);
+      await checkFit(page, tag(`debrief ${run.debriefs}`));
+      await toMap.click();
+      continue;
+    }
+
+    /**
+     * A reflection node. Its responses are authored prose, so there is no fixed label to
+     * look for — the screen is identified by its region and any response advances it,
+     * because none of them changes state. That is the whole point of the beat.
+     */
+    const reflection = page.locator('[data-region="reflection"]');
+    if ((await reflection.count()) > 0 && (await reflection.first().isVisible())) {
+      misses = 0;
+      run.reflections += 1;
+      if (policy.shotAll && run.reflections <= 2) await shot(page, `reflection-${run.reflections}`);
+      await checkFit(page, tag(`reflection ${run.reflections}`));
+      const answer = reflection.first().getByRole("button").first();
+      if ((await answer.count()) === 0) {
+        problems.push(tag(`reflection ${run.reflections}: no response to give`));
+        break;
+      }
+      await answer.click();
+      await page.waitForTimeout(200);
+      continue;
+    }
+
     // ── interlude ──────────────────────────────────────────
     const begins = await button(page, "Begin the chapter");
     if (begins) {
       misses = 0;
       run.interludes += 1;
+      /* Only the openers are one-per-chapter; the three story turns share this screen
+         because both are things the player watches. */
+      if ((await page.locator('[data-beat="chapter-open"]').count()) > 0) run.openers += 1;
       if (policy.shotAll && run.interludes <= 2) await shot(page, `interlude-${run.interludes}`);
       await begins.click();
       continue;
@@ -570,10 +615,10 @@ async function runPath(browser, policy) {
   }
   /* One interlude opens each chapter the run visits. Derived, so adding a chapter does
      not make this file wrong. */
-  if (run.chapters.size && run.interludes !== run.chapters.size) {
+  if (run.chapters.size && run.openers !== run.chapters.size) {
     problems.push(
       tag(
-        `saw ${run.interludes} interludes for ${run.chapters.size} chapters ` +
+        `saw ${run.openers} chapter openers for ${run.chapters.size} chapters ` +
           `(${[...run.chapters].join(", ")}) — one opens each chapter`,
       ),
     );
@@ -632,7 +677,8 @@ async function main() {
         : "";
     console.log(
       `${policy.label.padEnd(14)} missions ${run.missions}/${run.total ?? "?"}${early} · ` +
-        `consequences ${run.consequences} · interludes ${run.interludes} · rewards ${run.rewards} · ${seconds}s`,
+        `consequences ${run.consequences} · interludes ${run.interludes} · ` +
+      `reflections ${run.reflections} · debriefs ${run.debriefs} · rewards ${run.rewards} · ${seconds}s`,
     );
   }
   if (!ALL_PATHS) {

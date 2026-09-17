@@ -1,13 +1,37 @@
 /**
- * The mission briefing — the core gameplay surface.
+ * The two console beats of a mission: READ, then DECIDE.
  *
  * Options are laid out as **side-by-side columns**, not stacked rows. Their checklists
  * line up, so the player compares across in one eye movement instead of reading four
  * bands top to bottom. That is the difference between a hand of cards and a radio list,
  * and it is `docs/UI-AUDIT.md` finding F2.
  *
+ * ── the mode grammar (`docs/SCREEN-SPECS.md` §3) ───────────────────────────────────────
+ *
+ * Brief, decide and consequence used to share chrome, ground and action position. Three
+ * modes in one costume, across 66 of a run's 76 screens, and that is the whole of "it
+ * feels like static pages". The two in this file are now separated by what is ON them,
+ * not by a hue:
+ *
+ *  **READ — the brief.** Calm, and calm here means FLUSH. One continuous white sheet
+ *  divided by 1px rules: the situation, the client, the assessment strip, their concerns
+ *  and the colleague, with nothing floating on top of anything. The four assessment cards
+ *  and the colleague's bordered panel are gone as *cards* — same content, same order, no
+ *  gaps and no shadows, which is both the mockups' own construction and ~70px of height
+ *  given back. It carries the mission photograph, and it carries **no stake element**: the
+ *  meters are in the rail and quiet, nothing on this screen suggests a price.
+ *
+ *  **DECIDE — the options.** Everything READ has, minus the reading, plus one thing no
+ *  other screen in the game has: `StakeMark`, beside the question. It is the work-area
+ *  half of the stake element — the gate in the action bar (or under the chosen reply, on
+ *  a conversation surface) is the interactive half, and the two rhyme deliberately: the
+ *  same three pictograms, the same bright violet rim. The mission `eyebrow` comes OFF this
+ *  beat, because it is the same string the brief showed thirty seconds ago and the band
+ *  needs the room for the mark.
+ *
  * Everything here is sized to fit the console without scrolling. Be careful adding
- * vertical space — `tools/verify.mjs` fails if the working area overflows at 1440×900.
+ * vertical space — `tools/verify.mjs` fails if the working area overflows, and the tightest
+ * console decide beat runs at 686px of a 739px working area at 1440×900.
  */
 
 import { story } from "../content/story";
@@ -17,13 +41,15 @@ import {
   resolveSaidQuote,
   resolveSituation,
 } from "../engine/engine";
-import type {
-  AssessmentFactor,
-  ClientProfile,
-  GameState,
-  Mission,
-  Option,
-  SaidQuote,
+import {
+  DIMENSIONS,
+  DIMENSION_META,
+  type AssessmentFactor,
+  type ClientProfile,
+  type GameState,
+  type Mission,
+  type Option,
+  type SaidQuote,
 } from "../engine/types";
 import { Facsimile } from "./facsimile";
 import { Bullet, Icon, IconTile, Pill, SectionTitle } from "./icons";
@@ -38,6 +64,70 @@ import {
   quoted,
   radioTabIndex,
 } from "./shell";
+
+/**
+ * Interface strings. MUST MOVE TO `UI_LABEL` in `ui/shell.tsx` — this worker does not own
+ * that file. Neither is story: one names the mode of a screen, the other is the
+ * non-colour redundancy for three pictograms that are `aria-hidden`.
+ */
+const LABEL = {
+  /** the stake element's own words, on every decide beat and nowhere else */
+  stake: "Committing is final",
+  /** what the three pictograms in it are, for anyone who cannot see them */
+  stakeSpoken:
+    "This is a decision. It is measured against Winability, Profitability and Deliverability, and it cannot be undone.",
+} as const;
+
+/* ───────────────────────── the stake element ───────────────────────── */
+
+/**
+ * The mark that says this screen changes the game state — and the only thing in the game
+ * that says it.
+ *
+ * `docs/SCREEN-TAXONOMY.md` §5 rule 2: the stake element appears on decide beats and
+ * nowhere else, and if it ever appears on a read beat the grammar is broken. Chrome
+ * quantity is the carrier, so this is drawn as an object with a border and a fill rather
+ * than as a line of text — it has to survive being looked at rather than read, which is
+ * the thumbnail test.
+ *
+ * The three pictograms are the dimensions' own, each in its own ink, so the mark is
+ * polychrome and rhymes with both the rail above it and the gate's chips below it. The
+ * words are about irreversibility rather than about magnitude, deliberately: a commit is
+ * always final, whereas "this moves all three" is false on the outcomes where nothing
+ * moves — and `nothingMoved` is a real branch the consequence has to handle.
+ *
+ * It is NOT a prediction. It names what the decision is measured against; it says nothing
+ * about which option does what, which is G3 and is the one line this screen may not cross.
+ */
+export function StakeMark({ inline = false }: { inline?: boolean }) {
+  return (
+    <div
+      data-region="stake"
+      className={`flex shrink-0 rounded-[12px] border-2 px-3 ${
+        /* Two rows in the console's question band, where it has a 24px heading and a
+           disclosure line beside it and 64px of band to fill. One row on a conversation
+           surface, where every pixel it takes comes off the tile wall or the thread. */
+        inline ? "items-center gap-2 py-1.5" : "flex-col gap-1.5 py-2"
+      }`}
+      style={{
+        borderColor: "var(--color-accent-ring)",
+        background: "var(--color-accent-tint)",
+      }}
+    >
+      <span aria-hidden="true" className="flex items-center gap-1.5">
+        {DIMENSIONS.map((d) => (
+          <span key={d} style={{ color: `var(${DIMENSION_META[d].textVar})` }}>
+            <Icon name={DIMENSION_META[d].icon} size={16} />
+          </span>
+        ))}
+      </span>
+      <span className="text-[13px] font-bold leading-tight text-(--color-accent-deep)">
+        {LABEL.stake}
+      </span>
+      <Hidden>{LABEL.stakeSpoken}</Hidden>
+    </div>
+  );
+}
 
 /* ───────────────────────── header ───────────────────────── */
 
@@ -75,9 +165,14 @@ function Header({
         >
           {mission.title}
         </h1>
-        <div className="mt-3.5 space-y-1">
+        {/* `max-w-[66ch]`, which is the measure DESIGN-SYSTEM.md assigns to 15px prose.
+            It binds only on the missions with no hero photograph, where the column is
+            848px wide and a line of body copy was running to 110 characters — twice
+            Bringhurst's comfortable measure, on the one screen whose entire job is
+            reading. Where there is a hero the image already sets the measure. */}
+        <div className="mt-3.5 max-w-[66ch] space-y-1.5">
           {situation.map((p, i) => (
-            <p key={i} className="text-[15px] leading-[1.5] text-(--color-ink-soft)">
+            <p key={i} className="text-[15px] leading-[1.55] text-(--color-ink-soft)">
               {p}
             </p>
           ))}
@@ -212,38 +307,52 @@ const LEVEL: Record<AssessmentFactor["level"], { pct: number; word: string }> = 
   strong: { pct: 96, word: "Strong" },
 };
 
+/**
+ * A flush strip, not four cards.
+ *
+ * Same four factors, same order, same polychrome tiles. What has gone is the gap and the
+ * border-radius around each one: `gap-px` over a line-coloured ground draws the divisions
+ * as 1px rules and nothing else, which is the mockups' own construction for a fact strip
+ * and is the READ beat's calm. It also costs ~10px less height than the card grid did,
+ * because a card's border and a section's outer padding were being paid twice.
+ */
 function Assessment({ factors }: { factors: AssessmentFactor[] }) {
   return (
-    <section className="border-t border-(--color-line) px-5 py-2">
-      <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2 xl:grid-cols-4">
-        {factors.map((f) => {
-          const l = LEVEL[f.level];
-          const iconTone = f.tone;
-          return (
-            <div key={f.label} className="card px-3 py-1.5">
-              <div className="flex items-center gap-2">
-                <IconTile name={f.icon} tone={iconTone} size={30} />
-                <span className="min-w-0 flex-1 text-[13px] font-bold leading-tight text-(--color-ink)">
-                  {f.label}
-                </span>
-              </div>
-              <div
-                className="mt-2 h-1.5 w-full overflow-hidden rounded-full"
-                style={{ background: "var(--color-canvas-deep)" }}
-              >
-                <div
-                  className="h-full rounded-full bg-(--color-border-strong) transition-[width] duration-700 ease-out"
-                  style={{ width: `${l.pct}%` }}
-                />
-              </div>
-              <p className="mt-1 text-[15px] font-bold leading-none text-(--color-text-strong)">
-                {l.word}
-              </p>
-              <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-(--color-muted)">{f.note}</p>
+    <section
+      className="grid gap-px border-t border-(--color-line) sm:grid-cols-2 xl:grid-cols-4"
+      style={{ background: "var(--color-line)" }}
+    >
+      {factors.map((f) => {
+        const l = LEVEL[f.level];
+        return (
+          /* `px-5`, matching the page gutter, so the first cell's content sits on the
+             same spine as the heading above it. At `px-4` it was 4px to the left of it —
+             invisible on one screen and taken on every brief in the game. */
+          <div key={f.label} className="bg-(--color-surface) px-5 py-2.5">
+            <div className="flex items-center gap-2">
+              <IconTile name={f.icon} tone={f.tone} size={30} />
+              <span className="min-w-0 flex-1 text-[13px] font-bold leading-tight text-(--color-ink)">
+                {f.label}
+              </span>
             </div>
-          );
-        })}
-      </div>
+            <div
+              className="mt-2 h-1.5 w-full overflow-hidden rounded-full"
+              style={{ background: "var(--color-canvas-deep)" }}
+            >
+              <div
+                className="h-full rounded-full bg-(--color-border-strong) transition-[width] duration-700 ease-out"
+                style={{ width: `${l.pct}%` }}
+              />
+            </div>
+            <p className="mt-1 text-[15px] font-bold leading-none text-(--color-text-strong)">
+              {l.word}
+            </p>
+            <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-(--color-muted)">
+              {f.note}
+            </p>
+          </div>
+        );
+      })}
     </section>
   );
 }
@@ -252,26 +361,30 @@ function Assessment({ factors }: { factors: AssessmentFactor[] }) {
  * Only the concerns. The client's own words are in the header pull-quote, where every
  * mockup puts them — rendering both was the same quote twice on one screen.
  */
+/**
+ * The client's concerns, and the rose panel they used to sit in is gone.
+ *
+ * A filled alarm-tinted panel is a cost signal, and READ is the mode where **nothing may
+ * suggest a price** (`SCREEN-TAXONOMY.md` §5 rule 4). These are facts about the client's
+ * position, not a charge against the player — so the section is flush like every other
+ * one on the sheet and the risk colour survives where it is honest: on the heading's icon
+ * and on the bullet markers.
+ */
 function Concerns({ concerns }: { concerns?: string[] }) {
   if (!concerns?.length) return null;
   return (
-    <section className="border-t border-(--color-line) px-5 py-2">
-      <div
-        className="rounded-xl px-4 py-2"
-        style={{ background: "var(--color-bad-tint)" }}
-      >
-        <SectionTitle icon="warning" tone="bad" className="mb-1.5">
-          Key concerns
-        </SectionTitle>
-        <ul className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
-          {concerns.map((c) => (
-            <li key={c} className="flex gap-2 text-[13px] leading-snug text-(--color-ink-soft)">
-              <Bullet className="mt-[7px]" />
-              {c}
-            </li>
-          ))}
-        </ul>
-      </div>
+    <section className="border-t border-(--color-line) px-5 py-2.5">
+      <SectionTitle icon="warning" tone="bad" className="mb-1.5">
+        Key concerns
+      </SectionTitle>
+      <ul className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
+        {concerns.map((c) => (
+          <li key={c} className="flex gap-2 text-[13px] leading-snug text-(--color-ink-soft)">
+            <Bullet className="mt-[7px] text-(--color-bad)" />
+            {c}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -873,48 +986,59 @@ export function BriefBody({ mission, state }: { mission: Mission; state: GameSta
         <Concerns concerns={mission.concerns} />
       </div>
 
-      {/* The colleague's view and their open questions. On the brief, where there is room
-          to read them — not beside the options, where they competed with the decision. */}
+      {/**
+       * The colleague's view and their open questions — flush, not a card.
+       *
+       * It was a bordered, rounded panel with 20px of desk around it, sitting under the
+       * white situation sheet: a detached card with a gap and a shadow, which is the
+       * "SaaS card kit" construction the brief for this work names as a generic-AI tell.
+       * Flush against the sheet above it, it is the last section of one document instead
+       * of a second object, and it gives back ~50px — which is what paid for the
+       * consequence's result band on the tightest paths.
+       *
+       * `aria-labelledby` is not needed: the person's name is the first thing in it.
+       */}
       {mission.advisor && (
-        <div data-region="colleague" className="px-5 py-5">
-          <div className="flex w-full items-start gap-4 rounded-[14px] border border-(--color-line) bg-(--color-surface) p-5">
-            {mission.advisor.photo && (
-              <img
-                src={artUrl(mission.advisor.photo)}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                className="h-[56px] w-[56px] shrink-0 rounded-full object-cover"
-              />
+        <section
+          data-region="colleague"
+          className="flex items-start gap-4 border-y border-(--color-line) bg-(--color-surface) px-5 py-4"
+        >
+          {mission.advisor.photo && (
+            <img
+              src={artUrl(mission.advisor.photo)}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-[56px] w-[56px] shrink-0 rounded-full object-cover"
+            />
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] font-bold text-(--color-ink)">
+              {mission.advisor.name}
+              <span className="ml-2 font-medium text-(--color-accent)">
+                {mission.advisor.role}
+              </span>
+            </p>
+            <p className="mt-1.5 max-w-[66ch] text-[15px] italic leading-relaxed text-(--color-ink-soft) text-pretty">
+              {quoted(mission.advisorLine ?? mission.advisor.quote)}
+            </p>
+            {mission.consider && mission.consider.length > 0 && (
+              <ul className="mt-3 grid gap-x-8 gap-y-1.5 border-t border-(--color-line) pt-3 sm:grid-cols-2">
+                {mission.consider.map((c) => (
+                  <li
+                    key={c}
+                    className="flex gap-2 text-[13px] leading-snug text-(--color-ink-soft)"
+                  >
+                    <span aria-hidden="true" className="shrink-0 font-bold text-(--color-accent)">
+                      +
+                    </span>
+                    {c}
+                  </li>
+                ))}
+              </ul>
             )}
-            <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-bold text-(--color-ink)">
-                {mission.advisor.name}
-                <span className="ml-2 font-medium text-(--color-accent)">
-                  {mission.advisor.role}
-                </span>
-              </p>
-              <p className="mt-1.5 text-[15px] italic leading-relaxed text-(--color-ink-soft) text-pretty">
-                {quoted(mission.advisorLine ?? mission.advisor.quote)}
-              </p>
-              {mission.consider && mission.consider.length > 0 && (
-                <ul className="mt-3 grid gap-x-8 gap-y-1.5 border-t border-(--color-line) pt-3 sm:grid-cols-2">
-                  {mission.consider.map((c) => (
-                    <li
-                      key={c}
-                      className="flex gap-2 text-[13px] leading-snug text-(--color-ink-soft)"
-                    >
-                      <span aria-hidden="true" className="shrink-0 font-bold text-(--color-accent)">
-                        +
-                      </span>
-                      {c}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
@@ -969,24 +1093,37 @@ export function DecideBody({
           padding, which is internal space, rather than out of the 20px air step between
           this station and the option row, which is what does the grouping. Net: every
           decide screen is 2px SHORTER than before the change. */}
-      <div data-region="question" className="m-swap border-b border-(--color-line) bg-(--color-surface) px-5 py-2.5">
-        <p className="eyebrow" style={{ color: "var(--color-accent)" }}>
-          {mission.eyebrow}
-        </p>
-        <h1
-          id={BEAT_TITLE_ID}
-          className="mt-1 text-[24px] font-bold leading-[1.15] tracking-[-0.02em] text-(--color-ink)"
-        >
-          {mission.question}
-        </h1>
-        <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3">
-          <Continuity mission={mission} state={state} fallback={situation[0]} />
-          {mission.kind !== "choice" && (
-            <Pill tone={ready ? "good" : "accent"}>
-              {mission.kind === "investigate" ? "Choose" : "Pick"} {need} · {have}/{need}
-            </Pill>
-          )}
+      {/* The mission `eyebrow` is NOT here any more. It is the same string the brief put
+          over the same situation half a minute ago, and it was an all-caps kicker over a
+          heading on all 17 of these screens — which the brief for this work names as a
+          thing to stop doing. Its 20px pays for the stake mark, so the band is the height
+          it always was. */}
+      <div
+        data-region="question"
+        className="m-swap flex items-start gap-5 border-b border-(--color-line) bg-(--color-surface) px-5 py-2.5"
+      >
+        <div className="min-w-0 flex-1">
+          <h1
+            id={BEAT_TITLE_ID}
+            className="text-[24px] font-bold leading-[1.15] tracking-[-0.02em] text-(--color-ink)"
+          >
+            {mission.question}
+          </h1>
+          <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3">
+            <Continuity mission={mission} state={state} fallback={situation[0]} />
+            {mission.kind !== "choice" && (
+              <Pill tone={ready ? "good" : "accent"}>
+                {mission.kind === "investigate" ? "Choose" : "Pick"} {need} · {have}/{need}
+              </Pill>
+            )}
+          </div>
         </div>
+
+        {/* The stake element. On this surface the gate itself lives in the action bar, so
+            this is the half of it that sits where the player is actually looking — beside
+            the question, at the top of the screen, in the same rim and the same three
+            pictograms the chips down there use. */}
+        <StakeMark />
       </div>
 
       {/* Station 4 — the options. The only place on this screen with real word count. */}

@@ -639,7 +639,21 @@
  * for somebody who asked for less motion is worse than the animation was.
  */
 @media (prefers-reduced-motion: reduce) {
-  *,
+  /*
+   * `:not([data-meter])` — because a meter's `scaleX` is DATA, not motion.
+   *
+   * This blanket rule forced `transform: none !important` on everything, and an inline
+   * `transform: scaleX(0.34)` cannot outrank `!important`. So EVERY BAR IN THE GAME
+   * RENDERED FULL for a reduced-motion user: the four meter tracks, the chapter stepper
+   * and the level bar all read 100 regardless of the value behind them. Not a degraded
+   * animation — WRONG INFORMATION, shown only to the people who asked for less movement.
+   *
+   * Reduced motion asks for less movement, never for less meaning. So a bar whose width
+   * carries a value keeps its transform and simply does not animate into it (the
+   * transition is still killed below). Anything opting out this way must be a value, not
+   * an effect.
+   */
+  *:not([data-meter]),
   *::before,
   *::after {
     /* No travel, no scale, no overshoot. */

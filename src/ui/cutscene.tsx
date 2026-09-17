@@ -150,6 +150,10 @@ export function CutScene({
   return (
     <section
       key={node.id}
+      /* So a harness can tell a chapter opener from a story turn. They are the same
+         screen deliberately — both are things you watch — but only the openers are
+         one-per-chapter, and `verify` asserts that. */
+      data-beat={node.role ?? "chapter-open"}
       aria-label={`${CUT_LABEL.chapter} ${node.chapter}: ${node.title}`}
       className="cut-stage relative isolate flex h-full min-h-[560px] w-full items-stretch overflow-hidden bg-(--color-stage)"
     >

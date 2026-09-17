@@ -6,6 +6,105 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-061 · `resolving` is folded into the consequence's entrance, and the handover is one prop
+`SCREEN-TAXONOMY.md` §3 names `resolving` as the one screen type to cut: a one-second
+transition holding **17 of a run's 76 screen instances**, earning its slot purely by being
+in the way. The replacement is not a shorter transition — it is the consequence screen
+arriving with its meters already travelling.
+
+**The guarantee that made `resolving` exist is the thing to preserve, and it is not about
+duration.** A CSS transition needs the same DOM node to hold both values. `resolving` was
+built because committing used to unmount both rails, so the three meters did not travel
+from 58 to 64 — they were destroyed at 58 and recreated at 64, a cut dressed as feedback.
+Keeping the rails mounted across the beat is what makes the movement exist at all, and
+that is `App.tsx`'s job and still is.
+
+**The centre is the new part, and it cannot inherit a value from the DOM**, because the
+result band does not exist until the screen arrives. So it paints `from` for exactly one
+frame and then sets the target — `useFirstFrame` in `ui/consequence.tsx`, a four-line local
+copy of `useSettled`, which `ui/shell.tsx` keeps private.
+
+**The prop is `from?: Record<DimensionId, number>`, not `animate: boolean`.** Same shape
+the rail already takes, so `App.tsx` passes the same expression to both and the two are
+visibly one event. It is a prop rather than being read off `resolution.dimsBefore` because
+only the caller knows whether this mount is the arrival: reading it inside would re-run the
+whole 900ms travel on any remount — a resumed save, or a return from the map.
+
+Measured, sampling every ~95ms through a commit: figures 55 → 59 and the bar 0.550 → 0.590
+scaleX over ~700ms, with **the band and the rail within 0.002 of each other at every
+sample**. One event in two places.
+
+**Cost:** `ResolvingScreen` is still exported and still routed to, because `App.tsx` is
+owned by another worker mid-change; until they drop the phase the game shows the travel
+twice — once on the resolving beat and settled values on the consequence. **Reversible:**
+yes. Omit `from` and the consequence renders settled, which is exactly what it does today.
+
+---
+
+## D-062 · The three modes are separated by what is on the screen, never by a hue
+Brief, decide and consequence shared chrome, ground and action position — three modes in
+one costume across 66 of 76 screens, which is the whole of "it feels like static pages".
+`SCREEN-TAXONOMY.md` §1 is explicit that the carrier is **chrome quantity, monotonically**,
+and that colour is secondary everywhere. The test applied was the thumbnail test: three
+screenshots, shrunk to 170px wide until the text is unreadable, side by side.
+
+**READ (brief).** Calm means FLUSH. The four assessment cards became a 1px-divided fact
+strip, the concerns lost their rose panel, and the colleague's bordered card became the
+last flush section of one white sheet. Nothing floats. The rose panel had to go on a rule
+rather than on taste: a filled alarm-tinted panel is a cost signal, and READ is the mode
+where nothing may suggest a price. It keeps the mission photograph. **~70px of height came
+back**, which is what paid for the result band below.
+
+**DECIDE.** One element no other screen in the game has — `StakeMark`, beside the question,
+carrying the three dimension pictograms and the words *"Committing is final"*. The words
+are about irreversibility rather than magnitude, deliberately: a commit is always final,
+whereas "this moves all three" is false on the `nothingMoved` outcomes. It is not a
+prediction and says nothing about which option does what (G3). The mission `eyebrow` came
+off this beat to pay for it — an all-caps kicker over a heading, on 17 screens, repeating a
+string the brief showed thirty seconds earlier. Net **−22px** per console decide beat.
+
+**RECEIVE.** Three things, and the first is a subtraction: the consequence stopped
+rendering `mission.hero`. It was the **same image file the brief renders, in the same
+place, at a similar size** — a picture of the situation standing in for a picture of the
+outcome, and the single biggest reason the two were indistinguishable in a thumbnail. In
+its place: the three figures at the 56px display step, flush and full width, divided by 1px
+rules, which is the only place in the run where a numeral outranks a heading. Then the
+verdict on the player's own call full width, then the read and what changed side by side.
+
+**Two other arrangements were built and looked at, and both were worse.** Giving the spare
+height to the read panel put a 350px field of lavender under 140px of type. Giving it to
+the result band left the three figures floating in the middle of a void that grew to ~500px
+at 1440×1024. A document that ends, with desk under it, is the one that reads as finished.
+
+**Cost:** the consequence has no art at all now, and the decide beat has lost a line of
+content framing. **Reversible:** both, in a line each — `hero` is still in the props.
+
+---
+
+## D-063 · Under reduced motion every meter in the game reads 100
+Found by looking at the render with `reducedMotion: "reduce"`, not by any test.
+
+`index.css` collapses reduced motion with `transform: none !important` on `*`. Every meter
+in GPL draws its value as `transform: scaleX(v/100)` from a left origin — correctly, because
+of width, height, margin and padding Linear's engineering write-up says "never animate
+those. I mean never." But an inline style cannot outrank `!important`, so under `reduce` a
+`scaleX` bar renders **unscaled, which is full width**. A player who asked the operating
+system for less movement is shown three bars at 100 whatever the numbers beside them say.
+
+Four sites: `MeterTrack` and `ChapterStepper` in `ui/shell.tsx`, the level bar in
+`ui/reward.tsx`, and the new result band in `ui/consequence.tsx`.
+
+**Fixed in the result band only**, because that is the owned file: `useReducedMotion()`
+picks `width: v%` when there is nothing to animate and `scaleX` when there is. Under
+`reduce` a width is static, so it costs no layout and the number is right. The screenshot
+at `docs/modes/reduce/mode-receive.png` shows the fix and the bug side by side — the band
+reads 59 / 52 / 50 and the rail eight inches away still reads full.
+
+**Cost:** the same two lines are needed in two other files and are not written. **Reversible:**
+irrelevant; the current behaviour is a defect, not a decision.
+
+---
+
 ## D-056 · The path-reveal shows an untaken outcome only where it is certain
 The chapter debrief's second column is the reveal Detroit: Become Human ends every chapter
 with — the branch you did not take — and the brief for it asked for "the sibling outcomes

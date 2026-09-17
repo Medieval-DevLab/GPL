@@ -1,22 +1,42 @@
 /**
- * The two beats after a decision.
+ * RECEIVE — the beat where the result is the subject.
  *
- *   resolving   — a short pause so the commit lands as an event, not a page swap
- *   consequence — your call, what happened, what changed, and a colleague's read on it
+ * One screen, not two. `resolving` used to sit in front of this one: a full screen that
+ * existed for a single second, seventeen times a run, occupying 17 of the run's 76 screen
+ * instances purely by being in the way (`docs/SCREEN-TAXONOMY.md` §3, "the type to cut").
+ * It is now this screen's ENTRANCE — the consequence mounts and the three meters travel
+ * from `dimsBefore` to `dimsAfter` as part of its arrival.
  *
- * There used to be a third: a full screen carrying the lesson in 26px bold under the
- * caption "Next time." Sixteen of them, one after every decision, with no speaker and
- * nothing to disagree with. That screen was where the feeling of being lectured at
- * actually lived, so the phase is gone and its words now come out of the mouth of the
- * colleague who briefed you — which makes the teaching a read on what just happened
- * rather than a moral assigned to you. See docs/ENGAGEMENT-MODEL.md.
+ * **The guarantee that made `resolving` exist is kept.** A meter only travels if the same
+ * DOM node holds both values, so the right-hand rail must stay mounted from the decision
+ * beat through to the result — `App.tsx` does that, and it is why the rail's bars and this
+ * screen's band move as one event in two places rather than as two events. The band in the
+ * centre is new on this beat and so cannot inherit a previous value from the DOM; it paints
+ * `from` for exactly one frame and then sets the target, which is what gives the CSS
+ * transition something to interpolate. See `useFirstFrame` below.
  *
- * Badges also do not appear here. Recognition mid-run is a narrator patting the player
- * on the head; the same information in the closing debrief is an account of how they
- * played.
+ * ── the mode grammar (`docs/SCREEN-SPECS.md` §3) ───────────────────────────────────────
+ *
+ * This is the RECEIVE screen, and three things separate it from the READ screen it used to
+ * be mistaken for — none of them a hue:
+ *
+ *  1. **No situation photograph.** The consequence was rendering `mission.hero`, which is
+ *     the SAME image file the brief renders, in the same place, at a similar size. The
+ *     result screen was showing a picture of the situation as though it were a picture of
+ *     the outcome, and it was the single biggest reason the two read as one screen in a
+ *     thumbnail. The prop is still accepted, because `App.tsx` owns the call site.
+ *  2. **The result band.** Three figures at the 56px display step, flush, full width and
+ *     divided by 1px rules — the only place in the run where a numeral is bigger than a
+ *     heading. The meters are the story on this beat, so they are drawn at the size of the
+ *     story rather than as rail furniture.
+ *  3. **The verdict on the player's own call** sits between the two, full width. It is the
+ *     answer to the question the gate made them ask, so it is the hinge of the screen.
+ *
+ * Badges do not appear here. Recognition mid-run is a narrator patting the player on the
+ * head; the same information in the closing debrief is an account of how they played.
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import {
   DIMENSIONS,
@@ -27,7 +47,35 @@ import {
   type Resolution,
 } from "../engine/types";
 import { Bullet, Icon, SectionTitle } from "./icons";
-import { BEAT_TITLE_ID, FactorGrid, UI_LABEL, artUrl, meterDelay, quoted } from "./shell";
+import {
+  BEAT_TITLE_ID,
+  Hidden,
+  UI_LABEL,
+  artUrl,
+  meterDelay,
+  quoted,
+  useCountUp,
+  useReducedMotion,
+} from "./shell";
+
+/**
+ * Interface strings. MUST MOVE TO `UI_LABEL` in `ui/shell.tsx` — this worker does not own
+ * that file, so they are declared here with the same job they will have there: none of
+ * them is story, all of them are interface state or non-colour redundancy.
+ */
+const LABEL = {
+  /** what the player picked, above the headline */
+  youChose: "You chose:",
+  /** the result band's own name, as a landmark. Deliberately NOT "Where you stand",
+      which is the right rail's heading — two landmarks with near-identical names is a
+      worse outcome than no landmark. */
+  whatItMoved: "What it moved",
+  /** the ▲ / ▼ in the delta chip, which reads as "up-pointing triangle" or as nothing */
+  up: "up",
+  down: "down",
+  /** the panel naming what the outcome altered */
+  nowDifferent: "What is now different",
+} as const;
 
 /**
  * Tone is carried by the medallion's colour AND its icon — never colour alone (E6).
@@ -55,80 +103,6 @@ const TONE: Record<
   mixed: { colour: "var(--color-text-muted)", tint: "var(--color-panel)", icon: "scale" },
   hard: { colour: "var(--color-bad)", tint: "var(--color-bad-tint)", icon: "warning" },
 };
-
-/* ─────────────────────────── resolving ─────────────────────────── */
-
-/**
- * The beat that used to be a lie.
- *
- * It was one second of `gpl-fade` plus a 1,150ms **skeleton shimmer** — a white gradient
- * sweeping a grey bar, which is the visual idiom of a pending network request, on the one
- * beat of a deterministic offline game where the answer is already computed and sitting in
- * `state.resolution`. A visual reviewer located the "feels like a form" complaint exactly
- * here: *"the one moment of consequence is rendered in the idiom of a pending XHR."*
- *
- * It is now the three meters moving. Same second, and the player spends it watching the
- * thing their decision actually did — which is the only quantitative feedback in the game
- * and was previously delivered as a number that had silently become a different number
- * while a fake progress bar held their attention somewhere else.
- *
- * Two consequences of doing it here rather than on the next screen, both deliberate:
- *
- *  · The meters in the right-hand rail move at the same moment, on the same stagger and
- *    the same curve, because `App` now keeps the rails mounted through this beat. The
- *    player sees one event in two places rather than two events.
- *  · By the time the second is up, every number has arrived. easeInOutCubic is 99.97%
- *    complete at 93% of its duration, so the last of the three — delayed 160ms into a
- *    900ms travel — has visually settled at 1,000ms. The consequence screen therefore
- *    opens showing exactly the numbers the player just watched land, rather than catching
- *    them mid-flight.
- *
- * The 1,000ms is unchanged, and the labour-illusion literature is why that is defensible
- * now when it was not before: a pause earns its keep only if it shows work rather than
- * waiting. A second of fake latency is above the Doherty threshold and buys nothing. A
- * second of watching a value travel is the transition Heer & Robertson measured at "around
- * one second" for statistical data graphics.
- */
-export function ResolvingScreen({
-  resolution,
-  onDone,
-}: {
-  resolution: Resolution | null;
-  onDone: () => void;
-}) {
-  useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const t = window.setTimeout(onDone, reduced ? 120 : 1000);
-    return () => window.clearTimeout(t);
-  }, [onDone]);
-
-  return (
-    <div className="flex min-h-full flex-col items-center justify-center px-5 py-6">
-      <div className="w-full max-w-2xl">
-        {/* Carries the beat-title id even though it is not a heading: the work area takes
-            focus on every phase change, and for this one second it would otherwise be an
-            unnamed region — "main", and nothing else, while the player waits.
-
-            Not animated beyond a short fade. Under `reduce` this beat is 120ms long, so
-            anything whose meaning lived in this line's entrance would be unreadable. */}
-        <p
-          id={BEAT_TITLE_ID}
-          className="m-swap mb-7 text-center text-[13px] font-medium text-(--color-muted)"
-        >
-          Seeing what happens…
-        </p>
-        {resolution && (
-          <FactorGrid
-            dims={resolution.dimsAfter}
-            from={resolution.dimsBefore}
-            deltas={resolution.deltas}
-            showDeltas
-          />
-        )}
-      </div>
-    </div>
-  );
-}
 
 /* ───────────────────── the call the player made ───────────────────── */
 
@@ -185,6 +159,204 @@ function sentence(s: string): string {
   return /[.!?…]$/.test(s.trim()) ? s.trim() : `${s.trim()}.`;
 }
 
+/* ───────────────────────── the result band ───────────────────────── */
+
+/** 0–100, because a meter drawn outside its track is a rendering bug, not a value. */
+const clamp = (n: number) => Math.max(0, Math.min(100, n));
+
+/**
+ * True from the frame after mount.
+ *
+ * A CSS transition needs two computed values to interpolate between, and an element that
+ * mounts already showing its final value has only one. The rail's meters survive the
+ * commit — `App.tsx` keeps them mounted — so they simply transition when the prop changes.
+ * The band in the centre does not exist until this screen arrives, so it has to paint the
+ * old value for exactly one frame and then set the new one. One extra render per beat, and
+ * it is the whole reason the centre and the rail move together instead of one of them
+ * jumping.
+ *
+ * A local copy of `useSettled`, which `ui/shell.tsx` keeps private. Four lines, and this
+ * worker does not own that file; if it is ever exported this should use it.
+ */
+function useFirstFrame(): boolean {
+  const [past, setPast] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setPast(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return past;
+}
+
+/**
+ * One dimension, as the result screen draws it: a 56px figure, its movement, and the bar
+ * arriving underneath.
+ *
+ * The figure is `aria-hidden` and the truth lives on the `role="meter"` below it, for the
+ * same reason `ui/shell.tsx` gives: a counting number and an authoritative one in the
+ * accessibility tree at once are two numbers for one quantity that disagree for 900ms.
+ */
+function ResultCell({
+  dim,
+  value,
+  from,
+  delta,
+  index,
+}: {
+  dim: DimensionId;
+  value: number;
+  /** where this meter is travelling FROM, on the beat where it is arriving */
+  from?: number;
+  delta: number;
+  index: number;
+}) {
+  const meta = DIMENSION_META[dim];
+  const ink = `var(${meta.textVar})`;
+  const delay = meterDelay(index);
+  const shownNumber = useCountUp(value, from, delay);
+  const painted = useFirstFrame();
+  const reduced = useReducedMotion();
+  const bar = painted ? value : (from ?? value);
+
+  return (
+    <div className="bg-(--color-surface) px-5 py-4">
+      <div className="flex items-center gap-2" style={{ color: ink }}>
+        <Icon name={meta.icon} size={16} />
+        <span className="text-[13px] font-bold">{meta.label}</span>
+      </div>
+
+      <div className="mt-1.5 flex items-baseline gap-2.5">
+        {/* 56px, the display step, and the only place in a mission where a numeral
+            outranks the heading above it. That is the whole of "the meters are the story
+            on this screen and furniture on every other one" — and it is what makes the
+            result screen legible as a result at thumbnail size, with the text unreadable. */}
+        <span
+          aria-hidden="true"
+          className="numeral text-[56px]"
+          style={{ color: ink }}
+        >
+          {shownNumber}
+        </span>
+        {delta !== 0 && (
+          /* A gain lands with a slight overshoot; a loss simply appears. That asymmetry is
+             argued in `motion.css` and it is not a stylistic preference — feedback that
+             celebrates a loss is measurably remembered as a win (Dixon et al., 2010). */
+          <span
+            className={`${delta > 0 ? "m-land" : "m-arrive"} rounded-full px-2 py-0.5 text-[13px] font-bold tabular-nums`}
+            style={{
+              animationDelay: `${delay}ms`,
+              color: delta > 0 ? "var(--color-good)" : "var(--color-bad)",
+              background: delta > 0 ? "var(--color-good-tint)" : "var(--color-bad-tint)",
+            }}
+          >
+            <span aria-hidden="true">
+              {delta > 0 ? "▲ +" : "▼ "}
+              {Math.abs(delta)}
+            </span>
+            {/* The glyph carries direction to the eye and nothing at all to a screen
+                reader, which reads "▲" as either a triangle or as silence. */}
+            <Hidden>
+              {delta > 0 ? LABEL.up : LABEL.down} {Math.abs(delta)}.
+            </Hidden>
+          </span>
+        )}
+      </div>
+
+      <div
+        className="mt-2.5 h-2 w-full overflow-hidden rounded-full"
+        style={{ background: `var(--color-${dim}-tint)` }}
+        role="meter"
+        aria-valuenow={value}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`${meta.label}: ${value} ${UI_LABEL.outOf} 100`}
+      >
+        {/**
+         * `transform` when it moves, `width` when it does not — and the second half of
+         * that is a bug fix, not an optimisation.
+         *
+         * A travelling bar must be a `transform`: a width transition runs layout on every
+         * frame of a 900ms animation, and of width, height, margin and padding Linear's
+         * engineering write-up says "never animate those. I mean never." So the animated
+         * path is `scaleX` from a left origin, composited, with `.m-settle` carrying the
+         * curve.
+         *
+         * But `index.css` collapses reduced motion with `transform: none !important` on
+         * `*`, and an inline style cannot outrank `!important` — so under `reduce` a
+         * `scaleX` bar renders at its UNSCALED width, which is 100%. **Every meter in the
+         * game currently reads full under reduced motion**, because the rail, the chapter
+         * stepper and the reward level bar are all built this way
+         * (`MeterTrack` and `ChapterStepper` in `ui/shell.tsx`, and `ui/reward.tsx`). That
+         * is a player who asked for less movement being shown the wrong number, which is
+         * worse than the animation was.
+         *
+         * Under `reduce` there is nothing to animate, so `width` costs nothing and is
+         * correct. Fixed here because this file is owned; the other three need the same
+         * two lines and are written up rather than reached into.
+         */}
+        <div
+          className={`h-full rounded-full ${reduced ? "" : "m-settle w-full"}`}
+          style={
+            reduced
+              ? { width: `${clamp(value)}%`, background: `var(${meta.fillVar})` }
+              : {
+                  transform: `scaleX(${clamp(bar) / 100})`,
+                  transitionDelay: `${delay}ms`,
+                  background: `var(${meta.fillVar})`,
+                }
+          }
+        />
+      </div>
+
+      <p className="mt-2 text-[13px] text-(--color-muted)">{meta.question}</p>
+    </div>
+  );
+}
+
+/**
+ * The three of them, flush and full width, divided by 1px rules.
+ *
+ * `gap-px` over a line-coloured ground rather than three bordered cards with gaps between
+ * them: the mockups' own construction, and the difference between a console and a card kit.
+ */
+function ResultBand({
+  dims,
+  from,
+  deltas,
+}: {
+  dims: Record<DimensionId, number>;
+  from?: Record<DimensionId, number>;
+  deltas: Record<DimensionId, number>;
+}) {
+  return (
+    <section
+      data-region="result"
+      aria-label={LABEL.whatItMoved}
+      className="grid gap-px border-y border-(--color-line) sm:grid-cols-3"
+      style={{ background: "var(--color-line)" }}
+    >
+      {DIMENSIONS.map((d, i) => (
+        <ResultCell
+          key={d}
+          dim={d}
+          value={dims[d]}
+          from={from?.[d]}
+          delta={deltas[d]}
+          index={i}
+        />
+      ))}
+    </section>
+  );
+}
+
+/* ───────────────────── the verdict on your call ───────────────────── */
+
+/**
+ * The hinge of the screen: the answer to the question the gate made the player ask.
+ *
+ * Full width and flush under the band it is about, rather than a floating pill above it.
+ * The landing is on the icon and only when the call was right — a wrong call is not a
+ * thing to give a satisfying little bounce to.
+ */
 function YourCall({ resolution }: { resolution: Resolution }) {
   const text = predictionVerdict(resolution);
   if (!text) return null;
@@ -194,80 +366,16 @@ function YourCall({ resolution }: { resolution: Resolution }) {
   const tint = right ? "var(--color-good-tint)" : "var(--color-warn-tint)";
 
   return (
-    /* The strip itself rides the reveal sequence — it is the first thing in it, because
-       it answers the question the PLAYER asked rather than telling them something. The
-       landing is on the icon instead, and only when the call was right: a wrong call is
-       not a thing to give a satisfying little bounce to. See `m-arrive` in motion.css. */
-    <div className="flex items-center gap-2.5 rounded-xl px-4 py-2.5" style={{ background: tint }}>
+    <div
+      className="flex items-center gap-2.5 border-b border-(--color-line) px-5 py-2.5"
+      style={{ background: tint }}
+    >
       <span className={`${right ? "m-land" : "m-arrive"} shrink-0`} style={{ color: colour }}>
-        <Icon name={right ? "check" : "scale"} size={16} />
+        <Icon name={right ? "check" : "scale"} size={18} />
       </span>
-      <p className="text-[13px] font-semibold" style={{ color: colour }}>
+      <p className="text-[15px] font-bold" style={{ color: colour }}>
         {text}
       </p>
-    </div>
-  );
-}
-
-/**
- * Three metric tiles with their movement — the mockups' result-screen shape.
- *
- * The rail carries the same three values as bars; these carry the CHANGE, which is the
- * only thing the player is looking for at this moment.
- */
-function Impact({
-  dims,
-  deltas,
-}: {
-  dims: Record<DimensionId, number>;
-  deltas: Record<DimensionId, number>;
-}) {
-  return (
-    <div className="card grid gap-px overflow-hidden sm:grid-cols-3" style={{ background: "var(--color-line)" }}>
-      {(Object.keys(DIMENSION_META) as DimensionId[]).map((d, i) => {
-        const meta = DIMENSION_META[d];
-        const colour = `var(${meta.textVar})`;
-        const delta = deltas[d];
-        return (
-          <div key={d} className="bg-(--color-surface) px-4 py-3">
-            <div className="flex items-center gap-2">
-              <span className="shrink-0" style={{ color: colour }}>
-                <Icon name={meta.icon} size={16} />
-              </span>
-              <span className="text-[12px] font-bold" style={{ color: colour }}>
-                {meta.label}
-              </span>
-            </div>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span
-                className="text-[24px] font-bold leading-none tabular-nums"
-                style={{ color: colour }}
-              >
-                {dims[d]}
-              </span>
-              {delta !== 0 && (
-                /* The number beside this one does NOT count here — the player watched it
-                   count, one beat ago, and re-running it would make the restatement look
-                   like a second event. What repeats is the RHYTHM: the three chips arrive
-                   on the same 0 / 80 / 160ms stagger the meters just moved on, so the two
-                   beats read as one consequence rather than as a result and a summary. */
-                <span
-                  className={`${delta > 0 ? "m-land" : "m-arrive"} rounded-full px-1.5 py-0.5 text-[12px] font-bold tabular-nums`}
-                  style={{
-                    animationDelay: `${meterDelay(i)}ms`,
-                    color: delta > 0 ? "var(--color-good)" : "var(--color-bad)",
-                    background: delta > 0 ? "var(--color-good-tint)" : "var(--color-bad-tint)",
-                  }}
-                >
-                  {delta > 0 ? "▲ +" : "▼ "}
-                  {delta}
-                </span>
-              )}
-            </div>
-            <p className="mt-1 text-[12px] text-(--color-muted)">{meta.question}</p>
-          </div>
-        );
-      })}
     </div>
   );
 }
@@ -275,11 +383,13 @@ function Impact({
 /* ───────────────────── the colleague's read ───────────────────── */
 
 /**
- * Where the teaching lives now.
+ * Where the teaching lives.
  *
- * Same words that were on the lesson screen; the difference is that a named person with
- * a job and a stake is saying them about something that just happened, which is a
- * briefing. The interface saying them to nobody in particular was a lecture.
+ * There used to be a screen for it: the lesson in 26px bold under the caption "Next time",
+ * sixteen of them, with no speaker and nothing to disagree with. That screen was where the
+ * feeling of being lectured at actually lived. Same words, out of the mouth of the
+ * colleague who briefed you, about something that just happened — which is a briefing
+ * rather than a moral assigned to you. See docs/ENGAGEMENT-MODEL.md.
  */
 function TheRead({ advisor, resolution }: { advisor?: Advisor; resolution: Resolution }) {
   const { lesson } = resolution;
@@ -287,34 +397,33 @@ function TheRead({ advisor, resolution }: { advisor?: Advisor; resolution: Resol
 
   return (
     <section
-      className="rounded-[14px] border px-5 py-4"
-      style={{ borderColor: "var(--color-accent-ring)", background: "var(--color-accent-tint)" }}
+      data-region="read"
+      className="flex min-w-0 flex-1 items-start gap-3.5 border-r border-(--color-line) px-5 py-4"
+      style={{ background: "var(--color-accent-tint)" }}
     >
-      <div className="flex items-start gap-3.5">
-        {advisor.photo ? (
-          <img
-            src={artUrl(advisor.photo)}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            className="h-[52px] w-[52px] shrink-0 rounded-full object-cover"
-          />
-        ) : null}
-        <div className="min-w-0">
-          <p className="text-[13px] font-bold text-(--color-ink)">
-            {advisor.name}
-            <span className="ml-2 font-medium text-(--color-accent)">{advisor.role}</span>
-          </p>
-          {/* One interpolated string each, not `“` + text + `”` as three sibling nodes.
-              Those were the two orphaned closing quote marks on every consequence screen
-              in the game — see `quoted` in `ui/shell.tsx`. */}
-          <p className="mt-1.5 text-[15px] font-semibold leading-snug text-(--color-ink) text-pretty">
-            {quoted(lesson.principle)}
-          </p>
-          <p className="mt-2 text-[15px] leading-relaxed text-(--color-ink-soft) text-pretty">
-            {quoted(lesson.because)}
-          </p>
-        </div>
+      {advisor.photo ? (
+        <img
+          src={artUrl(advisor.photo)}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="h-[48px] w-[48px] shrink-0 rounded-full object-cover"
+        />
+      ) : null}
+      <div className="min-w-0">
+        <p className="text-[13px] font-bold text-(--color-ink)">
+          {advisor.name}
+          <span className="ml-2 font-medium text-(--color-accent)">{advisor.role}</span>
+        </p>
+        {/* One interpolated string each, not `“` + text + `”` as three sibling nodes.
+            Those were the two orphaned closing quote marks on every consequence screen
+            in the game — see `quoted` in `ui/shell.tsx`. */}
+        <p className="mt-1.5 text-[15px] font-semibold leading-snug text-(--color-ink) text-pretty">
+          {quoted(lesson.principle)}
+        </p>
+        <p className="mt-1.5 text-[15px] leading-relaxed text-(--color-ink-soft) text-pretty">
+          {quoted(lesson.because)}
+        </p>
       </div>
     </section>
   );
@@ -325,123 +434,115 @@ function TheRead({ advisor, resolution }: { advisor?: Advisor; resolution: Resol
 export function ConsequenceScreen({
   resolution,
   advisor,
-  hero,
+  from,
 }: {
   resolution: Resolution;
   advisor?: Advisor;
+  /**
+   * Still accepted, deliberately unused.
+   *
+   * `App.tsx` passes the mission's hero photograph and owns that call site. This screen
+   * does not render it any more — see the note at the top of the file: it is the same
+   * file the brief renders, in the same place, which is most of why READ and RECEIVE
+   * were indistinguishable at a glance.
+   */
   hero?: string;
+  /**
+   * Where the three meters are travelling FROM, and the whole of what `resolving` used
+   * to be.
+   *
+   * Present when this screen IS the arrival of the commit: the band paints these values
+   * for one frame, then travels to `resolution.dimsAfter` on the 0 / 80 / 160ms stagger
+   * and the 900ms slow-in-slow-out curve the rail uses, so the centre and the rail are
+   * one event in two places. Omit it and the screen renders settled, which is what a
+   * revisit or a resumed save should do.
+   *
+   * It is a prop rather than being read off `resolution.dimsBefore` on purpose: only the
+   * caller knows whether this mount is the arrival. Reading it here would re-run the
+   * whole travel on any re-render that remounted the screen.
+   */
+  from?: Record<DimensionId, number>;
 }) {
   const tone = TONE[resolution.outcome.tone];
 
   return (
     <div className="flex min-h-full flex-col">
-      {/* Header, matching the briefing's shape so the console does not change register.
-          `m-swap`, not a rise: this band occupies the same place as the band that was
-          here a moment ago, and translating it would claim a move that did not happen. */}
-      <div className="m-swap flex items-stretch gap-5 bg-(--color-surface)">
-        <div className="min-w-0 flex-1 px-5 pt-5">
-          <div className="flex items-start gap-3.5">
-            {/* The one object on this screen that is allowed to land. It is the verdict
-                on the decision, and it is the first thing the eye goes to. */}
-            <span
-              aria-hidden="true"
-              className="m-land flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-full text-white"
-              style={{ background: tone.colour }}
+      {/**
+       * The header, and it is NOT the brief's header.
+       *
+       * No photograph, a 60px tone medallion, and the outcome at the 32px step. `m-swap`,
+       * not a rise: this band occupies the same place as the band that was here a moment
+       * ago, and translating it would claim a move that did not happen.
+       */}
+      <div className="m-swap bg-(--color-surface) px-5 pb-4 pt-5">
+        <div className="flex items-start gap-4">
+          {/* The one object in the header allowed to land. It is the verdict on the
+              decision and it is the first thing the eye goes to. */}
+          <span
+            aria-hidden="true"
+            className="m-land flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-full text-white"
+            style={{ background: tone.colour }}
+          >
+            <Icon name={tone.icon} size={30} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] text-(--color-muted)">
+              {LABEL.youChose}{" "}
+              <span className="font-bold text-(--color-ink-soft)">{resolution.chosenLabel}</span>
+            </p>
+            <h1
+              id={BEAT_TITLE_ID}
+              className="mt-1 max-w-[30ch] text-[32px] font-bold leading-[1.1] tracking-[-0.015em] text-(--color-ink) text-pretty"
             >
-              <Icon name={tone.icon} size={25} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[13px] text-(--color-muted)">
-                You chose:{" "}
-                <span className="font-bold text-(--color-ink-soft)">{resolution.chosenLabel}</span>
-              </p>
-              <h1
-                id={BEAT_TITLE_ID}
-                className="mt-1 text-[24px] font-bold leading-[1.12] tracking-[-0.015em] text-(--color-ink)"
-              >
-                {resolution.outcome.headline}
-              </h1>
-            </div>
+              {resolution.outcome.headline}
+            </h1>
           </div>
-          <p className="mt-3 text-[15px] leading-[1.55] text-(--color-ink-soft)">
-            {resolution.outcome.detail}
-          </p>
         </div>
-        {hero && (
-          <img
-            src={artUrl(hero)}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            className="hidden h-[172px] w-[34%] shrink-0 object-cover md:block"
-            style={{
-              maskImage: "linear-gradient(to right, transparent, #000 22%)",
-              WebkitMaskImage: "linear-gradient(to right, transparent, #000 22%)",
-            }}
-          />
-        )}
+        <p className="mt-3 max-w-[92ch] text-[15px] leading-[1.55] text-(--color-ink-soft)">
+          {resolution.outcome.detail}
+        </p>
       </div>
 
+      {/* The subject of the screen. Flush against the header and against the verdict
+          below it, because a result is not a card floating on a page. */}
+      <ResultBand
+        dims={resolution.dimsAfter}
+        from={from}
+        deltas={resolution.deltas}
+      />
+
+      <YourCall resolution={resolution} />
+
       {/**
-       * The reveal, and the only sequenced entrance in the game.
+       * What it changed, and what a colleague makes of it — side by side, flush, divided
+       * by a 1px rule, on the tinted ground.
        *
-       * Its order is the argument the beat is making: whether you called it → what it
-       * cost → what you found out → what is now different → what a colleague makes of it.
-       * 70ms apart and a 6px rise, so it reads as one cascade settling rather than five
-       * separate animations, and it is over in 540ms. Nothing waits for it: the primary
-       * action is in the action bar, which is outside this element and never animates, so
-       * a player who wants the next mission can have it immediately.
+       * They used to be two of five full-width cards stacked down a 739px column, which
+       * left ~200px of empty desk under the last one on most paths and pushed the
+       * colleague's read — the only part of a consequence that teaches anything — off the
+       * bottom on the densest ones. Two columns is also the second structural difference
+       * from the brief, which is one column of prose.
        *
-       * `m-seq` indexes on `:nth-child`, and every section below is conditional — which
-       * is fine and is worth stating, because a falsy branch in JSX renders no node at
-       * all, so the stagger stays contiguous rather than leaving a gap where a mission
-       * with no revealed evidence would have been.
+       * `m-seq` is kept and is now two children rather than five: the meters travelling
+       * ARE the entrance, so a five-step cascade behind them would be a second arrival
+       * competing with the first.
+       *
+       * The surplus height goes BELOW this pair, onto the desk, rather than being
+       * distributed into the screen. Two other arrangements were built and looked at
+       * first, and both were worse: giving the slack to the read panel put a 350px field
+       * of lavender under 140px of type, and giving it to the result band left the three
+       * figures floating in the middle of a white void that grew to 500px at 1440x1024.
+       * A document that ends, with desk under it, is the one that reads as finished.
        */}
-      <div className="m-seq flex-1 space-y-4 px-5 py-4">
-        <YourCall resolution={resolution} />
+      <div className="m-seq flex flex-wrap items-stretch border-b border-(--color-line)">
+        <TheRead advisor={advisor} resolution={resolution} />
 
-        <Impact dims={resolution.dimsAfter} deltas={resolution.deltas} />
-
-        {/**
-         * The evidence, deferred rather than printed a third time.
-         *
-         * This block is the whole of the investigate consequence's overflow: 113px at
-         * 1440x900 on the first-option path, 64px and 70px on the other two. It reprinted
-         * the FULL reveal text of every card the player opened — paragraphs they had
-         * already read once when they opened them, and which are permanently in "Your
-         * file" in the left rail on every screen for the rest of the run. So it was the
-         * third printing, and what it pushed off the bottom of the screen was the
-         * colleague's read: the only part of a consequence that teaches anything.
-         *
-         * Deferring it hides nothing decision-critical, because there is nothing left to
-         * decide on this beat. The labels stay visible so the player can see WHAT they
-         * found without re-reading it, which is the part with recall value.
-         */}
-        {resolution.revealed.length > 0 && (
-          <details className="card overflow-hidden px-5 py-3">
-            <summary className="flex min-h-[24px] cursor-pointer list-none flex-wrap items-center gap-x-2 text-[13px]">
-              <SectionTitle icon="search">{UI_LABEL.foundOut}</SectionTitle>
-              <span className="text-(--color-ink-soft)">
-                {resolution.revealed.map((e) => e.label).join(" \u00b7 ")}
-              </span>
-              <span className="text-(--color-accent)">{UI_LABEL.show}</span>
-            </summary>
-            <div className="mt-2 space-y-2.5 border-t border-(--color-line) pt-2.5">
-              {resolution.revealed.map((e) => (
-                <div key={e.id}>
-                  <p className="text-[13px] font-bold text-(--color-ink)">{e.label}</p>
-                  <p className="text-[13px] leading-relaxed text-(--color-ink-soft)">
-                    {e.reveals}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </details>
-        )}
-
-        <div className="card px-5 py-4">
+        <section
+          data-region="changed"
+          className="min-w-[280px] flex-1 bg-(--color-surface) px-5 py-4"
+        >
           <SectionTitle icon="spark" className="mb-2.5">
-            What is now different
+            {LABEL.nowDifferent}
           </SectionTitle>
           <ul className="space-y-1.5">
             {resolution.outcome.changed.map((c, i) => (
@@ -458,9 +559,93 @@ export function ConsequenceScreen({
               </li>
             ))}
           </ul>
-        </div>
 
-        <TheRead advisor={advisor} resolution={resolution} />
+          {/**
+           * The evidence, deferred rather than printed a third time.
+           *
+           * This block was the whole of the investigate consequence's overflow: it
+           * reprinted the FULL reveal text of every card the player opened — paragraphs
+           * they had already read once when they opened them, and which are permanently
+           * in "Your file" in the left rail for the rest of the run. What it pushed off
+           * the bottom was the colleague's read.
+           *
+           * The labels stay visible so the player can see WHAT they found without
+           * re-reading it, which is the part with recall value.
+           */}
+          {resolution.revealed.length > 0 && (
+            <details className="mt-3 border-t border-(--color-line) pt-2.5">
+              <summary className="flex min-h-[24px] cursor-pointer list-none flex-wrap items-center gap-x-2 text-[13px]">
+                <SectionTitle icon="search">{UI_LABEL.foundOut}</SectionTitle>
+                <span className="text-(--color-ink-soft)">
+                  {resolution.revealed.map((e) => e.label).join(" · ")}
+                </span>
+                <span className="text-(--color-accent)">{UI_LABEL.show}</span>
+              </summary>
+              <div className="mt-2 space-y-2.5">
+                {resolution.revealed.map((e) => (
+                  <div key={e.id}>
+                    <p className="text-[13px] font-bold text-(--color-ink)">{e.label}</p>
+                    <p className="text-[13px] leading-relaxed text-(--color-ink-soft)">
+                      {e.reveals}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────── resolving ─────────────────────────── */
+
+/**
+ * DEPRECATED, and kept only until `App.tsx` stops routing to it.
+ *
+ * This is the screen `docs/SCREEN-TAXONOMY.md` §3 names as the one type to cut: a
+ * one-second transition holding 17 of a run's 76 screen instances, earning its slot purely
+ * by being in the way. Everything it did now happens as `ConsequenceScreen`'s entrance —
+ * pass that screen `from` and the same three meters travel on the same stagger and the
+ * same curve, on a screen that also has something to say.
+ *
+ * It is still exported because `App.tsx` is owned by another worker and removing the
+ * export would break their file mid-change. Delete it, and this comment, the day the
+ * `resolving` phase leaves the flow.
+ */
+export function ResolvingScreen({
+  resolution,
+  onDone,
+}: {
+  resolution: Resolution | null;
+  onDone: () => void;
+}) {
+  useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const t = window.setTimeout(onDone, reduced ? 120 : 1000);
+    return () => window.clearTimeout(t);
+  }, [onDone]);
+
+  return (
+    <div className="flex min-h-full flex-col items-center justify-center px-5 py-6">
+      <div className="w-full max-w-2xl">
+        {/* Carries the beat-title id even though it is not a heading: the work area takes
+            focus on every phase change, and for this one second it would otherwise be an
+            unnamed region — "main", and nothing else, while the player waits. */}
+        <p
+          id={BEAT_TITLE_ID}
+          className="m-swap mb-7 text-center text-[13px] font-medium text-(--color-muted)"
+        >
+          Seeing what happens…
+        </p>
+        {resolution && (
+          <ResultBand
+            dims={resolution.dimsAfter}
+            from={resolution.dimsBefore}
+            deltas={resolution.deltas}
+          />
+        )}
       </div>
     </div>
   );

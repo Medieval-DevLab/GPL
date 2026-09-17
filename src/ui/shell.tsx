@@ -517,6 +517,9 @@ export function ChapterStepper({
           is the interface agreeing. `scaleX` rather than `width` so a 900ms animation in
           the top bar does not run layout on every frame of it. */}
       <span
+          /* Its width is a value, so it keeps its transform under reduced
+             motion — see the `:not([data-meter])` note in index.css. */
+          data-meter
         aria-hidden="true"
         className="m-settle absolute top-[11px] h-[2px] rounded-full"
         style={{
@@ -1143,6 +1146,9 @@ function MeterTrack({
       aria-label={`${label}: ${value} ${UI_LABEL.outOf} 100`}
     >
       <div
+          /* Its width is a value, so it keeps its transform under reduced
+             motion — see the `:not([data-meter])` note in index.css. */
+          data-meter
         className="m-settle h-full w-full rounded-full"
         style={{
           transform: `scaleX(${Math.max(0, Math.min(100, shown)) / 100})`,

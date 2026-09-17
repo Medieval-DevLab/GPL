@@ -604,6 +604,9 @@ function TallyCard({
         style={{ background: "color-mix(in oklab, var(--color-stage-ink) 12%, transparent)" }}
       >
         <span
+          /* Its width is a value, so it keeps its transform under reduced
+             motion — see the `:not([data-meter])` note in index.css. */
+          data-meter
           className="rw-bar block h-full w-full origin-left rounded-full"
           style={{
             background: `var(${meta.fillVar})`,

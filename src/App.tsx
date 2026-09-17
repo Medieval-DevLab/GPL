@@ -37,11 +37,13 @@ import {
 } from "./ui/consequence";
 import { DialogueScene, isDialogue } from "./ui/dialogue";
 import { BriefBody, DecideBody } from "./ui/mission";
-import { badgeProgress } from "./engine/progress";
 import { CutScene } from "./ui/cutscene";
+import { PerformanceDashboard } from "./ui/dashboard";
+import { ChapterDebrief } from "./ui/debrief";
+import { ReflectionRail, ReflectionScreen } from "./ui/reflection";
 import { HubScreen } from "./ui/hub";
 import { JourneyMap } from "./ui/journey";
-import { BadgeEarned, RecognitionBoard } from "./ui/reward";
+import { BadgeEarned } from "./ui/reward";
 import {
   EndingScreen,
   SetupScreen,
@@ -321,6 +323,9 @@ export default function App() {
     return first && isMission(first) ? first.advisor : undefined;
   }, [node]);
 
+  /** Which of the four interlude screens this beat is. `chapter-open` is the default. */
+  const interludeRole = node.kind === "interlude" ? (node.role ?? "chapter-open") : null;
+
   const wideEnough = useWideEnough();
 
   /* The hub, once there is a run to come back to. A first-time player still meets the
@@ -377,7 +382,10 @@ export default function App() {
    * beat that is supposed to feel continuous.
    */
   const onResolving = state.phase === "resolving" && mission !== null;
-  const framed = onBrief || onDecide || onResolving || onResult;
+  /* A reflection is framed too — it is a paper beat inside the console. The other three
+     interlude roles are full-bleed and take no frame. */
+  const onReflection = state.phase === "interlude" && interludeRole === "reflection";
+  const framed = onBrief || onDecide || onResolving || onResult || onReflection;
   /** The meters have just moved on exactly these two beats, and only they pass `from`. */
   const moved = (onResolving || onResult) && state.resolution ? state.resolution : null;
   const need = mission ? requiredCount(mission) : 0;
@@ -542,7 +550,17 @@ export default function App() {
         ) : undefined
       }
       right={
-        framed && mission ? (
+        /**
+         * `ReflectionRail`, not `InsightRail` with the meters hidden.
+         *
+         * A reflection is the only paper screen with the meters REMOVED, and that absence
+         * is the teaching: meters mean stakes, so no meters means nothing is at stake. It
+         * is a different component rather than a flag on this one so that a later edit
+         * inside `InsightRail` cannot quietly undo the single rule the screen exists for.
+         */
+        onReflection ? (
+          <ReflectionRail file={discoveredFile(state)} />
+        ) : framed && mission ? (
           <InsightRail
             dims={state.dims}
             /* `state.dims` is ALREADY the new values by the time the phase is
@@ -609,14 +627,39 @@ export default function App() {
       {/* The chapter card becomes a cut scene: a full-bleed change of place, a figure at
           400px rather than a 104px circle, and a Begin action. `InterludeScreen` is kept
           for the print debrief, which must stay paper. */}
+      {/**
+        * Four screens, one node kind, routed on `role`.
+        *
+        * Twelve interludes were added to the graph and every one of them rendered as a
+        * chapter opener until this existed — so the reflections and the chapter debriefs
+        * were in the run, reachable, and invisible, and `verify` reported "17 interludes
+        * for 5 chapters" without being able to say why.
+        */}
       {state.phase === "interlude" && node.kind === "interlude" && (
-        <CutScene
-          node={node as Interlude}
-          chapter={chapterFor(node.chapter)}
-          person={nextAdvisor}
-          onBegin={doAdvance}
-          titleId={BEAT_TITLE_ID}
-        />
+        <>
+          {interludeRole === "reflection" && (
+            <ReflectionScreen node={node as Interlude} onRespond={doAdvance} />
+          )}
+          {interludeRole === "chapter-debrief" && (
+            <ChapterDebrief
+              state={state}
+              content={content}
+              node={node as Interlude}
+              onExit={doAdvance}
+            />
+          )}
+          {(interludeRole === "chapter-open" || interludeRole === "turn") && (
+            <CutScene
+              node={node as Interlude}
+              chapter={chapterFor(node.chapter)}
+              /* A turn is something done TO the player, so it carries no figure — nobody
+                 is briefing you when the rival moves or the sponsor resigns. */
+              person={interludeRole === "turn" ? undefined : nextAdvisor}
+              onBegin={doAdvance}
+              titleId={BEAT_TITLE_ID}
+            />
+          )}
+        </>
       )}
 
       {state.phase === "resolving" && (
@@ -627,7 +670,9 @@ export default function App() {
         <ConsequenceScreen
           resolution={state.resolution}
           advisor={mission?.advisor}
-          hero={mission?.hero}
+          /* The same expression the rail gets, so the centre band and the rail read as
+             one event rather than two things that happen to agree. */
+          from={state.resolution.dimsBefore}
         />
       )}
 
@@ -638,7 +683,9 @@ export default function App() {
       {view === "journey" && (
         <JourneyMap state={state} content={content} onSelectMission={backToPlay} />
       )}
-      {view === "awards" && <RecognitionBoard badges={badgeProgress(state)} />}
+      {/* The dashboard, not a leaderboard: there is no backend, and an invented cohort
+          is a lie a learner spots. It carries the recognition board inside it. */}
+      {view === "awards" && <PerformanceDashboard state={state} content={content} onDismiss={backToPlay} />}
 
       {/* Six badges the engine has always awarded and no screen has ever mentioned. */}
       {badgeToShow && (

@@ -49,6 +49,7 @@ import { useEffect, useRef, useState } from "react";
 import { availableOptions, resolveSaidQuote, resolveSituation } from "../engine/engine";
 import type { ChoiceMission, DimensionId, GameState, Mission, Option } from "../engine/types";
 import { Bullet, Icon, PersonGlyph, Pill, SectionTitle } from "./icons";
+import { StakeMark } from "./mission";
 import {
   BEAT_TITLE_ID,
   Disc,
@@ -740,6 +741,13 @@ function ChatThread({
  * It renders inside the reply list, indented under the reply it is asking about, and it
  * carries `PREDICTION_QUESTION_ID` — which is what the action bar's `aria-describedby`
  * points at, so the button says what it is waiting for rather than repeating it.
+ *
+ * It is also the LOUDEST thing on the screen after the replies themselves, and that is a
+ * requirement rather than a preference (`SCREEN-SPECS.md` §3): the gate is the only thing
+ * in the game that marks a change of state, so on the surface where it lives in the work
+ * area it is drawn as a 2px-rimmed object with the question at the body step, not as a
+ * caption. It was 13px inside a 1px hairline, and the reported bug — "cannot get past
+ * Commit to this" — was somebody not seeing it.
  */
 function PredictionGate({
   prediction,
@@ -762,10 +770,10 @@ function PredictionGate({
   return (
     <div
       key={nudge}
-      className={`ml-9 mt-2 rounded-[12px] border px-3.5 py-2.5 ${nudge > 0 ? "m-land" : "m-swap"}`}
+      className={`ml-9 mt-2 rounded-[12px] border-2 px-4 py-2.5 ${nudge > 0 ? "m-land" : "m-swap"}`}
       style={{ borderColor: "var(--color-accent-ring)", background: "var(--color-accent-tint)" }}
     >
-      <p id={PREDICTION_QUESTION_ID} className="text-[13px] font-bold text-(--color-ink)">
+      <p id={PREDICTION_QUESTION_ID} className="text-[15px] font-bold text-(--color-ink)">
         {UI_LABEL.predictQuestion}
       </p>
       <div className="mt-2">
@@ -812,7 +820,15 @@ function Composer({
 
   return (
     <div className="m-swap">
-      <SectionTitle icon="talk">{mission.question}</SectionTitle>
+      {/* The stake element, in its one-row form. It is the constant declaration that this
+          beat changes the game state — the gate below is the interactive half, and it only
+          exists once a reply is chosen, so without this the listening beat and the
+          answering beat were the same screen until the player clicked something. Same
+          component as the console's question band uses; see `ui/mission.tsx`. */}
+      <div className="flex items-center justify-between gap-4">
+        <SectionTitle icon="talk">{mission.question}</SectionTitle>
+        <StakeMark inline />
+      </div>
       <RadioGroup label={mission.question} className="m-deal mt-2 space-y-2">
         {options.map((o, i) => {
           const selected = chosen === o.id;
