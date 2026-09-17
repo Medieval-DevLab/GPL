@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 
 import { story } from "./content/story";
 import { decodeRun } from "./engine/runcode";
@@ -37,14 +37,19 @@ import {
 } from "./ui/consequence";
 import { DialogueScene, isDialogue } from "./ui/dialogue";
 import { BriefBody, DecideBody } from "./ui/mission";
+import { badgeProgress } from "./engine/progress";
+import { CutScene } from "./ui/cutscene";
+import { HubScreen } from "./ui/hub";
+import { JourneyMap } from "./ui/journey";
+import { BadgeEarned, RecognitionBoard } from "./ui/reward";
 import {
   EndingScreen,
-  InterludeScreen,
   SetupScreen,
   TitleScreen,
 } from "./ui/screens";
 import {
   ActionBar,
+  BEAT_TITLE_ID,
   Console,
   InsightRail,
   MissionRail,
@@ -273,7 +278,65 @@ export default function App() {
     isMission(node) &&
     content.missionOrder.indexOf(node.id) === content.missionOrder.length - 1;
 
+  /**
+   * Where the player is LOOKING, which is not where they are in the pursuit.
+   *
+   * Deliberately React state and not a `Phase`. Opening the map or the awards board is
+   * not a move in the game — it changes nothing, costs nothing and must be leavable with
+   * the state exactly as it was. Making it a phase would have put a view preference into
+   * the save file and into every exhaustive sweep of the state space.
+   */
+  const [view, setView] = useState<"play" | "journey" | "awards">("play");
+  const backToPlay = useCallback(() => setView("play"), []);
+
+  /**
+   * The badge the player has just earned, if any, shown once.
+   *
+   * `resolution.newBadges` has existed since the engine was written and no screen has
+   * ever read it — six badges that the game awards and never once mentions. A ref, not a
+   * flag in state: the modal is a presentation event, and it must not re-fire when the
+   * consequence screen re-renders.
+   */
+  const shownBadge = useRef<string | null>(null);
+  const freshBadge = state.resolution?.newBadges?.[0] ?? null;
+  const badgeKey = freshBadge ? `${state.nodeId}:${freshBadge}` : null;
+  const [dismissedBadge, setDismissedBadge] = useState<string | null>(null);
+  if (badgeKey && shownBadge.current !== badgeKey) shownBadge.current = badgeKey;
+  const badgeToShow =
+    state.phase === "consequence" && freshBadge && dismissedBadge !== badgeKey ? freshBadge : null;
+
+  /**
+   * Who fronts this cut scene: the colleague who briefs the chapter it opens.
+   *
+   * An interlude has no advisor of its own, and a cinematic beat with no face in it is
+   * the chapter card we are replacing. So look forward to the first mission of the
+   * chapter and borrow its advisor — which is also who the player is about to hear from,
+   * so the figure introduces the voice rather than decorating the screen.
+   */
+  const nextAdvisor = useMemo(() => {
+    if (node.kind !== "interlude") return undefined;
+    const first = content.missionOrder
+      .map((id) => content.nodes[id])
+      .find((m) => m && isMission(m) && m.chapter === node.chapter);
+    return first && isMission(first) ? first.advisor : undefined;
+  }, [node]);
+
   const wideEnough = useWideEnough();
+
+  /* The hub, once there is a run to come back to. A first-time player still meets the
+     title screen, because a hub with every number at zero explains nothing. */
+  if (state.phase === "title" && state.completed.length > 0) {
+    return wideEnough ? (
+      <HubScreen
+        state={state}
+        onContinue={doAdvance}
+        onViewJourney={() => setView("journey")}
+        onViewRecognition={() => setView("awards")}
+      />
+    ) : (
+      <NarrowScreen />
+    );
+  }
 
   if (state.phase === "title") {
     return wideEnough ? (
@@ -341,6 +404,8 @@ export default function App() {
          done" cannot be gamed, because the only way to move it is to play the beats. */
       progress={{ done: state.completed.length, total: missionTotal }}
       badgeCount={state.badges.length}
+      onJourney={() => setView(view === "journey" ? "play" : "journey")}
+      onRecognition={() => setView(view === "awards" ? "play" : "awards")}
     />
   );
 
@@ -430,7 +495,10 @@ export default function App() {
   } else if (state.phase === "ending") {
     bottom = <ActionBar label="Take a new brief" onAction={doRestart} />;
   } else if (state.phase === "interlude") {
-    bottom = <ActionBar label="Begin the chapter" onAction={doAdvance} />;
+    /* No action bar. The cut scene is a full-bleed change of place and carries its own
+       Begin, so the bar was putting a second identical button 250px below the first. A
+       cinematic beat with console furniture bolted under it is not a cut scene. */
+    bottom = null;
   } else if (state.phase === "setup") {
     bottom = (
       <ActionBar
@@ -538,10 +606,16 @@ export default function App() {
         />
       )}
 
+      {/* The chapter card becomes a cut scene: a full-bleed change of place, a figure at
+          400px rather than a 104px circle, and a Begin action. `InterludeScreen` is kept
+          for the print debrief, which must stay paper. */}
       {state.phase === "interlude" && node.kind === "interlude" && (
-        <InterludeScreen
+        <CutScene
           node={node as Interlude}
           chapter={chapterFor(node.chapter)}
+          person={nextAdvisor}
+          onBegin={doAdvance}
+          titleId={BEAT_TITLE_ID}
         />
       )}
 
@@ -558,6 +632,18 @@ export default function App() {
       )}
 
       {state.phase === "ending" && <EndingScreen state={state} />}
+
+      {/* Stepping out. Both are overlays on the working area rather than routes, so the
+          beat underneath keeps its state and returning costs nothing. */}
+      {view === "journey" && (
+        <JourneyMap state={state} content={content} onSelectMission={backToPlay} />
+      )}
+      {view === "awards" && <RecognitionBoard badges={badgeProgress(state)} />}
+
+      {/* Six badges the engine has always awarded and no screen has ever mentioned. */}
+      {badgeToShow && (
+        <BadgeEarned badge={badgeToShow} onDismiss={() => setDismissedBadge(badgeKey)} />
+      )}
     </Console>
   );
 }

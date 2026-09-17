@@ -68,27 +68,79 @@
      ═══════════════════════════════════════════════════════════════════════════ */
 
   /* Warm paper. OkLCh h 85°, chroma climbing with depth so that a surface coming
-     forward is both lighter AND cooler — elevation by temperature, not by shadow. */
+     forward is both lighter AND cooler — elevation by temperature, not by shadow.
+     ENRICHED. The previous ramp's three reading surfaces measured 1.04, 1.13 and
+     1.29 against white: **inside 1.3:1 of each other, which cannot express
+     elevation at all.** Every surface was the same surface, which is most of why
+     the build read as "pale" — there was no depth to see, only borders. Chroma
+     roughly doubled at every step and the panel taken down to 1.39:1, which is
+     the deepest the panel can go while `win-text` still clears 4.5:1 on it
+     (5.06:1, the new system floor). Depth is now visible before it is measured. */
   --ref-paper-0: #ffffff;
-  --ref-paper-1: #fdfbf7;
-  --ref-paper-2: #f6f2ea;
-  --ref-paper-3: #efe9de;
-  --ref-paper-4: #e6dfd1;
-  --ref-paper-5: #ddd5c5;
-  --ref-paper-6: #d5ccba;
-  --ref-paper-7: #7b7565;
-  --ref-paper-8: #6b6659;
+  --ref-paper-1: #fdfaf3;
+  --ref-paper-2: #f7eee0;
+  --ref-paper-3: #e7d9c2;
+  --ref-paper-4: #ded1b9;
+  --ref-paper-5: #cbb894;
+  --ref-paper-6: #bfa87f;
+  --ref-paper-7: #6b6049;
+  --ref-paper-8: #574d3b;
 
   /* Ink, with a few points of the brand's chroma in it — a tinted neutral, not a
      grey. OkLCh h 318°: 62° off Deliverability (h 256°) and 14° off the brand
      (h 304°), which is the right way round. Being near the brand costs nothing
      because neither the brand nor the type encodes a value; being near
      Deliverability cost 13.4. Lifting the ink off the blue axis raises that pair
-     to 16.6. */
-  --ref-ink-9: #695f6c;
-  --ref-ink-10: #5e5462;
-  --ref-ink-11: #403443;
-  --ref-ink-12: #221925;
+     to 16.6.
+
+     Deepened one step alongside the paper. The panel could not come down to a
+     readable elevation while the ink stayed where it was: `subtle` measured 4.70:1
+     on the new panel, inside the margin of error of the 4.5 floor. Each step moves
+     down by roughly the gap that used to separate it from its neighbour, so the
+     ramp keeps four distinct tiers and the whole system gains a point of contrast
+     rather than spending one. */
+  --ref-ink-9: #5e5462;
+  --ref-ink-10: #514657;
+  --ref-ink-11: #3a2e3d;
+  --ref-ink-12: #1e1621;
+
+  /* ── night ──────────────────────────────────────────────────────────────────
+     The dark cinematic register: the hub, the journey map, cut scenes and reward
+     moments. Not a dark MODE — the seventeen mission screens stay on paper, where
+     every contrast guarantee in this document was measured. This is a second
+     register for the surfaces that are the game rather than the work, and it is
+     the brand's own hue taken to OkLCh L 0.18 rather than a neutral black: the
+     stage is violet, so a purple glow on it reads as the brand's light and not as
+     a sticker. `-4` is the hairline, which needs 3:1 and clears it on both
+     grounds (3.69 and 3.23). */
+  --ref-night-1: #180927; /* OkLCh 0.180 0.060 304 */
+  --ref-night-2: #28163a; /* OkLCh 0.245 0.068 304 */
+  --ref-night-4: #756887; /* OkLCh 0.540 0.050 304 */
+  --ref-night-11: #aa9ebc;
+  --ref-night-12: #f5f1fa;
+
+  /* ── the two gamification accents ───────────────────────────────────────────
+     Exactly two, each with one fixed job, and confined to earned / progress /
+     celebration surfaces. A game palette carries five to seven saturated accents
+     where an enterprise palette carries one, but the discipline that makes a
+     reward feel earned is that its colour appears NOWHERE else — so these are not
+     available as general chrome, and never as a dimension.
+
+     Cyan, not lime, and the choice is arithmetic. Lime lands in the yellow-green
+     band Okabe–Ito builds its whole set to avoid, and converges with Winability's
+     gold under deuteranopia. Cyan at CIELAB h 215° sits 69° off Deliverability
+     (h 284°) and 46° off Profitability (h 169°), with L* 83.6 against their 33.9
+     and 54.0 — separated by hue AND by 30–50 points of lightness, so it cannot be
+     misread as a dimension value.
+
+     The reward gold DOES share Winability's hue family (h 83° against h 62°), and
+     that is the one place this palette accepts an adjacency. It is paid for by
+     lightness — L* 82.7 against 56.0 — and by containment: reward renders on the
+     hub and the celebration surfaces, which have no meters on them. */
+  --ref-cyan-4: #00e5ff;
+  --ref-cyan-11: #0a5462;
+  --ref-reward-4: #ffc53d;
+  --ref-reward-11: #5c3d05;
 
   /* ── the brand ───────────────────────────────────────────────────────────────
      Steps 3, 4, 6 and 11 are the Accenture theme verbatim — `ppt/theme/theme1.xml`,
@@ -108,9 +160,15 @@
 
      So the brand deck's mid purple is the one purple this interface cannot put
      next to a Deliverability meter, and the deck's own deep purple and core
-     purple are both safe. Nothing needed inventing; it needed measuring. */
-  --ref-purple-1: #f5eeff;
-  --ref-purple-2: #f1e8ff;
+     purple are both safe. Nothing needed inventing; it needed measuring.
+
+     Steps 1 and 2 carry more chroma than they did (`#f5eeff` → `#f3e9ff`,
+     `#f1e8ff` → `#ebdeff`). They were a lavender nobody could see: the page and
+     the selected wash were within 1.02:1 of white, so the brand's own colour was
+     present on screen and invisible, which is half of what "pale" meant. The wash
+     alphas on `body` come down to compensate — see the note there. */
+  --ref-purple-1: #f3e9ff;
+  --ref-purple-2: #ebdeff;
   --ref-purple-3: #e6dcff;
   --ref-purple-4: #c2a3ff;
   --ref-purple-6: #a100ff;
@@ -121,20 +179,26 @@
      arithmetic says leave it alone. Every attempt to open the purple gap by
      moving the blue toward Okabe–Ito's own `#0072b2` cost more in
      Profitability/Deliverability than it bought — that pair falls from 19.0 to
-     8.3 — so the blue stays exactly where it is and the brand moves instead. */
-  --ref-gold-6: #fbebdc;
+     8.3 — so the blue stays exactly where it is and the brand moves instead.
+
+     The `-6` tints are the meter tracks, and they are the one place where "more
+     colour" is measurable rather than a matter of taste: each was within 1.1:1 of
+     the card it sat on. Each now carries enough chroma for the track to read as a
+     band, held at the point where its own solid still clears 3:1 against it —
+     3.03, 3.20, 6.17 — so the fill remains legible as a value. */
+  --ref-gold-6: #fde7d1;
   --ref-gold-7: #b8803c;
   --ref-gold-9: #cd6d0a;
   --ref-gold-11: #8a4708;
-  --ref-green-6: #d7f5e8;
+  --ref-green-6: #c8f2e0;
   --ref-green-7: #37957a;
   --ref-green-9: #339075;
   --ref-green-11: #0f6249;
-  --ref-blue-6: #dae9ff;
+  --ref-blue-6: #cfe2ff;
   --ref-blue-7: #4d7fbb;
   --ref-blue-9: #054e9e;
   --ref-blue-11: #0a4c90;
-  --ref-red-6: #ffe3df;
+  --ref-red-6: #ffd9d3;
   --ref-red-7: #c2574c;
   --ref-red-9: #a31515;
   --ref-red-11: #8e1212;
@@ -170,7 +234,7 @@
   --color-text-default: var(--ref-ink-11); /* 11.73:1 */
   --color-text-muted: var(--ref-ink-10); /* 7.19:1 */
   --color-text-subtle: var(--ref-ink-9); /* 6.08:1 */
-  --color-text-disabled: #5e585f; /* 5.22:1 on surface-disabled */
+  --color-text-disabled: #4f4a51; /* 5.22:1 on surface-disabled */
 
   --color-border-subtle: var(--ref-paper-6); /* 1.55:1 — DECORATIVE ONLY */
   --color-border-control: var(--ref-paper-7); /* 4.59:1 on card, 3.80:1 on panel */
@@ -225,6 +289,59 @@
   --color-deliver-text: var(--ref-blue-11);
   --color-deliver-tint: var(--ref-blue-6);
   --color-deliver-line: var(--ref-blue-7);
+
+  /* ── the stage: the dark cinematic register ─────────────────────────────────
+     Two surfaces and three inks, and nothing else, because a third surface would
+     have to be measured too. `--color-stage-raised` is the elevated plane — a
+     card, a rail, a lit mission node on the map — and every ink and the hairline
+     clear their floor on BOTH grounds, so a component may move between them
+     without re-checking anything:
+
+       token                  on stage   on stage-raised   floor
+       --color-stage-ink        17.02        14.88          4.5
+       --color-stage-ink-soft    7.52         6.58          4.5
+       --color-stage-line        3.69         3.23          3.0
+       --color-energy           12.33        10.78          4.5
+       --color-reward           12.02        10.51          4.5
+       --color-glow-ink          7.05         6.17          4.5
+       --color-glow              3.58         3.13          3.0  ← FILLS ONLY
+
+     `--color-glow` is `#a100ff`, the mandated Accenture bright, and it is the one
+     trap in this register: **3.58:1 on the stage passes 1.4.11 and fails 1.4.3.**
+     It is legal as a fill, a border, a glow and a display numeral at 24px+ (or
+     18.66px bold, where large-text AA is 3:1) and it is illegal as body text.
+     `--color-glow-ink` exists so that the answer to "I need violet type here" is
+     a token rather than a guess.
+
+     The `-ink` tokens are the type-legal variants, and each is legal on the ground
+     its base colour is NOT: `--color-glow-ink` is violet type on the stage;
+     `--color-energy-ink` and `--color-reward-ink` are cyan and gold type on PAPER
+     (8.55 and 9.88 on the card, 6.78 and 7.84 on the panel), because on the stage
+     the vivid values already clear 10:1 and need no help. Both are also legal as
+     type ON their own fill — 5.56 and 6.26 — so a cyan progress pill or a gold
+     badge has exactly one legal label colour and it is the one named after it. */
+  --color-stage: var(--ref-night-1);
+  --color-stage-raised: var(--ref-night-2);
+  --color-stage-ink: var(--ref-night-12);
+  --color-stage-ink-soft: var(--ref-night-11);
+  --color-stage-line: var(--ref-night-4);
+
+  --color-glow: var(--ref-purple-6);
+  --color-glow-ink: #c77dff; /* 7.05:1 on stage. The text-legal violet. */
+  --color-energy: var(--ref-cyan-4);
+  --color-energy-ink: var(--ref-cyan-11);
+  --color-reward: var(--ref-reward-4);
+  --color-reward-ink: var(--ref-reward-11);
+
+  /* The lip. See `.btn-game` below — a button's bottom edge is a darker shade of
+     its own fill, which is what makes it read as a moulded object rather than a
+     rectangle of colour. Named tokens rather than a `color-mix` inside the
+     utility so that the pressed state of the primary action is a value somebody
+     measured: white on the lip is 16.67:1, so the label stays legal for the 120ms
+     the button is held. */
+  --color-brand-lip: var(--ref-purple-12);
+  --color-energy-lip: #0093a8;
+  --color-reward-lip: #c07f00;
 
   /* ═══════════════════════════════════════════════════════════════════════════
      MIGRATION ALIASES — the old names, repointed.
@@ -302,6 +419,21 @@
   --text-lg: 24px;
   --text-xl: 32px;
   --text-display: 56px;
+  /* Two display steps above the old ceiling, for numerals only — a score, a
+     streak, a percentage, a chapter number. This is the cheapest signal in the
+     whole brief: a 96px figure is read as a scoreboard and a 32px figure is read
+     as a table, and nothing else about the screen has to change. Type carries
+     the register as much as colour does, and a 56px ceiling is a report's. */
+  --text-hero: 72px;
+  --text-mega: 96px;
+
+  /* Tracking belongs to the token layer because nobody hand-rolls it correctly.
+     Type set at 72px with default tracking looks loose — the optical rule is that
+     tracking tightens as size rises — and an all-caps label set without extra
+     tracking looks cramped, which is the same rule running the other way. */
+  --tracking-display: -0.022em; /* 56px and up */
+  --tracking-tight: -0.01em; /* 24–32px headings */
+  --tracking-label: 0.05em; /* button labels, small caps */
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -311,8 +443,28 @@
   /* Shadows are cast by the ink, which now carries the brand's hue, so the
      shadow under a card is a purple shadow rather than a grey one. That is most
      of what stops a white card on warm paper reading as a photocopy. */
-  --shadow-card: 0 1px 2px rgb(34 25 37 / 0.04), 0 4px 16px rgb(34 25 37 / 0.06);
-  --shadow-lift: 0 2px 4px rgb(34 25 37 / 0.05), 0 14px 38px rgb(34 25 37 / 0.12);
+  --shadow-card: 0 1px 2px rgb(30 22 33 / 0.05), 0 4px 16px rgb(30 22 33 / 0.07);
+  --shadow-lift: 0 2px 4px rgb(30 22 33 / 0.06), 0 14px 38px rgb(30 22 33 / 0.14);
+
+  /* A real elevation scale, in three steps, stacked two or three deep and no
+     more: past three shadows the difference is imperceptible and the paint cost
+     is not. Use `.elev-1/2/3` rather than these directly — the utilities are the
+     documented surface. `-3` is for the thing that is genuinely above the page
+     (a reward card, a modal); `-1` is a resting card. */
+  --shadow-e1: 0 1px 2px rgb(30 22 33 / 0.06), 0 2px 6px rgb(30 22 33 / 0.06);
+  --shadow-e2:
+    0 1px 2px rgb(30 22 33 / 0.07), 0 6px 14px rgb(30 22 33 / 0.10),
+    0 2px 4px rgb(70 0 115 / 0.05);
+  --shadow-e3:
+    0 2px 4px rgb(30 22 33 / 0.08), 0 14px 30px rgb(30 22 33 / 0.14),
+    0 4px 10px rgb(70 0 115 / 0.08);
+
+  /* On the stage, a shadow cannot darken anything — the ground is already dark.
+     Depth there comes from a brand-hued bloom sitting UNDER the raised surface
+     plus a light hairline on top of it, which is why `--color-stage-line` has to
+     clear 3:1 rather than merely exist. */
+  --shadow-stage: 0 2px 8px rgb(8 2 16 / 0.6), 0 12px 32px rgb(8 2 16 / 0.45);
+  --shadow-stage-glow: 0 0 0 1px rgb(161 0 255 / 0.35), 0 8px 30px rgb(161 0 255 / 0.28);
 }
 
 /* ─── base ───────────────────────────────────────────────────
@@ -350,15 +502,20 @@
      `--ref-purple-4` and `--ref-paper-5`, and `fixed` so the wash does not slide
      when the one scrolling screen scrolls.
 
-     The lavender is capped at 0.30 and not a point higher, and the number is not
-     a taste judgement: composited over the page it lands on `#e6d8ff`, where
-     `text-subtle` measures 4.53:1. At 0.42 it is 4.21 and the title screen has an
-     illegal ground. The warm stop can go to 0.55 because it barely darkens. */
+     The alphas are 0.32 and 0.38, and the numbers are arithmetic rather than
+     taste. The page colour itself is richer now, so the same alphas that were
+     legal over `#f5eeff` are not legal over `#f3e9ff` — and the binding case is
+     not either wash but the two of them STACKED in the middle of the field, which
+     the previous numbers never considered. At 0.30/0.55 the overlap composites to
+     `#d9c7cf`, where `text-subtle` measures 4.46:1: a live 1.4.3 failure in a
+     band across the title screen. At 0.32/0.38 it is `#dac9d6` and 4.56:1, and
+     each wash alone is 5.15 and 5.10. The warm stop loses some weight and the
+     lavender gains some, which is also the right direction for a game. */
   body {
     margin: 0;
     background:
-      radial-gradient(85% 70% at 10% 4%, rgb(194 163 255 / 0.30) 0%, rgb(194 163 255 / 0) 70%),
-      radial-gradient(75% 68% at 96% 100%, rgb(221 213 197 / 0.55) 0%, rgb(221 213 197 / 0) 66%),
+      radial-gradient(85% 70% at 10% 4%, rgb(194 163 255 / 0.32) 0%, rgb(194 163 255 / 0) 70%),
+      radial-gradient(75% 68% at 96% 100%, rgb(203 184 148 / 0.38) 0%, rgb(203 184 148 / 0) 66%),
       var(--color-page);
     background-attachment: fixed;
     color: var(--color-ink);
@@ -385,6 +542,23 @@
      around the whole screen is not a focus indicator, it is a flash.
      Programmatic focus only matches `:focus-visible` when the last input was a key, so
      a player driving with the mouse never sees this. */
+  /* The stage needs its own focus ring: the deep purple is 1.4:1 on a
+     violet-black ground and would be an indicator nobody can see. Cyan is 12.33:1
+     there, so any container marked `data-stage` switches the ring and the halo.
+     Scoped to a data attribute so a dark surface opts in by saying what it is.
+
+     WCAG 2.2 adds 2.4.11 Focus Appearance at AA, and it is the one place where
+     the game aesthetic and the standard genuinely conflict: an indicator needs a
+     perimeter of at least 2 CSS px and 3:1 between the focused and unfocused
+     states. **A soft glow satisfies 1.4.11 and fails 2.4.11**, because a blurred
+     halo has no perimeter to measure. So the ring stays a solid 2px line and any
+     bloom goes OUTSIDE it, as decoration — which is what `.glow-focus` is for. */
+  [data-stage] :focus-visible,
+  [data-stage]:focus-visible {
+    outline: 2px solid var(--color-energy);
+    box-shadow: 0 0 0 4px var(--color-stage);
+  }
+
   [data-work-area]:focus-visible {
     outline-offset: -2px;
     box-shadow: none;
@@ -495,6 +669,35 @@
   .m-arrive {
     animation-duration: 120ms !important;
     animation-name: gpl-fade-in !important;
+  }
+
+  .sweep::after {
+    animation-name: gpl-sweep-fade !important;
+    animation-duration: 420ms !important;
+  }
+}
+
+/* The reward sweep's travel, and its reduced-motion replacement. Both live outside
+   `@layer components` because a layered `@keyframes` is legal but easy to lose. */
+@keyframes gpl-sweep {
+  to {
+    transform: translateX(120%);
+  }
+}
+
+/* With `transform: none` forced, the sweep's overlay would otherwise sit still on
+   top of the thing it was meant to light. So it becomes a pulse of light in place:
+   a change of opacity, which WCAG 2.3.3's Intent states is not motion animation at
+   all. Replacement, not removal — the player still sees the moment land. */
+@keyframes gpl-sweep-fade {
+  0% {
+    opacity: 0;
+  }
+  45% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }
 
@@ -634,7 +837,182 @@
   border-color: var(--color-border-subtle);
 }
 
-/* Shimmer used on the "resolving" beat */
+/* ─── depth, by name ───────────────────────────────────────────
+   Three elevations and two glows, as classes, so that four agents building four
+   screens reach for the same five values instead of inventing nine box-shadows.
+   Every one of them is `box-shadow` or `background-image` only: nothing here
+   changes an element's size, so nothing here can move the fit gate. */
+.elev-1 {
+  box-shadow: var(--shadow-e1);
+}
+.elev-2 {
+  box-shadow: var(--shadow-e2);
+}
+.elev-3 {
+  box-shadow: var(--shadow-e3);
+}
+
+/* On the stage, elevation is a bloom under the surface, not a shadow on it. */
+.elev-stage {
+  box-shadow: var(--shadow-stage);
+}
+
+/* A radial glow behind a thing, as a background layer. Put it on the CONTAINER,
+   not the object — the point is light falling on the ground behind the object, so
+   a badge or a numeral sits in it rather than wearing it. `--glow-hue` lets a
+   reward moment glow gold and a progress moment glow cyan from one class. */
+.glow-radial {
+  --glow-hue: var(--color-glow);
+  background-image: radial-gradient(
+    60% 60% at 50% 45%,
+    color-mix(in oklab, var(--glow-hue) 40%, transparent) 0%,
+    color-mix(in oklab, var(--glow-hue) 0%, transparent) 70%
+  );
+}
+
+/* Decoration that sits OUTSIDE the focus ring — see the 2.4.11 note in base.
+   Never the indicator itself. */
+.glow-focus {
+  box-shadow: var(--shadow-stage-glow);
+}
+
+/* ─── the lip ──────────────────────────────────────────────────
+   The single cheapest difference between a game button and an enterprise
+   button: a solid 4px edge along the bottom in a darker shade of the button's
+   own fill, so the control reads as a moulded key with a side to it. On press
+   the lip vanishes and the face travels down into it, which is the whole of the
+   tactile feel. Duolingo does exactly this on every primary action and it is
+   most of why its buttons feel pressable and ours did not.
+
+   The lip is `box-shadow`, not `border-bottom`, and that is deliberate: a border
+   is in layout and would add 4px to forty buttons, which is how a
+   fits-one-screen gate breaks. A shadow is outside layout, so the lip costs zero
+   reflow — the same argument `motion.css` makes for its focus ring. The cost is
+   that a parent with `overflow: hidden` will clip it; set the lip colour to
+   transparent there rather than reaching for a border.
+
+   Fill and lip are custom properties, so `.btn-game` with no other class is the
+   primary action, and a reward or progress button is one line:
+       style={{ "--btn-fill": "var(--color-reward)", ... }}
+   or the two variant classes below. */
+.btn-game {
+  --btn-fill: var(--color-brand-solid);
+  --btn-lip: var(--color-brand-lip);
+  --btn-label: #fff;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--btn-fill);
+  color: var(--btn-label);
+  font-size: var(--text-base);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  cursor: pointer;
+  box-shadow: 0 4px 0 0 var(--btn-lip);
+  transition:
+    transform 90ms ease-out,
+    box-shadow 90ms ease-out,
+    filter 90ms ease-out,
+    background-color 140ms ease;
+}
+
+.btn-game:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+/* Down into the lip. 4px of travel and a 5% darken — the darken is what sells it
+   on a screenshot, where the travel is invisible. */
+.btn-game:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 0 var(--btn-lip);
+  filter: brightness(0.95);
+}
+
+/* Pale lavender, never grey: grey reads as broken, and the disabled primary
+   action still has to look like the primary action. Brand solid on the brand
+   tint is 10.64:1, so the label stays legible instead of being faded out — the
+   opacity route is how the 1.6:1 button happened. */
+.btn-game:disabled {
+  --btn-fill: var(--color-brand-tint);
+  --btn-lip: var(--color-brand-line);
+  --btn-label: var(--color-brand-solid);
+  cursor: default;
+}
+
+.btn-game[data-variant="reward"] {
+  --btn-fill: var(--color-reward);
+  --btn-lip: var(--color-reward-lip);
+  --btn-label: var(--color-reward-ink);
+}
+
+/* The stage's primary action. The deep brand purple is a 2:1 edge against a
+   violet-black ground — a button nobody can find — so on the stage the primary
+   fill is the bright shore instead, lipped with the deep one. White on
+   `#a100ff` is 5.30:1, which is legal for type; white on the lip is 13.93:1. */
+.btn-game[data-variant="glow"] {
+  --btn-fill: var(--color-glow);
+  --btn-lip: var(--color-brand-solid);
+  --btn-label: #fff;
+}
+
+.btn-game[data-variant="energy"] {
+  --btn-fill: var(--color-energy);
+  --btn-lip: var(--color-energy-lip);
+  --btn-label: var(--color-energy-ink);
+}
+
+/* ─── display numerals ────────────────────────────────────────
+   A score is a figure, not a sentence: tabular so it cannot wobble as it counts,
+   tight so it does not read as loose, and lining so it sits on the cap line. */
+.numeral {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-weight: 700;
+  letter-spacing: var(--tracking-display);
+  line-height: 0.92;
+}
+
+/* ─── a saturated brand field ──────────────────────────────────
+   The light register's one full-strength moment. The brand was only ever present
+   as thin ink — a 1px rule, a word, a 20px glyph — which is why a screen could
+   be "purple" and read as grey. This is the brand as a FIELD, for a hub header
+   or a chapter break, with white type at 13.93:1 on it. */
+.field-brand {
+  background:
+    radial-gradient(90% 120% at 100% 0%, rgb(161 0 255 / 0.55) 0%, rgb(161 0 255 / 0) 62%),
+    var(--color-brand-solid);
+  color: #fff;
+}
+
+/* ─── the reward sweep ────────────────────────────────────────
+   One pass of light across an earned thing, at the moment it is earned. Finite
+   and short: an infinite shimmer with no pause control is a 2.2.2 failure at
+   Level A whether or not it looks nice, which is why the previous `.shimmer`
+   was deleted rather than restyled. */
+.sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    color-mix(in oklab, var(--color-stage-ink) 0%, transparent) 35%,
+    color-mix(in oklab, var(--color-stage-ink) 34%, transparent) 50%,
+    color-mix(in oklab, var(--color-stage-ink) 0%, transparent) 65%
+  );
+  transform: translateX(-120%);
+  animation: gpl-sweep 900ms cubic-bezier(0.2, 0.7, 0.3, 1) 1 both;
+  pointer-events: none;
+}
+
 
 /* ─── the two views of the closing debrief ──────────────────
    The debrief is LEAN ON SCREEN and DENSE IN PRINT, from one set of

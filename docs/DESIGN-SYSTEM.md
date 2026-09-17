@@ -108,52 +108,67 @@ collision with the alarm colour.
 
 Computed from the hex, not inherited — and re-derived from the *shipped* `src/index.css` by
 parsing the file and resolving the `var()` chains, so this table cannot drift from the
-tokens the way the last one did. All **77** pairs pass. **Every text token clears 4.5:1
-(WCAG 2.2 AA, 1.4.3) on every surface it renders on**; the lowest in the whole system is
-**5.03:1** (`text-subtle` on `panel`). There is no "faint" tier: the old
-`--color-faint #948fa6` measured **2.78:1 on panel** and was a live failure on every screen
-in the game.
+tokens the way the last one did. **Every text token clears 4.5:1 (WCAG 2.2 AA, 1.4.3) on
+every surface it renders on**; the lowest in the whole system is **4.66:1** (`win-text` on
+`surface-disabled`) and the lowest on a live reading surface is **5.06:1** (`win-text` on
+`panel`). There is no "faint" tier: the old `--color-faint #948fa6` measured **2.78:1 on
+panel** and was a live failure on every screen in the game.
+
+These numbers are the **enriched** ramp — see "Depth is temperature" below for why the
+previous one had to move. Deepening the paper by roughly a third of a stop cost about a
+point of contrast at the bottom of the table and bought the first visible elevation the
+system has ever had.
 
 ### Text — needs 4.5:1
 
 | token | card | desk | page | panel | selected | disabled | brand tint |
 |---|---|---|---|---|---|---|---|
-| `text-strong #221925` | 17.02 | 16.47 | 15.35 | 14.09 | 14.37 | 12.84 | 13.01 |
-| `text-default #403443` | 11.73 | 11.35 | 10.58 | 9.71 | 9.90 | — | 8.96 |
-| `text-muted #5e5462` | 7.19 | 6.96 | 6.49 | 5.95 | 6.07 | 5.42 | 5.49 |
-| `text-subtle #695f6c` | 6.08 | 5.88 | 5.37 | **5.03** | — | — | — |
-| `text-disabled #5e585f` | — | — | — | — | — | 5.22 | — |
-| `accent #460073` | 13.93 | 13.47 | 12.56 | 11.53 | 11.76 | — | 10.64 |
-| `accent-deep #2f064f` | 16.67 | 16.13 | 15.04 | — | 14.07 | — | 12.74 |
-| `win-text #8a4708` | 7.03 | 6.81 | — | — | 5.94 | — | 6.04 (own tint) |
-| `profit-text #0f6249` | 7.33 | 7.10 | — | — | 6.19 | — | 6.33 (own tint) |
-| `deliver-text #0a4c90` | 8.57 | 8.30 | — | — | 7.24 | — | 6.97 (own tint) |
-| `risk-text #8e1212` | 9.35 | 9.05 | — | 7.74 | — | — | 7.71 (own tint) |
+| `text-strong #1e1621` | 17.62 | 16.90 | 15.03 | 12.67 | 13.78 | 11.68 | 13.46 |
+| `text-default #3a2e3d` | 12.82 | 12.30 | 10.93 | 9.22 | 10.03 | 8.50 | 9.80 |
+| `text-muted #514657` | 8.88 | 8.52 | 7.58 | 6.39 | 6.95 | 5.89 | 6.79 |
+| `text-subtle #5e5462` | 7.19 | 6.90 | 6.13 | 5.17 | 5.62 | 4.77 | 5.49 |
+| `text-disabled #4f4a51` | 8.64 | 8.29 | 7.37 | 6.21 | 6.76 | **5.73** | 6.60 |
+| `accent #460073` | 13.93 | 13.36 | 11.88 | 10.01 | 10.89 | 9.24 | 10.64 |
+| `accent-deep #2f064f` | 16.67 | 15.99 | 14.22 | 11.99 | 13.04 | 11.05 | 12.74 |
+| `win-text #8a4708` | 7.03 | 6.75 | 6.00 | **5.06** | 5.50 | **4.66** | 5.37 |
+| `profit-text #0f6249` | 7.33 | 7.03 | 6.25 | 5.27 | 5.74 | 4.86 | 5.60 |
+| `deliver-text #0a4c90` | 8.57 | 8.22 | 7.31 | 6.17 | 6.71 | 5.69 | 6.55 |
+| `risk-text #8e1212` | 9.35 | 8.97 | 7.98 | 6.73 | 7.31 | 6.20 | 7.15 |
 
-White text on a fill: `accent` 13.93 · `accent-deep` 16.67 · `good` (= `text-strong`) 17.02
-· `risk-solid` 7.85 · `brand-bright` 5.30.
+On their own tints: `win-text` 5.87 · `profit-text` 6.02 · `deliver-text` 6.52 ·
+`risk-text` 7.18.
+
+White text on a fill: `accent` 13.93 · `accent-deep` / `brand-lip` 16.67 ·
+`good` (= `text-strong`) 17.62 · `risk-solid` 7.85 · `brand-bright` 5.30.
+
+`surface-disabled` is the tightest ground in the light register and it is why the paper
+ramp stops where it does: one step deeper, `win-text` on a disabled choice card measures
+4.32:1 and the game has a 1.4.3 failure on every mission where an option is unavailable.
 
 ### Non-text — needs 3:1 (1.4.11)
 
-| token | vs card | vs desk | vs page | vs panel | vs selected | vs track |
+| token | vs card | vs desk | vs page | vs panel | vs selected | vs hover |
 |---|---|---|---|---|---|---|
-| `border-control #7b7565` | 4.59 | 4.44 | 4.14 | 3.80 | 3.88 | — |
-| `border-strong #6b6659` | 5.72 | — | — | — | — | 5.12 |
-| `brand-bright #a100ff` | 5.30 | 5.13 | 4.78 | 4.39 | 4.48 | — |
-| `win-solid #cd6d0a` | 3.63 | 3.51 | — | — | — | **3.25** |
-| `profit-solid #339075` | 3.90 | 3.77 | — | — | — | 3.49 |
-| `deliver-solid #054e9e` | 8.11 | 7.85 | — | — | — | 7.26 |
-| `risk-solid #a31515` | 7.85 | 7.59 | — | — | — | — |
-| `border-subtle #d5ccba` | 1.55 | 1.54 | — | — | — | — |
+| `border-control #6b6049` | 6.19 | 5.93 | 5.28 | 4.45 | 4.84 | 5.38 |
+| `border-strong #574d3b` | 8.30 | 7.96 | 7.08 | 5.97 | 6.49 | 7.22 |
+| `border-subtle #bfa87f` | 2.30 | 2.21 | 1.96 | 1.66 | 1.80 | 2.00 |
+| `brand-bright #a100ff` | 5.30 | 5.09 | 4.52 | 3.81 | 4.15 | 4.61 |
+| `brand-line #c2a3ff` | 2.10 | 2.02 | 1.80 | 1.51 | 1.65 | 1.83 |
+| `win-solid #cd6d0a` | 3.63 | 3.48 | 3.09 | *2.61* | *2.84* | 3.16 |
+| `profit-solid #339075` | 3.90 | 3.74 | 3.32 | *2.80* | *3.05* | 3.39 |
+| `deliver-solid #054e9e` | 8.11 | 7.78 | 6.92 | 5.83 | 6.34 | 7.05 |
+| `risk-solid #a31515` | 7.85 | 7.53 | 6.69 | 5.64 | 6.14 | 6.83 |
 
-`border-subtle` is **decorative only** and must never appear on a control. The meter bars
-against their own track (`win-solid` at **3.25**) is the tightest graphical pair in the
-system and was not measured before this revision.
+Meter fill against its own track: `win` **3.03** · `profit` 3.20 · `deliver` 6.17 ·
+`risk` 6.02. That 3.03 is the tightest graphical pair in the system and it is what caps how
+much chroma the tracks may carry: a deeper gold track is a prettier band and an unreadable
+value.
 
-**Never put white text on `win-solid` or `profit-solid`.** They measure 3.63:1 and 3.90:1:
-enough for a fill under 1.4.11, not enough for type under 1.4.3. Coloured chips are a
-`tint` fill with ink text. (One deliberate exception exists as a *graphical object*, not
-type — see the facsimiles below.)
+Two rules fall out of the italics. `border-subtle` and `brand-line` are **decorative only**
+and must never bound a control — a 1px rule between two panels is not a UI component
+boundary. And **a dimension solid renders on the card or on its own track, never on the
+panel**: `win-solid` measures 2.61 there. The three meters live in the white rail, so this
+is a rule about where a chip or a dot may go, not a live failure.
 
 ### Where WCAG 2.x and APCA disagree, and which we followed
 
@@ -443,27 +458,43 @@ and the number is not a taste judgement: composited over the page it lands on `#
 where `text-subtle` measures **4.53:1**. At 0.42 it is 4.21 and the title screen has an
 illegal ground.
 
-## Depth is temperature, not shadow
+## Depth is temperature — and now also elevation
 
 Four grounds, three temperatures, forward is lighter and cooler:
 
-| surface | hex | C\* | what it is |
+| surface | hex | vs white | what it is |
 |---|---|---|---|
-| page | `#f5eeff` | 9.1 | the brand's mat, behind everything |
-| desk | `#fdfbf7` | 2.1 | the work area — paper |
-| panel | `#efe9de` | 6.1 | supporting regions — paper, deeper |
-| card | `#ffffff` | 0.0 | the thing you are deciding |
+| page | `#f3e9ff` | 1.17 | the brand's mat, behind everything |
+| desk | `#fdfaf3` | 1.04 | the work area — paper |
+| hover | `#f7eee0` | 1.15 | a surface sinking under the pointer |
+| panel | `#e7d9c2` | **1.39** | supporting regions — paper, deeper |
+| card | `#ffffff` | 1.00 | the thing you are deciding |
 
-The paper ramp climbs in chroma as it darkens (C\* 2.1 → 10.1), so a surface coming forward
-is both lighter *and* less coloured. Shadows are cast by the ink, which now carries the
-brand's hue, so the shadow under a white card is a purple shadow — which is most of what
-stops a white card on warm paper reading as a photocopy.
+**The old ramp could not express elevation at all, and that is the diagnosis behind "very
+pale".** Desk, hover and panel measured 1.04, 1.13 and 1.29 against white: three reading
+surfaces inside 1.3:1 of each other, which is to say one surface wearing three names. A
+card could not read as raised because there was nothing for it to be raised above, so the
+only thing distinguishing a region from a card was a 1.55:1 hairline — and a screen whose
+entire structure is carried by hairlines reads as a printed form. Paleness was not a
+saturation problem first; it was a *flatness* problem.
 
-Note the deliberate asymmetry: page and selected surfaces are **chromatic** (C\* 9.1 and
-12.3); desk, panel, hover and track are **tinted neutrals** (C\* 2.1–6.1). A tinted neutral
-is not a chromatic surface and must not be counted as one — the desk is 43% of a decision
-screen's pixels and tipping it over C\* 8 would make the metric meaningless and the reading
-surface tiring.
+So the panel goes to 1.39:1 against the card, chroma roughly doubles at every step of the
+ramp, and the ink deepens a step to pay for it. 1.39 is not a taste judgement either: it is
+the floor imposed by `win-text` at 5.06:1 on the panel, with the next step down landing at
+4.9 and the one after that illegal.
+
+Shadows are cast by the ink, which carries the brand's hue, so the shadow under a white
+card is a purple shadow. There are now three of them, as `.elev-1/2/3`, stacked two or
+three deep: past three shadows the difference is imperceptible and the paint cost is not.
+`.elev-3` is for a thing genuinely above the page — a reward card, a modal — and `.elev-1`
+is a resting card. On the stage a shadow cannot darken anything, so `.elev-stage` is a
+brand-hued bloom *under* the surface plus the hairline on top of it, which is why
+`--color-stage-line` has to clear 3:1 rather than merely exist.
+
+Note the deliberate asymmetry: page and selected surfaces are **chromatic**; desk, panel,
+hover and track are **tinted neutrals**. A tinted neutral is not a chromatic surface and
+must not be counted as one — the desk is 43% of a decision screen's pixels and tipping it
+fully chromatic would make the metric meaningless and the reading surface tiring.
 
 **The brand wash means "you chose this" and nothing else.** `surface-hover` was briefly
 lavender too, and at C\* 9.1 against a selected fill of C\* 12.3 it made an unchosen card
@@ -514,9 +545,17 @@ different could be a single-file diff.
 
 ## Type
 
-Seven integer steps, three weights. The previous build had 27 sizes including 9px, 10.5px
+Nine integer steps, three weights. The previous build had 27 sizes including 9px, 10.5px
 and a run of half-pixels — which is not a hierarchy, it is the residue of shaving pixels
 to satisfy the fits-one-screen gate.
+
+The top two steps are new and they are **display numerals only**. A 56px ceiling is a
+report's ceiling: a score, a streak or a chapter number set at 32px is read as a table cell
+and the same figure at 96px is read as a scoreboard, and nothing else on the screen has to
+change for that to happen. It is the cheapest available signal that this is a game, which
+is exactly why it is worth two scale steps. There is no step between 56 and 72 for prose,
+and there never will be — `--text-hero` and `--text-mega` take `.numeral` (tabular, lining,
+tight) or they are being misused.
 
 | px | weight | line-height | tracking | measure | for |
 |---|---|---|---|---|---|
@@ -527,6 +566,12 @@ to satisfy the fits-one-screen gate.
 | 24 | 700 | 30 | −0.018em | ≤28ch | the question, metric values |
 | 32 | 700 | 38 | −0.022em | ≤24ch | chapter and brief titles |
 | 56 | 700 | 56 | −0.032em | — | title screen only |
+| 72 | 700 | 0.92 | −0.022em | — | **numerals only** — score, streak, progress |
+| 96 | 700 | 0.92 | −0.022em | — | **numerals only** — the one figure a screen is about |
+
+Tracking is a token — `--tracking-display`, `--tracking-tight`, `--tracking-label` —
+because nobody hand-rolls it correctly. The optical rule runs both ways: tracking tightens
+as size rises, and an all-caps label set without extra tracking looks cramped at 12px.
 
 Why not a constant ratio: 1.25 from 12px gives 15 / 18.75 / 23.4 / 29.3 — non-integers,
 which is exactly how half-pixels get born. The step widens as it climbs (≈1.08 between UI
@@ -582,15 +627,126 @@ it("keeps every non-data hue off the data hue axes", () => {
 });
 ```
 
-## Dark mode: deliberately not yet
+## Two registers: paper and stage
 
-Lightening the three hues for a dark ground collapses their separation to **ΔE 3.5**
-(tritan win/risk) against 18.9 in light mode, because the lightness spread that makes the
-triad safe is unavailable when everything must sit *above* the background. Dark mode here
-is not a token swap — it needs a second, independently optimised triad and a re-derived
-`border-control`. The brand is in the same position: the dark shore that makes `#460073`
-safe against Deliverability is unreachable on a dark ground, so a dark mode would have to
-use `#a100ff` and re-verify. Deferred rather than done badly.
+The game is two things at once, so the palette is two registers.
+
+**The light register is the work.** Seventeen mission screens, the dialogues, the
+consequences, the debrief. It stays on warm paper, because that is where every number in
+the table above was measured and because the work of a client engagement is read, not
+watched.
+
+**The dark register is the game.** The hub, the journey map, the cut scenes and the reward
+moments render on `--color-stage`: the brand's own hue taken to OkLCh L 0.18 rather than a
+neutral black, so a violet glow on it reads as the brand's light and not as a sticker.
+
+This is **not dark mode.** Dark mode is a token swap over the same screens, and that is
+still deferred for the reason it always was: lightening the three dimension hues for a dark
+ground collapses their separation to **ΔE 3.5** (tritan win/risk) against 18.9 in light,
+because the lightness spread that makes the triad safe is unavailable when everything must
+sit *above* the background. The stage sidesteps that entirely by carrying **no dimension
+hues at all**. Nothing on the stage encodes a value the player reads off a colour.
+
+### Measured — every ink on both stage grounds
+
+| token | hex | on `stage` | on `stage-raised` | floor | job |
+|---|---|---|---|---|---|
+| `stage` | `#180927` | — | — | — | the ground. OkLCh 0.180 0.060 304 |
+| `stage-raised` | `#28163a` | — | — | — | the elevated plane. OkLCh 0.245 0.068 304 |
+| `stage-ink` | `#f5f1fa` | **17.02** | **14.88** | 4.5 | primary type |
+| `stage-ink-soft` | `#aa9ebc` | **7.52** | **6.58** | 4.5 | secondary type |
+| `stage-line` | `#756887` | **3.69** | **3.23** | 3.0 | hairline |
+| `glow` | `#a100ff` | **3.58** | **3.13** | 3.0 | **fills, borders, glow — never body text** |
+| `glow-ink` | `#c77dff` | **7.05** | **6.17** | 4.5 | violet type on the stage |
+| `energy` | `#00e5ff` | **12.33** | **10.78** | 4.5 | progress, live, in-play |
+| `reward` | `#ffc53d` | **12.02** | **10.51** | 4.5 | earned, badge, achievement |
+
+**The trap is `--color-glow`.** `#a100ff` is the mandated Accenture bright and it measures
+3.58:1 on the stage: it passes 1.4.11 and **fails 1.4.3**. It is legal as a fill, a border,
+a glow and a display numeral at 24px or above (18.66px if bold, where large-text AA is
+3:1), and it is illegal as body text. `--color-glow-ink` exists so that "I need violet type
+here" has a token as its answer rather than a guess. This is the single most likely way a
+vivid rebuild fails an audit.
+
+Only two stage surfaces ship, and that is deliberate: a third would have to be measured
+against all eight of these, and at OkLCh L 0.30 the glow drops to 2.64 and stops being
+legal even as a border.
+
+### The two gamification accents, and where they may appear
+
+Exactly two saturated accents, each with one fixed job, and **confined to earned /
+progress / celebration surfaces**. An enterprise palette carries one accent; a game palette
+carries five to seven, each semantic. What makes a reward feel earned is not the gold — it
+is that the gold appears nowhere else. So neither of these is available as general chrome,
+and neither may ever encode a dimension.
+
+**Cyan, not lime, and the choice is arithmetic.** Lime lands in the yellow-green band
+Okabe–Ito builds its whole set to avoid, and converges with Winability's gold under
+deuteranopia. Cyan at CIELAB h 215° sits 69° off Deliverability (h 284°) and 46° off
+Profitability (h 169°), with L\* 83.6 against their 33.9 and 54.0 — separated by hue *and*
+by 30–50 points of lightness, so it cannot be misread as a dimension value. It is also
+purple's split-complement, which is why it reads as voltage rather than as a second brand.
+
+The reward gold **does** share Winability's hue family — h 83° against h 62° — and it is
+the one adjacency this palette accepts. It is paid for by lightness (L\* 82.7 against 56.0)
+and by containment: reward renders on the hub and the celebration surfaces, which have no
+meters on them.
+
+Both have a type-legal sibling, and each is legal on the ground its base colour is not:
+
+| token | hex | on card | on panel | on its own fill |
+|---|---|---|---|---|
+| `energy-ink` | `#0a5462` | 8.55 | 6.78 | 5.56 |
+| `reward-ink` | `#5c3d05` | 9.88 | 7.84 | 6.26 |
+
+On the stage the vivid values already clear 10:1 and need no help, so the `-ink` variants
+are for **paper** — a cyan progress label in the rail, a gold badge in the debrief — and
+for type sitting *on* the vivid fill, which is the same value. A cyan pill and a gold badge
+each have exactly one legal label colour and it is the one named after them.
+
+### Focus on the stage, and the one place WCAG 2.2 fights the aesthetic
+
+The deep purple focus ring is 1.4:1 on a violet-black ground, so any container marked
+`data-stage` switches the ring to cyan at 12.33:1 and the halo to the stage colour.
+
+WCAG 2.2 adds **2.4.11 Focus Appearance** at AA: the indicator needs a perimeter of at
+least 2 CSS px and 3:1 between the focused and unfocused states. **A soft glow satisfies
+1.4.11 and fails 2.4.11**, because a blurred halo has no perimeter to measure. So the ring
+is a solid 2px line and any bloom goes *outside* it as decoration — that is what
+`.glow-focus` is for, and it is never the indicator itself.
+
+## The lip, and why every button has one
+
+The cheapest single difference between a game button and an enterprise button is a solid
+4px edge along the bottom in a darker shade of the button's own fill. The control stops
+being a rectangle of colour and becomes a moulded key with a side to it. On press the lip
+vanishes and the face travels down into it, plus a 5% darken — and the darken matters more
+than the travel, because it is the half that survives a screenshot.
+
+`.btn-game` ships it. Three notes on the implementation, each of which is a decision:
+
+- The lip is **`box-shadow`, not `border-bottom`.** A border is in layout and would add 4px
+  to forty buttons, which is how a fits-one-screen gate breaks. A shadow is outside layout,
+  so the lip costs zero reflow. The cost is that a parent with `overflow: hidden` clips it;
+  set the lip to transparent there rather than reaching for a border.
+- Fill, lip and label are custom properties, so `.btn-game` alone is the primary action and
+  `data-variant="reward"` or `"energy"` is a one-attribute change. White on
+  `--color-brand-lip` is 16.67:1, so the label stays legal for the 120ms the button is held.
+- On the stage, `data-variant="glow"` is the primary action: the deep brand purple is a
+  2:1 edge against a violet-black ground, which is a button nobody can find. The bright
+  shore fills it and the deep one lips it, so the object is still unmistakably the brand's.
+- **Disabled is pale lavender, never grey.** Grey reads as broken, and the disabled primary
+  action still has to look like the primary action: `brand-solid` on `brand-tint` is
+  10.64:1. The opacity route is how the 1.6:1 button happened.
+
+## Motion added with the stage
+
+`.sweep` is one pass of light across an earned thing, at the moment it is earned. Finite
+and 900ms: an infinite shimmer with no pause control is a 2.2.2 failure at Level A whether
+or not it looks nice, which is why the previous `.shimmer` was deleted rather than
+restyled. Under `prefers-reduced-motion` it is **replaced, not removed** — the travel
+becomes a pulse of light in place, which WCAG 2.3.3's own Intent states is not motion
+animation at all.
 
 ## Sources
 

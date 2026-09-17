@@ -43,8 +43,16 @@ const uiFiles = Object.entries(uiModules).map(([p, text]) => ({
 
 const css = stripComments(cssRaw);
 
-/** The seven steps. See docs/DESIGN-SYSTEM.md. */
-const SCALE = [12, 13, 15, 18, 24, 32, 56];
+/**
+ * The nine steps. See docs/DESIGN-SYSTEM.md.
+ *
+ * 72 and 96 are display numerals only — a score, a streak, a chapter number. They are on
+ * the scale because a 56px ceiling is a report's ceiling: a figure has to be big enough to
+ * be read as a scoreboard rather than as a table cell, and that is the cheapest signal
+ * available that this is a game. They are not heading sizes and there is no step between
+ * 56 and 72 for prose.
+ */
+const SCALE = [12, 13, 15, 18, 24, 32, 56, 72, 96];
 
 /**
  * Every sweep below is a search for something that should be absent, so an empty source
@@ -61,7 +69,7 @@ describe("the sources these tests read", () => {
 });
 
 describe("type scale", () => {
-  it("uses only the seven scale steps", () => {
+  it("uses only the nine scale steps", () => {
     const offenders: string[] = [];
     for (const { name, text } of uiFiles) {
       for (const m of text.matchAll(/text-\[(\d+(?:\.\d+)?)px\]/g)) {
@@ -285,6 +293,54 @@ describe("the tokens themselves", () => {
     }
     // Printed so the margin is visible rather than merely asserted.
     expect(separations.length).toBe(3);
+  });
+
+  /**
+   * The dark register, as a set.
+   *
+   * Four agents are building against these names at once, and the failure mode is not a
+   * typo — it is an agent finding the token missing and falling back to a local hex, which
+   * the colour-discipline sweep above would then blame on their file. So assert the whole
+   * set is present and aliased to the reference ramp, not merely that the stage exists.
+   */
+  it("declares the whole dark register", () => {
+    for (const token of [
+      "--color-stage",
+      "--color-stage-raised",
+      "--color-stage-ink",
+      "--color-stage-ink-soft",
+      "--color-stage-line",
+      "--color-glow",
+      "--color-glow-ink",
+      "--color-energy",
+      "--color-energy-ink",
+      "--color-reward",
+      "--color-reward-ink",
+    ]) {
+      expect(css, `missing ${token}`).toContain(`${token}:`);
+      expect(css.split(`${token}:`).length - 1, `${token} declared twice`).toBe(1);
+    }
+  });
+
+  /**
+   * The two display steps have to exist as tokens, not just be permitted by SCALE — the
+   * scale gate above only says what a component MAY spell, and a step nothing declares is
+   * a step nobody can reach by name.
+   */
+  it("declares the display steps and their tracking", () => {
+    expect(css).toContain("--text-hero: 72px");
+    expect(css).toContain("--text-mega: 96px");
+    expect(css).toContain("--tracking-display:");
+  });
+
+  /**
+   * `#a100ff` is 3.58:1 on the stage: legal as a fill under 1.4.11, illegal as body text
+   * under 1.4.3. The trap is that `--color-glow` LOOKS like a colour you could set type
+   * in. So a text-legal sibling must exist, or every agent needing violet type on the
+   * stage invents one.
+   */
+  it("gives the glow a text-legal sibling, because the glow itself is not", () => {
+    expect(css).toContain("--color-glow-ink:");
   });
 
   it("keeps a border token that is legal on controls", () => {

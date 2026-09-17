@@ -229,6 +229,7 @@ async function runPath(browser, policy) {
     briefs: 0,
     consequences: 0,
     interludes: 0,
+    rewards: 0,
     total: null,
     chapters: new Set(),
     routedToEnding: false,
@@ -285,6 +286,25 @@ async function runPath(browser, policy) {
   /** Consecutive polls with nothing recognised on screen — see the stuck branch below. */
   let misses = 0;
   for (let step = 0; step < MAX_STEPS; step++) {
+    /**
+     * Dismiss a reward modal before looking for the beat underneath it.
+     *
+     * The game now interrupts with a badge when one is earned, and the modal takes a
+     * focus trap and a full-screen scrim. Without this the harness sat clicking the beat
+     * behind the scrim until Playwright timed out — which is not a bug in the game, it is
+     * the harness failing to behave like a player. A real one dismisses it and carries on,
+     * so counting the interruptions is also a free check that they actually fire.
+     */
+    const modal = page.locator('[role="dialog"]');
+    if ((await modal.count()) > 0 && (await modal.first().isVisible())) {
+      run.rewards += 1;
+      if (policy.shotAll && run.rewards === 1) await shot(page, "reward-badge");
+      const dismiss = modal.first().getByRole("button").first();
+      await dismiss.click();
+      await page.waitForTimeout(200);
+      continue;
+    }
+
     await page.waitForTimeout(150);
 
     if ((await page.getByText("How it ended", { exact: true }).count()) > 0) {
@@ -612,7 +632,7 @@ async function main() {
         : "";
     console.log(
       `${policy.label.padEnd(14)} missions ${run.missions}/${run.total ?? "?"}${early} · ` +
-        `consequences ${run.consequences} · interludes ${run.interludes} · ${seconds}s`,
+        `consequences ${run.consequences} · interludes ${run.interludes} · rewards ${run.rewards} · ${seconds}s`,
     );
   }
   if (!ALL_PATHS) {
