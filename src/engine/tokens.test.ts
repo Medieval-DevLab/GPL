@@ -10,6 +10,11 @@
  * codebase has already drifted once.
  */
 
+import { createHash } from "node:crypto";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import cssRaw from "../index.css?raw";
@@ -200,12 +205,30 @@ const artFiles = Object.keys(
   import.meta.glob("../../public/art/*.webp", { eager: true }),
 ).map((p) => p.split("/").pop()?.replace(/\.webp$/, "") as string);
 
+/**
+ * Real bytes, read from disk and hashed.
+ *
+ * NOT `import.meta.glob` with `?arraybuffer`: that query is not honoured for these files,
+ * so every entry came back as the same non-buffer value, `new Uint8Array` of it was empty,
+ * and the duplicate check reported EVERY PAIR as identical — a test that fails on
+ * everything is as useless as one that passes on everything, and this one managed both
+ * within an hour. `node:fs` in a test file is fine; the purity rule is about `src/engine`
+ * source, not its tests.
+ */
+const artDir = fileURLToPath(new URL("../../public/art", import.meta.url));
+const artHashes: Record<string, string> = Object.fromEntries(
+  readdirSync(artDir)
+    .filter((f) => f.endsWith(".webp"))
+    .map((f) => [f, createHash("sha256").update(readFileSync(join(artDir, f))).digest("hex")]),
+);
+
 const storyModules = import.meta.glob("../content/story.ts", {
   query: "?raw",
   import: "default",
   eager: true,
 }) as Record<string, string>;
 const storySource = Object.values(storyModules)[0] as string;
+const allSource = [storySource, ...Object.values(uiModules)].join(" ");
 
 describe("artwork", () => {
   it("loaded the manifest", () => {
@@ -213,17 +236,43 @@ describe("artwork", () => {
     expect(storySource.length).toBeGreaterThan(10_000);
   });
 
+  /**
+   * Widened from `story.ts` alone to the components too.
+   *
+   * Cut scenes, the hub, the map and the dashboard reference their own plates from
+   * `src/ui`, not from content — so scanning only the story file would have reported
+   * every one of them as an unreferenced orphan the day the artwork landed, and the
+   * honest fix would have looked like deleting the test.
+   */
   it("ships no asset that nothing references", () => {
-    const orphans = artFiles.filter((name) => !storySource.includes(`"${name}"`));
+    const orphans = artFiles.filter((name) => !allSource.includes(`"${name}"`));
     expect(orphans).toEqual([]);
   });
 
-  it("gives every character their own portrait", () => {
-    const portraits = artFiles.filter((n) => n.startsWith("portrait-"));
-    expect(portraits.length).toBeGreaterThan(1);
-    // Distinct files is necessary but not sufficient — they were distinct files of one
-    // person. Byte-identity is what a copy-paste produces, so it is worth asserting.
-    expect(new Set(portraits).size).toBe(portraits.length);
+  /**
+   * Byte-identity, across ALL artwork — and the previous version of this test asserted
+   * nothing at all.
+   *
+   * It read `new Set(portraits).size === portraits.length` over a list of FILENAMES, which
+   * is true by construction: a directory cannot contain two files with the same name. The
+   * comment above it claimed to be checking byte-identity because "they were distinct
+   * files of one person", and the code never hashed a single byte.
+   *
+   * It also only looked at `portrait-*`. Both gaps hid the same bug one prefix over:
+   * `hero-retail-exterior` and `hero-storefront-wide` are the SAME IMAGE, so two beats
+   * that should establish different places were showing one photograph under two names.
+   */
+  it("ships no two identical images under different names", () => {
+    const byHash = new Map<string, string[]>();
+    for (const [name, hash] of Object.entries(artHashes)) {
+      const list = byHash.get(hash);
+      if (list) list.push(name);
+      else byHash.set(hash, [name]);
+    }
+    const duplicates = [...byHash.values()]
+      .filter((group) => group.length > 1)
+      .map((group) => group.join(" === "));
+    expect(duplicates).toEqual([]);
   });
 });
 

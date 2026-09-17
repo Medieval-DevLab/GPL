@@ -627,6 +627,15 @@ export interface Interlude {
   prompt?: string;
   /** The player's possible answers on a reflection. NONE of them changes state. */
   responses?: string[];
+  /**
+   * The full-bleed plate behind a cut scene or a turn, filename without extension.
+   *
+   * Content, not a component constant, because which room a beat happens in is an
+   * authoring decision — and because `tokens.test.ts` fails the build on any art file
+   * nothing references, so a plate named only inside a component would have reported
+   * every cut-scene image as an orphan the day the artwork arrived.
+   */
+  plate?: string;
   chapter: number;
   eyebrow: string;
   title: string;

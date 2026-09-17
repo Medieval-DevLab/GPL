@@ -174,6 +174,7 @@ const nodes: GameNode[] = [
   {
     kind: "interlude",
     id: "int-1",
+    role: "chapter-open",
     chapter: 1,
     eyebrow: "Chapter One",
     title: "Find the client",
@@ -336,7 +337,11 @@ const nodes: GameNode[] = [
     eyebrow: "Understand the client",
     objective: "Work out what you need to know first.",
     minutes: 4,
-    hero: "hero-storefront-wide",
+    /* Was `hero-storefront-wide`, which was BYTE-IDENTICAL to this file — two beats
+       establishing two different places from one photograph, under two names. Repointed
+       and the duplicate deleted, so the repo stops claiming seven distinct heroes while
+       shipping six. m2 wants its own plate; `docs/ASSET-MANIFEST.md` specifies it. */
+    hero: "hero-retail-exterior",
     situation: [
       "Orion's brief is one line: “improve the customer experience across our stores”.",
       "You can dig into two things. Not five. Choosing what to ignore is the job.",
@@ -612,6 +617,29 @@ const nodes: GameNode[] = [
         "Broad reach, direct access and a sharp point of view are three different tools. Which one is right depends on whether you need attention, a decision, or credibility.",
       watchFor: "Ask what you actually need from the next conversation before choosing how to start it.",
     },
+    next: "deb-1",
+  },
+
+  /**
+   * The chapter debriefs.
+   *
+   * One line each, and one line only. The rest of the screen is the player's own history
+   * for the chapter — what they chose, what tone it landed on, which sibling branch never
+   * fired — which the renderer derives from state. What cannot be derived is a sentence
+   * naming what the chapter was FOR, so that is what is authored here.
+   *
+   * None of them congratulates. A debrief that reports only the good half is a scoreboard.
+   */
+  {
+    kind: "interlude",
+    id: "deb-1",
+    role: "chapter-debrief",
+    chapter: 1,
+    eyebrow: "Chapter one, closed",
+    title: "Three names, one team",
+    body: [
+      "Three clients wanted a partner and you could back one. What you know about Orion is what you bought by not chasing the others.",
+    ],
     next: "int-2",
   },
 
@@ -619,6 +647,7 @@ const nodes: GameNode[] = [
   {
     kind: "interlude",
     id: "int-2",
+    role: "chapter-open",
     chapter: 2,
     eyebrow: "Chapter Two",
     title: "Make it an opportunity",
@@ -801,6 +830,32 @@ const nodes: GameNode[] = [
         "Qualifying is deciding how much to risk before you know whether you will win. Commit too early and you spend your best people on a guess; commit too late and someone else is already in front of the client.",
       watchFor: "Six weeks of your best people is the most expensive thing you can spend without approval.",
     },
+    next: "turn-rival",
+  },
+
+  /**
+   * The three story turns.
+   *
+   * Moments done TO the player, which is the whole definition of the type: the rival
+   * announces, the panel decides, the sponsor leaves. None of them can be altered, so none
+   * of them is staged as though it could be — no options, no gate, nothing to commit.
+   *
+   * They are written as reports of things that have already happened somewhere else. A
+   * turn that describes a choice is a decision wearing a cut scene's clothes.
+   */
+  {
+    kind: "interlude",
+    id: "turn-rival",
+    role: "turn",
+    chapter: 2,
+    eyebrow: "Tuesday, 07:00",
+    title: "Somebody else announces first",
+    body: [
+      "A competitor put out a press release at seven in the morning. They have partnered with a retail technology vendor whose name everyone in the sector knows.",
+      "By eleven there was a launch event with a stage and a storefront demo running on a loop. By one, three people inside Orion had forwarded it to each other.",
+      "None of it mentions Orion by name. It did not have to. Sarah's board had seen it by lunchtime, and two of them sent it to her.",
+    ],
+    prompt: "The vendor's logo is on that slide. Yours is not.",
     next: "m5",
   },
 
@@ -978,6 +1033,37 @@ const nodes: GameNode[] = [
         "A competitor's move is information, and this one was. Reacting to all of it makes you thrash; reacting to none of it makes you irrelevant.",
       watchFor: "A press release is a claim about the future. It is not evidence that anything shipped.",
     },
+    next: "refl-rival",
+  },
+
+  /**
+   * The four reflection nodes.
+   *
+   * Each sits after its chapter's hardest beat, because recovery belongs after the blow
+   * rather than before it. Neither response changes a flag, a dimension or a badge — this
+   * is a breath, and the absent meters on the screen are what say so.
+   *
+   * The questions are Thiagi's debrief phases four and five, "how does this relate to the
+   * real world?" and "what if?", which are the two where transfer actually happens and the
+   * two a vendor course leaves out. So each prompt pulls OUT of Orion and into the
+   * player's own working life, and both answers are honest — one of them is not the
+   * grown-up one.
+   */
+  {
+    kind: "interlude",
+    id: "refl-rival",
+    role: "reflection",
+    chapter: 2,
+    eyebrow: "A moment",
+    title: "After the announcement",
+    advisor: RIYA,
+    body: ["Riya stays on the line after Sarah drops off."],
+    prompt:
+      "Somewhere you have worked, a competitor's announcement landed mid-plan. Did anyone change course, and were they right to?",
+    responses: [
+      "We changed everything, and it cost six weeks we never got back.",
+      "We held the plan, and I still cannot say if that was nerve or stubbornness.",
+    ],
     next: "m5b",
   },
 
@@ -985,6 +1071,7 @@ const nodes: GameNode[] = [
   {
     kind: "interlude",
     id: "int-3",
+    role: "chapter-open",
     chapter: 3,
     eyebrow: "Chapter Three",
     title: "Build the response",
@@ -1287,6 +1374,7 @@ const nodes: GameNode[] = [
   {
     kind: "interlude",
     id: "int-4",
+    role: "chapter-open",
     chapter: 4,
     eyebrow: "Chapter Four",
     title: "Make the deal work",
@@ -1712,6 +1800,7 @@ const nodes: GameNode[] = [
   {
     kind: "interlude",
     id: "int-5",
+    role: "chapter-open",
     chapter: 5,
     eyebrow: "Chapter Five",
     title: "Deliver the promise",
@@ -2068,6 +2157,24 @@ const nodes: GameNode[] = [
         "What went wrong in month five was not a delivery mistake. It was the arithmetic of choices made during qualification, solutioning and pricing, arriving on schedule.",
       watchFor: "When you make a commitment, ask who has to keep it and whether they know yet.",
     },
+    next: "refl-month5",
+  },
+
+  {
+    kind: "interlude",
+    id: "refl-month5",
+    role: "reflection",
+    chapter: 5,
+    eyebrow: "A moment",
+    title: "After month five",
+    advisor: AISHA,
+    body: ["Aisha stays on the call after the others have dropped off."],
+    prompt:
+      "I have been handed month five on four programmes. Which of your own decisions would you unmake now?",
+    responses: [
+      "The date. I agreed one before anybody had checked it could be met.",
+      "None of them yet. I want to see how this one lands first.",
+    ],
     next: "m10b",
   },
 
@@ -2221,6 +2328,19 @@ const nodes: GameNode[] = [
         "Every one of those five was worth doing. Choosing two meant deciding which three gaps you were willing to carry into a contract.",
       watchFor: "When you cannot do everything, name what you are choosing to be ignorant about.",
     },
+    next: "deb-2",
+  },
+
+  {
+    kind: "interlude",
+    id: "deb-2",
+    role: "chapter-debrief",
+    chapter: 2,
+    eyebrow: "Chapter two, closed",
+    title: "Where the team actually went",
+    body: [
+      "Interest became an opportunity here, and the decisions that did it were about where your people went, not what you said to the client.",
+    ],
     next: "int-3",
   },
 
@@ -2370,6 +2490,24 @@ const nodes: GameNode[] = [
         "Who delivers it, what you reuse, and how you get paid are all choices — and each one changes what you are competing on.",
       watchFor: "When every firm is answering the same question, look at what else could be moved.",
     },
+    next: "refl-shape",
+  },
+
+  {
+    kind: "interlude",
+    id: "refl-shape",
+    role: "reflection",
+    chapter: 3,
+    eyebrow: "A moment",
+    title: "Before the proposal",
+    advisor: ARJUN,
+    body: ["Arjun is still at the whiteboard when everyone else has gone."],
+    prompt:
+      "When did you last see a bid win on shape rather than price? What was different about it?",
+    responses: [
+      "Once. They answered a question the client had not thought to ask.",
+      "Never, honestly. Everything I have watched came down to the number.",
+    ],
     next: "m7",
   },
 
@@ -2557,6 +2695,19 @@ const nodes: GameNode[] = [
         "Whatever you spent the week on, it was cheap. The same fix during delivery costs a renegotiation, and the same gap left open costs a client.",
       watchFor: "The reviewers do not care whether you win. That is the whole value of them.",
     },
+    next: "deb-3",
+  },
+
+  {
+    kind: "interlude",
+    id: "deb-3",
+    role: "chapter-debrief",
+    chapter: 3,
+    eyebrow: "Chapter three, closed",
+    title: "The document you now own",
+    body: [
+      "This is where the pursuit stopped being a conversation and became a document. Every line in it is now somebody's job, whoever wrote it.",
+    ],
     next: "int-4",
   },
 
@@ -2852,6 +3003,49 @@ const nodes: GameNode[] = [
         "Somebody has to justify this in writing to people who were never in the room. Everything that makes that easy for them — their own numbers, a named owner for every change, a criterion you score first on — is worth more than another page about your capability.",
       watchFor: "Ask who has to defend this decision internally, and what you have given them.",
     },
+    next: "turn-award",
+  },
+
+  /**
+   * The award, written so it reads whichever way it went.
+   *
+   * Four of m9a's outcomes carry their own `next: "end"` — a pursuit lost at the award
+   * stops there, as walking away does — so in practice this node is reached by the
+   * branches that won. It is still written without a verdict in it, because the point of
+   * the beat is that the verdict was reached in a room the player was not in, and a scene
+   * that opens by announcing the result is describing the wrong thing.
+   */
+  {
+    kind: "interlude",
+    id: "turn-award",
+    role: "turn",
+    chapter: 4,
+    eyebrow: "Thursday, 08:14",
+    title: "The panel has decided",
+    body: [
+      "The evaluation panel sat on Tuesday afternoon. Foyle, two people from finance, and someone from operations who read the submissions on the train.",
+      "It took forty minutes. The scorecard was completed, signed and filed, and nobody in that room spoke to any of the three firms.",
+      "The email went out on Thursday morning at 08:14, to all of them, in the same words. Sarah forwarded hers eleven minutes later with nothing added.",
+    ],
+    prompt: "Four people, three of whom you have never met, settled this on a Tuesday afternoon.",
+    next: "refl-award",
+  },
+
+  {
+    kind: "interlude",
+    id: "refl-award",
+    role: "reflection",
+    chapter: 4,
+    eyebrow: "A moment",
+    title: "After the award",
+    advisor: RIYA_DEAL,
+    body: ["Riya reads the email twice, then puts her phone face down."],
+    prompt:
+      "Someone had to defend this choice in a room you were not in. When has that gone against you?",
+    responses: [
+      "More than once. I never did find out who was arguing for us.",
+      "It has gone my way too, and I could not tell you why.",
+    ],
     next: "m9b",
   },
 
@@ -3052,6 +3246,19 @@ const nodes: GameNode[] = [
         "Everything before this was reversible. The signature is the line after which the promises belong to somebody else.",
       watchFor: "A pursuit accumulates concessions. Nobody ever decides to end up where you ended up.",
     },
+    next: "deb-4",
+  },
+
+  {
+    kind: "interlude",
+    id: "deb-4",
+    role: "chapter-debrief",
+    chapter: 4,
+    eyebrow: "Chapter four, closed",
+    title: "Decided elsewhere",
+    body: [
+      "Price, risk, and a decision made by people you never met. What you could say in each room was fixed weeks earlier.",
+    ],
     next: "int-5",
   },
 
@@ -3190,6 +3397,22 @@ const nodes: GameNode[] = [
         "The programme was scoped as though the right people would be free. Whether that was optimism or an oversight, the delivery team is the one that finds out.",
       watchFor: "When you commit to a date, ask who specifically is going to be sitting there.",
     },
+    next: "turn-sarah",
+  },
+
+  {
+    kind: "interlude",
+    id: "turn-sarah",
+    role: "turn",
+    chapter: 5,
+    eyebrow: "Monday, month six",
+    title: "Sarah resigns",
+    body: [
+      "Orion announced it internally on a Monday morning. Sarah Lim is leaving for a bigger role elsewhere and finishes in three weeks.",
+      "She had known for a month. She could not say, and she did not, to her team or to you.",
+      "Her calendar empties over the following week and no successor is named. The programme she put her name to stays exactly where it is, with her name still on it.",
+    ],
+    prompt: "Three weeks of handover, and nobody has been appointed to receive it.",
     next: "m10c",
   },
 
@@ -3406,6 +3629,19 @@ const nodes: GameNode[] = [
         "Nothing about the work changed. One person left, and the programme's future changed with them — because its future was attached to that one person.",
       watchFor: "Sponsors move roughly every eighteen months. Programmes rarely finish faster than that.",
     },
+    next: "deb-5",
+  },
+
+  {
+    kind: "interlude",
+    id: "deb-5",
+    role: "chapter-debrief",
+    chapter: 5,
+    eyebrow: "Chapter five, closed",
+    title: "What was already true",
+    body: [
+      "Nothing in this chapter was new. Month five, the staffing and the resignation all arrived out of decisions taken when they cost nothing.",
+    ],
     next: "end",
   },
 
