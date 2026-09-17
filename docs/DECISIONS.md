@@ -6,6 +6,142 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-056 · The path-reveal shows an untaken outcome only where it is certain
+The chapter debrief's second column is the reveal Detroit: Become Human ends every chapter
+with — the branch you did not take — and the brief for it asked for "the sibling outcomes
+that did not fire". Two thirds of that is exact and one third is not, and the split is
+worth recording because the tempting version is the one that lies.
+
+**Exact, from the content itself.** On an investigate beat the roads not taken are the
+questions the player did not spend a slot on; on a build beat they are the components left
+out. `HistoryEntry.chosenIds` minus the authored list is the answer, and it is the best
+teaching on the screen — *"Who else is in the room?"* sitting unasked next to what the
+player did ask is the whole lesson of m2 in one line.
+
+**Not knowable here.** For a `choice` beat, the OPTION not taken is exact, but the outcome
+it would have produced is selected by matching conditions against the flags and dimensions
+as they stood before the commit. `HistoryEntry` records `dimsBefore` and no flags, and
+flags are only ever added — so they could be reconstructed by subtracting the ones later
+beats set. That reconstruction is a game rule, and rules do not live in `src/ui` (E2). The
+alternatives were worse: printing each option's LAST outcome, the unconditional fallback,
+would be a plausible-looking headline that on a third of options is not what would have
+happened, which is the exact class of quiet mis-teaching the whole engine is built to
+prevent.
+
+So the rule is **show the result only where the branch has exactly one outcome and no
+condition on it.** Measured against today's content that is **14 of the 50 choice options**
+— 3 in chapter one, 2 in two, 6 in three, 3 in four and **none in chapter five**, whose
+eleven options all branch. The ones without a result are still named, because *"you did not
+take the phased price"* is the lesson and inventing its consequence would not add one.
+Chapters one, two and three each also hold an investigate or build beat, whose entire
+untaken list is exact; **chapter five holds neither and has no certain option**, so its
+debrief is the one that shows names and no results at all. That is the screen to look at
+first if this rule is ever revisited.
+
+The certain ones carry their authored tone as their colour, which is how a cyan *"It is
+duller, and it will hold"* ends up sitting beside a `hard` decision in chapter three. That
+single line is the most useful thing on the screen, and it is also the argument for fixing
+the other 36.
+
+**Cost:** 36 of 50 choice branches are named without a result, chapter five's entirely, and
+a reviewer cannot tell from the screen which ones those are. **Reversible:** yes, and
+cheaply — the moment `HistoryEntry` carries the flags as they stood at commit, `untakenOn`
+can call `selectOutcome` and every branch gets its real headline. One field and one call.
+
+---
+
+## D-057 · The reflection's missing meters are silent for the eye and spoken for the ear
+`SCREEN-SPECS.md` §4.5 makes the absent meters load-bearing: meters mean stakes, so no
+meters means nothing is at stake, and the player learns it without being told. The first
+build of the screen printed *"Nothing on this screen changes your position."* at 12px under
+the responses, which explains the joke to the only people who can already see it.
+
+But an absence is not perceivable on the audio channel at all. A screen-reader user meets a
+reflection as an ordinary beat with a person, a question and two buttons, and has no "where
+the meters used to be" to notice. So the sentence stayed and became `sr-only`: **the visual
+channel carries it by subtraction and the spoken channel carries it in words.** Same
+information, two encodings, neither redundant.
+
+The mechanism is also structural rather than conditional. `ReflectionRail` is a separate
+export that renders "Your file" and nothing else, and `App.tsx` passes it in place of
+`InsightRail`. Hiding a block inside `InsightRail` on a `role === "reflection"` test would
+have put the rule somewhere a future edit could silently undo.
+
+**One measured correction while building it.** "Paper, warmer" was first done as a radial
+wash of `--color-accent-tint` at 78% over the desk, and it was invisible on a screenshot —
+that lavender is within about 1.1:1 of the desk it sits on, which is the same mistake this
+palette has already recorded twice, for the meter tracks and for the page wash. Washing
+toward `--color-surface-panel` instead — the warm paper step, 1.39:1 against white — makes
+the room visibly different while leaving the white card the lightest thing on screen.
+
+**Cost:** one string that will read as dead weight to anyone who greps for it without
+reading the comment. **Reversible:** yes, one element.
+
+---
+
+## D-058 · On the stage the dimension fills invert, so the arc is drawn in the `-line` tokens
+`--color-deliver-solid` is `#054e9e`. On paper that is a legal fill — 3.90:1 on white — and
+on `--color-stage` it is **2.34:1**, which fails 1.4.11 for a line that carries meaning. So
+the three paper solids are not a set on the dark ground: Winability measures 5.23,
+Profitability 4.87 and Deliverability 2.34, one of them invisible and the trio incoherent.
+
+The step-7 `-line` values clear it on all three — **5.59 / 5.19 / 4.58** — and sit within
+1.2 stops of each other, so the arc reads as one family rather than one bright line and two
+murky ones. `ui/dashboard.tsx` therefore draws every stroke, marker and bar in
+`--color-<dim>-line`, and the header comment carries the measurements so the next person
+does not re-derive them.
+
+Note this is a **pre-existing condition, not a new one**: `HubScreen`'s `StageMeter` paints
+its Deliverability bar in `deliver-solid` on the same ground today, at the same 2.34:1.
+
+**Cost:** two spellings of "the Deliverability colour" depending on the ground, which is
+exactly the ambiguity `--color-glow-ink` exists to remove for violet. The real fix is a
+`--color-<dim>-stage` triad in the token layer; until it exists, `-line` is the honest role
+name for a stroke. **Reversible:** yes — one object, three lines, in one file.
+
+---
+
+## D-059 · The arc measures its box; it does not scale into it
+The obvious way to draw a chart that has to be 340px tall at 1440×900 and 466px tall at
+1440×1024 is a `viewBox` with `preserveAspectRatio`, and it is wrong here. Uniform scaling
+scales the type too: at the 739px height the box is 892×340 against a 880×470 canvas, a
+0.72 factor that puts the 13px axis labels at 9.4px and the 12px chapter labels at 8.7px —
+under the scale's own 12px floor, on the screen whose whole job is to be read.
+
+So the canvas is sized in real pixels from a `ResizeObserver` on its container and the
+geometry is derived from that. The SVG is absolutely positioned inside the box it measures,
+so a taller chart cannot make a taller box and there is no feedback loop.
+
+**Cost:** one observer and one piece of state in a component that would otherwise be pure
+render, plus a chart that has a floor (560×236) below which it scrolls horizontally rather
+than shrinking — which is what happens at 390px wide, where the direct end labels would
+otherwise be cut off and the non-colour carrier lost with them. **Reversible:** yes, but
+only by accepting sub-12px axis type.
+
+---
+
+## D-060 · The reachable range's ceiling is 100 on all three meters, so the floor is the story
+`reachableExtremes(story)` today returns **win 41–100, profit 17–100, deliver 0–100**. Every
+ceiling is the cap, which was not the expectation: the dashboard's headline comparator was
+meant to be "84 of a reachable 100", and against a ceiling of 100 on every meter that
+sentence carries almost no information.
+
+The information is at the other end. A greedy policy can drive Deliverability to **0** and
+Profitability to **17**, and cannot pull Winability below **41** — so what the range
+actually says is *how far down each meter can be pushed*, which is a statement about where
+this story's risk lives. The bar therefore renders the whole witnessed band as a shaded
+region behind the player's value rather than only a ceiling tick, and the caption names the
+band rather than the maximum: "a floor and a witnessed ceiling, not a theoretical one."
+
+Measured cost of asking: **22–80ms** for the whole replay, memoised per `Content` object in
+a `WeakMap`, so it is paid once per session and not once per open.
+
+**Cost:** the phrase "of a reachable 100" reads as flat on all three rows until content
+changes make a meter genuinely uncappable. **Reversible:** yes — and it reverses itself, as
+it reads whatever the engine reports.
+
+---
+
 ## D-055 · The blank floor was a layout fault, and I had diagnosed it as a content shortage
 Three times I moved that empty space around the chat surface and three times I described it
 as "not enough content to fill a beat" — ~190px below the replies on m9, ~420px on m3,

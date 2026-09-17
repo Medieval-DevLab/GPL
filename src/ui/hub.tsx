@@ -98,7 +98,19 @@ function DoorButton({
 /** A dimension, on dark. The glyph carries the meaning colour is only repeating. */
 function StageMeter({ id, value }: { id: DimensionId; value: number }) {
   const meta = DIMENSION_META[id];
-  const hue = `var(${meta.fillVar})`;
+  /**
+   * `-line`, not `fillVar`, because this bar is on the DARK stage.
+   *
+   * The `-solid` variants are calibrated to clear 3:1 against paper. On
+   * `--color-stage` they do not: Deliverability's measures **2.34:1**, which fails
+   * 1.4.11 for a bar that is the only thing carrying the value. The `-line` variants
+   * measure 5.59 / 5.19 / 4.58 on the same ground.
+   *
+   * Two tokens per dimension exists precisely so one cannot be used for both jobs
+   * (see `DIMENSION_META`) — and this is the same trap one register over: a token
+   * correct on one ground silently wrong on another.
+   */
+  const hue = `var(--color-${id}-line)`;
   return (
     <div>
       <div className="flex items-baseline justify-between gap-2">

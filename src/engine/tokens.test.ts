@@ -10,11 +10,6 @@
  * codebase has already drifted once.
  */
 
-import { createHash } from "node:crypto";
-import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { describe, expect, it } from "vitest";
 
 import cssRaw from "../index.css?raw";
@@ -206,21 +201,23 @@ const artFiles = Object.keys(
 ).map((p) => p.split("/").pop()?.replace(/\.webp$/, "") as string);
 
 /**
- * Real bytes, read from disk and hashed.
+ * File CONTENT, so the duplicate check compares images rather than names.
  *
- * NOT `import.meta.glob` with `?arraybuffer`: that query is not honoured for these files,
- * so every entry came back as the same non-buffer value, `new Uint8Array` of it was empty,
- * and the duplicate check reported EVERY PAIR as identical — a test that fails on
- * everything is as useless as one that passes on everything, and this one managed both
- * within an hour. `node:fs` in a test file is fine; the purity rule is about `src/engine`
- * source, not its tests.
+ * `?raw` rather than `node:fs`, because this project has no `@types/node` and a test is
+ * not worth a dependency. Decoding a WebP as UTF-8 is lossy — but it is lossy in the SAFE
+ * DIRECTION: identical bytes always produce identical strings, so this can only ever fail
+ * to catch a duplicate, never wrongly accuse two different images of being the same. That
+ * is the same asymmetry the stop-word list downstairs relies on.
+ *
+ * It is NOT `?arraybuffer`: that query is not honoured for these files, every entry came
+ * back as the same non-buffer value, and the check reported EVERY PAIR as identical. A
+ * test that fails on everything is as useless as one that passes on everything.
  */
-const artDir = fileURLToPath(new URL("../../public/art", import.meta.url));
-const artHashes: Record<string, string> = Object.fromEntries(
-  readdirSync(artDir)
-    .filter((f) => f.endsWith(".webp"))
-    .map((f) => [f, createHash("sha256").update(readFileSync(join(artDir, f))).digest("hex")]),
-);
+const artContent = import.meta.glob("../../public/art/*.webp", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
 
 const storyModules = import.meta.glob("../content/story.ts", {
   query: "?raw",
@@ -263,15 +260,16 @@ describe("artwork", () => {
    * that should establish different places were showing one photograph under two names.
    */
   it("ships no two identical images under different names", () => {
-    const byHash = new Map<string, string[]>();
-    for (const [name, hash] of Object.entries(artHashes)) {
-      const list = byHash.get(hash);
+    const byContent = new Map<string, string[]>();
+    for (const [path, text] of Object.entries(artContent)) {
+      const name = path.split("/").pop() ?? path;
+      const list = byContent.get(text);
       if (list) list.push(name);
-      else byHash.set(hash, [name]);
+      else byContent.set(text, [name]);
     }
-    const duplicates = [...byHash.values()]
+    const duplicates = [...byContent.values()]
       .filter((group) => group.length > 1)
-      .map((group) => group.join(" === "));
+      .map((group) => group.sort().join(" === "));
     expect(duplicates).toEqual([]);
   });
 });
