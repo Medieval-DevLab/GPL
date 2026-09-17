@@ -109,7 +109,54 @@ export const UI_LABEL = {
   done: "done",
   journey: "Journey",
   recognition: "Awards",
+  /** the scaffolding marker — see `WorkInProgress` */
+  wip: "WORK IN PROGRESS",
 } as const;
+
+/**
+ * A work-in-progress marker, shown ON the screen it applies to.
+ *
+ * The brief is to ship the whole shape of the game so the experience can be judged end to
+ * end, and to mark honestly what is not finished rather than hiding it. A gap that is
+ * labelled is a plan; a gap that is silent is a defect the reviewer has to find.
+ *
+ * Deliberately unmissable and deliberately not pretty — it is scaffolding and should look
+ * like scaffolding, so nobody mistakes it for a design decision or ships it by accident.
+ * It carries WHAT IS LEFT, not just that something is, because "WIP" on its own tells a
+ * reviewer nothing they could act on.
+ *
+ * `aria-hidden` is wrong here: a screen reader user needs to know this is unfinished too.
+ * It is a `note` landmark so it can be skipped, and it never traps focus.
+ */
+export function WorkInProgress({ what, left }: { what: string; left: string[] }) {
+  return (
+    <div
+      role="note"
+      aria-label={`Work in progress: ${what}`}
+      className="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-center p-3"
+    >
+      <div
+        className="pointer-events-auto max-w-[520px] rounded-xl border-2 border-dashed px-4 py-2.5 text-[13px] backdrop-blur-sm"
+        style={{
+          borderColor: "var(--color-reward)",
+          background: "color-mix(in oklab, var(--color-stage) 82%, transparent)",
+          color: "var(--color-stage-ink)",
+        }}
+      >
+        <p className="font-bold" style={{ color: "var(--color-reward)" }}>
+          {UI_LABEL.wip} — {what}
+        </p>
+        <ul className="mt-1 space-y-0.5">
+          {left.map((l) => (
+            <li key={l} className="leading-snug text-(--color-stage-ink-soft)">
+              · {l}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
 
 /** Visually-hidden text: what an icon or a dot row says to the eye and to nothing else. */
 export function Hidden({ children }: { children: React.ReactNode }) {

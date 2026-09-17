@@ -588,9 +588,45 @@ export interface Setup {
   next: string;
 }
 
+/**
+ * What an interlude is FOR, which decides how it is staged.
+ *
+ * Four different screens, one node kind. `GAME-SEQUENCE.md` calls for chapter openers,
+ * reflection nodes, chapter debriefs and three story turns the player cannot alter — and
+ * every one of them is the same thing mechanically: a beat with prose and no decision,
+ * sitting between missions in the graph.
+ *
+ * So they share `kind: "interlude"` rather than adding four node kinds. That costs one
+ * optional field and buys a great deal: the exhaustive sweep, the validator, `next`
+ * resolution and the save format all keep working untouched, because nothing about the
+ * STATE MACHINE changed — only the renderer reads this.
+ */
+export type InterludeRole =
+  /** opens a chapter. Full-bleed cut scene with a figure. The default. */
+  | "chapter-open"
+  /** a breath after the chapter's hardest beat. Paper, and the METERS ARE REMOVED. */
+  | "reflection"
+  /** closes a chapter: what you did, what you missed, stars. Stage ground. */
+  | "chapter-debrief"
+  /** a story turn done TO the player — the rival moves, the award lands, she resigns. */
+  | "turn";
+
 export interface Interlude {
   kind: "interlude";
   id: string;
+  /** How this beat is staged. Defaults to `chapter-open`. */
+  role?: InterludeRole;
+  /**
+   * The colleague who speaks, on the roles that have a voice.
+   *
+   * A reflection node is a person asking you something; a chapter opener has a figure in
+   * it. Both need someone, and an interlude has no advisor of its own.
+   */
+  advisor?: Advisor;
+  /** What they say. Reflection nodes are a question; turns are a line of narration. */
+  prompt?: string;
+  /** The player's possible answers on a reflection. NONE of them changes state. */
+  responses?: string[];
   chapter: number;
   eyebrow: string;
   title: string;
