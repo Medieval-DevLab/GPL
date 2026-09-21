@@ -29,29 +29,7 @@ import {
   type DimensionId,
 } from "../engine/types";
 import { Icon } from "./icons";
-import { useCountUp } from "./shell";
-
-/* ───────────────────────── interface labels ─────────────────────────
-   Interface state, not story — it names affordances and supplies the non-colour
-   redundancy for gold-versus-grey. Belongs in `UI_LABEL` in `shell.tsx`; local only
-   because that file is being edited in parallel. */
-const REWARD_LABEL = {
-  earnedEyebrow: "Recognition earned",
-  dismiss: "Continue",
-  /** the board */
-  boardTitle: "Recognition",
-  boardOf: "of",
-  boardCaption: "Six ways of working the game notices. You keep whichever you earn.",
-  /** per-slot state, said in words as well as in gold */
-  earned: "Earned",
-  locked: "Not yet earned",
-  /** how a locked slot names its goal without predicting anything */
-  toEarn: "Awarded when:",
-  /** the tally */
-  tallyTitle: "Where you stand",
-  up: "up",
-  down: "down",
-};
+import { UI_LABEL, useCountUp } from "./shell";
 
 /**
  * Local stylesheet.
@@ -324,7 +302,7 @@ export function BadgeEarned({
           className="rw-rise mt-7 text-[13px] font-semibold tracking-[0.14em] uppercase text-(--color-reward)"
           style={at(200)}
         >
-          {REWARD_LABEL.earnedEyebrow}
+          {UI_LABEL.recognitionEarned}
         </p>
         <h2
           id="gpl-badge-title"
@@ -353,7 +331,7 @@ export function BadgeEarned({
             ...at(380),
           }}
         >
-          {REWARD_LABEL.dismiss}
+          {UI_LABEL.dismiss}
         </button>
       </div>
     </div>
@@ -383,7 +361,7 @@ export function RecognitionBoard({
 
   return (
     <section
-      aria-label={REWARD_LABEL.boardTitle}
+      aria-label={UI_LABEL.recognition}
       className="relative flex h-full min-h-[560px] w-full flex-col justify-center overflow-hidden bg-(--color-stage) px-12 py-10"
     >
       <div
@@ -401,10 +379,10 @@ export function RecognitionBoard({
             id={titleId}
             className="text-[32px] font-bold tracking-[-0.025em] text-(--color-stage-ink)"
           >
-            {REWARD_LABEL.boardTitle}
+            {UI_LABEL.recognition}
           </h1>
           <p className="mt-2 max-w-[46ch] text-[15px] text-(--color-stage-ink-soft)">
-            {REWARD_LABEL.boardCaption}
+            {UI_LABEL.recognitionCaption}
           </p>
         </div>
         <p className="rw-pop flex items-baseline gap-2.5 whitespace-nowrap" style={at(60)}>
@@ -417,7 +395,7 @@ export function RecognitionBoard({
             {count}
           </span>
           <span className="text-[18px] font-semibold text-(--color-stage-ink-soft)">
-            {REWARD_LABEL.boardOf} {badges.length}
+            {UI_LABEL.of} {badges.length}
           </span>
         </p>
       </header>
@@ -475,7 +453,7 @@ export function RecognitionBoard({
                   }
                 >
                   {has && <Icon name="check" size={12} />}
-                  {has ? REWARD_LABEL.earned : REWARD_LABEL.locked}
+                  {has ? UI_LABEL.earned : UI_LABEL.notYetEarned}
                 </span>
               </div>
               <div>
@@ -489,7 +467,7 @@ export function RecognitionBoard({
                 <p className="mt-1.5 text-[13px] leading-[1.55] text-(--color-stage-ink-soft)">
                   {!has && (
                     <span className="font-semibold text-(--color-energy)">
-                      {REWARD_LABEL.toEarn}{" "}
+                      {UI_LABEL.awardedWhen}{" "}
                     </span>
                   )}
                   {meta.note}
@@ -525,7 +503,7 @@ export function ScoreTally({
   useRewardStyles();
   return (
     <div
-      aria-label={REWARD_LABEL.tallyTitle}
+      aria-label={UI_LABEL.whereYouStand}
       className={`flex items-stretch gap-3 ${className ?? ""}`}
     >
       {DIMENSIONS.map((dim, i) => (
@@ -561,7 +539,7 @@ function TallyCard({
     const id = requestAnimationFrame(() => setLevel(to));
     return () => cancelAnimationFrame(id);
   }, [to]);
-  const word = delta > 0 ? REWARD_LABEL.up : REWARD_LABEL.down;
+  const word = delta > 0 ? UI_LABEL.movedUp : UI_LABEL.movedDown;
 
   return (
     <div

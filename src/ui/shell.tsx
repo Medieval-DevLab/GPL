@@ -41,7 +41,28 @@ export const artUrl = (name: string) => `${import.meta.env.BASE_URL}art/${name}.
 
    `outOf` already shipped, in the meters' `aria-label` ("…out of 100"); `chooseApproach`,
    `pickTeam` and `teamPicked` already shipped as literals in `App.tsx` and were moved,
-   not written. `ready`, `up` and `down` are new. */
+   not written. `ready`, `up` and `down` are new.
+
+   TEN LOCAL BLOCKS WERE FOLDED IN HERE, and the merge was not mechanical. Nine files had
+   grown their own `LABEL` object while this one was being edited by somebody else, and
+   between them they declared `title` four times, `of` six times and `up` three times,
+   each meaning something different in each file. The rules used:
+
+    · **One word, one job, one key.** `of` really is the same word doing the same job in
+      six places ("4 of 6"), so it is one key and not `starsOf` + `boardOf` + `reachableOf`.
+      Same for `stars`, `more`, `chapter`, `complete`, `earned` and `milestone`.
+    · **Same string, different job, two keys.** "Continue" resumes a run in the hub and
+      dismisses a modal on the reward, so it is `resume` and `dismiss` — they will not stay
+      the same string for ever, and a shared key would make that a find-and-replace.
+    · **Read the call site, not the file it came from.** `DASH_LABEL.title` is the
+      dashboard's `<h1>`, and it already existed here as `howYouPlayed`; it is the same
+      sentence naming the same thing, so it is one key. `JOURNEY_LABEL.title` became
+      `mapTitle`, because `UI_LABEL.title` at a call site says nothing at all.
+
+   The four-word-fallback strings in `ui/apply.tsx` deliberately did NOT come here. They
+   are the `where` half of that screen's `EARNED` table — the human name of a thing the
+   player could have found out — which its own comment marks as authoring bound for
+   content. Chrome moves here; authoring waits for `story.ts`. */
 export const UI_LABEL = {
   /** magnitude, where the visual is a row of filled dots that produces no text */
   outOf: "out of",
@@ -99,18 +120,208 @@ export const UI_LABEL = {
   /** the prediction gate's question, asked in two places and therefore written in one */
   predictQuestion: "Which of the three will move least?",
   /** the closing debrief's section headings and its one disclosure */
-  standing: "Where you ended up",
+  endedUp: "Where you ended up",
   account: "The account",
   decisions: "Your decisions",
   decisionsOpen: "— and what they told you to watch for",
   ledToWhat: "What led to what",
+  /** also the performance dashboard's own `<h1>` — the same sentence naming the same thing */
   howYouPlayed: "How you played",
   /** the persistent navigation added when the game gained a hub and a map */
   done: "done",
   journey: "Journey",
-  recognition: "Awards",
+  /** the top bar's shorter word for the same board the dashboard heads "Recognition" */
+  awardsNav: "Awards",
   /** the scaffolding marker — see `WorkInProgress` */
   wip: "WORK IN PROGRESS",
+
+  /* ── words the whole game shares ──────────────────────────────────────────────
+     Each of these was declared in two to six files. They are one key each because
+     they are one word doing one job, and splitting them per screen is how "4 of 6"
+     and "4 of 6" end up reading differently on two screens. */
+  of: "of",
+  more: "more",
+  stars: "stars",
+  /** the label. `chapterWord` is the same noun set mid-sentence under a numeral */
+  chapter: "Chapter",
+  chapterWord: "chapter",
+  complete: "complete",
+  earned: "Earned",
+  recognition: "Recognition",
+  recognitionEarned: "Recognition earned",
+  whereYouStand: "Where you stand",
+  /** picking a run back up. NOT the reward modal's "Continue", which is `dismiss` */
+  resume: "Continue",
+  /** the achievement pill's non-colour redundancy, on the cut scene and the debrief */
+  milestone: "Milestone reached",
+  /** which way a meter went, where the visual is a ▲ or a ▼ and nothing else */
+  movedUp: "up",
+  movedDown: "down",
+
+  /* ── the console furniture in this file ───────────────────────────────────── */
+  wordmark: "Global Pursuit League",
+  chapters: "Chapters",
+  startOver: "Start over",
+  discardRun: "Discard this run?",
+  discardRunSpoken: "Confirm starting over. This discards your run.",
+  keyFactors: "Key factors",
+  /** the brief's rose panel — see `Concerns` in `ui/mission.tsx` */
+  keyConcerns: "Key concerns",
+  ifYouCommit: "If you commit",
+  ledgerEmpty: "Nothing committed yet. Everything you learn and promise lands here.",
+  /** the left rail's two panels — see the note on `MissionRail` */
+  theBrief: "The brief",
+  yourFile: "Your file",
+
+  /* ── the consequence beat ─────────────────────────────────────────────────── */
+  youChose: "You chose:",
+  /** the result band's own name, as a landmark. Deliberately NOT `whereYouStand`, which
+      is the right rail's heading — two landmarks with near-identical names is a worse
+      outcome than no landmark. */
+  whatItMoved: "What it moved",
+  nowDifferent: "What is now different",
+
+  /* ── the cut scene ────────────────────────────────────────────────────────── */
+  /* "Begin the chapter", not "Begin". `tools/verify.mjs` identifies an interlude beat by
+     this exact accessible name, and it is also the clearer sentence — the player is
+     starting a chapter, not a generic something. */
+  beginChapter: "Begin the chapter",
+  chapterAhead: "What happens in this chapter",
+
+  /* ── the decide beat's stake element ──────────────────────────────────────── */
+  stake: "Committing is final",
+  /** what the three pictograms in it are, for anyone who cannot see them */
+  stakeSpoken:
+    "This is a decision. It is measured against Winability, Profitability and Deliverability, and it cannot be undone.",
+
+  /* ── the reflection node, the one paper screen with no meters ─────────────── */
+  /** what the missing meters say, for anyone who cannot see that they are missing */
+  noStake: "Nothing on this screen changes your position.",
+  /** names the response set for assistive technology; the prompt is the question */
+  responses: "How you would answer",
+
+  /* ── the chapter debrief ──────────────────────────────────────────────────── */
+  /** the two columns, which are the whole argument of the screen */
+  whatYouDid: "What you did",
+  whatYouDidNot: "What you did not",
+  starsEarnedHere: "stars earned in this chapter",
+  earnedThisChapter: "Earned in this chapter",
+  /** nothing was left on the table — every road was taken, which a build beat can do */
+  nothingUntaken: "Nothing left on the table.",
+  /** the one action, and it goes to the map because the loop closes in the same place */
+  backToMap: "Back to the map",
+
+  /* ── the hub ──────────────────────────────────────────────────────────────── */
+  welcomeBack: "Welcome back",
+  yourEngagement: "Your engagement",
+  upNext: "Up next",
+  /** `tools/verify.mjs` identifies chapter 0 by this exact accessible name */
+  startPursuit: "Start the pursuit",
+  startNote: "Chapter one, from the beginning",
+  minutes: "min",
+  /** the rail's estimated time, which is an estimate and says so */
+  about: "About",
+  pursuitMap: "The pursuit map",
+  missionsComplete: "missions complete",
+  chapterReached: "Chapter reached",
+  yourPath: "Your path",
+  viewWholeMap: "See the whole map",
+  everyMissionDone: "Every mission complete",
+
+  /* ── the journey map ──────────────────────────────────────────────────────── */
+  mapTitle: "The pursuit",
+  mapLede: "One client, from first contact to delivery.",
+  /** a chapter's action, and the three states a beat on the map can be in */
+  start: "Start",
+  stateDone: "Complete",
+  stateCurrent: "In progress",
+  stateLocked: "Locked",
+
+  /* ── the performance dashboard ────────────────────────────────────────────── */
+  dashboardLede: "Your run, measured against what this story can actually be driven to.",
+  backToGame: "Back to the game",
+  missionsPlayed: "missions played",
+  readTradeRight: "read the trade right",
+  noCallsYet: "no calls made yet",
+  recognitionsEarned: "recognitions earned",
+  stillToEarn: "still to earn",
+  levelReached: "level reached",
+  levelNote: "for turning up, and for doing it well",
+  arcTitle: "The arc of the run",
+  arcNote: "Each beat you played, and what it moved.",
+  arcEmpty: "Nothing to plot yet.",
+  arcEmptyNote:
+    "The arc appears once you have committed to your first decision. It draws every beat you play, so you can see where the run turned and what turned it.",
+  beats: "beats",
+  reachableTitle: "Against what was reachable",
+  reachableOf: "of a reachable",
+  reachablePast: "past the",
+  reachablePastTail: "any witnessed run reached",
+  reachableFoot:
+    "Shaded is the range a played-through run has been seen to occupy — a floor and a witnessed ceiling, not a theoretical one.",
+  starsByChapter: "Stars by chapter",
+  starsNote: "Three for a strong result you saw coming.",
+  notYet: "Not yet",
+
+  /* ── the reward modal and the recognition board ───────────────────────────── */
+  /** dismissing the modal. NOT `resume`, which picks a run back up */
+  dismiss: "Continue",
+  recognitionCaption: "Six ways of working the game notices. You keep whichever you earn.",
+  /** per-slot state, said in words as well as in gold */
+  notYetEarned: "Not yet earned",
+  /** how a locked slot names its goal without predicting anything */
+  awardedWhen: "Awarded when:",
+
+  /* ── the apply beat, where stored knowledge is the currency ───────────────── */
+  /** the card's own marker, in the register of the beat: these options are sentences */
+  sayThis: "Say this",
+  chosen: "Chosen",
+  /** the locked card's action row, where a live card has a button */
+  notAvailable: "Not on the table",
+  /** what a screen reader hears instead of the padlock, appended to the card's name */
+  lockedSpoken: "locked; the card names what it rests on and where that was",
+  /** the provenance block on a live card */
+  fromYourFile: "From your file",
+  /** …and the honest label for an option that needed no groundwork at all. NOT "Needed
+      nothing you had to find": on the award beat this card is the one the player who
+      gathered least is left with, and that sentence reads as a verdict on them. */
+  neededNothing: "Open whatever you found.",
+  /**
+   * The provenance block on a locked card — one lead per kind of unmet requirement.
+   *
+   * Every one of these describes the ARGUMENT, never the player, and that is the whole
+   * point of this group. They read "Rests on", "Any one of these opens it", "Needs a
+   * position of" — not "You needed", "…would have done", "Your position was short of".
+   * A live card's provenance says "From your file", which names a place; its locked
+   * sibling has to name the argument the same way rather than switching to the second
+   * person and the past tense. Up to three of these are on screen at once, at the award
+   * and at the handover, which are the two beats where the player is most exposed — and
+   * "never earned" is the schoolroom register, the line that crosses from "this could
+   * have been done" to "you did not do it".
+   *
+   * None of these passes through `validateContent`'s leak check, which is how the earlier
+   * wording survived. That is an argument for `EARNED` moving to `story.ts`, not a reason
+   * to be casual here.
+   */
+  restsOn: "Rests on",
+  anyOneOf: "Any one of these opens it",
+  ruledOutBy: "Ruled out by",
+  needsPosition: "Needs a position of",
+  /** the defensive lead, if a lock cannot be explained from `requires` at all */
+  unexplained: "Not available on this run",
+  /** the ones a card had no room to name. Which word is right depends on the clause:
+      after "You needed" they are more of the same requirement (`more`), after "Any one of
+      these would have done" they are alternatives, and "+ 2 more" there reads as two more
+      things you failed to get rather than two other doors into the same room. */
+  otherWayIn: "other way in",
+  otherWaysIn: "other ways in",
+  /** the count over the row, and it counts the TABLE rather than the player — see the
+      Pill's own condition in `ui/apply.tsx` for when it is worth drawing at all */
+  onTheTable: "on the table",
+  /** where a dimension requirement was set, since it is not one beat but all of them */
+  positionWhere: "Set by every decision before this one",
+  atLeast: "at least",
+  atMost: "at most",
 } as const;
 
 /**
@@ -502,7 +713,7 @@ export function ChapterStepper({
   return (
     <ol
       className={`relative flex items-start justify-between ${compact ? "w-full max-w-[320px]" : "w-full max-w-[560px]"}`}
-      aria-label="Chapters"
+      aria-label={UI_LABEL.chapters}
     >
       <span
         aria-hidden="true"
@@ -602,14 +813,14 @@ function StartOver({ onRestart }: { onRestart: () => void }) {
     <button
       onClick={() => (armed ? onRestart() : setArmed(true))}
       onBlur={() => setArmed(false)}
-      aria-label={armed ? "Confirm starting over. This discards your run." : "Start over"}
+      aria-label={armed ? UI_LABEL.discardRunSpoken : UI_LABEL.startOver}
       className={`rounded-lg px-2.5 py-1.5 text-[12px] font-medium transition-colors ${
         armed
           ? "bg-(--color-risk-tint) text-(--color-risk-text)"
           : "text-(--color-muted) hover:bg-(--color-canvas-deep) hover:text-(--color-ink)"
       }`}
     >
-      {armed ? "Discard this run?" : "Start over"}
+      {armed ? UI_LABEL.discardRun : UI_LABEL.startOver}
     </button>
   );
 }
@@ -660,7 +871,7 @@ export function TopBar({
             GPL
           </span>
           <span className="hidden whitespace-nowrap text-[13px] font-semibold text-(--color-ink) sm:block">
-            Global Pursuit League
+            {UI_LABEL.wordmark}
           </span>
         </div>
 
@@ -960,13 +1171,13 @@ export function MissionRail({
               and `target` is Winability's pictogram — which is on the same screen, two
               rails away, with a number beside it. */}
           <SectionTitle icon="megaphone" className="mb-1.5">
-            The brief
+            {UI_LABEL.theBrief}
           </SectionTitle>
           <p className="text-[13px] leading-relaxed text-(--color-ink-soft)">{objective}</p>
           {minutes !== undefined && (
             <p className={`${RAIL_INTRA} flex items-center gap-2 text-[12px] text-(--color-muted)`}>
               <Icon name="clock" size={14} />
-              About {minutes} min
+              {UI_LABEL.about} {minutes} {UI_LABEL.minutes}
             </p>
           )}
         </section>
@@ -977,7 +1188,7 @@ export function MissionRail({
       {file && file.length > 0 && (
         <section className="border-t border-(--color-line) pt-2.5">
           <SectionTitle icon="search" className="mb-1.5">
-            Your file
+            {UI_LABEL.yourFile}
           </SectionTitle>
           <ul className="space-y-1.5">
             {file.map((e) => (
@@ -1434,7 +1645,7 @@ export function InsightRail({
 }) {
   return (
     <div className="space-y-3.5">
-      <RailCard title="Key factors" icon="chart" region="factors">
+      <RailCard title={UI_LABEL.keyFactors} icon="chart" region="factors">
         <FactorBars dims={dims} from={from} />
       </RailCard>
 
@@ -1448,7 +1659,7 @@ export function InsightRail({
           style={{ background: "var(--color-accent-tint)" }}
         >
           <SectionTitle icon="scale" className="mb-1.5">
-            If you commit
+            {UI_LABEL.ifYouCommit}
           </SectionTitle>
           <p className="text-[13px] leading-snug text-(--color-ink-soft)">{commits}</p>
         </section>
@@ -1456,7 +1667,7 @@ export function InsightRail({
 
       {/* `flag`, not `layers`. "Where you stand" is a position, which is what a flag is,
           and `layers` belongs to Deliverability. */}
-      <RailCard title="Where you stand" icon="flag" region="ledger">
+      <RailCard title={UI_LABEL.whereYouStand} icon="flag" region="ledger">
         {collapsed && entries.length > 0 ? (
           <details>
             {/* 231×20 before, which fails 2.5.8 on the short axis. `min-h` rather than
@@ -1497,7 +1708,7 @@ export function InsightRail({
           </details>
         ) : entries.length === 0 ? (
           <p className="text-[13px] leading-relaxed text-(--color-muted)">
-            Nothing committed yet. Everything you learn and promise lands here.
+            {UI_LABEL.ledgerEmpty}
           </p>
         ) : (
           <ul className="space-y-1.5">

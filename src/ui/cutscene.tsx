@@ -19,25 +19,7 @@ import { useEffect, useRef } from "react";
 
 import type { Chapter, Interlude } from "../engine/types";
 import { Icon } from "./icons";
-import { artUrl } from "./shell";
-
-/* ───────────────────────── interface labels ─────────────────────────
-   Interface state, not story. These belong in `UI_LABEL` in `shell.tsx`; they are
-   declared locally only because several agents are editing that file in parallel. Move
-   them and delete this block. */
-const CUT_LABEL = {
-  /** the single action out of the cut scene */
-  /* "Begin the chapter", not "Begin". `tools/verify.mjs` identifies an interlude beat by
-     this exact accessible name, and it is also the clearer sentence — the player is
-     starting a chapter, not a generic something. */
-  begin: "Begin the chapter",
-  /** names the numeral for anyone who cannot see that it is set at 96px */
-  chapter: "Chapter",
-  /** the achievement pill's non-colour redundancy */
-  milestone: "Milestone reached",
-  /** what the chapter will contain, listed under the stage */
-  ahead: "What happens in this chapter",
-};
+import { UI_LABEL, artUrl } from "./shell";
 
 /* Presentation defaults: a chapter's stage dressing, not its content — which photograph
    is graded behind the stage and whose figure stands on it. Both are overridable. */
@@ -154,7 +136,7 @@ export function CutScene({
          screen deliberately — both are things you watch — but only the openers are
          one-per-chapter, and `verify` asserts that. */
       data-beat={node.role ?? "chapter-open"}
-      aria-label={`${CUT_LABEL.chapter} ${node.chapter}: ${node.title}`}
+      aria-label={`${UI_LABEL.chapter} ${node.chapter}: ${node.title}`}
       className="cut-stage relative isolate flex h-full min-h-[560px] w-full items-stretch overflow-hidden bg-(--color-stage)"
     >
       {/* ── the place. Photography graded down until it is light and architecture
@@ -225,7 +207,7 @@ export function CutScene({
               }}
             >
               <Icon name="check" size={13} />
-              <span className="sr-only">{CUT_LABEL.milestone}: </span>
+              <span className="sr-only">{UI_LABEL.milestone}: </span>
               {node.milestone}
             </span>
           )}
@@ -254,7 +236,7 @@ export function CutScene({
         {chapter && chapter.steps.length > 0 && (
           <div className="cut-in mt-7" style={at(400)}>
             <p className="text-[12px] font-semibold tracking-[0.12em] uppercase text-(--color-stage-ink-soft)">
-              {CUT_LABEL.ahead}
+              {UI_LABEL.chapterAhead}
             </p>
             <ul className="mt-2.5 flex flex-wrap gap-2">
               {chapter.steps.map((step, i) => (
@@ -286,7 +268,7 @@ export function CutScene({
               boxShadow: "0 10px 34px -12px color-mix(in oklab, var(--color-glow) 85%, transparent)",
             }}
           >
-            {CUT_LABEL.begin}
+            {UI_LABEL.beginChapter}
           </button>
         </div>
       </div>

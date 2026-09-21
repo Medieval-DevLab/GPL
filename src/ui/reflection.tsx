@@ -34,24 +34,15 @@
 
 import type { Interlude } from "../engine/types";
 import { Icon, SectionTitle } from "./icons";
-import { BEAT_TITLE_ID, Hidden, Monogram, WorkInProgress, artUrl, quoted } from "./shell";
-
-/* ───────────────────────── interface labels ─────────────────────────
-   MUST MOVE TO `UI_LABEL` in `ui/shell.tsx`. Declared locally only because several
-   agents are editing that module in parallel; move them and delete this block.
-
-   None of it is story. `file` names a rail that already exists under that heading on the
-   brief, and `noStake` is the non-colour, non-absence redundancy for the one thing this
-   screen says by leaving something out: a sighted player reads "no meters", and a player
-   using a screen reader reads nothing at all unless the region says so. */
-const REFLECTION_LABEL = {
-  /** the right rail, kept from the mission rails so the desk does not change shape */
-  file: "Your file",
-  /** what the missing meters say, for anyone who cannot see that they are missing */
-  noStake: "Nothing on this screen changes your position.",
-  /** names the response set for assistive technology; the prompt is the question */
-  responses: "How you would answer",
-} as const;
+import {
+  BEAT_TITLE_ID,
+  Hidden,
+  Monogram,
+  UI_LABEL,
+  WorkInProgress,
+  artUrl,
+  quoted,
+} from "./shell";
 
 /**
  * The right rail on a reflection: the file, and deliberately nothing else.
@@ -71,7 +62,7 @@ export function ReflectionRail({
     <div data-region="account" className="space-y-2.5">
       <section>
         <SectionTitle icon="search" className="mb-1.5">
-          {REFLECTION_LABEL.file}
+          {UI_LABEL.yourFile}
         </SectionTitle>
         <ul className="space-y-1.5">
           {file.map((e) => (
@@ -220,10 +211,10 @@ export function ReflectionScreen({
               explain its own joke to the people who can already see it. A player using a
               screen reader has no "where the meters used to be" to look at, and would
               otherwise meet a reflection as an ordinary beat with two buttons. */}
-          <Hidden>{REFLECTION_LABEL.noStake}</Hidden>
+          <Hidden>{UI_LABEL.noStake}</Hidden>
 
           {responses.length > 0 && (
-            <div className="mt-6" role="group" aria-label={REFLECTION_LABEL.responses}>
+            <div className="mt-6" role="group" aria-label={UI_LABEL.responses}>
               <div className="m-deal space-y-2.5">
                 {responses.map((text, i) => (
                   <button

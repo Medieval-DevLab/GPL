@@ -58,37 +58,7 @@ import {
 } from "../engine/types";
 import { Icon } from "./icons";
 import { Celebration } from "./reward";
-import { BEAT_TITLE_ID } from "./shell";
-
-/* ───────────────────────── interface labels ─────────────────────────
-   MUST MOVE TO `UI_LABEL` in `ui/shell.tsx`. Local only because several agents are
-   editing that module in parallel; move them and delete this block.
-
-   None of it is story. Every string names a region, a state or a count — the chapter's
-   own words arrive as `verdict`, `title` and `eyebrow` from content. */
-const DEBRIEF_LABEL = {
-  /** the chapter label, when content has not authored an eyebrow */
-  chapter: "Chapter",
-  complete: "complete",
-  /** the two columns, which are the whole argument of the screen */
-  didColumn: "What you did",
-  didNotColumn: "What you did not",
-  /** the star read-out, where the figure alone would not say what it counts */
-  starsOf: "of",
-  starsEarned: "stars earned in this chapter",
-  /** per-row, for anyone who cannot see three glyphs */
-  starsLabel: "stars",
-  /** the recognition strip */
-  recognition: "Earned in this chapter",
-  /** the path-reveal's overflow, when a beat had more roads than the row can hold */
-  more: "more",
-  /** nothing was left on the table — every road was taken, which a build beat can do */
-  nothingUntaken: "Nothing left on the table.",
-  /** the one action, and it goes to the map because the loop closes in the same place */
-  exit: "Back to the map",
-  /** the achievement pill's non-colour redundancy, as on the cut scene */
-  milestone: "Milestone reached",
-} as const;
+import { BEAT_TITLE_ID, UI_LABEL } from "./shell";
 
 /* ───────────────────────── the dark register ─────────────────────────
    Named once, as `ui/journey.tsx` does, so this file cannot spell a colour nobody
@@ -238,7 +208,7 @@ function StarRow({ count, size = 15 }: { count: Stars; size?: number }) {
   return (
     <span className="flex shrink-0 items-center gap-0.5">
       <span className="sr-only">
-        {count} {DEBRIEF_LABEL.starsOf} 3 {DEBRIEF_LABEL.starsLabel}
+        {count} {UI_LABEL.of} 3 {UI_LABEL.stars}
       </span>
       {[1, 2, 3].map((n) => (
         <span
@@ -349,7 +319,7 @@ export function ChapterDebrief({
   const celebrate = badges.length > 0 || rows.some((r) => r.stars === 3);
 
   const authored = content.chapters.find((c) => c.number === number);
-  const eyebrow = node?.eyebrow ?? `${DEBRIEF_LABEL.chapter} ${number}`;
+  const eyebrow = node?.eyebrow ?? `${UI_LABEL.chapter} ${number}`;
   const title = node?.title ?? authored?.title ?? "";
   const line = verdict ?? node?.body?.[0];
 
@@ -381,7 +351,7 @@ export function ChapterDebrief({
             <span aria-hidden="true" style={{ color: T.line }}>
               ·
             </span>
-            <span style={{ color: T.inkSoft }}>{DEBRIEF_LABEL.complete}</span>
+            <span style={{ color: T.inkSoft }}>{UI_LABEL.complete}</span>
           </p>
           <h1
             id={titleId}
@@ -405,7 +375,7 @@ export function ChapterDebrief({
               }}
             >
               <Icon name="check" size={13} />
-              <span className="sr-only">{DEBRIEF_LABEL.milestone}: </span>
+              <span className="sr-only">{UI_LABEL.milestone}: </span>
               {node.milestone}
             </span>
           )}
@@ -425,11 +395,11 @@ export function ChapterDebrief({
                 {earned}
               </span>
               <span className="text-[18px] font-semibold" style={{ color: T.inkSoft }}>
-                {DEBRIEF_LABEL.starsOf} {possible}
+                {UI_LABEL.of} {possible}
               </span>
             </p>
             <p className="relative mt-1 text-[12px]" style={{ color: T.inkSoft }}>
-              {DEBRIEF_LABEL.starsEarned}
+              {UI_LABEL.starsEarnedHere}
             </p>
           </div>
         )}
@@ -451,10 +421,10 @@ export function ChapterDebrief({
           }}
         >
           <ColumnHead icon="flag" tint={T.energy} lit>
-            {DEBRIEF_LABEL.didColumn}
+            {UI_LABEL.whatYouDid}
           </ColumnHead>
           <ColumnHead icon="block" tint="var(--color-glow-ink)" lit={false}>
-            {DEBRIEF_LABEL.didNotColumn}
+            {UI_LABEL.whatYouDidNot}
           </ColumnHead>
 
           {rows.map((row) => {
@@ -494,7 +464,7 @@ export function ChapterDebrief({
               >
                 {shown.length === 0 && (
                   <p className="text-[13px]" style={{ color: T.inkSoft }}>
-                    {DEBRIEF_LABEL.nothingUntaken}
+                    {UI_LABEL.nothingUntaken}
                   </p>
                 )}
                 {shown.map((b) => (
@@ -526,7 +496,7 @@ export function ChapterDebrief({
                 ))}
                 {rest > 0 && (
                   <p className="ml-3.5 text-[12px]" style={{ color: T.inkSoft }}>
-                    +{rest} {DEBRIEF_LABEL.more}
+                    +{rest} {UI_LABEL.more}
                   </p>
                 )}
               </div>,
@@ -540,7 +510,7 @@ export function ChapterDebrief({
         <div data-region="recognition" className="flex min-w-0 flex-wrap items-center gap-2">
           {badges.length > 0 && (
             <span className="text-[12px] font-semibold" style={{ color: T.inkSoft }}>
-              {DEBRIEF_LABEL.recognition}
+              {UI_LABEL.earnedThisChapter}
             </span>
           )}
           {badges.map((id) => (
@@ -560,7 +530,7 @@ export function ChapterDebrief({
         </div>
 
         <button type="button" className="btn-game shrink-0" data-variant="glow" onClick={onExit}>
-          {DEBRIEF_LABEL.exit}
+          {UI_LABEL.backToMap}
         </button>
       </footer>
     </section>

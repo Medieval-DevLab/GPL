@@ -52,47 +52,7 @@ import {
 import { story } from "../content/story";
 import { Icon } from "./icons";
 import { STAGE_TOKENS } from "./journey";
-
-/* ─────────────────────────── interface labels ───────────────────────────
-   MUST MOVE TO `UI_LABEL` in `ui/shell.tsx`. Kept local only because four agents are
-   editing in parallel and this file does not own that module. None of it is story. */
-const DASH_LABEL = {
-  title: "How you played",
-  lede: "Your run, measured against what this story can actually be driven to.",
-  back: "Back to the game",
-
-  missionsDone: "missions played",
-  chapterReached: "chapter",
-  of: "of",
-  readRight: "read the trade right",
-  readNothingYet: "no calls made yet",
-  badges: "recognitions earned",
-  stillToEarn: "still to earn",
-  level: "level reached",
-  levelNote: "for turning up, and for doing it well",
-
-  arc: "The arc of the run",
-  arcNote: "Each beat you played, and what it moved.",
-  arcEmpty: "Nothing to plot yet.",
-  arcEmptyNote:
-    "The arc appears once you have committed to your first decision. It draws every beat you play, so you can see where the run turned and what turned it.",
-  beats: "beats",
-
-  reachable: "Against what was reachable",
-  reachableOf: "of a reachable",
-  reachablePast: "past the",
-  reachablePastTail: "any witnessed run reached",
-  reachableFoot:
-    "Shaded is the range a played-through run has been seen to occupy — a floor and a witnessed ceiling, not a theoretical one.",
-
-  starsBy: "Stars by chapter",
-  starsNote: "Three for a strong result you saw coming.",
-  stars: "stars",
-
-  recognition: "Recognition",
-  earned: "Earned",
-  notYet: "Not yet",
-} as const;
+import { UI_LABEL } from "./shell";
 
 const T = STAGE_TOKENS;
 
@@ -183,7 +143,7 @@ function Numeral({
             className="tabular-nums"
             style={{ fontSize: "var(--text-md)", fontWeight: 700, color: T.inkSoft }}
           >
-            {DASH_LABEL.of} {total}
+            {UI_LABEL.of} {total}
           </span>
         )}
       </p>
@@ -303,7 +263,7 @@ function arcSummary(series: Series[], beats: number): string {
     const direction = last > first ? "up" : last < first ? "down" : "level";
     return `${DIMENSION_META[s.id].label} started at ${first} and finished at ${last}, ${direction} over the run, ranging between ${low} and ${high}.`;
   });
-  return `${DASH_LABEL.arc}: three lines across ${beats} ${DASH_LABEL.beats}. ${lines.join(" ")}`;
+  return `${UI_LABEL.arcTitle}: three lines across ${beats} ${UI_LABEL.beats}. ${lines.join(" ")}`;
 }
 
 /**
@@ -398,13 +358,13 @@ function ArcChart({ state, content }: { state: GameState; content: Content }) {
             <Icon name="chart" size={38} />
           </span>
           <p className="mt-4" style={{ fontSize: "var(--text-lg)", fontWeight: 700, color: T.ink }}>
-            {DASH_LABEL.arcEmpty}
+            {UI_LABEL.arcEmpty}
           </p>
           <p
             className="mt-2 max-w-[54ch] text-pretty"
             style={{ fontSize: "var(--text-base)", color: T.inkSoft, lineHeight: 1.5 }}
           >
-            {DASH_LABEL.arcEmptyNote}
+            {UI_LABEL.arcEmptyNote}
           </p>
         </div>
       ) : (
@@ -540,8 +500,8 @@ function ReachableBar({ id, value, range }: { id: DimensionId; value: number; ra
   const hue = onStage[id];
   const beyond = value > range.max;
   const caption = beyond
-    ? `${value} — ${DASH_LABEL.reachablePast} ${range.max} ${DASH_LABEL.reachablePastTail}`
-    : `${value} ${DASH_LABEL.reachableOf} ${range.max}`;
+    ? `${value} — ${UI_LABEL.reachablePast} ${range.max} ${UI_LABEL.reachablePastTail}`
+    : `${value} ${UI_LABEL.reachableOf} ${range.max}`;
 
   return (
     <li>
@@ -659,7 +619,7 @@ function ChapterStars({
       {/* The pips say nothing and "4/9" reads as "four slash nine", so the row carries
           its own sentence. */}
       <span className="sr-only">
-        {earned} {DASH_LABEL.of} {available} {DASH_LABEL.stars}
+        {earned} {UI_LABEL.of} {available} {UI_LABEL.stars}
       </span>
     </li>
   );
@@ -713,7 +673,7 @@ function BadgeCell({ badge }: { badge: BadgeStatus }) {
         style={{ fontSize: "var(--text-xs)", color: T.inkSoft, lineHeight: 1.35 }}
       >
         <span style={{ fontWeight: 700, color: has ? T.reward : T.ink }}>
-          {has ? DASH_LABEL.earned : DASH_LABEL.notYet}
+          {has ? UI_LABEL.earned : UI_LABEL.notYet}
         </span>
         {"  ·  "}
         {badge.note}
@@ -799,10 +759,10 @@ export function PerformanceDashboard({
               lineHeight: 1.1,
             }}
           >
-            {DASH_LABEL.title}
+            {UI_LABEL.howYouPlayed}
           </h1>
           <p className="mt-0.5 truncate" style={{ fontSize: "var(--text-sm)", color: T.inkSoft }}>
-            {DASH_LABEL.lede}
+            {UI_LABEL.dashboardLede}
           </p>
         </div>
         {onDismiss && (
@@ -812,7 +772,7 @@ export function PerformanceDashboard({
             data-variant="glow"
             className="btn-game shrink-0 py-2.5"
           >
-            {DASH_LABEL.back}
+            {UI_LABEL.backToGame}
           </button>
         )}
       </header>
@@ -820,7 +780,7 @@ export function PerformanceDashboard({
       {/* ── the numerals ── */}
       <section
         data-region="dashboard-headline"
-        aria-label={DASH_LABEL.title}
+        aria-label={UI_LABEL.howYouPlayed}
         className="relative grid shrink-0 grid-cols-2 items-end gap-6 px-7 py-3 lg:grid-cols-4"
         style={{ borderBottom: `1px solid ${T.line}` }}
       >
@@ -838,8 +798,8 @@ export function PerformanceDashboard({
           <Numeral
             value={summary.completed}
             total={summary.total}
-            label={DASH_LABEL.missionsDone}
-            note={`${DASH_LABEL.chapterReached} ${summary.chapter} ${DASH_LABEL.of} ${summary.chapterCount}`}
+            label={UI_LABEL.missionsPlayed}
+            note={`${UI_LABEL.chapterWord} ${summary.chapter} ${UI_LABEL.of} ${summary.chapterCount}`}
             size="mega"
             tone={T.ink}
           />
@@ -848,11 +808,11 @@ export function PerformanceDashboard({
           <Numeral
             value={accuracy === null ? "–" : accuracy}
             suffix={accuracy === null ? undefined : "%"}
-            label={DASH_LABEL.readRight}
+            label={UI_LABEL.readTradeRight}
             note={
               accuracy === null
-                ? DASH_LABEL.readNothingYet
-                : `${right} ${DASH_LABEL.of} ${answered.length}`
+                ? UI_LABEL.noCallsYet
+                : `${right} ${UI_LABEL.of} ${answered.length}`
             }
             size={accuracy === null ? "none" : "hero"}
             tone={accuracy === null ? T.inkSoft : T.energy}
@@ -862,8 +822,8 @@ export function PerformanceDashboard({
           <Numeral
             value={earnedBadges}
             total={badges.length}
-            label={DASH_LABEL.badges}
-            note={`${badges.length - earnedBadges} ${DASH_LABEL.stillToEarn}`}
+            label={UI_LABEL.recognitionsEarned}
+            note={`${badges.length - earnedBadges} ${UI_LABEL.stillToEarn}`}
             size="hero"
             tone={T.reward}
           />
@@ -871,8 +831,8 @@ export function PerformanceDashboard({
         <div className="relative">
           <Numeral
             value={level.level}
-            label={DASH_LABEL.level}
-            note={`${level.xp} XP · ${DASH_LABEL.levelNote}`}
+            label={UI_LABEL.levelReached}
+            note={`${level.xp} XP · ${UI_LABEL.levelNote}`}
             size="hero"
             tone={T.glowInk}
           />
@@ -883,10 +843,10 @@ export function PerformanceDashboard({
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <section
           data-region="dashboard-arc"
-          aria-label={DASH_LABEL.arc}
+          aria-label={UI_LABEL.arcTitle}
           className="flex min-h-[280px] min-w-0 flex-1 flex-col px-7 py-3"
         >
-          <Heading note={DASH_LABEL.arcNote}>{DASH_LABEL.arc}</Heading>
+          <Heading note={UI_LABEL.arcNote}>{UI_LABEL.arcTitle}</Heading>
           <ArcChart state={state} content={content} />
         </section>
 
@@ -895,8 +855,8 @@ export function PerformanceDashboard({
           className="flex w-full shrink-0 flex-col lg:w-[452px]"
           style={{ borderLeft: `1px solid ${T.line}`, background: T.raised }}
         >
-          <div className="px-6 py-3" aria-label={DASH_LABEL.reachable}>
-            <Heading>{DASH_LABEL.reachable}</Heading>
+          <div className="px-6 py-3" aria-label={UI_LABEL.reachableTitle}>
+            <Heading>{UI_LABEL.reachableTitle}</Heading>
             <ul className="mt-2.5 space-y-2">
               {DIMENSIONS.map((d) => (
                 <ReachableBar
@@ -911,16 +871,16 @@ export function PerformanceDashboard({
               className="mt-2.5 text-pretty"
               style={{ fontSize: "var(--text-xs)", color: T.inkSoft, lineHeight: 1.35 }}
             >
-              {DASH_LABEL.reachableFoot}
+              {UI_LABEL.reachableFoot}
             </p>
           </div>
 
           <div
             className="flex-1 px-6 py-3"
             style={{ borderTop: `1px solid ${T.lineSoft}` }}
-            aria-label={DASH_LABEL.starsBy}
+            aria-label={UI_LABEL.starsByChapter}
           >
-            <Heading note={DASH_LABEL.starsNote}>{DASH_LABEL.starsBy}</Heading>
+            <Heading note={UI_LABEL.starsNote}>{UI_LABEL.starsByChapter}</Heading>
             <ul className="mt-2.5 space-y-1.5">
               {byChapter.map((c) => (
                 <ChapterStars key={c.number} chapter={c} state={state} content={content} />
@@ -933,12 +893,12 @@ export function PerformanceDashboard({
       {/* ── recognition: six slots, flush-adjacent, divided by 1px rules ── */}
       <section
         data-region="dashboard-recognition"
-        aria-label={DASH_LABEL.recognition}
+        aria-label={UI_LABEL.recognition}
         className="shrink-0"
         style={{ borderTop: `1px solid ${T.line}` }}
       >
         <div className="px-7 pt-2.5 pb-2">
-          <Heading>{DASH_LABEL.recognition}</Heading>
+          <Heading>{UI_LABEL.recognition}</Heading>
         </div>
         {/* Flush to the panel’s own edges and divided by 1px rules — the hairline is the
             grid’s background showing through a 1px gap. A rounded, inset, bordered block

@@ -66,19 +66,6 @@ import {
   radioTabIndex,
 } from "./shell";
 
-/**
- * Interface strings. MUST MOVE TO `UI_LABEL` in `ui/shell.tsx` — this worker does not own
- * that file. Neither is story: one names the mode of a screen, the other is the
- * non-colour redundancy for three pictograms that are `aria-hidden`.
- */
-const LABEL = {
-  /** the stake element's own words, on every decide beat and nowhere else */
-  stake: "Committing is final",
-  /** what the three pictograms in it are, for anyone who cannot see them */
-  stakeSpoken:
-    "This is a decision. It is measured against Winability, Profitability and Deliverability, and it cannot be undone.",
-} as const;
-
 /* ───────────────────────── the stake element ───────────────────────── */
 
 /**
@@ -123,9 +110,9 @@ export function StakeMark({ inline = false }: { inline?: boolean }) {
         ))}
       </span>
       <span className="text-[13px] font-bold leading-tight text-(--color-accent-deep)">
-        {LABEL.stake}
+        {UI_LABEL.stake}
       </span>
-      <Hidden>{LABEL.stakeSpoken}</Hidden>
+      <Hidden>{UI_LABEL.stakeSpoken}</Hidden>
     </div>
   );
 }
@@ -376,7 +363,7 @@ function Concerns({ concerns }: { concerns?: string[] }) {
   return (
     <section className="border-t border-(--color-line) px-5 py-2.5">
       <SectionTitle icon="warning" tone="bad" className="mb-1.5">
-        Key concerns
+        {UI_LABEL.keyConcerns}
       </SectionTitle>
       <ul className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
         {concerns.map((c) => (

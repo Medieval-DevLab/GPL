@@ -83,48 +83,16 @@ import {
 } from "./shell";
 
 /**
- * Interface strings. MUST MOVE TO `UI_LABEL` in `ui/shell.tsx` — this worker does not own
- * that file.
+ * The four fallback `where` clauses, and the only strings on this screen that did NOT go
+ * to `UI_LABEL` with the rest of the block that used to live here.
  *
- * None of these is story. They name the state of a control ("Say this", "Chosen"), the
- * mechanism behind it ("Any one of these would have done") or the non-colour redundancy
- * for a padlock. The prose on this screen — the demand, the sentence on each card, the
- * situation beside it — is all content the mission already authors.
+ * They are not chrome. They are stand-ins for the `where` half of an `EARNED` entry — the
+ * beat at which something was for the taking — used when no entry has been authored for a
+ * flag yet. That makes them the same kind of thing as the table below, which is authoring
+ * bound for `story.ts`, and they should travel with it rather than sit in the interface's
+ * vocabulary pretending to be a button label.
  */
-const LABEL = {
-  /** the card's own marker, in the register of the beat: these options are sentences */
-  say: "Say this",
-  chosen: "Chosen",
-  /** the locked card's action row, where a live card has a button */
-  notAvailable: "Not available to you",
-  /** what a screen reader hears instead of the padlock, appended to the card's name */
-  lockedSpoken: "locked, because it was never earned",
-  /** the provenance block on a live card */
-  fromYourFile: "From your file",
-  /** …and the honest label for an option that needed no groundwork at all */
-  neededNothing: "Needed nothing you had to find.",
-  /** the provenance block on a locked card — one lead per kind of unmet requirement */
-  youNeeded: "You needed",
-  anyOneOf: "Any one of these would have done",
-  ruledOutBy: "Ruled out by",
-  yourPosition: "Your position was short of",
-  /** the defensive lead, if a lock cannot be explained from `requires` at all */
-  unexplained: "Not available on this run",
-  /** the ones a card had no room to name. Which word is right depends on the clause:
-      after "You needed" they are more of the same requirement, after "Any one of these
-      would have done" they are alternatives, and "+ 2 more" there reads as two more
-      things you failed to get rather than two other doors into the same room. */
-  more: "more",
-  otherWayIn: "other way in",
-  otherWaysIn: "other ways in",
-  /** the count over the row — the line that makes the whole screen legible */
-  openToYou: "open to you",
-  of: "of",
-  /** where a dimension requirement was set, since it is not one beat but all of them */
-  positionWhere: "Set by every decision before this one",
-  atLeast: "at least",
-  atMost: "at most",
-  /** fallbacks for a flag no label has been authored for yet — see `EARNED` */
+const FALLBACK = {
   somethingAsked: "Something you could have asked about",
   somethingCarried: "Something the proposal could have carried",
   somethingPromised: "Something you could have promised",
@@ -220,10 +188,10 @@ function humanise(flag: string): string {
  * trustworthy about where something was.
  */
 function whereFallback(flag: string): string {
-  if (flag.startsWith("knows:")) return LABEL.somethingAsked;
-  if (flag.startsWith("has:") || flag.startsWith("scope:")) return LABEL.somethingCarried;
-  if (flag.startsWith("promised:")) return LABEL.somethingPromised;
-  return LABEL.somethingEarlier;
+  if (flag.startsWith("knows:")) return FALLBACK.somethingAsked;
+  if (flag.startsWith("has:") || flag.startsWith("scope:")) return FALLBACK.somethingCarried;
+  if (flag.startsWith("promised:")) return FALLBACK.somethingPromised;
+  return FALLBACK.somethingEarlier;
 }
 
 interface Gap {
@@ -279,8 +247,8 @@ const ANY_GAPS = 1;
 /* "+ 1 other ways in" was on screen at the handover. The alternatives clause is the only
    one that can legitimately show a remainder of one, because it names two of its options
    and most `any` gates have exactly three. */
-const plainMore = () => LABEL.more;
-const anotherWayIn = (n: number) => (n === 1 ? LABEL.otherWayIn : LABEL.otherWaysIn);
+const plainMore = () => UI_LABEL.more;
+const anotherWayIn = (n: number) => (n === 1 ? UI_LABEL.otherWayIn : UI_LABEL.otherWaysIn);
 
 function lockFor(
   requires: Condition | undefined,
@@ -291,17 +259,17 @@ function lockFor(
 
   const missing = (requires?.all ?? []).filter((f) => !held.has(f));
     if (missing.length) {
-    return { lead: LABEL.youNeeded, gaps: missing.map(gapFor), show: NAMED_GAPS, moreWord: plainMore };
+    return { lead: UI_LABEL.restsOn, gaps: missing.map(gapFor), show: NAMED_GAPS, moreWord: plainMore };
   }
 
   const any = requires?.any ?? [];
   if (any.length && !any.some((f) => held.has(f))) {
-    return { lead: LABEL.anyOneOf, gaps: any.map(gapFor), show: ANY_GAPS, moreWord: anotherWayIn };
+    return { lead: UI_LABEL.anyOneOf, gaps: any.map(gapFor), show: ANY_GAPS, moreWord: anotherWayIn };
   }
 
   const blocked = (requires?.none ?? []).filter((f) => held.has(f));
     if (blocked.length) {
-    return { lead: LABEL.ruledOutBy, gaps: blocked.map(gapFor), show: NAMED_GAPS, moreWord: plainMore };
+    return { lead: UI_LABEL.ruledOutBy, gaps: blocked.map(gapFor), show: NAMED_GAPS, moreWord: plainMore };
   }
 
   /* A dimension gate. None exists in content today — m9a's own note in `story.ts` explains
@@ -314,22 +282,22 @@ function lockFor(
     if (min !== undefined && dims[d] < min) {
       short.push({
         key: `min-${d}`,
-        as: `${label} ${LABEL.atLeast} ${min}`,
-        where: LABEL.positionWhere,
+        as: `${label} ${UI_LABEL.atLeast} ${min}`,
+        where: UI_LABEL.positionWhere,
       });
     }
     const max = requires?.max?.[d];
     if (max !== undefined && dims[d] > max) {
       short.push({
         key: `max-${d}`,
-        as: `${label} ${LABEL.atMost} ${max}`,
-        where: LABEL.positionWhere,
+        as: `${label} ${UI_LABEL.atMost} ${max}`,
+        where: UI_LABEL.positionWhere,
       });
     }
   }
-  if (short.length) return { lead: LABEL.yourPosition, gaps: short, show: NAMED_GAPS, moreWord: plainMore };
+  if (short.length) return { lead: UI_LABEL.needsPosition, gaps: short, show: NAMED_GAPS, moreWord: plainMore };
 
-  return { lead: LABEL.unexplained, gaps: [], show: NAMED_GAPS, moreWord: plainMore };
+  return { lead: UI_LABEL.unexplained, gaps: [], show: NAMED_GAPS, moreWord: plainMore };
 }
 
 /** Which of an option's requirements the player actually holds — the live card's provenance. */
@@ -514,7 +482,7 @@ function PlayableCard({
               <span className="shrink-0 text-(--color-good)">
                 <Icon name="check" size={13} />
               </span>
-              {LABEL.fromYourFile}
+              {UI_LABEL.fromYourFile}
             </p>
             <ul className="mt-1 space-y-0.5">
               {held.slice(0, NAMED_GAPS).map((g) => (
@@ -524,7 +492,7 @@ function PlayableCard({
               ))}
               {held.length > NAMED_GAPS && (
                 <li className="text-[12px] leading-snug text-(--color-muted)">
-                  + {held.length - NAMED_GAPS} {LABEL.more}
+                  + {held.length - NAMED_GAPS} {UI_LABEL.more}
                 </li>
               )}
             </ul>
@@ -532,7 +500,7 @@ function PlayableCard({
         ) : (
           gated && (
             <p className="border-t border-(--color-line) pt-2.5 text-[12px] leading-snug text-(--color-muted)">
-              {LABEL.neededNothing}
+              {UI_LABEL.neededNothing}
             </p>
           )
         )}
@@ -540,7 +508,7 @@ function PlayableCard({
 
       {/* 5 · the card's own full-width marker, as on every other decide beat */}
       <div className={`self-end px-3.5 ${narrow ? "pb-2.5 pt-2.5" : "pb-3 pt-3"}`}>
-        <CardButton selected={selected} on={LABEL.chosen} off={LABEL.say} />
+        <CardButton selected={selected} on={UI_LABEL.chosen} off={UI_LABEL.sayThis} />
       </div>
     </button>
   );
@@ -572,7 +540,7 @@ function LockedCard({ option, lock, narrow }: { option: Option; lock: Lock; narr
       aria-checked={false}
       aria-disabled={true}
       tabIndex={-1}
-      aria-label={`${option.title} — ${LABEL.lockedSpoken}`}
+      aria-label={`${option.title} — ${UI_LABEL.lockedSpoken}`}
       aria-describedby={`apply-${option.id}-lock`}
       className="grid gap-0 overflow-hidden rounded-[12px] border text-left"
       style={{
@@ -653,7 +621,7 @@ function LockedCard({ option, lock, narrow }: { option: Option; lock: Lock; narr
           style={{ borderColor: "var(--color-text-disabled)", color: "var(--color-text-disabled)" }}
         >
           <LockGlyph size={14} />
-          {LABEL.notAvailable}
+          {UI_LABEL.notAvailable}
         </span>
       </div>
     </button>
@@ -808,11 +776,21 @@ export function ApplyScreen({
           </h1>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
             {mission.prompt && <p className="text-[13px] text-(--color-muted)">{mission.prompt}</p>}
-            {/* Only where something is actually gated. "4 of 4 open to you" on a beat that
-                gates nothing is a statistic about nothing. */}
-            {gated && (
+            {/**
+             * Only where two or more cards are actually shut, and that threshold is the
+             * point rather than tidiness.
+             *
+             * It used to be `gated` — whether the BEAT gates anything — which drew
+             * "4 of 4" on a run where nothing was locked: a statistic about nothing. But
+             * at one lock it is no better, because the padlock beside the card already
+             * says everything the fraction says, and what the fraction adds is a mark out
+             * of five, sitting above the locks, one beat before an ending that deletes
+             * its score on purpose. At two or three locks the count is doing real work —
+             * it tells you the row is mostly shut before you read four cards to find out.
+             */}
+            {options.length - playable.size >= 2 && (
               <Pill tone="accent">
-                {playable.size} {LABEL.of} {options.length} {LABEL.openToYou}
+                {playable.size} {UI_LABEL.of} {options.length} {UI_LABEL.onTheTable}
               </Pill>
             )}
           </div>

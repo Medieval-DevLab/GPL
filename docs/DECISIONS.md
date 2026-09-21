@@ -6,6 +6,120 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-074 · The locked card describes the argument, never the player
+`src/ui/apply.tsx`, and the strings now in `UI_LABEL`. A pedagogy audit read the apply
+beat's locked cards and found them written in the second person and the past tense:
+*"You needed"*, *"Your position was short of"*, *"Not available to you"*, and, worst,
+*"locked, because it was never earned"*. Up to three of them are on screen at once, at
+the award and at the handover — the two beats where the player is most exposed.
+
+The information was right; the grammar was an accusation. A **live** card's provenance
+reads "From your file", which names a place. Its locked sibling now does the same:
+**"Rests on"**, **"Any one of these opens it"**, **"Needs a position of"**,
+**"Not on the table"**. Two related fixes: `neededNothing` was *"Needed nothing you had
+to find."* on a card that, for the player who gathered least, is the only one they can
+play — now *"Open whatever you found."* And the counting Pill said *"2 of 5 open to
+you"*, which is a mark out of five one beat before an ending that deletes its score on
+purpose; it now counts the table, and **only draws at two or more locks**. Its condition
+used to be "does this beat gate anything", which drew "4 of 4" on a run where nothing was
+shut. At one lock the padlock already says it and the fraction adds only the grade; at
+two or three the count is doing real work.
+
+Cost: nothing but the words. Reversible in one commit. The thing to note is *how* this
+got in — none of these strings passes through `validateContent`'s leak check, because
+they are interface strings rather than content. That is an argument for `EARNED` and its
+fallbacks moving to `story.ts`, where the checks live.
+
+## D-073 · Ten label blocks into `UI_LABEL`, and what deliberately stayed behind
+Nine `src/ui` files had grown a private `LABEL` object while `shell.tsx` was owned by
+somebody else, and between them they declared `title` four times, `of` six times and `up`
+three times, each meaning something different. Merging them was the easy half; naming
+them was the decision.
+
+Three rules, in the order they were applied. **One word, one job, one key** — `of` really
+is the same word doing the same work in six places, so it is one key and not `starsOf` +
+`boardOf` + `reachableOf`; likewise `stars`, `more`, `chapter`, `complete`, `earned`,
+`milestone`. **Same string, different job, two keys** — "Continue" resumes a run in the
+hub and dismisses a modal on the reward, so `resume` and `dismiss`, because they will not
+stay the same string for ever and a shared key would make that a find-and-replace.
+**Read the call site** — `DASH_LABEL.title` is the dashboard's `<h1>`, which already
+existed here as `howYouPlayed` and is the same sentence naming the same thing, so it is
+one key; `JOURNEY_LABEL.title` became `mapTitle`, because `UI_LABEL.title` says nothing
+where it is used. Two existing keys were renamed for the same reason: `standing`
+("Where you ended up") became `endedUp` so it could not be confused with the rail's
+`whereYouStand`, and `recognition` ("Awards") became `awardsNav` so the word
+"Recognition" could be the key that says it.
+
+**`FALLBACK` in `apply.tsx` did not move.** Its four strings are the `where` half of an
+`EARNED` entry, used when no entry has been authored for a flag — the same kind of thing
+as the table beneath them, which its own comment marks as authoring bound for `story.ts`.
+Chrome comes to `UI_LABEL`; authoring waits for content. Moving them here would have put
+a sentence about the fiction into the interface's vocabulary and made it harder, not
+easier, to move `EARNED` later.
+
+Cost: one large diff across eleven files, and `UI_LABEL` is now 142 keys, which is big
+enough that the next person will be tempted to split it. Resist until content has a `ui:`
+block; two homes for chrome is the state this change just ended. Fully reversible.
+
+## D-072 · The closing debrief fits again: four columns, and two bands sharing a row
+`src/ui/screens.tsx`. Backlog 4.2 added twelve ledger rules, the account went from four
+rows to five, and the ending measured **854 in 739** — 115px over the design target and
+9px inside the hard limit, with `Your decisions` clipped at the fold. Measured band by
+band before anything was changed: verdict 203, account 308, threads 140, decisions 57,
+run code 31, plus 92px of band margins and 24px of padding.
+
+Three changes, in order of how much they were worth.
+
+**The tail row (−116px), which is the structural one.** `threads` is a wide, short region
+and `decisions` is a narrow, short one — 18 tone marks and a disclosure — so stacked they
+spent 300px of height on two things that between them filled about a third of the page.
+They now share a row, `1fr` and 468px, and 468 because that is the standing card's width
+in band 1, so the page has one right-hand spine holding the numbers and the record. The
+run code folded into the decisions block rather than keeping a band of its own for one
+line of 13px text. `threads` is absent on a large minority of runs, so when it is missing
+`decisions` takes the whole row rather than leaving a hole.
+
+**Four columns in the account (−44px).** The old comment said three columns existed so
+each detail line landed on one line at 437px. Measured, that was no longer true: twelve
+of fifteen entries already wrapped to two. At 310px every entry is two lines and **none**
+reaches three — checked in the browser before choosing it, because the risk was trading
+one row for four taller ones. The rule is `repeat(auto-fill, minmax(300px, 1fr))` rather
+than a breakpoint, so it is the measure that decides the column count and the same rule
+gives one column on a phone.
+
+**18px of page rhythm**, and this is the part that is taste rather than measurement:
+16px between bands and 10px of edge padding, against 20/24/24 and 12px. Every band opens
+with a bold coloured `SectionTitle`, so the sections are separated by weight.
+
+Where it landed, at 1440×900. The **after** column is measured in a browser; the two
+starred **before** figures are arithmetic on measured parts rather than a second run, and
+are marked because the distinction matters.
+
+| run | before | after |
+|---|---|---|
+| no chains (a large minority) | 690\* | **610** |
+| one chain — the harness's own path | 854 | **653** |
+| three chains | ~870\* | 774 |
+| a 21-entry account (the walk's worst case) | 960 | 771 |
+| 21 entries **and** three chains | ~976\* | 892 |
+
+The first two are what the gate measures and they are comfortably inside 739. The last
+row is still over 863 and is the honest cost of this fix: it improves the structural worst
+case by about 84px but does not repair it. Getting *that* under the line needs the account
+itself to be shorter, which means either hiding entries — the one thing 4.2 exists to stop
+— or shortening the detail lines, which is content.
+
+**What band 3 is now worth: 226px at the 739 target, 350px at 863.** That is the budget
+the backlog 4.5 claim item has to live inside, and it is up from the 140px the chains
+occupy today.
+
+One side effect, recorded because it is a real cost: opening `Your decisions` in a 468px
+column would have made an eighteen-row audit trail a 1,666px block instead of ~940px, so
+the row drops to one column while the disclosure is open. React's `onToggle` **does not
+fire** on `<details>` here — measured, with a native listener on the same element counting
+one toggle and React's handler counting none — so the mirror hangs off the summary's
+click, which activation always produces, keyboard included.
+
 ## D-071 · The SCORM bridge shipped disconnected, and the test that would have caught it
 `src/scorm.ts`, `src/scorm.test.ts` and `tools/scorm-package.mjs` all landed together.
 Eight tests green. Manifest correct against the 1.2 schema. `npm run scorm` producing a

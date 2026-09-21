@@ -506,19 +506,56 @@ function advisorFor(missionId: string): Advisor | undefined {
  *    and an interface that tells the player what to notice is the lecture this game keeps
  *    removing. A named person with a job and a stake saying it about a decision the player
  *    actually made is a debrief.
+ *
+ * ── AND THEN THE ACCOUNT GREW (backlog 4.2, twelve more ledger rules) ────────────────
+ *
+ * 854 in 739 — 115px over the design target, 9px inside the hard limit, with
+ * `Your decisions` clipped at the fold. Measured band by band before anything moved:
+ * verdict 203 · account 308 · threads 140 · decisions 57 · run code 31, plus 92px of band
+ * margins and 24px of padding. Three changes, biggest first:
+ *
+ * · **bands 3 and 4 share a row (−116px)** — the only place on the screen where two
+ *   regions were competing for height rather than for width. See the note on the row.
+ * · **the account is four columns (−44px)**, on a measured `minmax(300px, 1fr)` rather
+ *   than a breakpoint. See the note on the band; the old three-column rule was buying a
+ *   measure it had already lost.
+ * · **18px of page rhythm**, which is the only part of this that is taste.
+ *
+ * Where it lands, 1440×900: 610 with no chains, 653 on the harness's own path, 774 with
+ * three chains, 771 with a 21-entry account, 892 with both. The last is over 863 and this
+ * fix does not repair it — repairing it means a shorter account, which is content. Band 3
+ * is worth 226px at the 739 target and 350px at 863, which is the budget anything that
+ * replaces the chains has to live inside.
  */
 export function EndingScreen({ state }: { state: GameState }) {
   const verdict = finalVerdict(state.dims, state.flags);
   const threads = causalThreads(state, story);
   const account = ledger(state);
   const runCode = codeFromState(state, story);
+  /**
+   * Whether the run list is open, mirrored out of the native `<details>` rather than
+   * driving it.
+   *
+   * The element stays uncontrolled — `only-print-open` in `index.css` opens it on paper by
+   * reaching into `::details-content`, and a React-controlled `open` prop would fight
+   * that. All this does is let the layout below know, so that opening an eighteen-row
+   * audit trail gives it the page instead of threading it through a 468px column at
+   * roughly ninety pixels a row.
+   */
+  const [runListOpen, setRunListOpen] = useState(false);
 
   return (
     /* One gesture for the whole debrief, and then it holds still. No cascade: the screen
        now fits, so a stagger would be five animations over one page rather than a sequence
        the reader follows — and `m-enter` is opacity only, so it survives `reduce` as a
        dissolve instead of being deleted. */
-    <div className="m-enter flex min-h-full flex-col px-5 py-3">
+    /* The page rhythm is 16px between bands and 10px of edge padding, against 20/24/24 and
+       12px before. Worth 18px, which is worth having on the tightest screen in the game
+       and is not a legibility loss: every band opens with a bold, coloured `SectionTitle`,
+       so the sections are separated by weight rather than by air. Measured, band by band,
+       in the docstring above — the structural savings are the 4-column account and the
+       tail row, and this is the last 18px, not the argument. */
+    <div className="m-enter flex min-h-full flex-col px-5 py-2.5">
       {/* ── band 1 · the verdict, and where it left the three ─────────────────── */}
       <div data-region="verdict" className="flex flex-wrap items-start gap-x-8 gap-y-4">
         <div className="min-w-0 flex-1">
@@ -552,7 +589,7 @@ export function EndingScreen({ state }: { state: GameState }) {
         {/* The one card in band 1, and the only chart on the screen. */}
         <section data-region="standing" className="card w-full shrink-0 px-4 py-3 lg:w-[468px]">
           <SectionTitle icon="chart" className="mb-2">
-            {UI_LABEL.standing}
+            {UI_LABEL.endedUp}
           </SectionTitle>
           <FactorGrid dims={state.dims} />
           <p className="mt-2.5 border-t border-(--color-line) pt-2 text-[13px] leading-snug text-(--color-muted) text-pretty">
@@ -563,15 +600,22 @@ export function EndingScreen({ state }: { state: GameState }) {
       </div>
 
       {/* ── band 2 · the account ──────────────────────────────────────────────────
-          Three columns at this width, so every entry's detail line lands on one line
-          instead of a 660px measure reflowing into two. `flag`, not `layers`: the account
-          is a position, and `layers` belongs to Deliverability. */}
+          As many ~310px columns as the width holds, which is four at 1440 and one on a
+          phone. It was three fixed columns, on the stated grounds that a 437px column kept
+          every detail line to one line — measured, it does not: at 437px, twelve of the
+          fifteen entries already wrapped to two lines, so the third column was buying a
+          measure it no longer had. At 310px every entry is two lines and nothing reaches
+          three, which trades one row of five for none and takes 44px off the band. The
+          310px floor is what the measurement supports, so it is the number in the rule
+          rather than a breakpoint that happens to produce it.
+          `flag`, not `layers`: the account is a position, and `layers` belongs to
+          Deliverability. */}
       {account.length > 0 && (
-        <section data-region="account" className="mt-5">
+        <section data-region="account" className="mt-4">
           <SectionTitle icon="flag" className="mb-2">
             {UI_LABEL.account}
           </SectionTitle>
-          <ul className="grid gap-x-8 gap-y-2.5 sm:grid-cols-2 xl:grid-cols-3">
+          <ul className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-x-8 gap-y-2">
             {account.map((e) => (
               <LedgerRow key={e.label} entry={e} size={15} bare />
             ))}
@@ -579,123 +623,167 @@ export function EndingScreen({ state }: { state: GameState }) {
         </section>
       )}
 
-      {/* ── band 3 · what led to what ────────────────────────────────────────────
-          The payoff of the whole design, and empty on 77% of runs (backlog 1.5), so it
-          must cost nothing when it is absent. Three across rather than three down. */}
-      {threads.length > 0 && (
-        <section data-region="threads" className="mt-6">
-          <SectionTitle icon="spark" className="mb-2">
-            {UI_LABEL.ledToWhat}
-          </SectionTitle>
-          <div className="grid gap-x-8 gap-y-3 lg:grid-cols-2 xl:grid-cols-3">
-            {threads.map((t, i) => (
-              <div
-                key={i}
-                className="break-inside-avoid border-l-[3px] border-(--color-accent) pl-3 text-[15px] leading-snug"
-              >
-                <p className="text-(--color-ink) text-pretty">{t.because}</p>
-                <p className="mt-1.5 flex items-start gap-1.5 text-(--color-ink-soft) text-pretty">
-                  <span aria-hidden="true" className="shrink-0 font-bold text-(--color-accent)">
-                    →
-                  </span>
-                  {t.soLater}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── band 4 · the run itself ──────────────────────────────────────────────
-          Collapsed on screen, open in print. The summary carries the SHAPE of the run as
-          one mark per decision, so the collapsed state still says something true: a row of
-          ticks reads differently from a row of warnings across a room. */}
-      <section data-region="decisions" className="mt-6 pb-1">
-        <SectionTitle icon="clock" className="mb-1.5">
-          {UI_LABEL.decisions}
-        </SectionTitle>
-        <details className="only-print-open">
-          {/* The heading is NOT inside the summary: `<summary>` takes phrasing content or
-              one heading element, not both, and the run strip has to sit beside the
-              affordance rather than inside a heading. Same shape as the rail's ledger
-              disclosure, which is the other one in the game. */}
-          {/* `w-fit`, so the focus ring encloses the affordance rather than 1,374px of
-              empty row. A full-width ring around a half-width control reads as a bug. */}
-          <summary className="flex w-fit min-h-[24px] cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1.5">
-            <span aria-hidden="true" className="flex items-center gap-1">
-              {state.history.map((h) => (
-                <span key={h.missionId} style={{ color: TONE_MARK[h.tone].colour }}>
-                  <Icon name={TONE_MARK[h.tone].icon} size={13} />
-                </span>
-              ))}
-            </span>
-            <span className="text-[13px] text-(--color-muted)">
-              <span className="font-bold text-(--color-ink) tabular-nums">
-                {state.history.length}
-              </span>{" "}
-              in order <span className="text-(--color-accent)">{UI_LABEL.decisionsOpen}</span>
-            </span>
-          </summary>
-
-          <ol className="mt-2.5 grid gap-x-8 gap-y-2.5 xl:grid-cols-2">
-            {state.history.map((h) => {
-              const stage = STAGES.find((s) => s.id === h.stage);
-              const mark = TONE_MARK[h.tone];
-              const advisor = advisorFor(h.missionId);
-              return (
-                <li key={h.missionId} className="flex gap-2.5 break-inside-avoid">
-                  <span className="mt-[3px] shrink-0" style={{ color: mark.colour }}>
-                    <Icon name={mark.icon} size={15} />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-[12px] font-bold uppercase tracking-[0.07em] text-(--color-muted)">
-                      {stage?.label}
-                      <span className="ml-2 font-medium normal-case tracking-normal">
-                        {h.missionTitle}
-                      </span>
-                    </p>
-                    <p className="text-[13px] font-bold text-(--color-ink) text-pretty">
-                      {h.chosenLabel}
-                    </p>
-                    {/* The outcome headline is the one line of this row a player has
-                        already read, on the consequence screen. It is the facilitator's
-                        column, so it prints and does not compete on screen. */}
-                    <p className="only-print text-[13px] leading-snug text-(--color-ink-soft) text-pretty">
-                      {h.headline}
-                    </p>
-                    {/* 4.3 · what the colleague told you to watch for, in their voice.
-                        Never rendered without a name: unattributed, it is the interface
-                        telling the player what to notice. */}
-                    {h.lesson.watchFor && advisor && (
-                      <p className="mt-0.5 text-[13px] leading-snug text-(--color-ink-soft) text-pretty">
-                        <span className="font-bold text-(--color-ink)">{advisor.name}: </span>
-                        {quoted(h.lesson.watchFor)}
-                      </p>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-        </details>
-      </section>
-
       {/**
-       * The run code, at the one moment it is worth anything.
+       * ── bands 3 and 4, on one row ─────────────────────────────────────────────
        *
-       * Eight base32 characters that replay this exact run, because the game is
-       * deterministic — and until now the only screen that ever showed one was the
-       * failure path where a save could not be read. It is the mechanism behind peer
-       * comparison, facilitator pre-reading and exact bug repro (backlog 8.2), and the
-       * debrief is where a cohort actually wants to swap them. On paper it is the
-       * difference between an artefact and an anecdote.
+       * They used to stack, and stacking is what put the screen 115px over its design
+       * budget: `threads` is a wide, short region and `decisions` is a *narrow*, short one
+       * — 18 tone marks and a disclosure — so one under the other spent 300px of height on
+       * two things that between them fill about a third of the page. Measured band by
+       * band, this row is the single largest saving available on the screen (−116px),
+       * because it is the only place where two regions were competing for height rather
+       * than for width.
+       *
+       * The right column is 468px because that is the standing card's width in band 1:
+       * the page then has one right-hand spine holding the numbers and the record, rather
+       * than two arbitrary edges.
+       *
+       * `threads` is absent on a large minority of runs, so it must cost nothing when it
+       * is missing: with no left-hand region, `decisions` takes the whole row rather than
+       * leaving a 1fr hole where a section used to be.
        */}
-      {runCode && (
-        <p className="mt-6 border-t border-(--color-line) pt-2.5 text-[13px] text-(--color-muted)">
-          <span className="font-bold text-(--color-ink)">{UI_LABEL.runCode}: </span>
-          <span className="font-bold tracking-[0.04em] text-(--color-accent-deep)">{runCode}</span>
-        </p>
-      )}
+      <div
+        className={`mt-4 grid gap-x-8 gap-y-5 ${
+          threads.length > 0 && !runListOpen ? "lg:grid-cols-[minmax(0,1fr)_468px]" : ""
+        }`}
+      >
+        {/* The payoff of the whole design. Two across at this column width rather than
+            three: `auto-fill` will not open a 272px track for 15px prose, and with one
+            thread it still reserves the second track, which keeps a lone chain off a
+            117-character measure. */}
+        {threads.length > 0 && (
+          <section data-region="threads">
+            <SectionTitle icon="spark" className="mb-2">
+              {UI_LABEL.ledToWhat}
+            </SectionTitle>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(380px,1fr))] gap-x-8 gap-y-3">
+              {threads.map((t, i) => (
+                <div
+                  key={i}
+                  className="break-inside-avoid border-l-[3px] border-(--color-accent) pl-3 text-[15px] leading-snug"
+                >
+                  <p className="text-(--color-ink) text-pretty">{t.because}</p>
+                  <p className="mt-1.5 flex items-start gap-1.5 text-(--color-ink-soft) text-pretty">
+                    <span aria-hidden="true" className="shrink-0 font-bold text-(--color-accent)">
+                      →
+                    </span>
+                    {t.soLater}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* The run itself — collapsed on screen, open in print. The summary carries the
+            SHAPE of the run as one mark per decision, so the collapsed state still says
+            something true: a row of ticks reads differently from a row of warnings across
+            a room. */}
+        <section data-region="decisions" className="pb-1">
+          <SectionTitle icon="clock" className="mb-1.5">
+            {UI_LABEL.decisions}
+          </SectionTitle>
+          <details className="only-print-open">
+            {/* The heading is NOT inside the summary: `<summary>` takes phrasing content
+                or one heading element, not both, and the run strip has to sit beside the
+                affordance rather than inside a heading. Same shape as the rail's ledger
+                disclosure, which is the other one in the game. */}
+            {/* `w-fit`, so the focus ring encloses the affordance rather than 1,374px of
+                empty row. A full-width ring around a half-width control reads as a bug. */}
+            {/* The mirror hangs off the summary's click, not off `onToggle`. Measured:
+                React's `onToggle` never fired here — `toggle` does not bubble — while a
+                native listener on the same element counted one. Activating a summary
+                always produces a click, from the keyboard as well as the pointer, so this
+                is the event that exists. */}
+            <summary
+              onClick={() => setRunListOpen((open) => !open)}
+              className="flex w-fit min-h-[24px] cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1.5"
+            >
+              <span aria-hidden="true" className="flex items-center gap-1">
+                {state.history.map((h) => (
+                  <span key={h.missionId} style={{ color: TONE_MARK[h.tone].colour }}>
+                    <Icon name={TONE_MARK[h.tone].icon} size={13} />
+                  </span>
+                ))}
+              </span>
+              <span className="text-[13px] text-(--color-muted)">
+                <span className="font-bold text-(--color-ink) tabular-nums">
+                  {state.history.length}
+                </span>{" "}
+                in order <span className="text-(--color-accent)">{UI_LABEL.decisionsOpen}</span>
+              </span>
+            </summary>
+
+            {/* Two columns when the section has the page, one when it is sharing the row
+                with the chains. It was `xl:grid-cols-2`, which is a viewport query and so
+                would still have split a 468px column into two 218px ones. */}
+            <ol className="mt-2.5 grid grid-cols-[repeat(auto-fill,minmax(560px,1fr))] gap-x-8 gap-y-2.5">
+                {state.history.map((h) => {
+                  const stage = STAGES.find((s) => s.id === h.stage);
+                  const mark = TONE_MARK[h.tone];
+                  const advisor = advisorFor(h.missionId);
+                  return (
+                    <li key={h.missionId} className="flex gap-2.5 break-inside-avoid">
+                      <span className="mt-[3px] shrink-0" style={{ color: mark.colour }}>
+                        <Icon name={mark.icon} size={15} />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-[12px] font-bold uppercase tracking-[0.07em] text-(--color-muted)">
+                          {stage?.label}
+                          <span className="ml-2 font-medium normal-case tracking-normal">
+                            {h.missionTitle}
+                          </span>
+                        </p>
+                        <p className="text-[13px] font-bold text-(--color-ink) text-pretty">
+                          {h.chosenLabel}
+                        </p>
+                        {/* The outcome headline is the one line of this row a player has
+                            already read, on the consequence screen. It is the
+                            facilitator's column, so it prints and does not compete on
+                            screen. */}
+                        <p className="only-print text-[13px] leading-snug text-(--color-ink-soft) text-pretty">
+                          {h.headline}
+                        </p>
+                        {/* 4.3 · what the colleague told you to watch for, in their voice.
+                            Never rendered without a name: unattributed, it is the
+                            interface telling the player what to notice. */}
+                        {h.lesson.watchFor && advisor && (
+                          <p className="mt-0.5 text-[13px] leading-snug text-(--color-ink-soft) text-pretty">
+                            <span className="font-bold text-(--color-ink)">{advisor.name}: </span>
+                            {quoted(h.lesson.watchFor)}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+            </ol>
+          </details>
+
+          {/**
+           * The run code, at the one moment it is worth anything.
+           *
+           * Eight base32 characters that replay this exact run, because the game is
+           * deterministic — and until now the only screen that ever showed one was the
+           * failure path where a save could not be read. It is the mechanism behind peer
+           * comparison, facilitator pre-reading and exact bug repro (backlog 8.2), and the
+           * debrief is where a cohort actually wants to swap them. On paper it is the
+           * difference between an artefact and an anecdote.
+           *
+           * It sits inside `Your decisions` rather than under its own rule at the foot of
+           * the page: it is the same object — the record of this run — and as a band of
+           * its own it was 51px of height for one line of 13px text.
+           */}
+          {runCode && (
+            <p className="mt-2.5 border-t border-(--color-line) pt-2.5 text-[13px] text-(--color-muted)">
+              <span className="font-bold text-(--color-ink)">{UI_LABEL.runCode}: </span>
+              <span className="font-bold tracking-[0.04em] text-(--color-accent-deep)">
+                {runCode}
+              </span>
+            </p>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

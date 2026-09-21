@@ -27,29 +27,7 @@ import {
 import { story } from "../content/story";
 import { Icon } from "./icons";
 import { buildJourney, JourneyMap, STAGE_TOKENS } from "./journey";
-
-/* ─────────────────────────── interface labels ───────────────────────────
-   SHOULD MOVE TO `UI_LABEL` in `ui/shell.tsx`; this file does not own that
-   module while several agents are editing in parallel. None of it is story. */
-const HUB_LABEL = {
-  greeting: "Welcome back",
-  engagementLead: "Your engagement",
-  upNext: "Up next",
-  continue: "Continue",
-  start: "Start the pursuit",
-  startNote: "Chapter one, from the beginning",
-  minutes: "min",
-  journey: "The pursuit map",
-  recognition: "Recognition",
-  missionsComplete: "missions complete",
-  of: "of",
-  chapterReached: "Chapter reached",
-  badgesEarned: "Recognition earned",
-  standing: "Where you stand",
-  yourPath: "Your path",
-  viewWholeMap: "See the whole map",
-  finished: "Every mission complete",
-} as const;
+import { UI_LABEL } from "./shell";
 
 const T = STAGE_TOKENS;
 
@@ -176,7 +154,7 @@ function BigStat({
             className="tabular-nums"
             style={{ fontSize: "var(--text-md)", fontWeight: 700, color: T.inkSoft }}
           >
-            {HUB_LABEL.of} {total}
+            {UI_LABEL.of} {total}
           </span>
         )}
       </div>
@@ -242,11 +220,11 @@ export function HubScreen({
           style={{ borderBottom: `1px solid ${T.line}`, background: T.raised }}
         >
           <p style={{ fontSize: "var(--text-base)", fontWeight: 600, color: T.inkSoft }}>
-            {HUB_LABEL.greeting}
+            {UI_LABEL.welcomeBack}
           </p>
           <div className="flex items-center gap-2.5">
-            <DoorButton label={HUB_LABEL.journey} icon="flag" onClick={onViewJourney} />
-            <DoorButton label={HUB_LABEL.recognition} icon="trophy" onClick={onViewRecognition} />
+            <DoorButton label={UI_LABEL.pursuitMap} icon="flag" onClick={onViewJourney} />
+            <DoorButton label={UI_LABEL.recognition} icon="trophy" onClick={onViewRecognition} />
           </div>
         </header>
 
@@ -261,7 +239,7 @@ export function HubScreen({
                   color: T.energy,
                 }}
               >
-                {HUB_LABEL.engagementLead}
+                {UI_LABEL.yourEngagement}
               </p>
               <h1
                 className="mt-1"
@@ -285,7 +263,7 @@ export function HubScreen({
                 architecture rather than as a gap between two floating cards. */}
             <div className="px-9 py-6" style={{ borderTop: `1px solid ${T.lineSoft}` }}>
               <p style={{ fontSize: "var(--text-sm)", fontWeight: 700, color: T.inkSoft }}>
-                {next ? HUB_LABEL.upNext : HUB_LABEL.finished}
+                {next ? UI_LABEL.upNext : UI_LABEL.everyMissionDone}
               </p>
               <h2
                 className="mt-1.5"
@@ -295,7 +273,7 @@ export function HubScreen({
                   letterSpacing: "var(--tracking-tight)",
                 }}
               >
-                {next ? next.title : HUB_LABEL.finished}
+                {next ? next.title : UI_LABEL.everyMissionDone}
               </h2>
               {next && (
                 <p className="mt-1" style={{ fontSize: "var(--text-base)", color: T.inkSoft }}>
@@ -308,8 +286,8 @@ export function HubScreen({
                 onClick={onContinue}
                 aria-label={
                   next
-                    ? `${fresh ? HUB_LABEL.start : HUB_LABEL.continue}: ${next.title}`
-                    : (fresh ? HUB_LABEL.start : HUB_LABEL.continue)
+                    ? `${fresh ? UI_LABEL.startPursuit : UI_LABEL.resume}: ${next.title}`
+                    : (fresh ? UI_LABEL.startPursuit : UI_LABEL.resume)
                 }
                 /* THE LIP, from `.btn-game` in index.css: a solid 4px darker bottom
                    edge that collapses under a 4px drop on press. It is the strongest
@@ -329,7 +307,7 @@ export function HubScreen({
                     className="block"
                     style={{ fontSize: "var(--text-md)", fontWeight: 800, letterSpacing: "-0.01em" }}
                   >
-                    {fresh ? HUB_LABEL.start : HUB_LABEL.continue}
+                    {fresh ? UI_LABEL.startPursuit : UI_LABEL.resume}
                   </span>
                   {/* The mission is named by the heading directly above, so the button
                       carries the cost instead — repeating the title here read as a stutter. */}
@@ -338,8 +316,8 @@ export function HubScreen({
                     style={{ fontSize: "var(--text-sm)", fontWeight: 600, opacity: 0.85 }}
                   >
                     {fresh || !next || !nextChapter
-                      ? HUB_LABEL.startNote
-                      : `${nextChapter.eyebrow}  ·  ${next.minutes} ${HUB_LABEL.minutes}`}
+                      ? UI_LABEL.startNote
+                      : `${nextChapter.eyebrow}  ·  ${next.minutes} ${UI_LABEL.minutes}`}
                   </span>
                 </span>
                 <Icon name="rocket" size={22} />
@@ -351,13 +329,13 @@ export function HubScreen({
           <section
             className="flex w-[400px] shrink-0 flex-col"
             style={{ borderLeft: `1px solid ${T.line}`, background: T.raised }}
-            aria-label={HUB_LABEL.standing}
+            aria-label={UI_LABEL.whereYouStand}
           >
             <div className="px-7 py-6">
               <BigStat
                 value={journey.doneCount}
                 total={journey.total}
-                label={HUB_LABEL.missionsComplete}
+                label={UI_LABEL.missionsComplete}
                 size={DISPLAY_MEGA}
                 tone={T.ink}
               />
@@ -368,7 +346,7 @@ export function HubScreen({
                 <BigStat
                   value={nextChapter?.number ?? journey.chapterCount}
                   total={journey.chapterCount}
-                  label={HUB_LABEL.chapterReached}
+                  label={UI_LABEL.chapterReached}
                   size={DISPLAY_HERO}
                   tone={T.glow}
                 />
@@ -377,7 +355,7 @@ export function HubScreen({
                 <BigStat
                   value={state.badges.length}
                   total={badgeTotal}
-                  label={HUB_LABEL.badgesEarned}
+                  label={UI_LABEL.recognitionEarned}
                   size={DISPLAY_HERO}
                   tone={T.reward}
                 />
@@ -389,7 +367,7 @@ export function HubScreen({
               style={{ borderTop: `1px solid ${T.lineSoft}` }}
             >
               <p style={{ fontSize: "var(--text-sm)", fontWeight: 700, color: T.inkSoft }}>
-                {HUB_LABEL.standing}
+                {UI_LABEL.whereYouStand}
               </p>
               {DIMENSIONS.map((d) => (
                 <StageMeter key={d} id={d} value={state.dims[d]} />
@@ -409,7 +387,7 @@ export function HubScreen({
             className="mb-2.5"
             style={{ fontSize: "var(--text-sm)", fontWeight: 700, color: T.inkSoft }}
           >
-            {HUB_LABEL.yourPath}
+            {UI_LABEL.yourPath}
           </p>
           <JourneyMap state={state} content={content} compact />
         </div>
@@ -426,7 +404,7 @@ export function HubScreen({
             outlineColor: T.energy,
           }}
         >
-          {HUB_LABEL.viewWholeMap}
+          {UI_LABEL.viewWholeMap}
         </button>
       </div>
     </div>

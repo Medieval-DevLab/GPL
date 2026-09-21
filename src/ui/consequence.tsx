@@ -59,25 +59,6 @@ import {
 } from "./shell";
 
 /**
- * Interface strings. MUST MOVE TO `UI_LABEL` in `ui/shell.tsx` — this worker does not own
- * that file, so they are declared here with the same job they will have there: none of
- * them is story, all of them are interface state or non-colour redundancy.
- */
-const LABEL = {
-  /** what the player picked, above the headline */
-  youChose: "You chose:",
-  /** the result band's own name, as a landmark. Deliberately NOT "Where you stand",
-      which is the right rail's heading — two landmarks with near-identical names is a
-      worse outcome than no landmark. */
-  whatItMoved: "What it moved",
-  /** the ▲ / ▼ in the delta chip, which reads as "up-pointing triangle" or as nothing */
-  up: "up",
-  down: "down",
-  /** the panel naming what the outcome altered */
-  nowDifferent: "What is now different",
-} as const;
-
-/**
  * Tone is carried by the medallion's colour AND its icon — never colour alone (E6).
  * There is deliberately no label: "THAT WORKED" in tracked caps above the headline is
  * the interface grading the decision before the player has read what happened.
@@ -255,7 +236,7 @@ function ResultCell({
             {/* The glyph carries direction to the eye and nothing at all to a screen
                 reader, which reads "▲" as either a triangle or as silence. */}
             <Hidden>
-              {delta > 0 ? LABEL.up : LABEL.down} {Math.abs(delta)}.
+              {delta > 0 ? UI_LABEL.movedUp : UI_LABEL.movedDown} {Math.abs(delta)}.
             </Hidden>
           </span>
         )}
@@ -330,7 +311,7 @@ function ResultBand({
   return (
     <section
       data-region="result"
-      aria-label={LABEL.whatItMoved}
+      aria-label={UI_LABEL.whatItMoved}
       className="grid gap-px border-y border-(--color-line) sm:grid-cols-3"
       style={{ background: "var(--color-line)" }}
     >
@@ -487,7 +468,7 @@ export function ConsequenceScreen({
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[13px] text-(--color-muted)">
-              {LABEL.youChose}{" "}
+              {UI_LABEL.youChose}{" "}
               <span className="font-bold text-(--color-ink-soft)">{resolution.chosenLabel}</span>
             </p>
             <h1
@@ -542,7 +523,7 @@ export function ConsequenceScreen({
           className="min-w-[280px] flex-1 bg-(--color-surface) px-5 py-4"
         >
           <SectionTitle icon="spark" className="mb-2.5">
-            {LABEL.nowDifferent}
+            {UI_LABEL.nowDifferent}
           </SectionTitle>
           <ul className="space-y-1.5">
             {resolution.outcome.changed.map((c, i) => (

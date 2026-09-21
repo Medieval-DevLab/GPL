@@ -31,25 +31,7 @@ import {
 import { stars, type Stars } from "../engine/progress";
 import { story } from "../content/story";
 import { Icon } from "./icons";
-import { useReducedMotion } from "./shell";
-
-/* ─────────────────────────── interface labels ───────────────────────────
-   SHOULD MOVE TO `UI_LABEL` in `ui/shell.tsx` — this file does not own that
-   module while several agents are editing in parallel. None of it is story: it
-   is interface state and the non-colour half of each node's status. */
-const JOURNEY_LABEL = {
-  title: "The pursuit",
-  lede: "One client, from first contact to delivery.",
-  chapter: "Chapter",
-  start: "Start",
-  resume: "Continue",
-  done: "Complete",
-  current: "In progress",
-  locked: "Locked",
-  complete: "complete",
-  of: "of",
-  stars: "stars",
-} as const;
+import { UI_LABEL, useReducedMotion } from "./shell";
 
 /* ───────────────────────── the dark stage tokens ─────────────────────────
    The dark cinematic register, named once and shared with `ui/hub.tsx`. No hex
@@ -173,7 +155,7 @@ export function buildJourney(content: Content, state: GameState): Journey {
     return {
       number,
       eyebrow:
-        header?.kind === "interlude" ? header.eyebrow : `${JOURNEY_LABEL.chapter} ${number}`,
+        header?.kind === "interlude" ? header.eyebrow : `${UI_LABEL.chapter} ${number}`,
       title: header?.kind === "interlude" ? header.title : "",
       milestone: header?.kind === "interlude" ? header.milestone : undefined,
       stageLabel: [...new Set(own.map((m) => stageLabel(m.stage)))].join(" · "),
@@ -250,9 +232,9 @@ function LockGlyph({ size = 15 }: { size?: number }) {
 }
 
 const STATE_WORD: Record<NodeState, string> = {
-  done: JOURNEY_LABEL.done,
-  current: JOURNEY_LABEL.current,
-  locked: JOURNEY_LABEL.locked,
+  done: UI_LABEL.stateDone,
+  current: UI_LABEL.stateCurrent,
+  locked: UI_LABEL.stateLocked,
 };
 
 /* ───────────────────────────── a node ───────────────────────────── */
@@ -319,7 +301,7 @@ function MissionNode({
       : null;
 
   const starNote =
-    mission.stars > 0 ? `, ${mission.stars} ${JOURNEY_LABEL.of} 3 ${JOURNEY_LABEL.stars}` : "";
+    mission.stars > 0 ? `, ${mission.stars} ${UI_LABEL.of} 3 ${UI_LABEL.stars}` : "";
   const labelLeft = Math.min(Math.max(point.x - 66, 2), TRACK_W - 134);
 
   return (
@@ -571,7 +553,7 @@ function CompactRail({
   reducedMotion: boolean;
 }) {
   return (
-    <div className="flex items-end gap-5" role="group" aria-label={JOURNEY_LABEL.title}>
+    <div className="flex items-end gap-5" role="group" aria-label={UI_LABEL.mapTitle}>
       {journey.chapters.map((chapter) => (
         <div key={chapter.number} className="flex flex-col gap-1.5">
           <div className="flex items-center">
@@ -689,10 +671,10 @@ export function JourneyMap({
               lineHeight: 1.1,
             }}
           >
-            {JOURNEY_LABEL.title}
+            {UI_LABEL.mapTitle}
           </h1>
           <p className="mt-1" style={{ fontSize: "var(--text-sm)", color: T.inkSoft }}>
-            {JOURNEY_LABEL.lede}
+            {UI_LABEL.mapLede}
           </p>
         </div>
 
@@ -711,13 +693,13 @@ export function JourneyMap({
               /{journey.total}
             </span>
             <span className="ml-2" style={{ fontSize: "var(--text-xs)", color: T.inkSoft }}>
-              {JOURNEY_LABEL.complete}
+              {UI_LABEL.complete}
             </span>
           </div>
           <div
             className="h-2 w-[180px] overflow-hidden rounded-full"
             role="img"
-            aria-label={`${journey.doneCount} ${JOURNEY_LABEL.of} ${journey.total} ${JOURNEY_LABEL.complete}`}
+            aria-label={`${journey.doneCount} ${UI_LABEL.of} ${journey.total} ${UI_LABEL.complete}`}
             style={{ background: T.sunk }}
           >
             <div
@@ -737,7 +719,7 @@ export function JourneyMap({
             key={chapter.number}
             chapter={chapter}
             first={i === 0}
-            ctaLabel={journey.doneCount === 0 ? JOURNEY_LABEL.start : JOURNEY_LABEL.resume}
+            ctaLabel={journey.doneCount === 0 ? UI_LABEL.start : UI_LABEL.resume}
             onSelect={onSelectMission}
             reducedMotion={reducedMotion}
           />
