@@ -86,7 +86,22 @@ describe("content validity", () => {
     const dimGates = other.filter((w) => /gates on a dimension value/.test(w.message));
     expect(dimGates).toHaveLength(1);
 
-    const unexpected = other.filter((w) => !/gates on a dimension value/.test(w.message));
+    /**
+     * Claim items where exactly one candidate names a person, so the item can be answered
+     * without reading it. A ceiling rather than a pin, because unlike the flag lists above
+     * this is not a fixed vocabulary — any new thread can introduce one — and the fix is
+     * always the same: give a sibling a name, or take the name out.
+     *
+     * Three today, found by the check rather than by a reviewer; a pedagogy pass reading
+     * the same content by hand caught one of them. Fixing them takes this to zero and this
+     * test stays green; adding a fourth does not.
+     */
+    const nameTells = other.filter((w) => /names a person/.test(w.message));
+    expect(nameTells.length).toBeLessThanOrEqual(3);
+
+    const unexpected = other.filter(
+      (w) => !/gates on a dimension value/.test(w.message) && !/names a person/.test(w.message),
+    );
     if (unexpected.length) console.log("content warnings:\n" + formatIssues(unexpected));
     expect(unexpected).toEqual([]);
   });

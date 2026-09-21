@@ -205,7 +205,13 @@ describe("the content as authored", () => {
            name with a reason in `engine.test.ts` — so this class is owned in exactly the
            same way as the dead narrative flags above, by a list somebody has to edit
            deliberately rather than by a warning nobody reads. */
-        !/no ledger rule/.test(i.message),
+        !/no ledger rule/.test(i.message) &&
+        /* The fourth class: a claim item where exactly one candidate names a person, so
+           it is pickable without reading. Owned by a count in `engine.test.ts` rather
+           than by a list, because unlike a flag it is not a fixed vocabulary — any new
+           thread can introduce one, and the fix is always the same (give a sibling a
+           name, or take the name out). */
+        !/names a person/.test(i.message),
     );
     expect(unowned).toEqual([]);
   });
@@ -947,5 +953,42 @@ describe("the causal threads", () => {
     const c = clone();
     firstThread(c).insteadOf = ["Only one alternative."];
     expect(brokeIt(c)).toContain("coin toss");
+  });
+
+  /**
+   * The one structural tell a machine can see, and the reason it is only one.
+   *
+   * A pedagogy pass found six ways the claim item was answerable without thinking about
+   * causation. Five are CATEGORY matches — the stem is about a document and one candidate
+   * is about a document — and measuring them was tried and abandoned before this check
+   * was written: Jaccard overlap between candidate and stem peaks at 0.063 across every
+   * authored item and is zero on four of the six flagged, so a lexical gate would have
+   * passed on exactly the items the human reading caught. Length and clause count are no
+   * better; the authored set is uniform on both.
+   *
+   * A proper noun survives that because it is a token rather than a category. It fires on
+   * a lonely distractor as well as a lonely answer, since either is findable by a player
+   * who has stopped reading.
+   */
+  it("catches a claim item where only one candidate names a person", () => {
+    const c = clone();
+    const t = firstThread(c);
+    t.because = "Marcus Reed was given people named in the proposal.";
+    t.insteadOf = [
+      "The proposal funded a measurement workstream.",
+      "The commercial terms were settled before the review.",
+    ];
+    expect(warnedIt(c)).toContain("names a person");
+  });
+
+  it("is quiet when the candidates are consistent about naming people", () => {
+    const c = clone();
+    const t = firstThread(c);
+    t.because = "Marcus Reed was given people named in the proposal.";
+    t.insteadOf = [
+      "Marcus Reed was in the room before anything was written down.",
+      "The commercial terms were settled before the review.",
+    ];
+    expect(warnedIt(c)).not.toContain("names a person");
   });
 });

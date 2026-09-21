@@ -462,6 +462,20 @@ export function validateContent(content: Content): Issue[] {
    * fires and never complains: the ending is simply quieter than it was authored to be,
    * on some runs, and nothing in the build has an opinion. That is the most expensive
    * kind of content bug this repo has had, so it gets an error rather than a warning. */
+  /* Everyone the game gives a name to, derived rather than listed — a hardcoded cast
+     silently stops matching the day somebody is renamed, and this check would then go
+     quiet rather than wrong, which is the failure mode hardest to notice. Surnames count
+     too: half the game calls him Marcus and half Marcus Reed. */
+  const cast = new Set<string>();
+  for (const node of nodes) {
+    if (!isMission(node)) continue;
+    const people = [node.advisor?.name, node.saidQuote?.speaker, ...(node.quotes ?? []).map((q) => q.speaker)];
+    for (const p of people) {
+      if (!p) continue;
+      for (const part of p.split(/\s+/)) if (part.length > 2) cast.add(part);
+    }
+  }
+
   const outcomeIds = new Set<string>();
   for (const node of nodes) {
     if (!isMission(node)) continue;
@@ -506,6 +520,42 @@ export function validateContent(content: Content): Issue[] {
     });
     if (rule.insteadOf && rule.insteadOf.length < 2) {
       err(where, "insteadOf needs at least two wrong answers, or the item is a coin toss");
+    }
+
+    /**
+     * The one structural tell a machine can see.
+     *
+     * A pedagogy pass found six ways the claim item was answerable without thinking about
+     * causation — the stem was about a document and one candidate was about a document,
+     * the stem said "his systems" and one candidate named a person, and so on. Those are
+     * CATEGORY matches, and measuring them was tried and abandoned: Jaccard overlap
+     * between each candidate and the stem is at most 0.063 across every authored item and
+     * is zero on four of the six flagged ones, so a lexical gate would have passed on
+     * exactly the items the human reading caught. Length and clause count are no better —
+     * the authored set is uniform on both, which is a compliment to the writing and
+     * useless as a signal.
+     *
+     * A proper noun is the exception, because it is a hard token rather than a category.
+     * If exactly one candidate names somebody, that candidate is findable by a player who
+     * has stopped reading, whichever one it is — so this fires on a lonely distractor as
+     * well as a lonely answer. Warning, not error: a beat genuinely about one named
+     * person may have no honest way to avoid it, and this is the sort of judgement
+     * `SAY_TITLE_OVERLAP_LIMIT` is also left as a warning for.
+     *
+     * The other five stay a human's job. Recorded here rather than approximated, because
+     * a gate that catches one in six teaches whoever reads it green that the other five
+     * were looked for.
+     */
+    if (rule.insteadOf && rule.insteadOf.length >= 2) {
+      const candidates = [rule.because, ...rule.insteadOf];
+      const named = candidates.filter((c) => [...cast].some((n) => c.includes(n)));
+      if (named.length === 1) {
+        warn(
+          where,
+          `only one of the ${candidates.length} claim candidates names a person, so it is findable ` +
+            `without reading: "${named[0]?.slice(0, 60)}…"`,
+        );
+      }
     }
   });
 
