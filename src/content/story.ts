@@ -1555,8 +1555,21 @@ const nodes: GameNode[] = [
      * about cost, which is the half of a position the player is allowed to see; the
      * third is her correcting an assumption she has watched cost people money, which is
      * what a colleague with nine years of this is for.
+     *
+     * THE FIRST BRANCH IS THE POINT OF THE BEAT. `knows:budget` is bought at m2, with
+     * one of the two slots in the investigation, and until this line existed it was
+     * read by nothing: a player who spent a question on what the board had approved got
+     * a paragraph of prose and no other part of the game ever behaved differently. It
+     * sits first because this is the one screen where that answer is worth having, and
+     * it is safe for the same reason the other six flags are not — a fixed ceiling does
+     * not tell you whether to hold, cut, phase or come down, so the clause that says so
+     * is doing load-bearing work rather than softening the line.
      */
     advisorLine: [
+      {
+        when: { any: ["knows:budget"] },
+        text: "You asked what the board had actually approved. There is nothing behind that number, whichever way we answer them.",
+      },
       {
         when: { any: ["outcome_based"] },
         text: "A third of this fee already moves with the result. Some of our price is conditional before we start.",

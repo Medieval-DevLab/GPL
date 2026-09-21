@@ -49,7 +49,6 @@ describe("content validity", () => {
     "client:northwind", // which client you chased; the pursuit itself carries the difference
     "conventional", // took the safe proposal shape
     "has:journey", // proposal components — the build mission scores through dims, not flags
-    "knows:budget", // the number, which the pricing missions dramatise rather than gate on
     "learned_late",
     "reused_asset",
     "scope:diagnostic", // which scope you sold; delivery reads the promises, not the shape
@@ -59,7 +58,12 @@ describe("content validity", () => {
        reading them: she now names where the last six weeks went rather than saying the
        same sentence to every player. Two flags moved from narrative to live.
        `has:partner` left it at the handover, which gates Aisha's card on having anyone
-       who can answer a delivery question — a partner being one of the three ways. */
+       who can answer a delivery question — a partner being one of the three ways.
+       `knows:budget` left it at m8, and that one is the point of the whole exercise: it
+       is the money card from m2's investigation, and until now asking what the board had
+       actually approved changed nothing anywhere in the game. Riya reads it at the price
+       beat, which is the one place the board and the number collide. Four flags moved
+       from narrative to live; every one of them was a question the player paid to ask. */
   ];
 
   it("has no dead flags beyond the narrative ones", () => {
