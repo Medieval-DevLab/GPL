@@ -98,7 +98,7 @@ describe("the module list", () => {
     expect(byId.get("m2")).toBe("investigate");
     expect(byId.get("m7")).toBe("build");
     expect(byId.get("m3")).toBe("chat");
-    expect(byId.get("m9a")).toBe("call");
+    expect(byId.get("m9a")).toBe("apply");
     expect(byId.get("m1")).toBe("choice");
     expect(new Set(byId.values()).size).toBeGreaterThanOrEqual(4);
   });

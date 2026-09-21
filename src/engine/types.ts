@@ -337,6 +337,22 @@ export interface SaidQuote {
 }
 
 /**
+ * A colleague's line that depends on what the player has done.
+ *
+ * `advisorLine` was a bare string, so across 78 colleague utterances NOT ONE reacted to
+ * anything — the same steer arrived whether the player had found the constraint or walked
+ * past it. The client quotes gained conditions first (`ConditionalQuote`); this is the same
+ * capability for our own side of the room, and the reason it is separate is only that a
+ * colleague has no `speaker`/`role` to carry: they are already named by `advisor`.
+ *
+ * First match wins; a bare string remains legal and means "always this".
+ */
+export interface ConditionalLine {
+  when?: Condition;
+  text: string;
+}
+
+/**
  * A client-side line of dialogue, shown only when `when` passes.
  *
  * Extends `SaidQuote` so the two are interchangeable where they are rendered, and an
@@ -364,8 +380,13 @@ export interface ConditionalQuote extends SaidQuote {
  * assemble, five workstreams and room for two. Columns that line up are genuinely the
  * best tool for that and are not the problem.
  * `dialogue` is right where the player is ANSWERING somebody.
+ * `apply` is right where the question is WHAT DID YOU BRING. The console renders an
+ * option the player cannot take as a shorter list, which reads as the game offering less
+ * rather than as the player having earned less; apply renders it as a named padlock
+ * saying where it could have been earned. Only worth the third staging on a beat whose
+ * options are genuinely gated — 85% of runs reach the handover with something locked.
  */
-export type Presentation = "console" | "dialogue";
+export type Presentation = "console" | "dialogue" | "apply";
 
 /**
  * Which conversation surface a `dialogue` beat is staged on.
@@ -505,7 +526,7 @@ interface MissionBase {
    * one where the sponsor resigns and the proposal is not in question. Frozen is not
    * the same as consistent.
    */
-  advisorLine?: string;
+  advisorLine?: string | ConditionalLine[];
   /** open questions, shown in the right rail — never answers */
   consider?: string[];
   /** the nudge in the bottom bar */

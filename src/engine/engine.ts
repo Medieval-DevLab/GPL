@@ -186,6 +186,21 @@ export function resolveSaidQuote(mission: Mission, state: GameState): SaidQuote 
   return mission.saidQuote;
 }
 
+/**
+ * What the colleague says here, given what the player has done.
+ *
+ * A bare string means "always this", which is what 78 of 78 utterances were. An array is
+ * first-match-wins, like every other conditional surface in this content.
+ */
+export function resolveAdvisorLine(mission: Mission, state: GameState): string | undefined {
+  const line = mission.advisorLine;
+  if (typeof line === "string" || line === undefined) return line;
+  for (const l of line) {
+    if (evaluateCondition(l.when, state.flags, state.dims)) return l.text;
+  }
+  return undefined;
+}
+
 /** Options whose `requires` condition passes. Others are not shown at all. */
 export function availableOptions(mission: Mission, state: GameState): Option[] {
   if (mission.kind !== "choice") return [];
@@ -363,6 +378,12 @@ function selectionEffects(
  *   2. select the outcome against that updated state — so an outcome can react to
  *      what the player just discovered or built
  *   3. apply the outcome's effects
+ *
+ * A commit lands on `consequence`, not on `resolving`. It used to take the phase between
+ * them, and that phase was a screen: one second of "seeing what happens…" holding 17 of a
+ * run's 76 screen instances (`docs/SCREEN-TAXONOMY.md` §3). The meters' travel was the
+ * only thing it carried and `ConsequenceScreen` now animates that on arrival from
+ * `resolution.dimsBefore`, so the beat has nothing left to do but be in the way.
  */
 export function commit(state: GameState, content: Content): GameState {
   const node = getNode(content, state.nodeId);
@@ -429,7 +450,7 @@ export function commit(state: GameState, content: Content): GameState {
 
   return {
     ...state,
-    phase: "resolving",
+    phase: "consequence",
     dims: afterOutcome.dims,
     flags: afterOutcome.flags,
     badges: afterOutcome.badges,
@@ -454,6 +475,17 @@ export function advance(state: GameState, content: Content): GameState {
     case "brief":
       return isMission(node) ? { ...state, phase: "decide" } : state;
 
+    /**
+     * Nothing produces this phase any more, and it is handled anyway.
+     *
+     * `commit` lands on `consequence` directly, so no run this build plays can be here.
+     * A save written by an earlier build can be, and `decodeSave` rewrites it at the load
+     * boundary — which is the fix, because a state the interface has no screen for is a
+     * dead end no matter what `advance` would have done with it. This case stays as the
+     * backstop for anything that reaches the engine by another road (a hand-edited save,
+     * a future migration that forgets): forward to the beat the state is already holding
+     * the resolution for, rather than silently refusing to move.
+     */
     case "resolving":
       return { ...state, phase: "consequence" };
 
@@ -497,7 +529,51 @@ interface LedgerRule extends LedgerEntry {
   when: Condition;
 }
 
-const LEDGER_RULES: LedgerRule[] = [
+/**
+ * THE RULE THIS TABLE EXISTS TO KEEP: nothing may decide a branch without appearing here.
+ *
+ * Measured rather than asserted. 29 flags gate a branch somewhere in the story — they
+ * appear in an `outcome.when` or an `option.requires` — and 14 of them appeared in no rule
+ * in this table. So on those 14 the game silently branched on something it had never shown
+ * the player, and a player who then asks "why did that happen?" cannot tell a reasoning
+ * error from an information gap. That distinction is the whole teaching mechanism: every
+ * outcome has to be attributable, and an outcome turning on invisible state is not.
+ *
+ * The eleven rules marked `// 4.2` close that gap: 14 invisible gating flags before, 3
+ * after. "High traffic" is a measurement, not a judgement — walking every reachable state
+ * and toggling each gating flag at each mission counts the visits where that one flag
+ * alone changes which outcome fires or which options are offered. The eleven below score
+ * 11,960 to 51,144 decisive visits. The three left out score 227, 40 and 0, so the cut
+ * line is a 53× drop rather than a preference; `engine.test.ts` pins them with a reason
+ * each, so the list cannot grow quietly.
+ *
+ * TWO CONSTRAINTS ON ANYTHING ADDED HERE
+ *
+ *  1. **An entry states a POSITION. It never predicts an outcome.** "You overruled the
+ *     review" is a position; "this will cost you in delivery" is the consequence screen's
+ *     job and telling the player early removes the decision. `validateContent` runs the
+ *     same leak check over these strings that it runs over every pre-decision field, so
+ *     this is enforced rather than remembered.
+ *  2. **Never a bare restatement of the flag name.** A rail row reading "Reviewed" tells
+ *     a player nothing they can act on. Each entry names the position in the language of
+ *     the work and says what it is worth, or what it costs.
+ *
+ * WHAT IT COSTS THE LAYOUT, measured rather than guessed: the worst case goes from 13
+ * entries to 21, over the same walk in both cases. Read 21 as a floor, not a ceiling —
+ * the walk dedupes states on the flags a later mission still reads, so two states that
+ * differ only in a flag nothing will read again collapse, and the survivor may be the one
+ * with the shorter account. The structural ceiling is 29: every rule at once, less two of
+ * the three mutually exclusive ways of getting in.
+ *
+ * The rail is uncapped, so nothing breaks — but a 21-row account is a scroll, and the
+ * group comments below are the seams to cut along if it has to be paged or collapsed by
+ * section. The last three rules added (measurement, adoption, payback) are the marginal
+ * ones; deleting them costs 3 rows and reopens 3 gates in the handover beat.
+ *
+ * Order is rail order, and the groups below are the account: how you got in, the award,
+ * what you know, where you stand, what you have spent, what you have promised.
+ */
+export const LEDGER_RULES: LedgerRule[] = [
   /* How you got in. Exactly one of these always matches, so the opening choice stays
      on screen for the whole engagement instead of being a screen the player passes
      through. It is kept separate from the capability it grants, because `knows:rivals`
@@ -575,6 +651,21 @@ const LEDGER_RULES: LedgerRule[] = [
     icon: "clock",
   },
   // Where you stand
+  /* 4.2 — three Operations rows, and they are three different things.
+     `ops_engaged` is a meeting, `ops_onside` is a stake, `has:ops_workstream` is a funded
+     line in the proposal, and none of the three implies another: `ops_onside` is granted
+     at m7 to a player who never met Marcus, and a player who spent a workshop on him can
+     still propose nothing he can use. They read as near-duplicates on the rail and were
+     nearly merged for that reason — which would have been the wrong fix, because the gap
+     between "we have talked" and "they are invested" is one of the things this game is
+     about, and m9, m9b and m10c all branch on which of them you actually have. */
+  {
+    when: { all: ["ops_engaged"] },
+    label: "Operations is in the room",
+    detail: "Marcus and his leads have met you, before anything was written down.",
+    tone: "good",
+    icon: "people",
+  },
   {
     when: { all: ["ops_onside"] },
     label: "Operations invested",
@@ -588,6 +679,41 @@ const LEDGER_RULES: LedgerRule[] = [
     detail: "Your position is defensible without you in the room.",
     tone: "good",
     icon: "chart",
+  },
+  /* 4.2 — the pair that `evidenced` above is deliberately next to. Being believed and
+     being able to prove it are different assets, they are spent in different rooms, and
+     six branches choose between them. */
+  {
+    when: { all: ["credibility"] },
+    label: "They take your word",
+    detail: "Your read of their business is trusted before it is proven. Not the same as evidence.",
+    tone: "good",
+    icon: "spark",
+  },
+  /* 4.2 — the reframe. Four of m9a's five losing branches fire on its absence, which
+     makes this the most consequential single flag in the game to leave off the rail. */
+  {
+    when: { all: ["reframed"] },
+    label: "You chose the ground",
+    detail: "The comparison is about post-purchase now, where the rival's demo says nothing.",
+    tone: "good",
+    icon: "flag",
+  },
+  /* 4.2 — the two halves of the internal review, adjacent on purpose: the fork is only
+     legible if both of its arms can appear in the same list. */
+  {
+    when: { all: ["reviewed"] },
+    label: "The review is answered",
+    detail: "You spent the week the reviewers asked for. Nothing was overruled to get here.",
+    tone: "good",
+    icon: "shield",
+  },
+  {
+    when: { all: ["overrode_review"] },
+    label: "You overruled the review",
+    detail: "Their objections are in writing. Every gap they named belongs to you now.",
+    tone: "bad",
+    icon: "megaphone",
   },
   {
     when: { all: ["has_access"] },
@@ -633,12 +759,82 @@ const LEDGER_RULES: LedgerRule[] = [
     tone: "neutral",
     icon: "clock",
   },
+  /* 4.2 — what the proposal actually funds: the three unglamorous lines from m7, and the
+     highest-traffic invisible state in the game. `has:ops_workstream` alone decides a
+     branch on 51,144 reachable visits.
+     These three are one group because the handover beat asks about them as one: Aisha's
+     "the training, the integration stream, the measurement work" is an option gated on
+     exactly these flags, and an option the player cannot take because of something the
+     game never showed them reads as a shorter list rather than as a consequence. */
+  {
+    when: { all: ["has:ops_workstream"] },
+    label: "A route into Operations",
+    detail: "The proposal pays for getting changes into their release schedule, with their people.",
+    tone: "good",
+    icon: "rocket",
+  },
+  {
+    when: { all: ["has:data"] },
+    label: "Measurement is covered",
+    detail: "You know their order and returns data is usable, and something instruments it.",
+    tone: "good",
+    icon: "chart",
+  },
+  {
+    when: { all: ["has:training"] },
+    label: "Adoption is funded",
+    detail: "Training for the people who use it daily — and the cheapest line to cut later.",
+    tone: "good",
+    icon: "bulb",
+  },
+  /* 4.2 — the third answer to "who can answer a delivery question", and the last of that
+     triad to reach the rail. `ops_onside`, `has:ops_workstream` and `has:partner` are what
+     the handover's `o-deliverer` gates on, as alternatives; two of the three were already
+     visible, so a partnered player saw Aisha's card open for a reason the game had never
+     named. It is a bought capability rather than an earned one, which is why it reads
+     `neutral` beside their `good` — the margin went somewhere. */
+  {
+    when: { all: ["has:partner"] },
+    label: "A partner who does this",
+    detail: "Delivery capability you did not have, on a margin you now share.",
+    tone: "neutral",
+    icon: "people",
+  },
+  /* 4.2 — the payback clause. A commercial position rather than a scope one, and the only
+     promise in the game whose price is paid in month nine by somebody counting. */
+  {
+    when: { all: ["outcome_based"] },
+    label: "A payback number, in writing",
+    detail: "What you earn moves with the fall in support contacts. Somebody has to count it.",
+    tone: "neutral",
+    icon: "coins",
+  },
+  /* 4.2 — the counterpart to the rebuild above, and the reason a premium may not hold at
+     m8: if the scope is the brief as written, there is nothing in it that is hard to
+     compare. Neutral, not bad — proposing what a client asked for is a defensible thing
+     to have done, and the rail is an account, not a verdict. */
+  {
+    when: { all: ["scope:storefront"] },
+    label: "Their brief, as written",
+    detail: "The storefront work they asked for. The rival is bidding the same thing.",
+    tone: "neutral",
+    icon: "scale",
+  },
   {
     when: { all: ["promised:fast"] },
     label: "Eight weeks promised",
     detail: "Something live and demonstrable, with a board watching.",
     tone: "neutral",
     icon: "block",
+  },
+  /* 4.2 — how big the first commitment is. Separate from `has_access` above, which is the
+     access a paid discovery bought: declining the programme lands this without it. */
+  {
+    when: { all: ["landed_small"] },
+    label: "A narrow first job",
+    detail: "The first commitment is a small one, not the programme they first described.",
+    tone: "neutral",
+    icon: "coins",
   },
   {
     when: { all: ["unanchored"] },

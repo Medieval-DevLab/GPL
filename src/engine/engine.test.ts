@@ -4,6 +4,7 @@ import { story } from "../content/story";
 import {
   advance,
   causalThreads,
+  commit,
   createInitialState,
   finalVerdict,
   getNode,
@@ -46,15 +47,17 @@ describe("content validity", () => {
     "client:northwind", // which client you chased; the pursuit itself carries the difference
     "conventional", // took the safe proposal shape
     "has:journey", // proposal components — the build mission scores through dims, not flags
-    "has:partner",
     "knows:budget", // the number, which the pricing missions dramatise rather than gate on
-    "late_start", // came to it late
     "learned_late",
     "reused_asset",
     "scope:diagnostic", // which scope you sold; delivery reads the promises, not the shape
     "scope:postpurchase",
     "signed", // the contract exists; walking away is the branch, signing is the default
-    "spent_effort",
+    /* `late_start` and `spent_effort` left this list when Priya's steer at m2 started
+       reading them: she now names where the last six weeks went rather than saying the
+       same sentence to every player. Two flags moved from narrative to live.
+       `has:partner` left it at the handover, which gates Aisha's card on having anyone
+       who can answer a delivery question — a partner being one of the three ways. */
   ];
 
   it("has no dead flags beyond the narrative ones", () => {
@@ -75,7 +78,9 @@ describe("content validity", () => {
      * either side of it collapse in the sweep's dedup, and three such gates would breach
      * `MAX_FRONTIER`.
      */
-    const other = warnings.filter((w) => !/is set but never read/.test(w.message));
+    const other = warnings.filter(
+      (w) => !/is set but never read/.test(w.message) && !/no ledger rule/.test(w.message),
+    );
     const dimGates = other.filter((w) => /gates on a dimension value/.test(w.message));
     expect(dimGates).toHaveLength(1);
 
@@ -84,8 +89,46 @@ describe("content validity", () => {
     expect(unexpected).toEqual([]);
   });
 
-  it("has seventeen missions", () => {
-    expect(content.missionOrder).toHaveLength(17);
+  /**
+   * Backlog 4.2: state the game branches on and never shows.
+   *
+   * 14 of 29 gating flags used to be in this list, which means a player who asks "why did
+   * that happen?" could not tell a reasoning error from an information gap — the game
+   * decided against something it had never put on screen. Eleven ledger rules closed the
+   * high-traffic ones; these three are what is left, and they are pinned rather than
+   * printed for the same reason the dead flags above are: a list nobody compares is a list
+   * that grows.
+   *
+   * Adding a gate on a flag with no ledger rule fails here. The fix is to write the rule
+   * — `LEDGER_RULES` in `engine.ts` — or to add the flag below with a reason it is safe to
+   * leave invisible. "It would make the rail long" is not one; the rail is the player's
+   * only record of their own position.
+   */
+  const INVISIBLE_GATING_FLAGS = [
+    /* Its only writer is m10c and its only reader is m10, which runs two beats earlier, so
+       the term cannot be true when it is read. Dead rather than invisible — the outcome
+       still fires on its `ops_onside` alternative, which is why the sweep is happy. */
+    "broad_base",
+    /* 40 reachable visits where it decides anything, all at the last mission, one beat
+       after the choice that sets it. The player has just done it. */
+    "changed_scope",
+    /* 227 visits. Nearly every run that reaches its readers has it, and `knows:rival_gap`
+       — which IS on the rail — is the one the game actually teaches: knowing a market is
+       not knowing where this competitor is weak. */
+    "knows:rivals",
+  ];
+
+  it("shows the player the state it branches on", () => {
+    const invisible = issues
+      .filter((i) => i.severity === "warning")
+      .map((w) => /flag "([^"]+)" decides a branch/.exec(w.message)?.[1])
+      .filter((f): f is string => Boolean(f));
+    expect([...new Set(invisible)].sort()).toEqual([...INVISIBLE_GATING_FLAGS].sort());
+  });
+
+  it("has eighteen missions", () => {
+    /* Seventeen plus the chapter-five handover (backlog 5.7, GAME-SEQUENCE.md §3). */
+    expect(content.missionOrder).toHaveLength(18);
   });
 
   /**
@@ -133,6 +176,9 @@ describe("the game teaches what it claims to teach", () => {
     ["o-proceed"],
     ["o-push"],
     ["o-contractors"],
+    /* The handover. Recklessness confirms the whole document rather than choosing which
+       sentence it meant, which is the one answer that hands the judgement to delivery. */
+    ["o-meant-all-of-it"],
     ["o-prove-fast"],
   ];
 
@@ -154,6 +200,8 @@ describe("the game teaches what it claims to teach", () => {
     ["o-modify"],
     ["o-reset"],
     ["o-slip"],
+    /* Stands behind the unglamorous lines it bought in chapter three, and pays for them. */
+    ["o-meant-the-dull-lines"],
     ["o-broaden"],
   ];
 
@@ -175,6 +223,8 @@ describe("the game teaches what it claims to teach", () => {
     ["o-proceed"],
     ["o-absorb"],
     ["o-contractors"],
+    /* Holds the pilot date it sold, with no money left to make the date true. */
+    ["o-meant-the-date"],
     ["o-handover"],
   ];
 
@@ -185,7 +235,7 @@ describe("the game teaches what it claims to teach", () => {
   it("all three reach the ending", () => {
     for (const s of [reckless, considered, discounter]) {
       expect(s.phase).toBe("ending");
-      expect(s.history).toHaveLength(17);
+      expect(s.history).toHaveLength(18);
     }
   });
 
@@ -241,6 +291,7 @@ describe("the game teaches what it claims to teach", () => {
       ["o-modify"],
       ["o-reset"],
       ["o-slip"],
+      ["o-meant-the-dull-lines"],
       ["o-handover"],
     ]);
     const m6 = blind.history.find((h) => h.missionId === "m6");
@@ -576,7 +627,56 @@ describe("engine mechanics", () => {
       if (!selection) break;
       s = playMission(s, content, selection);
     }
-    expect(s.history).toHaveLength(17);
+    expect(s.history).toHaveLength(18);
     expect(s.phase).toBe("ending");
+  });
+
+  /**
+   * Committing lands on the consequence, and there is no beat in between.
+   *
+   * `resolving` was a phase and therefore a screen: one second of "seeing what happens…"
+   * holding 17 of a run's 76 screen instances, whose only content was the three meters
+   * travelling. They travel on the consequence's entrance now, from `dimsBefore`, which
+   * this asserts is on the state — without it the fold would silently take the animation
+   * with it and nobody would see a meter move again.
+   */
+  it("commits straight to the consequence, carrying where the meters came from", () => {
+    const s = pastSetup(content);
+    const mission = getNode(content, s.nodeId);
+    if (!isMission(mission)) throw new Error("expected a mission after chapter 0");
+    const selection = possibleSelections(mission, s)[0] as string[];
+
+    const committed = commit({ ...s, selection, prediction: "win" }, content);
+    expect(committed.phase).toBe("consequence");
+    expect(committed.resolution).not.toBeNull();
+    expect(committed.resolution?.dimsBefore).toEqual(s.dims);
+    expect(committed.resolution?.dimsAfter).toEqual(committed.dims);
+
+    // One advance from here is the next node, not a second screen for the same result.
+    expect(advance(committed, content).nodeId).not.toBe(committed.nodeId);
+  });
+
+  /**
+   * No reachable state holds the deleted phase — and one that somehow does still moves.
+   *
+   * The value stays in the `Phase` union on purpose: `save.ts` has to be able to
+   * RECOGNISE a save written by the previous build, and a phase it cannot name is a run
+   * thrown away. This is the pair of facts that keeps that decision honest — nothing in
+   * play produces it, and nothing carrying it is stuck.
+   */
+  it("never produces the resolving phase, and rescues a state that holds it", () => {
+    let s = pastSetup(content);
+    let guard = 0;
+    while (isMission(getNode(content, s.nodeId)) && guard++ < 50) {
+      const mission = getNode(content, s.nodeId);
+      if (!isMission(mission)) break;
+      const selection = possibleSelections(mission, s)[0];
+      if (!selection) break;
+      const committed = commit({ ...s, selection, prediction: "profit" }, content);
+      expect(committed.phase).not.toBe("resolving");
+      s = playMission(s, content, selection);
+      expect(s.phase).not.toBe("resolving");
+    }
+    expect(advance({ ...s, phase: "resolving" }, content).phase).toBe("consequence");
   });
 });

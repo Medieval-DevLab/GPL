@@ -194,12 +194,18 @@ describe("the content as authored", () => {
    * a thing to look at — and not a statement of consequence. A new warning is
    * not a soft landing for a check that fires today.
    */
-  it("raises warnings only in the two classes that already have owners", () => {
+  it("raises warnings only in the three classes that already have owners", () => {
     const unowned = validateContent(story).filter(
       (i) =>
         i.severity === "warning" &&
         !/is set but never read/.test(i.message) &&
-        !/gates on a dimension value/.test(i.message),
+        !/gates on a dimension value/.test(i.message) &&
+        /* The third class, added with the ledger rules for backlog 4.2: a flag that
+           decides a branch and appears in no ledger rule. Three remain, each pinned by
+           name with a reason in `engine.test.ts` — so this class is owned in exactly the
+           same way as the dead narrative flags above, by a list somebody has to edit
+           deliberately rather than by a warning nobody reads. */
+        !/no ledger rule/.test(i.message),
     );
     expect(unowned).toEqual([]);
   });

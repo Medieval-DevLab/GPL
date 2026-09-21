@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest";
 
 import { story } from "../content/story";
 import { playMission, possibleSelections } from "./analysis";
-import { advance, chooseSetup, createInitialState, getNode } from "./engine";
+import { advance, chooseSetup, commit, createInitialState, getNode } from "./engine";
 import { decodeRun, encodeRun, runFromState } from "./runcode";
 import { decodeSave, encodeSave, LEGACY_SAVE_KEYS, SAVE_SCHEMA, saveKey } from "./save";
 import { isMission, type Content, type GameState } from "./types";
@@ -175,6 +175,64 @@ describe("the save written by the build before this one", () => {
       expect(outcome.status, name).toBe("stale");
       if (outcome.status === "stale") expect(outcome.reason, name).toBe("unreadable");
     }
+  });
+});
+
+/**
+ * The cohort mid-commit when the `resolving` phase was deleted.
+ *
+ * Nobody sits on that beat for long — it was one second — but somebody closes a laptop
+ * during it, and the save they wrote names a phase this build has no screen for. It is
+ * adopted into the consequence, which is where that state already belongs: `commit`
+ * applied every effect and then set the phase, and the resolution the consequence draws
+ * is in the save beside it.
+ */
+describe("a save written in the phase that no longer exists", () => {
+  /** Exactly what the previous build wrote: a committed state, one beat early. */
+  function inFlight(): GameState {
+    const s = midRun(content, 3);
+    const node = getNode(content, s.nodeId);
+    if (!isMission(node)) throw new Error("expected a mission");
+    const selection = possibleSelections(node, s)[0]!;
+    const committed = commit({ ...s, selection, prediction: "win" }, content);
+    expect(committed.resolution).not.toBeNull();
+    return { ...committed, phase: "resolving" };
+  }
+
+  it("resumes on the consequence, with the result intact", () => {
+    const state = inFlight();
+    const outcome = decodeSave(encodeSave(state, content), content);
+    expect(outcome.status).toBe("ok");
+    if (outcome.status !== "ok") return;
+    expect(outcome.state.phase).toBe("consequence");
+    expect(outcome.migrated).toBe(true);
+    expect(outcome.state.nodeId).toBe(state.nodeId);
+    expect(outcome.state.resolution?.outcome.id).toBe(state.resolution?.outcome.id);
+    /* The meters must still have somewhere to travel from, or the entrance animation the
+       fold depends on has nothing to animate. */
+    expect(outcome.state.resolution?.dimsBefore).toEqual(state.resolution?.dimsBefore);
+  });
+
+  it("is adopted from a bare state too", () => {
+    const outcome = decodeSave(JSON.stringify(inFlight()), content);
+    expect(outcome.status).toBe("ok");
+    if (outcome.status !== "ok") return;
+    expect(outcome.state.phase).toBe("consequence");
+  });
+
+  /* No build ever wrote one — `commit` writes the phase and the resolution in the same
+     object — so this is damage, and a consequence beat with nothing to show is worse
+     than saying so. */
+  it("is refused when it carries no result to show", () => {
+    const orphan = { ...inFlight(), resolution: null };
+    expect(decodeSave(encodeSave(orphan, content), content)).toMatchObject({
+      status: "stale",
+      reason: "unreadable",
+    });
+    expect(decodeSave(JSON.stringify(orphan), content)).toMatchObject({
+      status: "stale",
+      reason: "unreadable",
+    });
   });
 });
 

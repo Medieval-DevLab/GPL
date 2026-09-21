@@ -348,7 +348,11 @@ export function playMission(state: GameState, content: Content, selection: strin
   let s: GameState = state.phase === "brief" ? advance(state, content) : state;
   s = { ...s, selection, prediction: "win" };
   s = commit(s, content);
-  s = advance(s, content); // resolving -> consequence
+  /* One advance, not two: `commit` lands on `consequence` now rather than on `resolving`.
+     The loop below would have swallowed a second call — it walks `brief` and `interlude`
+     either way, so the end state is identical — which is the reason to delete it rather
+     than leave it. A step that is only harmless because something downstream happens to
+     cover for it stops being harmless the day that loop changes. */
   s = advance(s, content); // consequence -> next node (or the diverted one)
   let guard = 0;
   while ((s.phase === "interlude" || s.phase === "brief") && guard++ < 20) {

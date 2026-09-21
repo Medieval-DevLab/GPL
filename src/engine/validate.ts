@@ -11,7 +11,7 @@
  * cross-checking of every flag read against every flag written catches that.
  */
 
-import { ENGINE_READ_FLAGS } from "./engine";
+import { ENGINE_READ_FLAGS, LEDGER_RULES } from "./engine";
 import {
   isMission,
   type Condition,
@@ -254,6 +254,20 @@ export function validateContent(content: Content): Issue[] {
    * drifted apart in wording; two copies of a rule is two rules, and the second
    * one is the one that stops being updated.
    */
+  /**
+   * Every form an `advisorLine` can take, as plain strings.
+   *
+   * It became `string | ConditionalLine[]` so a colleague could finally react to what the
+   * player had done. Each branch is a separate utterance the player can be shown, so each
+   * one has to be leak-checked and budgeted independently — checking only the first, or
+   * only the string case, would leave the conditional branches as the one pre-decision
+   * surface in the game with no gate on it at all.
+   */
+  const advisorLines = (m: Mission): string[] =>
+    typeof m.advisorLine === "string"
+      ? [m.advisorLine]
+      : (m.advisorLine ?? []).map((l) => l.text);
+
   const leakCheck = (text: string | undefined, where: string, field: string) => {
     if (!text) return;
     const lower = text.toLowerCase();
@@ -349,6 +363,9 @@ export function validateContent(content: Content): Issue[] {
 
     for (const v of node.variants ?? []) noteRead(v.when, `${node.id}/variant`);
     for (const q of node.quotes ?? []) noteRead(q.when, `${node.id}/quote`);
+    if (Array.isArray(node.advisorLine)) {
+      for (const l of node.advisorLine) noteRead(l.when, `${node.id}/advisorLine`);
+    }
     if (node.kind === "choice") {
       for (const o of node.options) {
         noteRead(o.requires, `${node.id}/${o.id}/requires`);
@@ -370,6 +387,74 @@ export function validateContent(content: Content): Issue[] {
     }
   }
 
+  /* ── invisible state ─────────────────────────────────────────
+   * A flag that decides a branch and appears in no ledger rule is state the game
+   * branches on and never shows. The player then cannot tell a reasoning error from an
+   * information gap — they made a call with information the game had and they did not —
+   * and every outcome being attributable is the whole teaching mechanism. 14 of 29
+   * gating flags were in this position when it was first measured.
+   *
+   * A WARNING rather than an error, for one specific reason: `LEDGER_RULES` still lives
+   * in `engine.ts`, so the only ways to clear an error here would be to edit the engine
+   * or to weaken a gate, and "adding a mission must never require editing the engine" is
+   * the stronger rule. `engine.test.ts` pins the set instead — same pattern as the dead
+   * narrative flags — so the list cannot grow quietly, which is what actually matters.
+   * If the table moves to content, this becomes an error and the pin goes away. */
+  const ledgerFlags = new Set(LEDGER_RULES.flatMap((r) => conditionFlags(r.when)));
+  const gating = new Map<string, string>(); // flag -> the first branch it decides
+  for (const node of nodes) {
+    if (!isMission(node)) continue;
+    const noteGate = (c: Condition | undefined, where: string) => {
+      for (const f of conditionFlags(c)) if (!gating.has(f)) gating.set(f, where);
+    };
+    if (node.kind === "choice") {
+      for (const o of node.options) {
+        noteGate(o.requires, `${node.id}/${o.id}/requires`);
+        for (const oc of o.outcomes) noteGate(oc.when, `${node.id}/${o.id}/${oc.id}`);
+      }
+    } else {
+      for (const oc of node.outcomes) noteGate(oc.when, `${node.id}/${oc.id}`);
+    }
+  }
+  for (const [flag, where] of gating) {
+    if (!ledgerFlags.has(flag)) {
+      warn(
+        where,
+        `flag "${flag}" decides a branch here and appears in no ledger rule — the player cannot see the state it turns on`,
+      );
+    }
+  }
+
+  /* ── the ledger's own copy ───────────────────────────────────
+   * The rail is a pre-decision surface: it is on screen, collapsed, while the options
+   * are being read. So the same rule applies to it as to every other pre-decision
+   * field — it may state a position and a cost, never an effect — and it gets the same
+   * check rather than a second, drifting copy of the rule. `engine.ts` has no leak check
+   * of its own, which is precisely why these strings had none.
+   *
+   * The lengths are the rail: 248px at 12px type is about 35 characters a line, and a
+   * row stops being glanceable past three of them. Measured against the table as it
+   * stands — longest label 28, longest detail 85 — so these are budgets with headroom
+   * rather than numbers that fire on arrival. */
+  const seenLabels = new Set<string>();
+  for (const rule of LEDGER_RULES) {
+    const where = `engine/ledger/${rule.label}`;
+    leakCheck(rule.label, where, "ledger label");
+    leakCheck(rule.detail, where, "ledger detail");
+    if (!rule.detail.trim()) {
+      err(where, "ledger entry has no detail — a bare label is a restatement, not a position");
+    }
+    if (rule.label.length > 30) err(where, `ledger label is ${rule.label.length} chars (max 30)`);
+    if (rule.detail.length > 95) {
+      err(where, `ledger detail is ${rule.detail.length} chars (max 95)`);
+    }
+    if (conditionFlags(rule.when).length === 0) {
+      err(where, "ledger rule has no flag condition, so it would be on the rail from the start");
+    }
+    if (seenLabels.has(rule.label)) err(where, "two ledger rules share a label");
+    seenLabels.add(rule.label);
+  }
+
   /* ── analysis assumption ─────────────────────────────────────
    * analysis.ts dedupes the exhaustive sweep on flags alone, which is exact
    * only while no branch gates on a dimension value. If that changes, branch
@@ -382,6 +467,9 @@ export function validateContent(content: Content): Issue[] {
     if (!isMission(node)) continue;
     for (const v of node.variants ?? []) checkDimGate(v.when, `${node.id}/variant`);
     for (const q of node.quotes ?? []) checkDimGate(q.when, `${node.id}/quote`);
+    if (Array.isArray(node.advisorLine)) {
+      for (const l of node.advisorLine) checkDimGate(l.when, `${node.id}/advisorLine`);
+    }
     if (node.kind === "choice") {
       for (const o of node.options) {
         checkDimGate(o.requires, `${node.id}/${o.id}/requires`);
@@ -454,7 +542,8 @@ export function validateContent(content: Content): Issue[] {
         (m.quotes ?? []).some((q) => q.text.trim().length > 0);
       const colleagueSpeaks =
         Boolean(m.advisor) &&
-        (Boolean(m.advisorLine?.trim()) || Boolean(m.advisor?.quote?.trim()));
+        (advisorLines(m).some((l) => l.trim().length > 0) ||
+          Boolean(m.advisor?.quote?.trim()));
       const canOpen = clientSpeaks || colleagueSpeaks;
       if (!canOpen) {
         err(
@@ -479,7 +568,9 @@ export function validateContent(content: Content): Issue[] {
     leakCheck(m.tip, m.id, "tip");
     leakCheck(m.objective, m.id, "objective");
     leakCheck(m.prompt, m.id, "prompt");
-    leakCheck(m.advisorLine, m.id, "advisorLine");
+    advisorLines(m).forEach((l, i) =>
+      leakCheck(l, m.id, m.advisorLine instanceof Array ? `advisorLine[${i}]` : "advisorLine"),
+    );
     /* `advisor.quote` is what renders when `advisorLine` is absent — the same
        italic line in the same slot — so checking only the override would leave
        the default open. `steer` is checked though nothing renders it today; the
@@ -541,7 +632,14 @@ export function validateContent(content: Content): Issue[] {
        advisor card, a pull-quote block — so an unbudgeted one does not read as
        long, it reads as broken. */
     budget(m.prompt, BUDGET.prompt, m.id, "prompt");
-    budget(m.advisorLine, BUDGET.advisorLine, m.id, "advisorLine");
+    advisorLines(m).forEach((l, i) =>
+      budget(
+        l,
+        BUDGET.advisorLine,
+        m.id,
+        m.advisorLine instanceof Array ? `advisorLine[${i}]` : "advisorLine",
+      ),
+    );
     budget(m.advisor?.quote, BUDGET.advisorLine, m.id, "advisor.quote");
     budget(m.advisor?.steer, BUDGET.advisorLine, m.id, "advisor.steer");
     budget(m.saidQuote?.text, BUDGET.saidQuote, m.id, "saidQuote");

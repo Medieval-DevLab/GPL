@@ -46,7 +46,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { availableOptions, resolveSaidQuote, resolveSituation } from "../engine/engine";
+import { availableOptions, resolveSaidQuote, resolveSituation, resolveAdvisorLine } from "../engine/engine";
 import type { ChoiceMission, DimensionId, GameState, Mission, Option } from "../engine/types";
 import { Bullet, Icon, PersonGlyph, Pill, SectionTitle } from "./icons";
 import { StakeMark } from "./mission";
@@ -122,7 +122,7 @@ interface Turn {
 function conversation(mission: Mission, state: GameState): Turn[] {
   const said = resolveSaidQuote(mission, state);
   const advisor = mission.advisor;
-  const line = mission.advisorLine ?? advisor?.quote;
+  const line = resolveAdvisorLine(mission, state) ?? advisor?.quote;
 
   const client: Turn | null = said
     ? { speaker: said.speaker, role: said.role, text: said.text }

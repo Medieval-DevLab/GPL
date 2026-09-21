@@ -131,6 +131,16 @@ export type LoadOutcome =
       replayable: boolean;
     };
 
+/**
+ * `resolving` is still on this list, and it has to be.
+ *
+ * No build produces it any more — `commit` lands on `consequence` — but a save written by
+ * the build before this one can be sitting in it, and this list is the gate: drop the
+ * value and `looksPlayable` reads that save as a different `GameState` shape, which
+ * throws away a run that is one beat from being perfectly resumable. It is kept as a
+ * value the boundary can RECOGNISE, not as a phase the game can be in; `adoptPhase`
+ * rewrites it on the way through.
+ */
 const PHASES: readonly Phase[] = [
   "title",
   "setup",
@@ -141,6 +151,25 @@ const PHASES: readonly Phase[] = [
   "consequence",
   "ending",
 ];
+
+/**
+ * Bring a loaded state into a phase this build actually renders.
+ *
+ * The only case is `resolving`, deleted from the flow because it was a one-second screen
+ * holding 17 of a run's 76 screen instances. Its successor is where the state already
+ * belongs: `commit` applied every effect and then set the phase, so a `resolving` state
+ * IS a post-commit state, and the resolution the consequence beat needs to draw is in the
+ * save beside it.
+ *
+ * Returns null when there is nothing honest to adopt. A `resolving` state with no
+ * resolution cannot have come from any build that shipped — `commit` writes both in one
+ * object — so it is damage, and guessing a phase for it would put the player on a screen
+ * with nothing on it. That is worse than saying the save could not be read.
+ */
+function adoptPhase(state: GameState): GameState | null {
+  if (state.phase !== "resolving") return state;
+  return state.resolution ? { ...state, phase: "consequence" } : null;
+}
 
 const isStrings = (v: unknown): v is string[] =>
   Array.isArray(v) && v.every((x) => typeof x === "string");
@@ -226,7 +255,8 @@ export function decodeSave(raw: string | null | undefined, content: Content): Lo
      and it closes as soon as the first envelope is written over the top. */
   if (envelope.schema === undefined && envelope.state === undefined) {
     if (!looksPlayable(parsed, content)) return stale("unreadable", null, false);
-    const legacy = parsed as GameState;
+    const legacy = adoptPhase(parsed as GameState);
+    if (!legacy) return stale("unreadable", null, false);
     if (legacy.phase === "title") return { status: "empty" };
     return { status: "ok", state: legacy, migrated: true };
   }
@@ -235,7 +265,13 @@ export function decodeSave(raw: string | null | undefined, content: Content): Lo
     return stale("unreadable", typeof envelope.code === "string" ? envelope.code : null, false);
   }
 
-  const state = envelope.state;
+  /* The phase is adopted before the fingerprints are compared, so the run code below is
+     taken from the state the player will actually resume into rather than from a phase
+     this build has no screen for. */
+  const state = adoptPhase(envelope.state);
+  if (!state) {
+    return stale("unreadable", typeof envelope.code === "string" ? envelope.code : null, false);
+  }
   const code = typeof envelope.code === "string" ? envelope.code : codeFromState(state, content);
   /* A code is only playable if the decisions still index the same way. `runcode.ts`
      refuses it otherwise, so promising it here would be a promise broken one screen later. */
@@ -245,5 +281,8 @@ export function decodeSave(raw: string | null | undefined, content: Content): Lo
   if (envelope.rules !== rulesFingerprint(content)) return stale("story", code, replayable);
   if (state.phase === "title") return { status: "empty" };
 
-  return { status: "ok", state, migrated: false };
+  /* `migrated` means "written by an older build and adopted", which a rewritten phase is
+     — the state going back is not the state that came in. The interface may say so; what
+     matters here is that it does not claim the save arrived current when it did not. */
+  return { status: "ok", state, migrated: state.phase !== envelope.state.phase };
 }

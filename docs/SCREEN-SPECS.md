@@ -183,13 +183,23 @@ business simulation rather than a quiz.
 └────────────┴──────────────────────────────────────┴───────┘
 ```
 
-**The design point, and it needs no new content.** m9a's options are *already* gated on
-`evidenced`, `ops_onside`, `reframed` and `knows:rival_gap`. The game already decides what
-you may say based on what you found out — and never tells you. Today an unearned option is
-simply **absent**, which reads as "fewer choices" rather than as a consequence.
+**The design point — and I had this half wrong, so here it is corrected.**
 
-So: **render the locked ones, greyed and named, with the beat where they could have been
-earned.** Seeing the argument you could have made is the lesson. One screen change.
+I wrote that m9a's options were *already* gated on `evidenced`, `ops_onside`, `reframed`
+and `knows:rival_gap`, and that staging it as an apply beat therefore needed **no content
+change**. Those flags condition m9a's **OUTCOMES**, not its options' `requires`. m9a had
+exactly one `requires` (`o-value`) — so the screen got built, correct, and degraded to an
+ordinary comparison on any competent run, showing **zero locked cards**, which is precisely
+the failure mode named at the foot of this section.
+
+The point survives; the free lunch does not. The game *does* already reason about what the
+player gathered at this beat — in the branch it picks afterwards — so gating the options
+makes an existing truth visible rather than inventing a new rule. But it is authoring work:
+2–3 of the four options need a `requires` before the screen earns its type.
+
+The screen's own job is unchanged: **render the locked ones, greyed and named, with the
+beat where they could have been earned.** Seeing the argument you could have made is the
+lesson.
 
 | Field | Value |
 |---|---|

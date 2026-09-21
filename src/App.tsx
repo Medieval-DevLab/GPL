@@ -32,9 +32,9 @@ import {
 } from "./engine/types";
 import {
   ConsequenceScreen,
-  ResolvingScreen,
   resolutionAnnouncement,
 } from "./ui/consequence";
+import { ApplyScreen, isApply } from "./ui/apply";
 import { DialogueScene, isDialogue } from "./ui/dialogue";
 import { BriefBody, DecideBody } from "./ui/mission";
 import { CutScene } from "./ui/cutscene";
@@ -364,43 +364,29 @@ export default function App() {
   /* On a consequence beat the node has not moved yet, so `mission` is still the one just
      played — which is exactly whose rail, advisor and hero photo belong on screen. */
   const onResult = state.phase === "consequence" && mission !== null;
-  /**
-   * The resolving beat is now inside the frame, and that one change is what makes the
-   * meters move rather than merely differ.
-   *
-   * It used to be outside it: `framed` excluded `resolving`, so committing a decision
-   * unmounted both rails and the action bar for one second and then mounted them again.
-   * The three meters the player had been looking at for the whole decision therefore did
-   * not travel from 58 to 64 — they were destroyed at 58 and recreated at 64, with a
-   * full-width shimmer screen in between. There was no animation to get wrong, because
-   * there were no persistent elements left to animate. A CSS transition needs the same
-   * DOM node at both values.
-   *
-   * Keeping the frame up also holds every edge of the console still from the decision
-   * through to the result, which is the other half of the "static screen changes"
-   * complaint: the rails and the bottom bar were flickering in and out around the one
-   * beat that is supposed to feel continuous.
-   */
-  const onResolving = state.phase === "resolving" && mission !== null;
   /* A reflection is framed too — it is a paper beat inside the console. The other three
      interlude roles are full-bleed and take no frame. */
   const onReflection = state.phase === "interlude" && interludeRole === "reflection";
-  const framed = onBrief || onDecide || onResolving || onResult || onReflection;
+  const framed = onBrief || onDecide || onResult || onReflection;
   /** The meters have just moved on exactly these two beats, and only they pass `from`. */
-  const moved = (onResolving || onResult) && state.resolution ? state.resolution : null;
+  const moved = onResult && state.resolution ? state.resolution : null;
   const need = mission ? requiredCount(mission) : 0;
   const ready = canCommit(state, content);
   const selected = selectionComplete(state, content);
   /**
-   * Is this beat staged as a conversation?
+   * How is this beat staged?
    *
-   * One flag, read in two places: it swaps the work area for the call surface, and it
-   * moves the prediction gate off the action bar and into the composer. Nothing else in
-   * this file changes — same phases, same `canCommit`, same rails, same primary action.
-   * See `ui/dialogue.tsx`.
+   * One flag, read in two places: it swaps the work area for another surface, and it
+   * moves the prediction gate off the action bar into that surface. Nothing else in this
+   * file changes — same phases, same `canCommit`, same rails, same primary action. See
+   * `ui/dialogue.tsx` and `ui/apply.tsx`.
    */
   const conversation = mission !== null && isDialogue(mission) ? mission : null;
   const dialogue = conversation !== null;
+  const applying = mission !== null && isApply(mission) ? mission : null;
+  /* Both restagings own their own gate, so the action bar suppresses its copy for
+     either. There must only ever be one `PREDICTION_QUESTION_ID` on screen. */
+  const restaged = dialogue || applying !== null;
 
   const bars = (
     <TopBar
@@ -466,32 +452,18 @@ export default function App() {
             : undefined
         }
       >
-        {/* On a conversation beat the gate is NOT here. It sits indented under the reply
-            the player has just chosen, which is the fix for the reported "cannot get past
-            Commit to this" — the requirement was legible as a legend and not as a
-            control. `PREDICTION_QUESTION_ID` moves with it, so the button still points at
-            whichever copy of the question is on screen and there is only ever one. */}
-        {selected && !dialogue ? (
+        {/* On a restaged beat the gate is NOT here. It sits indented under the reply or
+            the card the player has just chosen, which is the fix for the reported "cannot
+            get past Commit to this" — the requirement was legible as a legend and not as
+            a control. `PREDICTION_QUESTION_ID` moves with it, so the button still points
+            at whichever copy of the question is on screen and there is only ever one. */}
+        {selected && !restaged ? (
           <PredictionStrip
             prediction={state.prediction}
             onPredict={doPredict}
           />
         ) : null}
       </ActionBar>
-    );
-  } else if (state.phase === "resolving") {
-    /* No button — there is nothing to do for this one second, and offering a control that
-       does nothing would be worse than offering none. But the bar stays up carrying the
-       colleague's steer, which is still their advice about the decision just taken, so
-       the console's bottom edge does not drop 66px and come back. */
-    bottom = (
-      <ActionBar
-        aside={
-          mission?.tip && mission.advisor
-            ? { from: mission.advisor.name, text: mission.tip, photo: mission.advisor.photo }
-            : undefined
-        }
-      />
     );
   } else if (state.phase === "consequence") {
     bottom = (
@@ -541,11 +513,11 @@ export default function App() {
                nothing the player has to read while comparing options. */
             objective={onBrief ? mission.objective : undefined}
             minutes={onBrief ? mission.minutes : undefined}
-            /* From the resolving beat, not the consequence: the evidence was discovered
-               at the moment of commit, so this is when it honestly appears — and it lands
-               on the beat whose subject is what the decision did, rather than arriving as
-               an extra insertion underneath the result while the result is being read. */
-            file={onBrief || onResolving || onResult ? discoveredFile(state) : undefined}
+            /* On the consequence: the evidence was discovered at the moment of commit,
+               so this is when it honestly appears — and it lands on the beat whose subject
+               is what the decision did, rather than arriving as an extra insertion
+               underneath the result while the result is being read. */
+            file={onBrief || onResult ? discoveredFile(state) : undefined}
           />
         ) : undefined
       }
@@ -563,20 +535,20 @@ export default function App() {
         ) : framed && mission ? (
           <InsightRail
             dims={state.dims}
-            /* `state.dims` is ALREADY the new values by the time the phase is
-               `resolving` — `commit` applies them and then sets the phase — so the rail
-               needs telling where they came from before it can show them arriving. */
+            /* `state.dims` is ALREADY the new values by the time the consequence mounts
+               — `commit` applies every effect and then sets the phase — so the rail needs
+               telling where they came from before it can show them arriving. */
             from={moved?.dimsBefore}
             entries={ledger(state)}
             /* The colleague's questions live on the brief now. Beside the options they
                were station-2 content sitting in a rail, which is exactly the
                mis-placement the framework warns about. */
-            /* Stays collapsed through resolving on purpose. Opening the ledger is a
-               ~120px change of shape in this rail, and if it happened on commit it would
-               be the loudest thing on screen at the exact moment the three meters are
-               supposed to be the only thing moving. It opens one beat later, with the
-               result, where it is the quietest change on a screen that is all change. */
-            collapsed={onDecide || onResolving}
+            /* Collapsed while deciding, open on the consequence. Opening the ledger is a
+               ~120px change of shape in this rail, so on the decision beat it would be the
+               loudest thing on screen at the exact moment the three meters are supposed to
+               be the only thing moving. With `resolving` folded away the consequence IS
+               one beat later, so this now lands where the comment always wanted it. */
+            collapsed={onDecide}
             commits={onDecide ? selectedCommits(mission, state) : undefined}
           />
         ) : undefined
@@ -610,9 +582,24 @@ export default function App() {
         />
       )}
 
+      {/* Decide only — unlike the call, which is one instance across both phases. The
+          apply beat keeps the console's split because its reading half is an ordinary
+          brief: the situation is read once, with room, and then the screen narrows to
+          somebody else's question. Mounting the padlocks on the brief too would put the
+          answers on screen before the demand that makes them mean anything. */}
+      {onDecide && applying && (
+        <ApplyScreen
+          mission={applying}
+          state={state}
+          nudge={gateNudge}
+          onToggle={doToggle}
+          onPredict={doPredict}
+        />
+      )}
+
       {onBrief && mission && !dialogue && <BriefBody mission={mission} state={state} />}
 
-      {onDecide && mission && !dialogue && (
+      {onDecide && mission && !dialogue && !applying && (
         <DecideBody mission={mission} state={state} onToggle={doToggle} />
       )}
 
@@ -660,10 +647,6 @@ export default function App() {
             />
           )}
         </>
-      )}
-
-      {state.phase === "resolving" && (
-        <ResolvingScreen resolution={state.resolution} onDone={doAdvance} />
       )}
 
       {state.phase === "consequence" && state.resolution && (

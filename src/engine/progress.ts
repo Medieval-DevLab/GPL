@@ -41,14 +41,21 @@ import {
  *
  * This exists so a journey map can advertise variety before the player clicks: seventeen
  * identical dots say "seventeen of the same screen", and the game's actual answer to that
- * complaint — five different interactions — is invisible until you are inside one. Today's
- * story resolves to five distinct values across its seventeen missions.
+ * complaint — six different interactions — is invisible until you are inside one. Today's
+ * story resolves to six distinct values across its eighteen missions.
  *
  * Derived here rather than in the component because choosing a glyph from `kind`,
  * `presentation` and `surface` is a reading of the content, and `src/ui` holds no game
  * rules.
  */
-export type ActivityId = "investigate" | "build" | "call" | "chat" | "thread" | "choice";
+export type ActivityId =
+  | "investigate"
+  | "build"
+  | "call"
+  | "chat"
+  | "thread"
+  | "apply"
+  | "choice";
 
 /** One mission, reduced to what a path or a map needs to draw it. */
 export interface MissionEntry {
@@ -70,12 +77,15 @@ export interface MissionEntry {
  * a conversation. A `choice` has no distinguishing mechanic, so its staging is the most
  * informative thing about it, and a dialogue beat is named by its surface: a `call` is
  * live and you cannot take it back, a `chat` is quick and internal, a `thread` is written
- * and on the record. `Presentation` defaults to `console` and `Surface` to `call`, exactly
+ * and on the record. An `apply` beat earns its own glyph for the same reason: what the
+ * player does there is answer for what they already have, so the map should not promise a
+ * fresh comparison. `Presentation` defaults to `console` and `Surface` to `call`, exactly
  * as the renderer defaults them.
  */
 function activityOf(mission: Mission): ActivityId {
   if (mission.kind === "investigate") return "investigate";
   if (mission.kind === "build") return "build";
+  if (mission.presentation === "apply") return "apply";
   return mission.presentation === "dialogue" ? (mission.surface ?? "call") : "choice";
 }
 

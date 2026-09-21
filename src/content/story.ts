@@ -18,22 +18,32 @@
  * Outcome prose is deliberately NOT budgeted — the consequence screen has nothing else
  * on it, and that text is the actual teaching.
  *
- * ON STAGING. Ten beats are `presentation: "dialogue"` — m3, m5, m6, m7b, m8, m9, m9a,
- * m9b, m10, m10c — because on each of them the player is ANSWERING somebody who has just
- * spoken: a sponsor with a board, a procurement lead with a scorecard, a delivery lead who
- * inherits the sentences. Those carry a `say` line per option, which is the same choice
+ * ON STAGING. Eleven beats are `presentation: "dialogue"` — m3, m5, m6, m7b, m8, m9, m9a,
+ * m9b, m10, m10h, m10c — because on each of them the player is ANSWERING somebody who has
+ * just spoken: a sponsor with a board, a procurement lead with a scorecard, a delivery lead
+ * who inherits the sentences. Those carry a `say` line per option, which is the same choice
  * written as a reply, first person, twenty words at most, and it may describe what you are
  * doing but never what it will achieve. The other seven stay `console` on purpose: m1, m2,
  * m4, m5b, m6b, m7 and m10b are beats where the player is COMPARING — three clients, two
  * questions out of six, five workstreams and room for two — and columns that line up are
  * genuinely the right tool for that.
  *
+ * ON REACTION. `advisorLine` is `string | ConditionalLine[]`, and ten beats use the list
+ * form — m1, m2, m3, m4, m5, m5b, m6b, m9, m10b, m10h. First match wins and the entry
+ * with no `when` is the fallback, so every branch is a whole utterance rather than a
+ * template with a hole in it. The point of them is that a colleague should sound like
+ * somebody who NOTICED: Priya knows where the last six weeks went, Riya knows whether
+ * anyone has tested the brief she is about to fund, Aisha has read the commercial case.
+ * The first of them is on beat one, because chapters one and two used to read identically
+ * whatever the player knew.
+ *
  * THE SPINE OF COMPOUNDING — what the player learns early changes what happens late:
  *    knows:ops_constraint  → M6 credibility, M7 the workstream that saves delivery, M9, M10
  *    knows:real_pain       → M3 lands, M6 defensible rather than lucky
- *    scope:heavy           → M9 risk severity, M10 crisis
- *    promised:fast         → M9 risk, M10 crisis
+ *    scope:heavy           → M9 risk severity, M10 crisis, the handover
+ *    promised:fast         → M9 risk, M10 crisis, the handover
  *    discounted            → M10 no budget left to fix anything
+ *    outcome_based         → M9 liability finding, and a number to unsay at the handover
  */
 
 import type { Advisor, ClientProfile, Content, GameNode } from "../engine/types";
@@ -203,6 +213,28 @@ const nodes: GameNode[] = [
       { label: "Your team", value: "6 people" },
       { label: "Pursuits you can run", value: "One" },
     ],
+    /**
+     * The first state-dependent prose in the game, and it arrives on beat one.
+     *
+     * Chapter 0 is the only thing that has happened yet, so this is the only thing there
+     * is to notice — and noticing it is the point: Priya is looking at the same three
+     * names the player is, and weighing them against the team she has actually been
+     * given. Two branches plus the fallback rather than three `when` clauses, because
+     * there are exactly three advantages and an unreachable fallback is dead content; the
+     * Builders line is the one that carries it. If a fourth advantage is ever added, this
+     * is the sentence that will need re-reading.
+     */
+    advisorLine: [
+      {
+        when: { all: ["start:challenger"] },
+        text: "You read markets. Read these three and tell me which one we could actually take.",
+      },
+      {
+        when: { all: ["start:connector"] },
+        text: "People take your call, which gets us a meeting. It does not tell us whose.",
+      },
+      { text: "You have delivered work like this. Find the one where that is the whole argument." },
+    ],
     advisor: PRIYA,
     consider: [
       "Which needs something we can already prove?",
@@ -347,7 +379,19 @@ const nodes: GameNode[] = [
       "You can dig into two things. Not five. Choosing what to ignore is the job.",
     ],
     client: ORION,
-    advisorLine: "I would rather go in knowing one awkward thing than five comfortable ones.",
+    /* She watched where the last six weeks went, and says so. The fallback is the line
+       this beat has always carried, which is the right one when nothing was spent. */
+    advisorLine: [
+      {
+        when: { any: ["late_start"] },
+        text: "We have already lost six weeks at Apex. Two questions is what that leaves us.",
+      },
+      {
+        when: { any: ["spent_effort"] },
+        text: "A month in Meridian's procurement taught us nothing about Orion. Start where we are blind.",
+      },
+      { text: "I would rather go in knowing one awkward thing than five comfortable ones." },
+    ],
     advisor: PRIYA,
     consider: [
       "What could change our mind?",
@@ -482,7 +526,24 @@ const nodes: GameNode[] = [
        nowhere and rendered nowhere; see src/ui/dialogue.tsx. */
     surface: "chat",
     client: ORION,
-    advisorLine: "First contact sets what they think we are. It is very hard to move afterwards.",
+    /* What the two questions bought, named by the person who told you to spend them. The
+       first branch is the only place in chapter one where Marcus Reed's name is said out
+       loud by our own side, and it is said only to the player who found him. */
+    advisorLine: [
+      {
+        when: { all: ["knows:real_pain", "knows:ops_constraint"] },
+        text: "You know the pain and you know who owns the systems. Decide who you want in the room.",
+      },
+      {
+        when: { all: ["knows:ops_constraint"] },
+        text: "You found Marcus. Nobody else pitching this has. First contact decides who hears it.",
+      },
+      {
+        when: { all: ["knows:real_pain"] },
+        text: "You have their complaint data. It is the one thing here they have not read in a pitch.",
+      },
+      { text: "First contact sets what they think we are. It is very hard to move afterwards." },
+    ],
     advisor: PRIYA,
     consider: [
       "Do we need attention, access, or credibility?",
@@ -706,6 +767,21 @@ const nodes: GameNode[] = [
         note: "Multi-year, if the first phase works.",
       },
     ],
+    /* Riya decides where her people go, so what she notices here is how much of the
+       problem somebody has already tested. The middle branch is the whole of chapter one
+       coming back: if the player bought neither the complaints nor the constraint, she
+       says so before they commit six weeks of her team. */
+    advisorLine: [
+      {
+        when: { any: ["ops_engaged"] },
+        text: "Operations is already in the room. That is the part that usually costs us three months.",
+      },
+      {
+        when: { none: ["knows:real_pain", "knows:ops_constraint"] },
+        text: "Nobody has tested that one-line brief yet, and you are about to put a price on it.",
+      },
+      { text: "I have six people. Tell me how many of them this is worth, and for how long." },
+    ],
     advisor: RIYA,
     consider: [
       "What does being wrong cost us?",
@@ -884,7 +960,20 @@ const nodes: GameNode[] = [
       "A demo that is easy to show a board",
       "Your difference has not been stated plainly",
     ],
-    advisorLine: "Something changed in the market. Whether it changed anything real is your call.",
+    /* A press release is easier to answer when somebody already did the reading, and
+       harder to be frightened by from inside a paid engagement. Both branches are things
+       the player bought in the two beats before this one. */
+    advisorLine: [
+      {
+        when: { any: ["knows:rivals"] },
+        text: "You already know who that vendor is. Most people reacting to this today do not.",
+      },
+      {
+        when: { any: ["has_access"] },
+        text: "We are inside on a paid discovery. A press release does not change what we can see.",
+      },
+      { text: "Something changed in the market. Whether it changed anything real is your call." },
+    ],
     advisor: RIYA,
     consider: [
       "What changed — the facts, or the noise?",
@@ -1641,6 +1730,25 @@ const nodes: GameNode[] = [
         ],
       },
     ],
+    /**
+     * The one place a colleague reacts to the PRICE the player agreed.
+     *
+     * "Build in a mitigation" turns entirely on whether the money still exists, and until
+     * now the deal team heard the same sentence from Aisha whether they had held the price
+     * or funded the gap out of the contingency. She reads the commercial case; she would
+     * mention it.
+     */
+    advisorLine: [
+      {
+        when: { all: ["discounted"] },
+        text: "Before you promise me a fix, tell me what is left in the commercial case. I looked.",
+      },
+      {
+        when: { any: ["ops_onside", "has:ops_workstream"] },
+        text: "Marcus's stream absorbs most of that list. It is the two names nobody booked that worry me.",
+      },
+      { text: "Every line on that finding lands in my month. Tell me which ones you intend to fix." },
+    ],
     advisor: AISHA,
     consider: [
       "Are we solving this, or recording it?",
@@ -2207,7 +2315,19 @@ const nodes: GameNode[] = [
       text: "There are five things I need covered before you put anything in writing. I gather you have a fortnight.",
       ...SARAH,
     },
-    advisorLine: "Two weeks of my team's time. Tell me what it is buying.",
+    /* She is pricing a fortnight of her own people, so she notices what the fortnight no
+       longer has to buy — ground already taken, or a door already open. */
+    advisorLine: [
+      {
+        when: { any: ["reframed"] },
+        text: "You moved them onto the post-purchase ground. Two weeks is what you have to stand it up.",
+      },
+      {
+        when: { any: ["has_access"] },
+        text: "We are already inside. I would not spend a day of this getting in again.",
+      },
+      { text: "Two weeks of my team's time. Tell me what it is buying." },
+    ],
     advisor: RIYA,
     consider: [
       "Which of these changes what we propose?",
@@ -2358,7 +2478,20 @@ const nodes: GameNode[] = [
     situation: [
       "Two firms are proposing versions of the same thing. There is a third way to answer this, and it is not on anybody's slide yet.",
     ],
-    advisorLine: "Everyone is answering the question as asked. That is usually an opening.",
+    /* Arjun's opening depends on what the last beat settled. With their own evidence on
+       the table there is room to move the shape; having answered the brief as written,
+       the shape is the only thing left to move. */
+    advisorLine: [
+      {
+        when: { all: ["evidenced"] },
+        text: "You have their own numbers on the table. That lets us move the shape, not just the words.",
+      },
+      {
+        when: { all: ["scope:storefront"] },
+        text: "We answered the brief as written. So did everybody else. The shape is what is left.",
+      },
+      { text: "Everyone is answering the question as asked. That is usually an opening." },
+    ],
     advisor: ARJUN,
     consider: [
       "What would we do if we could not staff it?",
@@ -2761,8 +2894,12 @@ const nodes: GameNode[] = [
       "Declan Foyle in procurement has a scorecard, a savings target and two other proposals.",
       "Sarah wants you. Sarah does not score the submissions.",
     ],
-    presentation: "dialogue",
-    surface: "call",
+    /* The rebuttal. Foyle is scoring what you brought, so the screen has to show what you
+       brought — including the argument you cannot make because you never went and got the
+       evidence for it. Staged as a call, that argument was simply absent from the
+       composer, and an absent reply reads as the game offering three options rather than
+       as the player having earned three of four. */
+    presentation: "apply",
     variants: [
       {
         when: { none: ["evidenced", "ops_onside", "reframed", "knows:rival_gap"] },
@@ -2806,7 +2943,16 @@ const nodes: GameNode[] = [
            changed the prose and the numbers and never once changed what the player could
            DO — the whole run was a corridor with reactive text. This one is not a
            preference, it is arithmetic: a payback case needs their complaint data, and a
-           player who never got it cannot write one. */
+           player who never got it cannot write one.
+           It is now one of three on this beat. `SCREEN-SPECS.md` §4.3 described m9a as
+           already gated on four flags and therefore needing no content change to stage as
+           an apply beat; that was a misreading of the file — those four flags condition
+           the OUTCOMES, and only this option had a `requires`. So on a competent run the
+           apply screen showed nothing locked and degraded into a comparison, which §4.3
+           itself names as the failure mode of the type. `o-criteria` and `o-deliverer`
+           now carry the gates their own prose already assumed. `o-submit` deliberately
+           carries none: there is always a submission, and for a player who gathered
+           nothing it is the only card on the table, with the other three named beside it. */
         requires: { any: ["knows:real_pain", "evidenced", "ops_onside"] },
         description: "Returns cost Orion a known amount. Show what half of it is worth.",
         say: "Then let me write that box out of your own numbers — what half the returns problem is worth.",
@@ -2857,6 +3003,14 @@ const nodes: GameNode[] = [
         id: "o-criteria",
         title: "Ask for the criteria and re-cut",
         icon: "search",
+        /* Anybody can ask. Whether the weightings come back in time to re-cut a
+           submission depends on there being somebody client-side who picks up — a sponsor
+           who trusts you, an Operations team you brought into the room, or a paid
+           engagement that already has you inside. A firm that ran a campaign and never
+           got into a room is asking a stranger for the marking scheme in the last week.
+           `m9a-lost-criteria` is the earned version of the same move: he sends them, and
+           they are unkind. */
+        requires: { any: ["credibility", "ops_engaged", "has_access"] },
         description: "Find out how it is being scored, then answer that.",
         say:
           "Send me the weightings and I will answer the test you are actually setting, not the one I imagined.",
@@ -2897,6 +3051,14 @@ const nodes: GameNode[] = [
         id: "o-deliverer",
         title: "Put the delivery lead in the room",
         icon: "people",
+        /* Aisha can only answer Foyle's questions about how the changes reach production
+           if somebody has planned it: her own integration workstream, Marcus's people
+           inside the proposal, or a partner who runs returns for a living. With none of
+           the three there is nobody to send — the card would be an invitation to walk
+           your most truthful person into a room with nothing to be truthful about, which
+           is a trap rather than a decision. Locked and named, it says where she could
+           have been given something to say. */
+        requires: { any: ["ops_onside", "has:ops_workstream", "has:partner"] },
         description: "Aisha answers their questions instead of you.",
         say: "I will bring the person who has to deliver it. Ask her anything — she will not dress it up.",
         commits: "She will say what she actually thinks.",
@@ -3276,7 +3438,20 @@ const nodes: GameNode[] = [
     situation: [
       "The plan needs two more people than the firm has spare. One of your best is being pulled onto a bigger account and the replacement is available in six weeks.",
     ],
-    advisorLine: "I can staff this with the people who exist, or the people in the plan. Not both.",
+    /* Staffing is the beat where the pricing conversation finally arrives in a room with
+       the delivery lead in it, so she names it. The second branch is the reason graduates
+       are a reasonable bet on this programme and not on the last one. */
+    advisorLine: [
+      {
+        when: { any: ["discounted", "thin_mitigation"] },
+        text: "Before you say contractors: there is no money in this contract for contractors.",
+      },
+      {
+        when: { any: ["ops_onside", "has:training"] },
+        text: "Marcus's people are already in this. That changes what I can reasonably ask of a graduate.",
+      },
+      { text: "I can staff this with the people who exist, or the people in the plan. Not both." },
+    ],
     advisor: AISHA,
     consider: [
       "Who actually has to be senior here?",
@@ -3396,6 +3571,397 @@ const nodes: GameNode[] = [
       because:
         "The programme was scoped as though the right people would be free. Whether that was optimism or an oversight, the delivery team is the one that finds out.",
       watchFor: "When you commit to a date, ask who specifically is going to be sitting there.",
+    },
+    next: "m10h",
+  },
+
+  /**
+   * Backlog 5.7 — the handover. The one beat whose currency is what the player already
+   * has rather than what they would prefer.
+   *
+   * Aisha's standing line has been in this file since the cast was written: "My team
+   * inherits every sentence in that proposal. Which ones did you mean?" It was rhetorical
+   * for seventeen beats. Here it is the question, and the answers are the player's OWN
+   * commitments read back at them — so every option carries a `requires`, and which
+   * sentences you are entitled to stand behind is a consequence of the run rather than a
+   * menu. An option nobody earned renders locked and named (`ui/apply.tsx`); seeing the
+   * answer you could have given is the teaching.
+   *
+   * WHY THE FALLBACK IS GATED TOO. `o-meant-all-of-it` requires `won`, which every path
+   * reaching this node carries: every m9a branch that does not divert to the ending
+   * writes it, and m9b's two walk-away branches divert as well. So the beat is always
+   * playable AND nothing on it is ungated, which is the rule it exists to make visible —
+   * and the one commitment nobody here can disown is the document that won the work.
+   *
+   * NO STANCE IS SAFE, and the arithmetic is deliberate. Standing behind an overreach
+   * costs Deliverability, because somebody then plans to it. Withdrawing costs Winability,
+   * because the client agreed to the thing being taken back. Qualifying costs less of
+   * both and introduces a caveat after signature. Each option owns one dimension it is
+   * always worst on, which is what keeps five answers out of a ranking.
+   *
+   * IT WRITES NO FLAGS, deliberately. Every other beat in chapter five accumulates
+   * something a later one reads; this one spends. The only downstream reader is m10c, and
+   * inventing a flag for it would put a second cause under a variant that already has an
+   * honest one. What this beat leaves behind is three threads in the closing debrief.
+   */
+  {
+    kind: "choice",
+    id: "m10h",
+    chapter: 5,
+    stage: "delivery",
+    title: "The sentences you wrote",
+    eyebrow: "The handover",
+    objective: "Answer for the promises in your own proposal.",
+    minutes: 4,
+    hero: "solution-workshop",
+    situation: [
+      "Aisha's team starts on Monday. She has the proposal open, the lines she cannot plan around highlighted, and thirty minutes.",
+    ],
+    /* Backlog 5.7. Aisha asks which of your promises you meant, and the honest answer is
+       constrained by which ones you actually funded — so every line she cannot plan
+       around has to be on screen, named, whether or not you can still stand behind it.
+       85% of runs arrive here with at least one option locked, which is the whole beat:
+       the proposal is the thing being read back to you. */
+    presentation: "apply",
+    /* Her thread, her team, her question. The client is not in this room and is not meant
+       to be: the whole point of the beat is that it happens before anybody tells Orion
+       anything at all. */
+    room: "internal",
+    variants: [
+      {
+        when: { all: ["scope:heavy"], none: ["has:ops_workstream"] },
+        situation: [
+          "Aisha's team starts on Monday. She has the proposal open at the platform rebuild, and she wants the name of the person in Operations who agreed to take it.",
+          "There is not one in the document.",
+        ],
+      },
+      {
+        when: { all: ["promised:fast"], none: ["has:data"] },
+        situation: [
+          "Aisha's team starts on Monday. Two lines are highlighted: the eight-week pilot, and the sentence saying the order data is available.",
+          "She has spent a week looking for that data. It is not available.",
+        ],
+      },
+      {
+        when: { all: ["outcome_based"] },
+        situation: [
+          "Aisha's team starts on Monday. She has the contract open at the clause where a third of the fee moves with the support contact figure.",
+          "She would like to know who chose the number.",
+        ],
+      },
+      {
+        when: { all: ["ops_onside", "evidenced"] },
+        situation: [
+          "Aisha's team starts on Monday. She has the proposal open and almost nothing highlighted.",
+          "Her question is narrower than she expected: which of these are commitments, and which may she re-plan?",
+        ],
+      },
+    ],
+    advisorLine: [
+      {
+        when: { any: ["unanchored", "risk_accepted", "fragile_timeline"] },
+        text: "Three lines in here have no owner. I am not starting Monday pretending otherwise.",
+      },
+      {
+        when: { all: ["ops_onside", "evidenced"] },
+        text: "Most of this I can plan to. I would still like to hear which parts are fixed.",
+      },
+      { text: "I have marked the sentences I cannot plan around. Tell me which of them you actually meant." },
+    ],
+    advisor: AISHA,
+    consider: [
+      "Which of these did you write to win, not to do?",
+      "Who has to be told if you take one back?",
+      "What does Aisha stop planning for if you qualify it?",
+    ],
+    tip: "I am not trying to catch you out. I am trying to write a plan I can hold.",
+    prompt: "She needs one answer to take away. The rest stay exactly as written.",
+    question: "Which ones did you mean?",
+    options: [
+      {
+        id: "o-meant-the-date",
+        title: "Stand behind the date",
+        icon: "clock",
+        /* The pilot, and only the pilot — a date you never promised is not a sentence
+           anybody can read back at you. */
+        requires: { any: ["promised:fast", "fragile_timeline"] },
+        description: "The pilot date is in the contract and on Sarah's board slide. It holds.",
+        say: "The eight weeks was a commitment, not a flourish. Plan to it and tell me what it needs.",
+        commits: "Aisha plans against a date nobody has tested.",
+        pros: ["The client keeps what they bought", "No promise reopened"],
+        cons: ["The team absorbs the difference", "You have not checked it holds"],
+        cost: { time: 1, investment: 2 },
+        outcomes: [
+          {
+            id: "m10h-date-founded",
+            when: { any: ["has:data", "ops_onside"] },
+            tone: "strong",
+            headline: "She takes the date, because somebody had already checked it.",
+            detail:
+              "You are standing behind a date that rests on something — the data audit, or an Operations team already inside the programme. Aisha does not have to believe you. She can look at the thing the date depends on and see that it exists, which is a different conversation from the one she was expecting. She plans to the eight weeks and stops asking.",
+            changed: [
+              "The date is now a plan rather than a promise",
+              "You have committed the firm to resourcing it",
+            ],
+            effect: { dims: { win: 5, deliver: 2, profit: -4 }, badge: "connected_dots" },
+            lesson: {
+              principle: "I can plan to a date somebody checked. I cannot plan to one somebody hoped for.",
+              because:
+                "The eight weeks held because months earlier you funded the dull thing that made it true — the audit, or the Operations stream. Standing behind it therefore cost you money and nothing else.",
+              watchFor: "Before repeating a date out loud, ask what it is resting on.",
+            },
+          },
+          {
+            id: "m10h-date-hollow",
+            tone: "hard",
+            headline: "She writes the date down, and then writes down what it will cost.",
+            detail:
+              "Nothing underneath the eight weeks has changed since you wrote it, so the only variable left is how hard her team works. Aisha plans to it because you told her to, and the plan she produces has the two people who understand the programme best on it every weekend until the pilot ships. Sarah's board keeps its date. Nobody who has to hit it was in the room when it was agreed.",
+            changed: [
+              "The date survives",
+              "The plan behind it depends on people working weekends",
+              "Aisha has your answer in writing",
+            ],
+            effect: { dims: { win: 3, deliver: -10, profit: -2 } },
+            lesson: {
+              principle: "Standing behind a promise is free for me and expensive for whoever keeps it.",
+              because:
+                "You repeated a date you had never tested, so nothing about the work got easier and nothing about the plan got firmer. That is not a commitment, it is a transfer.",
+              watchFor:
+                "When you confirm a commitment, ask what has changed since you made it. If the answer is nothing, nothing is fixed.",
+            },
+          },
+        ],
+      },
+      {
+        id: "o-meant-with-conditions",
+        title: "Name what it depends on",
+        icon: "scale",
+        /* You can only attach conditions to a promise large enough to have them. All
+           three of these record a proposal that reached further than its plan. */
+        requires: { any: ["scope:heavy", "unanchored", "risk_accepted"] },
+        description: "Keep the promise and write down the things that have to be true first.",
+        say: "I meant the rebuild. I did not mean it without Operations. Put the conditions in writing.",
+        commits: "Sarah reads a caveat that was not there at signature.",
+        pros: ["The promise survives with limits", "Delivery inherits a boundary"],
+        cons: ["A condition appears after signature", "Reads as a retreat"],
+        cost: { time: 2, investment: 1 },
+        outcomes: [
+          {
+            id: "m10h-qualify-heard",
+            when: { any: ["ops_onside", "evidenced", "credibility", "reviewed"] },
+            tone: "strong",
+            headline: "The conditions go in, and nobody treats them as an excuse.",
+            detail:
+              "You have a record of being accurate with this client, so a list of dependencies reads as a delivery plan rather than as a firm reaching for the exit. Sarah signs them off inside a week. Aisha now has a document saying what has to be true, and a date she is permitted to move if it is not.",
+            changed: [
+              "The promise now carries written conditions",
+              "Sarah has seen a caveat she had not seen before",
+              "Aisha can re-plan without a negotiation",
+            ],
+            effect: { dims: { deliver: 9, win: -3 }, badge: "smart_tradeoff" },
+            lesson: {
+              principle: "A promise with its conditions written beside it is the only kind I can actually manage.",
+              because:
+                "You did not take the rebuild back. You said out loud what it needs, and because this client had reason to read you generously that cost a conversation rather than a renegotiation.",
+              watchFor: "The cheapest moment to attach a condition is before anybody has planned around its absence.",
+            },
+          },
+          {
+            id: "m10h-qualify-late",
+            tone: "mixed",
+            headline: "They accept the conditions and read them as a warning.",
+            detail:
+              "You are right that the rebuild depends on things nobody has agreed to. You are also introducing that fact after the signature, to a client with no particular reason to give you the benefit of the doubt. The conditions go in. So does a fortnightly review you did not ask for.",
+            changed: [
+              "The conditions are written down",
+              "The client now checks the programme far more closely",
+            ],
+            effect: { dims: { deliver: 6, win: -6, profit: -1 } },
+            lesson: {
+              principle: "Qualifying a promise spends whatever standing we have, and this time we were spending on credit.",
+              because:
+                "The conditions were the same conditions either way. What decided how they landed was whether this client had any reason to read you generously, and that was settled months ago.",
+              watchFor: "Notice which conversations you are able to have because of how the earlier ones went.",
+            },
+          },
+        ],
+      },
+      {
+        id: "o-meant-the-dull-lines",
+        title: "Stand behind the dull lines",
+        icon: "layers",
+        /* You cannot ring-fence a workstream you never bought. These are the three
+           unglamorous things m5b and m7 let the player pay for. */
+        requires: { any: ["has:training", "has:ops_workstream", "has:data"] },
+        description: "The training, the integration stream, the measurement work. None of it gets trimmed.",
+        say: "The unglamorous lines were not padding. Nobody trims them to make a date, including me.",
+        commits: "You give up the easiest thing to cut later.",
+        pros: ["Delivery keeps its scaffolding", "Nothing reopened"],
+        cons: ["The cost lines all stay", "Nothing new for the client"],
+        cost: { time: 1, investment: 2 },
+        outcomes: [
+          {
+            id: "m10h-dull-kept",
+            when: { any: ["ops_onside", "has:training", "has:ops_workstream"] },
+            tone: "strong",
+            headline: "The first thing anybody cuts is the first thing you protected.",
+            detail:
+              "Training and integration are always what goes when a programme needs to find a fortnight, because nobody outside the delivery team ever notices they have gone. You have said in advance that they do not move. Aisha now has an answer ready for the first person who asks her to find the fortnight, and it is your answer rather than hers.",
+            changed: [
+              "The adoption and integration work is ring-fenced",
+              "The cost of it stays on your side of the page",
+            ],
+            effect: { dims: { deliver: 7, profit: -6, win: 1 }, badge: "connected_dots" },
+            lesson: {
+              principle: "I have had the training workstream taken off me twice, and both times by somebody who meant well.",
+              because:
+                "You bought those lines months ago and have now said they are not available as savings. That is worth nothing in a pitch and it is the reason month nine will be quiet.",
+              watchFor: "Notice which parts of a plan nobody outside your own team would miss. Those are the ones that vanish.",
+            },
+          },
+          {
+            id: "m10h-dull-thin",
+            tone: "mixed",
+            headline: "You protect the measurement work, and there is not much else to protect.",
+            detail:
+              "The instrumentation stays, so somebody will eventually be able to prove whether this programme worked. That is a real thing to have defended. It is also the only unglamorous line in the document — the adoption work and the integration stream were never bought, so there is very little scaffold underneath the promise you are standing behind.",
+            changed: [
+              "The measurement work is ring-fenced",
+              "There is less underneath it than Aisha had hoped",
+            ],
+            effect: { dims: { deliver: 4, profit: -5, win: -2 } },
+          },
+        ],
+      },
+      {
+        id: "o-did-not-mean-the-number",
+        title: "Take the number back",
+        icon: "cross",
+        /* Only available to a player who put a figure in a contract — at m6b by pricing
+           on the outcome, or at m9a by writing Foyle his justification. */
+        requires: { all: ["outcome_based"] },
+        description: "Go to Sarah and remove the figure a third of the fee hangs on.",
+        say: "The payback figure was mine, not theirs. I would rather unsay it now than miss it in month nine.",
+        commits: "Withdrawing something the client agreed to in writing.",
+        pros: ["The exposure disappears", "Aisha stops planning around it"],
+        cons: ["Withdrawing a written commitment", "Sarah defended that number internally"],
+        cost: { time: 2, investment: 1 },
+        outcomes: [
+          {
+            id: "m10h-payback-cold",
+            when: { any: ["evidenced", "has:data"] },
+            tone: "hard",
+            headline: "You take back the one number they trusted.",
+            detail:
+              "The payback figure rested on a baseline you had actually audited, which is exactly why Sarah could put it in front of her board. Withdrawing it now does not read as prudence. It reads as a firm that has looked at its own commitment and lost confidence in it, and the first person to say so out loud is you.",
+            changed: [
+              "The fee no longer moves with the result",
+              "Sarah has to go back to a board that approved it",
+              "The one distinctive thing in the bid is gone",
+            ],
+            effect: { dims: { win: -12, profit: 5, deliver: 3 } },
+            lesson: {
+              principle: "We withdrew the only commitment nobody else in that race would have made.",
+              because:
+                "The number was defensible, because you had the baseline underneath it. Unsaying a promise you could have kept buys back an exposure you were not really carrying and costs you the reason they chose you.",
+              watchFor: "Before withdrawing a promise, check whether it was the promise that was weak or your nerve.",
+            },
+          },
+          {
+            id: "m10h-payback-right",
+            tone: "strong",
+            headline: "She is not pleased, and she is relieved.",
+            detail:
+              "Nobody ever agreed what a support contact was. The clause was going to produce its first argument in month nine, with your own fee on the table and no baseline either side could point at. Taking it out now costs you a difficult half hour with a sponsor who defended it. Leaving it in would have cost Aisha the whole of month nine.",
+            changed: [
+              "A third of the fee no longer turns on an undefined number",
+              "Sarah is cooler, and clear about why",
+            ],
+            effect: { dims: { profit: 8, deliver: 4, win: -7 }, badge: "smart_tradeoff" },
+            lesson: {
+              principle: "I would rather have a hard half hour now than an argument about measurement in month nine.",
+              because:
+                "There was never a baseline both sides believed, so the clause was an argument with a date on it. Withdrawing it spent goodwill and removed the argument, which is a trade worth making in that order.",
+              watchFor: "A number in a contract is only as good as the thing everybody has agreed to count.",
+            },
+          },
+        ],
+      },
+      {
+        id: "o-meant-all-of-it",
+        title: "All of it stands",
+        icon: "flag",
+        /* The unconditional answer, and still gated — on the one thing every run that
+           reaches this beat has done. `won` rather than `signed`, though both are
+           guaranteed here, because `won` is on the rail: the ledger has been telling the
+           player "everything after this is about keeping what you said" since the award,
+           so the card's provenance points at something they have already read rather than
+           at invisible state. See the note above the mission. */
+        requires: { all: ["won"] },
+        description: "You wrote it and you meant it, and you are not going through it line by line.",
+        say: "All of it. I wrote every line and I meant it. I am not unpicking it now.",
+        commits: "Aisha gets no help narrowing what she has to keep.",
+        pros: ["Nothing reopened with the client", "The document stays whole"],
+        cons: ["Aisha plans around all of it", "You have checked none of it"],
+        cost: { time: 1, investment: 1 },
+        outcomes: [
+          {
+            id: "m10h-all-sound",
+            when: {
+              none: ["scope:heavy", "promised:fast", "descoped", "risk_accepted", "discounted", "overrode_review"],
+            },
+            tone: "strong",
+            headline: "There was nothing in there you needed to take back.",
+            detail:
+              "Aisha goes through it line by line and finds a proposal that promises what the programme is resourced to do. Nothing was oversold to win the argument, nothing was cut to reach a price, and no review finding went in unfunded. Saying that every sentence stands takes four minutes, because it happens to be true.",
+            changed: [
+              "The whole document stands, and it holds",
+              "Aisha plans from the proposal rather than around it",
+            ],
+            effect: { dims: { win: 4, deliver: 3, profit: 2 }, badge: "held_nerve" },
+            lesson: {
+              principle: "The best version of this meeting is the short one, and I have only had it twice.",
+              because:
+                "Nothing had to be qualified because nothing had been oversold. That was settled in the scoping and the pricing, not by anything you said to Aisha this morning.",
+              watchFor: "Whether this conversation is short is decided months before anybody has it.",
+            },
+          },
+          {
+            id: "m10h-all-loaded",
+            tone: "hard",
+            headline: "You confirm all of it, including the parts you have not read since.",
+            detail:
+              "She asked which sentences you meant and you told her all of them, which is the one answer that gives her nothing to work with. So she plans to the whole document: the date, the reach, the finding the review left open. Every judgement about which promises were commitments and which were enthusiasm now belongs to her, and she will make them alone, in the week she is two people short.",
+            changed: [
+              "Every sentence is now a commitment",
+              "Aisha is deciding on her own which ones were real",
+              "Nothing was reopened with the client",
+            ],
+            /* Winability +2 rather than +5, and the difference is the whole reading of
+               this branch: confirming everything buys the ABSENCE of a bad conversation,
+               not the presence of a good one. Nothing reached the client, so nothing about
+               their view of you improved — whereas `m10h-all-sound` genuinely confirms a
+               document that holds, and is paid for it. It still carries the highest
+               Winability of the five loaded branches, which is what keeps the option from
+               being dominated: every other answer here costs the client something visible. */
+            effect: { dims: { win: 2, deliver: -12, profit: 1 } },
+            lesson: {
+              principle: "Confirming everything is the same as deciding nothing, and I am the one who finds that out.",
+              because:
+                "You had the whole pursuit in front of you and treated every line as equally meant. The sentences written to win and the sentences written to do are now indistinguishable to the person delivering them.",
+              watchFor: "If you cannot name which of your own promises was the weakest, somebody else will have to.",
+            },
+          },
+        ],
+      },
+    ],
+    lesson: {
+      principle: "Every sentence in there is a promise somebody keeps, and I would rather be told which ones you meant.",
+      because:
+        "Nothing in the proposal changed today. What changed is that somebody who has to deliver it now knows which lines you would defend and which you were hoping nobody would read closely.",
+      watchFor:
+        "The person who inherits a promise is rarely the person who made it. Say which ones were real while saying it is still cheap.",
     },
     next: "turn-sarah",
   },
@@ -3667,6 +4233,7 @@ export const story: Content = {
     "m9b",
     "m10",
     "m10b",
+    "m10h",
     "m10c",
   ],
 
@@ -3765,6 +4332,26 @@ export const story: Content = {
       soLater:
         "Three capable proposals arrived and nothing separated them but price. A scorecard with every column level is decided on cost.",
     },
+
+    /* ── the handover, which is where the pursuit finally answers for itself ───── */
+    {
+      needsOutcomes: ["m7-overreach", "m10h-all-loaded"],
+      because: "You confirmed every sentence in a proposal that had no route into production.",
+      soLater:
+        "Aisha planned to all of it, so the judgement about which promises were real ended up being made by the person who had to keep them.",
+    },
+    {
+      needsOutcomes: ["m6b-outcome-blind", "m10h-payback-right"],
+      because: "You tied a third of the fee to a figure nobody had a baseline for.",
+      soLater:
+        "At the handover the only options were to unsay it or to argue about measurement in month nine with your own fee on the table.",
+    },
+    {
+      needsOutcomes: ["m5b-grounded", "m10h-date-founded"],
+      because: "You spent a fortnight on a workshop and a data audit instead of on the pitch.",
+      soLater:
+        "Months later you could say the pilot date out loud and be believed, because the thing it depended on had already been checked by somebody.",
+    },
   ],
   chapters: [
     {
@@ -3804,8 +4391,8 @@ export const story: Content = {
       number: 5,
       label: "Delivery",
       title: "Deliver the promise",
-      missionIds: ["m10", "m10b", "m10c"],
-      steps: ["Month five", "Two people short", "The unexpected"],
+      missionIds: ["m10", "m10b", "m10h", "m10c"],
+      steps: ["Month five", "Two people short", "The handover", "The unexpected"],
     },
   ],
   nodes: Object.fromEntries(nodes.map((n) => [n.id, n])),

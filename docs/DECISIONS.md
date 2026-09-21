@@ -6,6 +6,206 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-068 · `apply` is a third presentation, not a third mission kind
+The apply/rebuttal beat — backlog 5.7, Aisha's "which ones did you mean?" — renders the
+options the player did **not** earn, greyed and padlocked, each naming the beat where it
+was for the taking. It ships on two beats: the award rebuttal (m9a) and the new handover
+(m10h).
+
+**The whole thing is one word in content.** `Presentation` gains `"apply"` beside
+`"console"` and `"dialogue"`, and that is the entire content-side change: identical
+options, identical outcomes, identical branching, identical state. No analysis, sweep or
+validator learns the screen exists, which is the property D-0xx built the presentation flag
+for in the first place and the reason this was not a new `Mission.kind`. A kind would have
+forced every exhaustive walk, every dominance check and every save migration to reason
+about a distinction that is purely about what is on screen.
+
+**Why the screen earns its place.** The console renders an unearned option by omitting it,
+and a shorter list reads as *the game offering less* rather than as *the player having
+earned less* — the one reading that turns a consequence into a mystery. 85% of runs reach
+the handover with at least one option locked and 36% reach m9a that way, so this is the
+common case at both beats, not an edge.
+
+**`isApply` refuses the staging when no option is gated**, mirroring `isDialogue`'s refusal
+to stage a conversation with no replies in it. A padlock column with nothing in it is an
+empty promise of consequence, and the honest fallback is the console.
+
+It mounts on `decide` only — unlike the call, which is one React instance across both
+phases so the transcript is not retyped. The apply beat keeps the split because its reading
+half is an ordinary brief, and `verify.mjs` caught the first wiring doing otherwise: putting
+the padlocks on the brief shows the answers before the demand that gives them meaning.
+
+`has:partner` reached the ledger in the same change. It was a narrative-only flag until the
+handover started gating Aisha's card on having anyone who can answer a delivery question —
+`ops_onside`, `has:ops_workstream` or a partner. The other two were already on the rail, so
+a partnered player saw a card open for a reason the game had never named.
+
+**Cost:** a third staging to keep in step — `ui/apply.tsx` restates `demandOf` rather than
+importing dialogue's private copy, and if a fourth screen needs it that resolution should
+move to `engine.ts` beside `resolveSaidQuote`. And `EARNED`, the flag→"what it was, and
+where" table, is authoring sitting in a component because `story.ts` has no field for it
+yet. Both are noted in the file. Reversible: delete the two `presentation` lines and the
+beats fall back to the console.
+
+---
+
+## D-067 · The `resolving` phase is deleted from the flow, and the save boundary adopts it
+`SCREEN-TAXONOMY.md` §3 names it as the one screen type to cut: a one-second transition
+holding **17 of a run's 76 screen instances**, earning its slot purely by being in the way.
+`commit` now returns `phase: "consequence"` and `ConsequenceScreen` animates the meters from
+`resolution.dimsBefore` on arrival, which is what D-061 built the `from` prop for.
+
+**The value stays in the `Phase` union, and that is the substance of this entry.** The
+instinct to keep it "so an old save still parses" is right but incomplete — parsing is not
+the failure mode. `save.ts` gates on a hand-listed `PHASES` array, so dropping the value
+makes `looksPlayable` read a mid-commit save as a **different `GameState` shape** and throw
+away a run that is one beat from resumable. Keeping it in the union and in that array only
+buys the ability to RECOGNISE such a save; what it then needs is somewhere to go, because a
+phase the interface has no screen for is a dead end regardless of what `advance` would do
+with it. So `decodeSave` rewrites `resolving` → `consequence` on the way through and reports
+`migrated: true`. That rewrite is honest rather than a guess: `commit` applied every effect
+and then set the phase, so a `resolving` state **is** a post-commit state and the resolution
+the consequence beat draws is in the save beside it.
+
+A `resolving` state carrying no resolution is refused as damage rather than adopted. No
+build ever wrote one — `commit` writes the phase and the resolution in the same object — and
+a consequence screen with nothing on it is worse than saying the save could not be read.
+
+`advance` still maps `resolving` → `consequence`. It is unreachable in play and kept as a
+backstop for anything that arrives by another road, with a test asserting both halves: no
+reachable state holds the phase, and a state that holds it still moves.
+
+**Cost:** two mechanisms for one migration — the load boundary and the backstop in
+`advance` — which is one more than the problem strictly needs. The alternative was a single
+mechanism that leaves a hand-edited or future-migrated state stuck on a blank screen, and a
+dead end is a support call while a redundant line is a comment. Also: `playMission` and
+`commitSelection` each lost an `advance` call whose absence the following loop would have
+covered for, so behaviour is unchanged and the flow now says what it does.
+
+**Reversible:** yes, in one line each in `commit` and `decodeSave`. Nothing about the
+deletion is load-bearing for the animation, which lives entirely in the consequence screen.
+
+## D-068 · Eleven ledger rules, because 14 of 29 gating flags decided a branch the player could not see
+Backlog 4.2, measured before it was believed. 29 flags gate a branch somewhere in the story
+— they appear in an `outcome.when` or an `option.requires` — and **14 of them appeared in no
+`LEDGER_RULES` entry**. On those 14 the game silently branched on state it had never shown,
+so a player asking "why did that happen?" could not tell a **reasoning error from an
+information gap**, and attribution is the whole teaching mechanism. Learning science put it
+top of its section and it blocks 1.1.
+
+**High traffic is a measurement, not a judgement.** Walking every reachable state and
+toggling each gating flag at each mission counts the visits where that one flag alone
+changes which outcome fires or which options are offered. The eleven rules added score
+**11,960 to 51,144** decisive visits. The three left invisible score **227, 40 and 0**, so
+the cut line is a 53× drop rather than a preference: `knows:rivals` (its readers almost
+always have it, and `knows:rival_gap` — already on the rail — is the distinction the game
+actually teaches), `changed_scope` (decides anything on 40 visits, one beat after the choice
+that sets it), and `broad_base`, which is **dead rather than invisible**: its only writer is
+m10c and its only reader is m10, two beats earlier, so the term can never be true when it is
+read. The outcome still fires on its `ops_onside` alternative, which is why the sweep never
+noticed. That one is content's to fix and is reported, not patched here.
+
+Three of the eleven — measurement, adoption, payback — were added because the handover beat
+landed mid-pass and gates an option on exactly those flags. Aisha's *"the training, the
+integration stream, the measurement work"* is unavailable to a player who did not fund them,
+and an option missing for an invisible reason reads as a shorter list rather than as a
+consequence.
+
+**What it costs the layout, measured on the same walk before and after: the worst case
+goes from 13 entries to 21.** Read 21 as a floor — the walk dedupes states on the flags a
+later mission still reads, so two states differing only in a flag nothing reads again
+collapse and the survivor may hold the shorter account. The structural ceiling is 29 (every
+rule at once, less two of the three mutually exclusive ways of getting in). The rail is
+uncapped so nothing breaks, but a 21-row account is a scroll. The group comments in the table are the seams to cut along; the last three rules are
+the marginal ones and deleting them costs 3 rows and reopens 3 gates in the handover.
+
+**Two rules the new copy is held to, and one of them is now mechanical.** An entry states a
+POSITION and never predicts an outcome — `validateContent` runs the same leak check over
+these strings that it runs over every pre-decision field, because the rail is on screen
+while the options are being read and `engine.ts` had no leak check of its own. And never a
+bare restatement of the flag name: a row reading "Reviewed" tells a player nothing they can
+act on. The second is still a matter of judgement and is not checked — "Risk accepted",
+which shipped long ago, would fail any mechanical version of it.
+
+**The gap itself is now a build failure.** `validate.ts` warns per flag that gates a branch
+with no ledger rule, and `engine.test.ts` pins the surviving three by name with a reason
+each — the same pattern as the dead narrative flags. A warning rather than an error for one
+specific reason: `LEDGER_RULES` lives in `engine.ts`, so the only ways to clear an error
+would be to edit the engine or to weaken a gate, and *"adding a mission must never require
+editing the engine"* is the stronger rule.
+
+**`LEDGER_RULES` belongs in `src/content/story.ts`, for the same reason the `threads` table
+moved,** and it is deliberately NOT moved in this pass because another worker owns that file
+right now. It is 31 entries of player-facing prose with a tone and an icon, keyed on content
+flags, and a writer cannot reach it. The move would also turn the warning above into an
+error, which is where it belongs. The one thing it needs first is a decision about
+`IconId`: the table is the only place in the engine that names an icon, so moving it makes
+content own that vocabulary too.
+
+**Cost:** three Operations rows now exist on one rail (`ops_engaged` a meeting,
+`ops_onside` a stake, `has:ops_workstream` a funded line) and they read as near-duplicates
+at a glance. Merging them was rejected: none implies another — `ops_onside` is granted at m7
+to a player who never met Marcus — and m9, m9b and m10c all branch on which you have.
+
+**Reversible:** yes, per rule. Each is one object in one array, and deleting one restores
+exactly the invisibility it removed.
+
+## D-064 · The apply screen renders the options you did not earn, because absence taught nothing
+`SCREEN-SPECS.md` §4.3 and `GAME-SEQUENCE.md` §3 asked for the one screen type the taxonomy
+found missing: the beat where **stored knowledge is the currency**. The mechanic for it was
+already in the game and invisible. m9a's `o-value` carries
+`requires: { any: ["knows:real_pain", "evidenced", "ops_onside"] }`, and `availableOptions`
+drops it — so a player who never bought the complaint data saw three cards instead of four
+and had no way to know a fourth existed. Four beats in the game gate an option this way and
+**not one of them says so.**
+
+`src/ui/apply.tsx` renders the full `mission.options` and draws the difference against
+`availableOptions` as a locked card **in its own place in the row**: the option's name, the
+sentence it would have been, the thing it needed, and the beat where that thing was for the
+taking — "Their complaint data · Chapter 1 · Learn what matters". `where` is spelled as the
+chapter plus the **left rail's own step name**, so it points at a memory rather than at a
+mission id.
+
+**Four calls inside it that were not obvious:**
+
+**The locked card is not a `.choice`.** It is `aria-disabled` with `tabIndex={-1}` inside
+the radio group, so Tab always lands on something playable and the arrows still reach the
+padlock — measured: `ArrowLeft` from the first live card focuses it and announces *"Build the
+case in their numbers — locked, because it was never earned"*, and no selection follows. It
+does not take the class because `.choice` carries a hover state and a pointer cursor, and
+`tools/verify.mjs` drives the game by clicking `button.choice`.
+
+**Dimmed, never faded.** `--color-surface-disabled` behind `--color-text-disabled`, 5.22:1,
+the pair `.choice:disabled` already uses. `opacity` would have invalidated the ratio and
+`tokens.test.ts` fails the build on it.
+
+**An `any` clause names ONE requirement in full and counts the rest** as "+ 2 other ways
+in", where an `all` clause names two. One of an `any` set would have done, so naming the
+nearest one with where it was says everything the player can act on — and four stacked
+"thing / where it was" pairs at 12px in a 171px column is a paragraph, not a label. It was
+also 45px of the 84px by which the selected state overflowed at 1440×900.
+
+**The gate is in the work area and is one row, not two.** Same reason the conversation
+surface moves it off the action bar: the requirement belongs beside the thing it is about.
+One row rather than the composer's stacked form, because this surface has the whole 848px
+beneath the cards — worth 32px.
+
+**Cost:** a flag needs a human label per entry, and that table (`EARNED`, 50 entries) is in
+the component with a comment saying it must move to `story.ts`, which has no field for it
+yet. An unlabelled flag degrades to a humanised name and a vague, deliberately non-committal
+`where` rather than an invented chapter. Measured after the trims: **0px overflow at
+1440×900 and 1440×1024, in both a 17-flag run and a 14-flag run, selected and unselected.**
+
+**Not done, and it is content's:** m9a has exactly **one** gated option today, so a
+competent run sees no locked card at all and the screen degrades to a comparison — which
+§4.3 names as the failure mode for this type. The screen is ready for more gates; the gates
+are authoring.
+
+**Reversible:** yes, entirely. It is one new file and one route in `App.tsx`; removing the
+route restores `DecideBody`.
+
+---
+
 ## D-061 · `resolving` is folded into the consequence's entrance, and the handover is one prop
 `SCREEN-TAXONOMY.md` §3 names `resolving` as the one screen type to cut: a one-second
 transition holding **17 of a run's 76 screen instances**, earning its slot purely by being

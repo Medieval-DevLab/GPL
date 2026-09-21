@@ -40,6 +40,7 @@ import {
   requiredSelectionCount,
   resolveSaidQuote,
   resolveSituation,
+  resolveAdvisorLine,
 } from "../engine/engine";
 import {
   DIMENSIONS,
@@ -1020,7 +1021,7 @@ export function BriefBody({ mission, state }: { mission: Mission; state: GameSta
               </span>
             </p>
             <p className="mt-1.5 max-w-[66ch] text-[15px] italic leading-relaxed text-(--color-ink-soft) text-pretty">
-              {quoted(mission.advisorLine ?? mission.advisor.quote)}
+              {quoted(resolveAdvisorLine(mission, state) ?? mission.advisor.quote)}
             </p>
             {mission.consider && mission.consider.length > 0 && (
               <ul className="mt-3 grid gap-x-8 gap-y-1.5 border-t border-(--color-line) pt-3 sm:grid-cols-2">

@@ -334,7 +334,11 @@ function commitSelection(state: GameState, content: Content, selection: string[]
   let s = state.phase === "brief" ? advance(state, content) : state;
   s = { ...s, selection: [...selection], prediction: null };
   s = commit(s, content);
-  s = advance(s, content); // resolving -> consequence
+  /* `commit` lands on `consequence`, so this is the only advance a replay needs. It was
+     two while `resolving` sat in between; `settle` skips interludes but not briefs, so a
+     leftover second call here WOULD have overshot — it would have taken the resumed
+     player past the brief they have not read yet, which is the one thing `settle`
+     deliberately stops in front of. */
   s = advance(s, content); // consequence -> the next node
   return settle(s, content);
 }
