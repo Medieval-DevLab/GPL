@@ -6,6 +6,60 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-076 · The game does arithmetic, and the premium is what pays back — not the fee
+Backlog 5.5. The game contained **no currency figure anywhere**. The value-case option at
+the award was called "Build the case in their numbers" and did no arithmetic; its own
+losing lesson said the case "read as a brochure", which was also true of the option.
+
+**One model, introduced in exactly one place.** The m2 complaint card — which the player
+spends one of two investigation slots to buy — carries half a million post-purchase
+contacts a year at roughly £5 each. Every figure downstream is arithmetic on those two and
+introduces none of its own, so there is one place to change and no way for two beats to
+disagree.
+
+| | |
+|---|---|
+| contacts × cost | £2.5m a year answering them |
+| halved | **£1.25m saving** |
+| our fee against the cheaper bid | £2.6m against £2m — exactly the committed 30% |
+| the gap | **£600k** |
+| payback on the gap | **5.8 months** |
+| payback on the whole fee | 25 months |
+
+**The fee does not pay back inside the twelve months the board was promised, and is not
+made to.** That was the brief's assumption and it is wrong; no honest set of numbers
+reaches it without inventing a benefit pool. What pays back inside twelve months is the
+**premium** — £600k of difference against £1.25m a year.
+
+This is the craft rather than a fudge, and it is the better lesson. Foyle's own line is
+"explain why I did not take the cheapest": he is not asking anyone to justify the fee, he
+is asking them to justify the *difference*, and the difference is the only thing a
+premium argument ever has to carry. It also locks into what the game already said — the
+cheaper bid is a storefront platform that "does nothing about deliveries, returns or
+support", so the £1.25m is precisely the saving the other bid cannot deliver. The premium
+is defensible because the comparison is false, and there is now a number proving it.
+
+**Checked against every figure already committed in player prose**, independently of the
+author: the premium is exactly 30.0%; "visible improvement inside twelve months" still
+holds, because a run-rate saving is visible well inside a year even when payback is not;
+and Riya's "eight percent on Meridian" is ~£208k, two months of the saving, which lands
+her anecdote at the right scale without stating it.
+
+Round rather than precise — "roughly five pounds" is a credible estimate and "£5.14" is a
+fabrication. The three outcomes at the award are the *same* arithmetic at three levels of
+evidence, which is what the existing gates already sorted players into: done from their
+data, quoted from a sector benchmark, or asked where the half million came from.
+
+**The approved budget stays unquantified, deliberately.** A figure would either put the
+fee over it — killing "hold the price" and collapsing that beat from four routes to three
+— or comfortably under, which drains it. The constraint works better unpriced.
+
+**Cost:** six places now carry a number, and every one is a place it can be wrong. Nothing
+checks the arithmetic — a validator rule could not, since the figures are prose. Four more
+sites were rejected for exactly that reason. Reversible only by hand.
+
+---
+
 ## D-075 · The claim item is wired, and "fit-neutral by construction" was wrong twice
 Backlog 4.5 is complete. `ui/claim.tsx` renders in band 3 of the ending, in the causal
 chains' own place, and the chains unfold once it is answered. 60.8% of runs get it; the

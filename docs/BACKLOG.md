@@ -80,7 +80,7 @@ These matter because a learner carries them into a real meeting.
 | 5.2 | **DONE** · **Concealment is net-rewarded and nothing names it.** `m10-quiet-covered` is dims +3 net, tone "mixed", and carries **no `lesson`**, so it inherits a generic one that never mentions candour. Same shape for crunch at `m10-push-ok` (+6 net, "paid by the team" never charged). | domain S3 |
 | 5.3 | **PART** · **Procurement is weather, not a person.** No evaluation criteria, no weights, no shortlist, no orals. MEDDICC Decision Criteria / Decision Process / Paper Process entirely absent. One named character with a mandate; trade away the CIO, incumbent and CFO. | domain S4 |
 | 5.4 | **DONE** · **The risk review finds only feasibility risk.** Zero occurrences of liability, indemnity, cap, service credit, warranty or IP. m9b offers to reopen "the two clauses you are least comfortable with" and never names either. | domain S6 |
-| 5.5 | **PART** · **No value case is ever constructed.** The price defence is always qualitative. The game holds the complaint volumes and never turns them into money, teaching that differentiation is a story rather than a sum. | domain S7 |
+| 5.5 | **DONE** · **No value case is ever constructed.** The price defence is always qualitative. The game holds the complaint volumes and never turns them into money, teaching that differentiation is a story rather than a sum. **One model, introduced once** — the m2 complaint card carries half a million contacts a year at roughly £5 each, and every downstream figure is arithmetic on those two. **The finding: the fee does not pay back inside the twelve months the board was promised (25 months), and is not made to. The PREMIUM does — £600k of difference against £1.25m a year, 5.8 months.** Foyle asks you to justify the difference, not the fee, and the difference is all a premium argument has to carry. Premium is exactly 30.0%, matching the committed prose. See D-076. | domain S7 |
 | 5.6 | **DONE** · **A Chapter 0 posture defends a 30% premium at m11.** `m8-hold-strong` fires on `knows:rivals`, which `s-challenger` grants on the first screen. Tighten to `evidenced` or `knows:rival_gap`. | domain S8 |
 | 5.7 | **DONE** · **The handover is narrated, not played.** Aisha's "my team inherits every sentence — which ones did you mean?" is the best line in the game and the player never answers it.  **Built as `m10h`, staged on the new apply screen** (D-068): the options are the promises in your own proposal, and the ones you never funded render locked and named where they could have been earned. 85% of runs arrive with at least one locked. | domain S10 |
 | 5.8 | Smaller: Operations owns the systems (a CIO would); pre-contact access to internal complaint data reads as information you should not have; the client's outcome is never shown. | domain S11/S12 |
@@ -145,7 +145,7 @@ passes. `advisor.steer` is declared in `types.ts` and used by zero missions. *(Q
 
 ## Status, as of the last commit
 
-**48 of 52 shipped, 2 open, 2 partial.** Counted by parsing the marks in this file
+**49 of 52 shipped, 2 open, 1 partial.** Counted by parsing the marks in this file
 rather than estimated, which is the only reason it can be trusted — the version of this
 table it replaces claimed section 4 was 0 of 5 and section 6 was 0 of 8 when both were
 finished, and said the ending overflowed by 2,700px after it had been fixed twice. A
@@ -157,7 +157,7 @@ scoreboard nobody recomputes is worse than no scoreboard: it is the thing people
 | 2 · the instruments | **6 of 6** | — |
 | 3 · accessibility | 6 of 7 | **3.7** — no small-screen design. Was marked done in error; `NarrowScreen` still renders below 1024px |
 | 4 · reading flow | **5 of 5** | — |
-| 5 · domain truth | 5 of 8, 2 partial | **5.3** procurement as a process · **5.5** a value case in money · **5.8** the smaller domain notes |
+| 5 · domain truth | 6 of 8, 1 partial | **5.3** procurement as a process · **5.8** the smaller domain notes |
 | 6 · voice | **8 of 8** | — |
 | 7 · craft | **7 of 7** | the ending fits: 854 → 653, and the claim item lands inside band 3's budget |
 | 8 · product surface | **6 of 6** | SCORM ships, connected and checked end to end |
