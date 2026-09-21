@@ -6,6 +6,52 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-075 · The claim item is wired, and "fit-neutral by construction" was wrong twice
+Backlog 4.5 is complete. `ui/claim.tsx` renders in band 3 of the ending, in the causal
+chains' own place, and the chains unfold once it is answered. 60.8% of runs get it; the
+rest see the chains immediately, as before.
+
+I claimed twice that the band was fit-neutral by construction, and was wrong both times
+in ways only the browser showed.
+
+**First: the layout.** Consequence beside candidates halved the column, so every
+candidate wrapped to two lines and the band came out at **320px against the 226px budget**
+D-072 left for it, putting the ending 90px over target. Stacking it — consequence full
+width, candidates two across — puts most candidates on one line and turns four rows into
+two. Same words, 224px.
+
+**Second, and worse: the settled state.** Answering used to keep the cards and merely drop
+the ones nobody picked, 224px → 183px. That reads as a shrink and is not one, because the
+chains arrive underneath *at the same moment* and they are ~140px — so answering grew the
+page by 99px and pushed "What led to what" off the bottom.
+
+**`verify.mjs` cannot see this, and passed throughout.** The harness plays to the ending
+and screenshots it; it never clicks the item, so the gate only ever measures the
+unanswered state. Found by driving the click by hand. That is the second time in a day a
+green gate covered a defect in the thing it does not interact with, after the SCORM
+bridge (D-071), and the shape is identical: the tests exercise the units and nothing
+exercises the join.
+
+The settled band is now two lines of prose, **224px → 73px**, so answering shrinks it by
+more than the chains add. That is also the better reading: once the chains are on screen
+they are the subject and the item's answer is a footnote to them. The consequence line
+goes too, because `soLater` is the second half of the very chain now printed below it.
+
+**When the player picks correctly the answer is not restated**, because the first chain
+below is that same sentence, and "This is the one: X" sitting 40px above "X → Y" reads as
+the page stuttering. When they picked something else both are named, in the same type and
+the same weight — "This is the one" and "Your answer", never "correct" and "wrong", no red
+and no green. `engine.ts` asserts the data carries no score; this file is the half that
+could have reintroduced one with a colour.
+
+**Cost:** `claim.tsx` keeps a local `LABEL` block, against the convention D-073 just
+established, because `shell.tsx` was being consolidated as this landed. It should join
+`UI_LABEL`. And band 3's budget now has a consumer whose height depends on how long the
+authored candidates are — four long ones would push it back over, and nothing measures
+that in advance; the fit gate catches it at the next `verify`.
+
+---
+
 ## D-074 · The locked card describes the argument, never the player
 `src/ui/apply.tsx`, and the strings now in `UI_LABEL`. A pedagogy audit read the apply
 beat's locked cards and found them written in the second person and the past tense:

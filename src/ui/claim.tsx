@@ -44,7 +44,7 @@
 import { useState } from "react";
 
 import type { CausalClaim } from "../engine/engine";
-import { Icon, SectionTitle } from "./icons";
+import { SectionTitle } from "./icons";
 
 /* TO JOIN `UI_LABEL`. Interface chrome, so it belongs in `src/ui/shell.tsx` with the rest
    — kept local only because that file was being consolidated by another worker as this
@@ -66,91 +66,31 @@ const LABEL = {
   whatHappened: "This is the one",
   whatYouChose: "Your answer",
   /** when the player got there — stated, never congratulated */
-  samePick: "Which is the one you picked.",
+  samePick: "The first chain below is the one you picked.",
   /** the bridge into the threads band */
   andTheRest: "The rest of the chains are below.",
 } as const;
 
 /**
- * One candidate.
+ * One candidate, before the item is answered.
  *
- * A `button` before the answer and a plain `div` after: once the item is settled there is
- * nothing left to press, and leaving four dead buttons in the tab order makes a keyboard
- * player hunt for an interaction that no longer exists.
+ * There is no answered variant, and there was: the settled state used to keep these cards
+ * with the answer and the player's pick marked on them. That cost 183px at the exact
+ * moment the causal chains arrive underneath, which pushed the ending past the fold. Two
+ * lines of prose say the same thing in a third of the height, so the cards exist only
+ * while there is something to press.
  */
-function Candidate({
-  text,
-  state,
-  onPick,
-}: {
-  text: string;
-  state: "open" | "answer" | "chosen-not-answer";
-  onPick?: () => void;
-}) {
-  /* Deliberately NOT a good/bad colour pair. `answer` is the accent the whole interface
-     uses for "this is the thing"; `chosen-not-answer` is a neutral outline. Green and red
-     here would be a mark in everything but name. */
-  const border =
-    state === "answer"
-      ? "var(--color-accent)"
-      : state === "chosen-not-answer"
-        ? "var(--color-ink-soft)"
-        : "var(--color-line)";
-
-  const body = (
-    <>
-      <span
-        className="mt-[3px] shrink-0"
-        style={{
-          color: state === "answer" ? "var(--color-accent)" : "var(--color-muted)",
-        }}
-      >
-        {state === "answer" ? (
-          <Icon name="spark" size={15} />
-        ) : state === "chosen-not-answer" ? (
-          <Icon name="talk" size={15} />
-        ) : (
-          /* Holds the column before the answer, so the row does not shift left when a
-             glyph appears. */
-          <span className="block h-[15px] w-[15px]" />
-        )}
-      </span>
-      <span className="min-w-0">
-        <span className="block text-[15px] leading-snug text-(--color-ink) text-pretty">
-          {text}
-        </span>
-        {state === "answer" && (
-          <span className="mt-0.5 block text-[12px] font-bold uppercase tracking-[0.06em] text-(--color-accent)">
-            {LABEL.whatHappened}
-          </span>
-        )}
-        {state === "chosen-not-answer" && (
-          <span className="mt-0.5 block text-[12px] font-bold uppercase tracking-[0.06em] text-(--color-muted)">
-            {LABEL.whatYouChose}
-          </span>
-        )}
-      </span>
-    </>
-  );
-
-  const shape = "flex w-full items-start gap-2.5 rounded-lg border px-3 py-2 text-left";
-
-  if (state === "open") {
-    return (
-      <button
-        type="button"
-        onClick={onPick}
-        className={`${shape} transition-colors hover:border-(--color-accent) hover:bg-(--color-surface-raised)`}
-        style={{ borderColor: border }}
-      >
-        {body}
-      </button>
-    );
-  }
+function Candidate({ text, onPick }: { text: string; onPick: () => void }) {
   return (
-    <div className={shape} style={{ borderColor: border }}>
-      {body}
-    </div>
+    <button
+      type="button"
+      onClick={onPick}
+      className="flex w-full items-start rounded-lg border border-(--color-line) px-3 py-1.5 text-left transition-colors hover:border-(--color-accent) hover:bg-(--color-surface-raised)"
+    >
+      <span className="min-w-0 text-[15px] leading-snug text-(--color-ink) text-pretty">
+        {text}
+      </span>
+    </button>
   );
 }
 
@@ -172,74 +112,96 @@ export function CausalClaimItem({
   };
 
   const rightFirstTime = picked === claim.answerId;
-
-  /**
-   * Once settled, the candidates the player did NOT pick are dropped.
-   *
-   * This is a fit decision and a teaching one, and they agree for once. The ending is the
-   * tightest screen in the game and this band sits where the threads go — so if answering
-   * added rows, a run WITH the item would be taller than a run without, and the budget
-   * argument for putting it here collapses. It also happens to be the right reading:
-   * the moment worth holding is "I thought that, it was actually this", and the two
-   * options nobody chose are noise in it.
-   */
-  const shown = settled
-    ? claim.candidates.filter((c) => c.id === claim.answerId || c.id === picked)
-    : claim.candidates;
+  const answer = claim.candidates.find((c) => c.id === claim.answerId);
+  const yours = claim.candidates.find((c) => c.id === picked);
 
   return (
-    <section data-region="claim" className="mt-6">
+    <section data-region="claim">
       <SectionTitle icon="bulb" className="mb-2">
         {LABEL.asking}
       </SectionTitle>
 
-      <div className="grid gap-x-8 gap-y-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
-        {/* the consequence, which really happened on this run */}
+      {/**
+       * ANSWERED, the band collapses to two lines of prose. Measured, and a correction of
+       * my own reasoning.
+       *
+       * The first version kept the cards and merely dropped the ones nobody picked: 224px
+       * down to 183px. That looked fit-neutral and was not, because the chains arrive
+       * underneath at the same moment and they are ~140px — so answering grew the page by
+       * 99px and pushed "What led to what" off the bottom. `verify.mjs` could not see it:
+       * the harness never clicks the item, so the gate only ever measures the unanswered
+       * state. It took driving the click by hand.
+       *
+       * Two lines instead of two cards is ~50px, so answering now SHRINKS the band by more
+       * than the chains add. It is also the better reading — once the chains are on screen
+       * they are the subject, and the item's answer is a footnote to them. The consequence
+       * itself goes too, because `soLater` is the second half of the very chain now
+       * printed below it.
+       */}
+      {settled ? (
         <div className="border-l-[3px] border-(--color-accent) pl-3">
-          <p className="text-[12px] font-bold uppercase tracking-[0.07em] text-(--color-muted)">
-            {LABEL.happened}
-          </p>
-          <p className="mt-1 text-[15px] leading-snug text-(--color-ink) text-pretty">
-            {claim.soLater}
-          </p>
-          {!settled && (
+          {/* The answer is NOT restated when the player got it, because the first chain
+              printed directly below is that same sentence — "This is the one: X" sitting
+              40px above "X → Y" reads as the page stuttering. When they picked something
+              else, both are named, because the whole value of the item is the gap. */}
+          {rightFirstTime ? (
+            <p className="text-[15px] leading-snug text-(--color-ink) text-pretty">
+              {LABEL.samePick}
+            </p>
+          ) : (
             <>
-              <p className="mt-2 text-[15px] font-bold leading-snug text-(--color-ink)">
-                {LABEL.question}
+              <p className="text-[15px] leading-snug text-(--color-ink) text-pretty">
+                <span className="font-bold">{LABEL.whatHappened}: </span>
+                {answer?.text}
               </p>
-              {/* Said plainly and once. The screen looks like a test and is not one, and a
-                  player who thinks they are being marked answers differently. */}
-              <p className="mt-1 text-[13px] text-(--color-muted)">{LABEL.noMark}</p>
+              <p className="mt-1 text-[15px] leading-snug text-(--color-muted) text-pretty">
+                <span className="font-bold">{LABEL.whatYouChose}: </span>
+                {yours?.text}
+              </p>
             </>
           )}
-          {settled && (
-            <p className="mt-2 text-[13px] leading-snug text-(--color-muted) text-pretty">
-              {rightFirstTime ? `${LABEL.samePick} ` : ""}
-              {LABEL.andTheRest}
-            </p>
-          )}
+          <p className="mt-1 text-[13px] leading-snug text-(--color-muted)">
+            {LABEL.andTheRest}
+          </p>
         </div>
+      ) : (
+        <>
+          {/**
+           * Stacked, not side by side — also measured. The first version put the
+           * consequence beside the candidates, which halved the column: every candidate
+           * wrapped to two lines and the band came out at 320px against a 226px budget,
+           * pushing the ending 90px over target. Full width lets most candidates sit on
+           * one line, and two across turns four rows into two.
+           */}
+          <div className="border-l-[3px] border-(--color-accent) pl-3">
+            <p className="text-[12px] font-bold uppercase tracking-[0.07em] text-(--color-muted)">
+              {LABEL.happened}
+            </p>
+            <p className="mt-1 text-[15px] leading-snug text-(--color-ink) text-pretty">
+              {claim.soLater}
+            </p>
+            <p className="mt-1.5 text-[15px] font-bold leading-snug text-(--color-ink)">
+              {LABEL.question}{" "}
+              {/* Said plainly and once. The screen looks like a test and is not one, and
+                  a player who thinks they are being marked answers differently. */}
+              <span className="font-normal text-(--color-muted)">{LABEL.noMark}</span>
+            </p>
+          </div>
 
-        {/* the candidates */}
-        <ul
-          className="grid gap-2"
-          /* A list, and announced as the question's answers, so a screen reader reaching
-             this band is told what it is being asked before it reads four sentences. */
-          aria-label={LABEL.question}
-        >
-          {shown.map((c) => (
-            <li key={c.id}>
-              <Candidate
-                text={c.text}
-                state={
-                  !settled ? "open" : c.id === claim.answerId ? "answer" : "chosen-not-answer"
-                }
-                onPick={() => pick(c.id)}
-              />
-            </li>
-          ))}
-        </ul>
-      </div>
+          <ul
+            className="mt-2 grid gap-1.5 sm:grid-cols-2"
+            /* A list, and announced as the question's answers, so a screen reader reaching
+               this band is told what it is being asked before it reads four sentences. */
+            aria-label={LABEL.question}
+          >
+            {claim.candidates.map((c) => (
+              <li key={c.id} className="grid">
+                <Candidate text={c.text} onPick={() => pick(c.id)} />
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       {/* One live region, so the answer is spoken rather than merely rendered — the
           whole band changes in place and a screen-reader user would otherwise have to go

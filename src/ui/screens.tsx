@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { story } from "../content/story";
-import { causalThreads, finalVerdict, ledger } from "../engine/engine";
+import { causalClaim, causalThreads, finalVerdict, ledger } from "../engine/engine";
 import { codeFromState } from "../engine/runcode";
 import {
   STAGES,
@@ -16,6 +16,7 @@ import {
   type OutcomeTone,
   type Setup,
 } from "../engine/types";
+import { CausalClaimItem } from "./claim";
 import { Facsimile } from "./facsimile";
 import { Icon, Pill, SectionTitle } from "./icons";
 import { CardButton } from "./mission";
@@ -530,6 +531,20 @@ function advisorFor(missionId: string): Advisor | undefined {
 export function EndingScreen({ state }: { state: GameState }) {
   const verdict = finalVerdict(state.dims, state.flags);
   const threads = causalThreads(state, story);
+  /**
+   * Backlog 4.5 — the one question the debrief asks, or `null`.
+   *
+   * Null on a run whose earned threads carry no authored wrong answers, which is about
+   * two runs in five; the chains then appear immediately, exactly as they always did.
+   * The chains wait for an answer ONLY while there is a question to answer.
+   */
+  const claim = causalClaim(state, story);
+  const [claimAnswered, setClaimAnswered] = useState(false);
+  const showThreads = threads.length > 0 && (claim === null || claimAnswered);
+  /* Whether the row has a left-hand region at all. It must cost nothing when it does
+     not: with neither a question nor chains, `decisions` takes the whole width rather
+     than leaving a 1fr hole where a section used to be. */
+  const leftColumn = claim !== null || showThreads;
   const account = ledger(state);
   const runCode = codeFromState(state, story);
   /**
@@ -644,35 +659,52 @@ export function EndingScreen({ state }: { state: GameState }) {
        */}
       <div
         className={`mt-4 grid gap-x-8 gap-y-5 ${
-          threads.length > 0 && !runListOpen ? "lg:grid-cols-[minmax(0,1fr)_468px]" : ""
+          leftColumn && !runListOpen ? "lg:grid-cols-[minmax(0,1fr)_468px]" : ""
         }`}
       >
-        {/* The payoff of the whole design. Two across at this column width rather than
-            three: `auto-fill` will not open a 272px track for 15px prose, and with one
-            thread it still reserves the second track, which keeps a lone chain off a
-            117-character measure. */}
-        {threads.length > 0 && (
-          <section data-region="threads">
-            <SectionTitle icon="spark" className="mb-2">
-              {UI_LABEL.ledToWhat}
-            </SectionTitle>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(380px,1fr))] gap-x-8 gap-y-3">
-              {threads.map((t, i) => (
-                <div
-                  key={i}
-                  className="break-inside-avoid border-l-[3px] border-(--color-accent) pl-3 text-[15px] leading-snug"
-                >
-                  <p className="text-(--color-ink) text-pretty">{t.because}</p>
-                  <p className="mt-1.5 flex items-start gap-1.5 text-(--color-ink-soft) text-pretty">
-                    <span aria-hidden="true" className="shrink-0 font-bold text-(--color-accent)">
-                      →
-                    </span>
-                    {t.soLater}
-                  </p>
+        {/* The question and then the chains it is about, in that order and in ONE track.
+            Two grid children would put them in two COLUMNS and push `decisions` onto a
+            row of its own — which is the 116px this row was built to reclaim. */}
+        {leftColumn && (
+          <div className="grid min-w-0 gap-y-5">
+            {/* Backlog 4.5, and it sits here rather than below because the chains are the
+                answer to it. `ui/claim.tsx` drops from four candidate rows to two once
+                answered, so the column does not grow at the moment they arrive. */}
+            {claim !== null && (
+              <CausalClaimItem claim={claim} onAnswered={() => setClaimAnswered(true)} />
+            )}
+
+            {/* The payoff of the whole design. Two across at this column width rather than
+                three: `auto-fill` will not open a 272px track for 15px prose, and with one
+                thread it still reserves the second track, which keeps a lone chain off a
+                117-character measure. */}
+            {showThreads && (
+              <section data-region="threads">
+                <SectionTitle icon="spark" className="mb-2">
+                  {UI_LABEL.ledToWhat}
+                </SectionTitle>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(380px,1fr))] gap-x-8 gap-y-3">
+                  {threads.map((t, i) => (
+                    <div
+                      key={i}
+                      className="break-inside-avoid border-l-[3px] border-(--color-accent) pl-3 text-[15px] leading-snug"
+                    >
+                      <p className="text-(--color-ink) text-pretty">{t.because}</p>
+                      <p className="mt-1.5 flex items-start gap-1.5 text-(--color-ink-soft) text-pretty">
+                        <span
+                          aria-hidden="true"
+                          className="shrink-0 font-bold text-(--color-accent)"
+                        >
+                          →
+                        </span>
+                        {t.soLater}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
+              </section>
+            )}
+          </div>
         )}
 
         {/* The run itself — collapsed on screen, open in print. The summary carries the
