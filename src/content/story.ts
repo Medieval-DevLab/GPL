@@ -4256,6 +4256,37 @@ export const story: Content = {
    * A rule needs at least two outcomes. Four once fired on a single outcome, so a
    * section introduced as "the chains your own decisions created" presented one decision
    * restated as a chain, and one simply paraphrased its own outcome's detail text.
+   *
+   * ON `insteadOf` — the wrong answers for the debrief's one causal-claim item.
+   *
+   * The item shows `soLater` and asks which earlier decision led to it, so each entry has
+   * to be a decision the player could believe caused this and did not. Two failure modes
+   * were steered around deliberately, and both make the item worthless:
+   *
+   *  · THE "I NEVER DID THAT" DISTRACTOR. A wrong answer describing something the player
+   *    plainly never chose is eliminated without a thought about causation, and the item
+   *    degrades into a memory test. So every entry below is a decision that is either
+   *    forced by the same chain — a player standing behind the pilot date necessarily put
+   *    a pilot in the proposal — or drawn from the multi-pick beats, where three of six
+   *    and two of six make any given component a coin toss rather than a long shot.
+   *  · ACCIDENTALLY TRUE. If the wrong answer also fed the consequence, the attentive
+   *    learner is right and the game tells them they are wrong. Each entry was checked
+   *    against the flags the outcome's own `when` reads, and against the ones every
+   *    outcome on the path between reads. That check removed more candidates than it
+   *    kept: the workshop with Marcus is out of the Operations threads because it does
+   *    make Operations invested; `o-conventional` is out of the level-scorecard thread
+   *    because its own outcome prose says the bids became indistinguishable; the review
+   *    week spent on the integration detail is out of the date thread because a testing
+   *    plan genuinely does hold a date up.
+   *
+   * Four rules carry none, which is the field working as intended rather than a gap: a
+   * rule with no `insteadOf` is never chosen as the item. `m9-mitigate-broke` fires only
+   * on `discounted`, which only `m8-discount` sets, so rule two cannot fire unless rule
+   * one has already fired and taken the item — writing distractors for it would author
+   * copy no player can reach. The other three are threads whose `soLater` is an
+   * observation rather than an event, or whose only honest cause is the thread's own
+   * other half. Eleven of fifteen carry them, which puts the item on about three runs in
+   * five; the rest end with the threads and no question, as they did before.
    */
   threads: [
     {
@@ -4263,6 +4294,14 @@ export const story: Content = {
       because: "You met the client on price to close the gap.",
       soLater:
         "When the review found a real risk, the money that would have covered it had already been spent winning the deal.",
+      /* The near-miss is an expensive programme mistaken for a spent contingency. Every
+         run reaches a review finding of some kind, so the decision that shaped WHICH
+         finding it was is not the decision that made the finding unaffordable. */
+      insteadOf: [
+        "You took two weeks of paid discovery rather than pitching the full programme.",
+        "You promised to rebuild the systems the whole operation runs on.",
+        "You spent the internal review week on the pitch rather than the commercial case.",
+      ],
     },
     {
       needsOutcomes: ["m9-mitigate-broke", "m10-absorb-broke"],
@@ -4275,18 +4314,43 @@ export const story: Content = {
       because: "You put an Operations workstream in the proposal before anyone asked for one.",
       soLater:
         "When delivery needed to be re-planned, Operations was already invested — so a hard conversation was treated as management rather than failure.",
+      /* Two, not three: `m10-reset-trust` also opens on `evidenced` and on `credibility`,
+         which rules out every distractor about their own data, the reference visit, the
+         point of view and the warm introduction — all of them would have been true. What
+         is left is the proposal's showier half and the shape of the deal. */
+      insteadOf: [
+        "You put an eight-week pilot in the proposal so the board could see something.",
+        "You restructured the deal into phases so the board's first cheque was small.",
+      ],
     },
     {
       needsOutcomes: ["m7-overreach", "m10-push-fragile"],
       because: "You promised to rebuild the systems at the centre of their operation with no route into production.",
       soLater:
         "Something shipped on the promised date that could not actually reach the business it was built for.",
+      /* The pilot and the accepted risk are both absent on purpose: `m10-push-fragile`
+         opens on `promised:fast` and on `risk_accepted` as well, so either would have
+         been a second true answer. These three are the ambition, the dependency and the
+         price — the three things a player blames before they blame the missing stream. */
+      insteadOf: [
+        "You put the customer journey redesign in as well, as the most visible piece in the document.",
+        "You brought in a logistics partner who already runs returns at this scale.",
+        "You met their number by coming down on price rather than taking work out.",
+      ],
     },
     {
       needsOutcomes: ["m2-both", "m6-real-evidenced"],
       because: "You spent your two questions on the complaints and on who actually decides.",
       soLater:
         "You could open the solution conversation with their own evidence, which is why nobody argued with you.",
+      /* All three are ways of being believed that are not evidence — the introduction,
+         the reference, the access. The outcome they are wrong about says so itself:
+         "you open with their complaint volumes rather than your credentials". */
+      insteadOf: [
+        "You used your warm introduction on thirty minutes in front of the sponsor.",
+        "You spent a fortnight taking Sarah to a retailer where you had already delivered.",
+        "You proposed a paid discovery, so you were inside the business before you priced it.",
+      ],
     },
 
     /* ── added from the co-occurrence measurement ───────────────────────────── */
@@ -4295,6 +4359,14 @@ export const story: Content = {
       because: "You used a question to find out who could stop this, and it was Marcus Reed.",
       soLater:
         "The proposal named his systems and his people, so the person best placed to object had nothing left to object to.",
+      /* Three plausible ways to quiet an Operations Director, none of which is giving his
+         team a named role. The workshop with his leads is deliberately not among them:
+         it would have quieted him too. */
+      insteadOf: [
+        "You argued the damage happened after the sale, not on the shop floor.",
+        "You put an eight-week pilot in, so something would be live inside two months.",
+        "You brought in a logistics partner who already runs returns at this scale.",
+      ],
     },
     {
       needsOutcomes: ["m2-ops", "m6-asked"],
@@ -4307,6 +4379,15 @@ export const story: Content = {
       because: "You went wide to get attention, then spread your two discovery weeks thin.",
       soLater:
         "Breadth twice over. You entered the solution phase knowing a little about a lot, which is the position every competitor was also in.",
+      /* The game has two fortnights in it and only one of them was spent thin, which is
+         the whole near-miss. Both entries are decisions to go and find something out —
+         the wrong answer is that either of them is what left you shallow. The early
+         questions are not offered: spending them on the race rather than the problem
+         genuinely does leave you here. */
+      insteadOf: [
+        "You spent days working out exactly what the rival had sold them, before answering Sarah.",
+        "You took two weeks of paid discovery rather than pitching the full programme.",
+      ],
     },
     {
       needsOutcomes: ["m5b-spread", "m7-overreach"],
@@ -4319,6 +4400,15 @@ export const story: Content = {
       because: "Operations had people named in the proposal before signature.",
       soLater:
         "Signing was a defensible decision rather than a hopeful one, because the part most likely to fail already had an owner.",
+      /* Written without "you", because `because` is: a distractor in a different voice
+         from the answer is findable on style alone, which is the oldest flaw in multiple
+         choice. Each is a real reduction in what signing risked, and none of them gave
+         anything an owner. */
+      insteadOf: [
+        "An eight-week pilot was in the proposal, with a date attached to it.",
+        "The programme had been split into phases before it went to the board.",
+        "A paid discovery had already put your team inside the business.",
+      ],
     },
     {
       needsOutcomes: ["m5b-grounded", "m9a-value-strong"],
@@ -4331,6 +4421,14 @@ export const story: Content = {
       because: "You proposed what they asked for, and then let the submission speak for itself.",
       soLater:
         "Three capable proposals arrived and nothing separated them but price. A scorecard with every column level is decided on cost.",
+      /* Three efforts aimed at people, against a decision made on a form. Keeping the
+         conventional shape is not here, because that outcome's own prose already says
+         three firms ended up offering the same answer — it would have been true. */
+      insteadOf: [
+        "You put a campaign into the market, and kept your senior people free for other work.",
+        "You took Sarah to see the work you had already done for another retailer.",
+        "You spent the internal review week making the case land harder with Sarah's board.",
+      ],
     },
 
     /* ── the handover, which is where the pursuit finally answers for itself ───── */
@@ -4339,18 +4437,44 @@ export const story: Content = {
       because: "You confirmed every sentence in a proposal that had no route into production.",
       soLater:
         "Aisha planned to all of it, so the judgement about which promises were real ended up being made by the person who had to keep them.",
+      /* Two recent decisions that left her short and left her informed respectively, and
+         neither of which handed her the judgement. The discount, the pilot, the part
+         taken out to reach their number, the accepted risk and the overruled review are
+         all excluded — `m10h-all-sound`'s `none` list names every one of them, so each
+         is a reason this branch fires rather than its sibling. */
+      insteadOf: [
+        "You staffed the gap with two graduates and your own time reviewing their work.",
+        "You took the real dates to the sponsor early, with a re-plan already drafted.",
+      ],
     },
     {
       needsOutcomes: ["m6b-outcome-blind", "m10h-payback-right"],
       because: "You tied a third of the fee to a figure nobody had a baseline for.",
       soLater:
         "At the handover the only options were to unsay it or to argue about measurement in month nine with your own fee on the table.",
+      /* Three other commitments of the same size, and the item is which kind of promise
+         can only be settled by an argument: a date can be checked, a price is a price,
+         and a number nobody has defined is a disagreement with a date on it. */
+      insteadOf: [
+        "You promised something live inside eight weeks, and put the date in the contract.",
+        "You committed to rebuilding the returns and support systems the business runs on.",
+        "You came down to procurement's number to close the gap on price.",
+      ],
     },
     {
       needsOutcomes: ["m5b-grounded", "m10h-date-founded"],
       because: "You spent a fortnight on a workshop and a data audit instead of on the pitch.",
       soLater:
         "Months later you could say the pilot date out loud and be believed, because the thing it depended on had already been checked by somebody.",
+      /* The first is guaranteed — standing behind the pilot date means a pilot went in
+         the proposal — and it is still wrong, because putting a date in a document is
+         not the same as checking what it rests on. The other two buy capacity, which is
+         the commonest thing to mistake for having checked. */
+      insteadOf: [
+        "You put an eight-week pilot in the proposal so something would be live early.",
+        "You brought in two experienced contractors at twice the rate to fill the gap.",
+        "You added people and carried the cost yourselves rather than move the date.",
+      ],
     },
   ],
   chapters: [
