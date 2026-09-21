@@ -160,7 +160,13 @@ describe("content validity", () => {
    * A PowerShell `Get-Content | Set-Content -Encoding utf8` did exactly that.
    */
   it("has no mis-decoded characters anywhere in the content", () => {
-    const suspect = /â€|Ã‚|Ã©|�/;
+    /* `Â` was added when the content gained its first currency symbols. A pound sign
+       read as Latin-1 and written back as UTF-8 becomes `Â£`, and the three sequences
+       beside it did not cover that — checked by encoding one and running it past the old
+       pattern, which passed it. `Â` prefixes every character in the A0–BF range mangled
+       that way, so it catches the whole class rather than one more example of it, and it
+       cannot appear legitimately in British English prose. */
+    const suspect = /â€|Ã‚|Ã©|Â|�/;
     const bad: string[] = [];
 
     const walk = (value: unknown, path: string) => {
