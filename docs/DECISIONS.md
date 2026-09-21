@@ -143,6 +143,24 @@ A quiz at the ending is the fourth door into the same room, and it is the one th
 most like good pedagogy from the outside. The item exists to make a cohort argue, not to
 tell anyone how they did.
 
+**One item, not three, and confirmed immediately rather than in aggregate — which is a
+deliberate departure from what both the backlog and `ENGAGEMENT-MODEL.md` asked for.**
+Backlog 4.5 specifies "three month-five consequences, which earlier decision caused each,
+confirmed in aggregate"; the engagement model ranks it as "confirm N at a time, never per
+item", which is Obra Dinn's mechanic and exists there so a player cannot brute-force by
+trial and error.
+
+Measured, over 304,432 reachable flag-states: **three threads fire on 5.6% of them.** Two
+or more on 27.4%. So the specified shape is unbuildable on 94% of runs, and would have
+produced either an item that almost never appears or one padded with consequences that
+did not happen — which breaks the rule that nothing here is invented.
+
+Batching is then moot: there is nothing to batch, and Obra Dinn's reason for batching does
+not transfer anyway. Its confirmation is withheld because guessing is cheap and repeatable
+there. Here the player picks once, nothing is scored, and a second guess is not on offer —
+so immediate confirmation costs nothing and delaying it would only separate the answer
+from the question that earned it.
+
 **The wrong answers are authored, not generated.** `CausalThreadRule.insteadOf`. The engine
 could assemble distractors from other rules' `because` lines, and the result would be
 unusable in both directions: a cause the player plainly never took turns the item into a

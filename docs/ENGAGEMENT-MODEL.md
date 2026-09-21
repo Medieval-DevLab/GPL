@@ -105,6 +105,11 @@ is to state it plainly *and* ask what the player was thinking.
 2. **Commit-a-causal-claim debrief, confirmed in batches.** "Which earlier decision caused
    this?" — confirm N at a time, never per item. Obra Dinn's mechanic doing Rudolph's job.
    *Medium — needs a cause-link field on outcomes.*
+   **BUILT, as one item confirmed immediately — not N, not batched.** Three causal
+   consequences requires three threads to have fired, which is 5.6% of reachable states.
+   And Obra Dinn batches because guessing there is cheap and repeatable; here the player
+   picks once, nothing is scored, and a second guess is not offered, so withholding the
+   answer would only separate it from the question. D-069.
 3. **Diegetic ledger instead of a score.** Hours owed, margin spent, people committed.
    *Low — a re-render of state we already hold.*
 4. **Tension band, not a scoreboard.** A dimension that is too high is also a failure
