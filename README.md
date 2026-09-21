@@ -191,14 +191,21 @@ teaching.
 
 Rules for authors are in [`docs/DESIGN-RULES.md`](docs/DESIGN-RULES.md).
 Why things are the way they are is in [`docs/DECISIONS.md`](docs/DECISIONS.md).
+Running it with a group is in [`docs/FACILITATOR-GUIDE.md`](docs/FACILITATOR-GUIDE.md) —
+written for the facilitator, not for us.
 
 ---
 
 ## Deliberately not here
 
-Multiplayer, teams, a facilitator console, accounts, a backend, analytics, an LMS integration,
+Multiplayer, teams, a facilitator console, accounts, a backend, analytics,
 XP, coins, levels, energy, timers, or a persistent economy. Several of those may be worth
 adding; none of them was worth adding *before* the core loop was proven to be fun and to teach.
+
+An LMS integration was on that list and has since been built, once reading paid — but only
+the honest half of one. `npm run scorm` reports **completion and never a score**, because
+the score was deleted on purpose and an LMS dashboard is exactly where it would come back
+where nobody could argue with it. See `src/scorm.ts`.
 
 ---
 
@@ -213,3 +220,4 @@ adding; none of them was worth adding *before* the core loop was proven to be fu
 | `npm run preview` | serve the production build |
 | `npm run verify` | full playthrough in a real browser + screenshots |
 | `npm run validate` | typecheck + test + build |
+| `npm run scorm` | build, then write a SCORM 1.2 manifest into `dist/` |
