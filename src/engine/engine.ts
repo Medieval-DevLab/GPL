@@ -10,6 +10,7 @@ import {
   DIMENSIONS,
   isMission,
   type BadgeId,
+  type CausalThreadRule,
   type Component,
   type Condition,
   type Content,
@@ -28,6 +29,22 @@ import {
 } from "./types";
 
 export const START_DIMS: Record<DimensionId, number> = { win: 50, profit: 50, deliver: 50 };
+
+/**
+ * FNV-1a, 32-bit. Not cryptographic and does not need to be: it guards typos and drift,
+ * and orders the debrief's claim candidates.
+ *
+ * It lives here rather than in `runcode.ts`, where it was written, because the engine now
+ * needs it too and `runcode` already imports the engine — the other direction is a cycle.
+ */
+export function fnv1a(text: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h >>> 0;
+}
 
 const clamp = (n: number): number => Math.max(0, Math.min(100, Math.round(n)));
 
@@ -892,14 +909,75 @@ export interface CausalThread {
  * authored; nine restatements read as padding.
  */
 export function causalThreads(state: GameState, content: Content): CausalThread[] {
+  return firedThreads(state, content)
+    .slice(0, 3)
+    .map(({ because, soLater }) => ({ because, soLater }));
+}
+
+/** Every rule this run earned, in authored order. */
+function firedThreads(state: GameState, content: Content): CausalThreadRule[] {
   const fired = new Set(state.history.map((h) => h.outcomeId));
-  const out: CausalThread[] = [];
-  for (const rule of content.threads) {
-    if (!rule.needsOutcomes.every((id) => fired.has(id))) continue;
-    if (rule.needsFlags && !rule.needsFlags.every((f) => state.flags.includes(f))) continue;
-    out.push({ because: rule.because, soLater: rule.soLater });
-  }
-  return out.slice(0, 3);
+  return content.threads.filter(
+    (r) =>
+      r.needsOutcomes.every((id) => fired.has(id)) &&
+      (!r.needsFlags || r.needsFlags.every((f) => state.flags.includes(f))),
+  );
+}
+
+/**
+ * The debrief's one causal-claim item — backlog 4.5.
+ *
+ * "Here is something that happened in month five. Which of your earlier decisions led to
+ * it?" Asked BEFORE the threads are revealed, because a section that hands the player
+ * every chain for free is a section they read rather than argue with, and the item turns
+ * the same content into the one artefact a cohort can disagree over.
+ *
+ * FOUR THINGS THIS DELIBERATELY IS NOT:
+ *
+ *  1. **Not scored, and not scoreable.** It returns the answer and nothing else; whoever
+ *     renders it confirms and moves on. This game deleted its score because a meter-greedy
+ *     policy reached 100/100/100 without reading a word, and a graded quiz at the ending
+ *     would reintroduce exactly that, at the one moment the player is finally reflecting
+ *     rather than optimising.
+ *  2. **Not invented.** The consequence really happened on this run and the answer really
+ *     caused it — both come from a thread the player earned. An item about a plausible
+ *     consequence would teach a rule the game did not actually apply.
+ *  3. **Not random.** No `Math.random` in here, and none is wanted: the run must replay
+ *     identically from its code, which is what makes a facilitator's pre-read and an exact
+ *     bug repro possible at all. The candidate order is a hash of the run's own outcomes,
+ *     so it is stable for a given run and differs between runs — the correct answer does
+ *     not sit in the same slot every time.
+ *  4. **Not always there.** `null` on a run that earned no thread carrying distractors,
+ *     which is the 33.5% that end with no thread at all plus any rule the author has not
+ *     given an `insteadOf` to. The caller renders nothing.
+ *
+ * Only the FIRST eligible thread becomes the item. Three items would be a test; one is a
+ * question, and the reviewers who asked for this were explicit that five is where the quiz
+ * lives and that there is exactly one of it.
+ */
+export interface CausalClaim {
+  /** what happened, in the language of the debrief */
+  soLater: string;
+  /** the real cause and its near-misses, in a stable per-run order */
+  candidates: { id: string; text: string }[];
+  /** which `candidates[].id` actually caused it */
+  answerId: string;
+}
+
+export function causalClaim(state: GameState, content: Content): CausalClaim | null {
+  const rule = firedThreads(state, content).find((r) => (r.insteadOf?.length ?? 0) > 0);
+  if (!rule) return null;
+
+  /* Seeded on what the player DID, not on the rule, so two runs that earn the same thread
+     by different routes do not present the same arrangement. */
+  const seed = [...state.history.map((h) => h.outcomeId)].sort().join("|");
+  const texts = [rule.because, ...(rule.insteadOf ?? [])];
+  const candidates = texts
+    .map((text) => ({ id: `c${fnv1a(text).toString(36)}`, text, at: fnv1a(seed + text) }))
+    .sort((a, b) => a.at - b.at)
+    .map(({ id, text }) => ({ id, text }));
+
+  return { soLater: rule.soLater, candidates, answerId: `c${fnv1a(rule.because).toString(36)}` };
 }
 
 /**

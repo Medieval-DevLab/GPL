@@ -6,6 +6,58 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-069 · The debrief asks one causal question, and refuses to mark it
+Backlog 4.5. Before the threads are revealed, the ending asks: here is what happened in
+month five — which of your earlier decisions led to it? The player picks, the game
+confirms, the chains appear.
+
+**It is not scored, and `engine.test.ts` asserts the return type carries no field that
+could become a score.** That test looks paranoid and is not. This game deleted its score
+because a meter-greedy policy reached 100/100/100 without reading a word; the debrief
+refuses to give a grade for the same reason; `src/scorm.ts` refuses to send one to an LMS.
+A quiz at the ending is the fourth door into the same room, and it is the one that looks
+most like good pedagogy from the outside. The item exists to make a cohort argue, not to
+tell anyone how they did.
+
+**The wrong answers are authored, not generated.** `CausalThreadRule.insteadOf`. The engine
+could assemble distractors from other rules' `because` lines, and the result would be
+unusable in both directions: a cause the player plainly never took turns the item into a
+memory test, and a cause that *also* contributed makes the "correct" answer a lie an
+attentive learner is right to reject. Only the person writing the thread knows which
+near-miss is instructive. A rule with no `insteadOf` is never chosen, so the cost of not
+authoring one is a quieter ending rather than a bad question.
+
+**The candidate order is a hash, not a shuffle.** `Math.random` is banned in `src/engine`
+and the ban earns its keep here specifically: a run has to replay identically from its
+fourteen-character code, which is what makes a facilitator's pre-read and an exact bug
+repro possible. The order is `fnv1a` over the run's own sorted outcome ids plus the
+candidate text — stable for a given run, different between runs, so the answer does not
+sit in slot one every time. `fnv1a` moved from `runcode.ts` into `engine.ts` to get there,
+because `runcode` already imports the engine and the other direction is a cycle.
+
+**The validator learned about threads in the same change, having never checked them at
+all.** That gap is the most expensive content bug this repo has had: a thread naming an
+outcome id that does not exist never fires and never complains, so the ending is just
+quieter than it was authored to be, on some runs, and nothing has an opinion. Five rules
+existed while `D-012` recorded nine. There are now six checks — dangling outcome ids,
+dangling flags, the two-outcome minimum `causalThreads` documented and did not enforce,
+endorsement language, duplicate candidates, and the two-distractor minimum — and each is
+shown failing on purpose in `validate.test.ts`, per `D-037`.
+
+The leak check applied to thread copy is deliberately the *looser* reading. The ending is
+the one screen whose job is to say what happened, so naming an outcome there is correct;
+what the shared term list buys is its other half, which is that the ending must never say
+which decision was the right one. It is the screen the player most wants a verdict from
+and therefore the one that must least give one.
+
+**Cost:** one more authored field for whoever writes a thread, and an item that is absent
+on any run whose threads have no distractors — which is honest but means two players can
+compare endings and one of them never saw the question. The alternative was generating
+distractors, which is worse in the way described above. Reversible: the field is optional
+and `causalClaim` returns `null` without it.
+
+---
+
 ## D-068 · `apply` is a third presentation, not a third mission kind
 The apply/rebuttal beat — backlog 5.7, Aisha's "which ones did you mean?" — renders the
 options the player did **not** earn, greyed and padlocked, each naming the beat where it

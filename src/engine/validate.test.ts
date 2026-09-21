@@ -891,3 +891,61 @@ describe("the dialogue rules are not vacuous", () => {
     );
   });
 });
+
+/* ── the causal threads ──────────────────────────────────────────────
+ * These had no checks at all until 4.5 needed one, and the cost of that is on the
+ * record: five rules existed, `DECISIONS.md` claimed nine, and the ending's payoff
+ * section was empty on 77% of runs. A thread naming an outcome that does not exist
+ * simply never fires — no error, no warning, a quieter ending. Each check below is
+ * therefore shown failing on purpose, per this file's opening note. */
+
+describe("the causal threads", () => {
+  const firstThread = (c: Content) => {
+    const t = c.threads[0];
+    if (!t) throw new Error("no thread to break");
+    return t;
+  };
+
+  it("catches a thread that waits on an outcome no mission produces", () => {
+    const c = clone();
+    firstThread(c).needsOutcomes = ["m7-anchored", "o-typo-that-never-fires"];
+    expect(brokeIt(c)).toContain("can never fire");
+  });
+
+  it("catches a thread that waits on a flag nothing sets", () => {
+    const c = clone();
+    firstThread(c).needsFlags = ["never_written_by_anything"];
+    expect(brokeIt(c)).toContain("can never fire");
+  });
+
+  it("catches one decision restated as a chain", () => {
+    const c = clone();
+    firstThread(c).needsOutcomes = ["m7-anchored"];
+    expect(brokeIt(c)).toContain("at least two outcomes");
+  });
+
+  /* Not the pre-decision leak rule — the ending is the one screen where naming what
+     happened is the entire job. What the shared check buys here is the other half of its
+     term list: the ending must never tell the player which decision was the right one,
+     and it is the screen most likely to try. */
+  it("catches thread copy that endorses a decision", () => {
+    const c = clone();
+    firstThread(c).soLater = "Reopening it was the best choice available to you.";
+    expect(brokeIt(c)).toContain("best choice");
+  });
+
+  /* 4.5. The item offers `[because, ...insteadOf]` and confirms one of them. A
+     duplicate makes the player right and the game wrong, which is worse than no item. */
+  it("catches a wrong answer that repeats the right one", () => {
+    const c = clone();
+    const t = firstThread(c);
+    t.insteadOf = [t.because, "Something else entirely, for the arity check."];
+    expect(brokeIt(c)).toContain("two right answers");
+  });
+
+  it("catches a single wrong answer, which is a coin toss", () => {
+    const c = clone();
+    firstThread(c).insteadOf = ["Only one alternative."];
+    expect(brokeIt(c)).toContain("coin toss");
+  });
+});

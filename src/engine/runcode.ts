@@ -37,7 +37,7 @@
  */
 
 import { openingState, possibleSelections } from "./analysis";
-import { advance, chooseSetup, commit, getNode } from "./engine";
+import { advance, chooseSetup, commit, fnv1a, getNode } from "./engine";
 import {
   DIMENSIONS,
   isMission,
@@ -96,16 +96,6 @@ const GROUP_SIZE = 4;
 const MAX_DECISIONS = 64;
 
 /* ─────────────────────────── the fingerprints ─────────────────────────── */
-
-/** FNV-1a, 32-bit. Not cryptographic and does not need to be: it guards typos and drift. */
-function fnv1a(text: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 0x01000193) >>> 0;
-  }
-  return h >>> 0;
-}
 
 function condText(c: Condition | undefined): string {
   if (!c) return "-";

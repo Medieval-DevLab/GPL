@@ -791,6 +791,19 @@ export interface CausalThreadRule {
   needsFlags?: string[];
   because: string;
   soLater: string;
+  /**
+   * Wrong answers for the debrief's causal-claim item (backlog 4.5), in the same register
+   * as `because`.
+   *
+   * Authored rather than generated, and that is the whole point of the field. The engine
+   * could assemble distractors from other rules' `because` lines, but each is then either
+   * something the player plainly never did — which makes the item a memory test — or
+   * something they did that ALSO contributed, which makes the item wrong. Only the person
+   * writing the thread knows which near-miss is instructive.
+   *
+   * Two or three. A rule with none is simply never chosen as the item.
+   */
+  insteadOf?: string[];
 }
 
 export interface Content {

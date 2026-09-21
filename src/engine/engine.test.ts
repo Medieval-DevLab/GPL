@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { story } from "../content/story";
 import {
   advance,
+  causalClaim,
   causalThreads,
   commit,
   createInitialState,
@@ -316,6 +317,54 @@ describe("the game teaches what it claims to teach", () => {
     // A thread must never appear for a chain the player did not cause.
     const considered2 = causalThreads(considered, content);
     expect(considered2.some((t) => t.because.includes("met the client on price"))).toBe(false);
+  });
+
+  /**
+   * Backlog 4.5. The properties that make the item honest, rather than that it renders.
+   *
+   * The one worth arguing with is DETERMINISM: the candidate order is a hash rather than a
+   * shuffle, because a run has to replay identically from its fourteen-character code. A
+   * `Math.random` here would silently break facilitator pre-reads and exact bug repro, and
+   * nothing else in the game would notice.
+   */
+  describe("the causal-claim item", () => {
+    it("asks about something that really happened, and the answer really caused it", () => {
+      const claim = causalClaim(discounter, content);
+      if (!claim) return; // authoring may not have reached this run's thread yet
+      const threads = causalThreads(discounter, content);
+      expect(threads.some((t) => t.soLater === claim.soLater)).toBe(true);
+      const answer = claim.candidates.find((c) => c.id === claim.answerId);
+      expect(answer).toBeDefined();
+      expect(threads.some((t) => t.because === answer?.text)).toBe(true);
+    });
+
+    it("offers the wrong answers alongside it, all distinct", () => {
+      const claim = causalClaim(discounter, content);
+      if (!claim) return;
+      expect(claim.candidates.length).toBeGreaterThanOrEqual(3);
+      expect(new Set(claim.candidates.map((c) => c.text)).size).toBe(claim.candidates.length);
+      expect(new Set(claim.candidates.map((c) => c.id)).size).toBe(claim.candidates.length);
+    });
+
+    it("is identical on a replay of the same run, because the code has to", () => {
+      const a = causalClaim(discounter, content);
+      const b = causalClaim(discounter, content);
+      expect(a).toEqual(b);
+    });
+
+    it("is null rather than invented when the run earned no eligible thread", () => {
+      const fresh = createInitialState(content);
+      expect(causalClaim(fresh, content)).toBeNull();
+    });
+
+    /* The whole screen is a reflection, not a test. A field named like a mark is the first
+       step back towards the grader this game deleted. */
+    it("carries no score, mark or correctness count", () => {
+      const claim = causalClaim(discounter, content);
+      if (!claim) return;
+      const keys = Object.keys(claim).join(" ").toLowerCase();
+      expect(/score|mark|correct|points|grade/.test(keys)).toBe(false);
+    });
   });
 
   it("awards recognition only where it was earned", () => {

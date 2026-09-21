@@ -455,6 +455,60 @@ export function validateContent(content: Content): Issue[] {
     seenLabels.add(rule.label);
   }
 
+  /* ── the causal threads ──────────────────────────────────────
+   * These had NO checks at all, which is how the section `engine.ts` calls "the payoff
+   * of the whole design" came to be empty on 77% of runs while `DECISIONS.md` recorded
+   * nine rules and five existed. A thread naming an outcome id that does not exist never
+   * fires and never complains: the ending is simply quieter than it was authored to be,
+   * on some runs, and nothing in the build has an opinion. That is the most expensive
+   * kind of content bug this repo has had, so it gets an error rather than a warning. */
+  const outcomeIds = new Set<string>();
+  for (const node of nodes) {
+    if (!isMission(node)) continue;
+    for (const { outcome } of missionOutcomes(node)) outcomeIds.add(outcome.id);
+  }
+
+  content.threads.forEach((rule, i) => {
+    const where = `threads[${i}]`;
+    /* Not the pre-decision rule, which would be a category error here: the ending is the
+       one screen whose job IS to say what happened. What the shared term list buys is its
+       other half — the ending must never name which decision was the right one, and being
+       the screen the player most wants a verdict from, it is the likeliest to try. */
+    leakCheck(rule.because, where, "thread because");
+    leakCheck(rule.soLater, where, "thread soLater");
+
+    for (const id of rule.needsOutcomes) {
+      if (!outcomeIds.has(id)) {
+        err(where, `needs outcome "${id}", which no mission produces — this thread can never fire`);
+      }
+    }
+    for (const f of rule.needsFlags ?? []) {
+      if (!written.has(f)) {
+        err(where, `needs flag "${f}", which nothing sets — this thread can never fire`);
+      }
+    }
+    /* The rule `causalThreads` documents and did not enforce: one outcome restated as a
+       chain is not a chain, and four rules were doing exactly that. */
+    if (rule.needsOutcomes.length < 2) {
+      err(where, "a thread needs at least two outcomes, or it restates one decision as a chain");
+    }
+
+    /* 4.5 — the claim item's wrong answers. A distractor identical to the answer makes the
+       item unanswerable, and the player is right and the game says otherwise. */
+    const seen = new Set([normalise(rule.because)]);
+    (rule.insteadOf ?? []).forEach((alt, j) => {
+      leakCheck(alt, where, `thread insteadOf[${j}]`);
+      const key = normalise(alt);
+      if (seen.has(key)) {
+        err(where, `insteadOf[${j}] repeats another candidate — the item has two right answers`);
+      }
+      seen.add(key);
+    });
+    if (rule.insteadOf && rule.insteadOf.length < 2) {
+      err(where, "insteadOf needs at least two wrong answers, or the item is a coin toss");
+    }
+  });
+
   /* ── analysis assumption ─────────────────────────────────────
    * analysis.ts dedupes the exhaustive sweep on flags alone, which is exact
    * only while no branch gates on a dimension value. If that changes, branch
