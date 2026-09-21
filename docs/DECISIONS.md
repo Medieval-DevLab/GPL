@@ -6,6 +6,61 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-070 · The bundle budget is 82% over, and the number is not the problem — OPEN
+`node tools/size.mjs` reports **171.44 kB of code against the 94 kB in `CLAUDE.md`**. The
+tool has been saying so for a while. What it could not say was *where*, and a single
+number sends whoever reads it to refactor components, which on this build is the wrong
+place to look.
+
+It can now attribute the bundle to the modules it came from, via the sourcemap. Measured:
+
+| | raw | share | gz (est) |
+|---|---|---|---|
+| framework (React + react-dom) | 222.0 kB | 40.6% | ~65.3 kB |
+| interface (`src/ui` + `App.tsx`) | 155.0 kB | 28.4% | ~45.6 kB |
+| content (`story.ts`) | 143.8 kB | 26.3% | ~42.3 kB |
+| engine | 25.2 kB | 4.6% | ~7.4 kB |
+
+**React is 69% of the entire budget before a line of this project runs.** That is a
+standing decision, not drift, and the only lever on it is a smaller runtime. The next
+largest single source is the writing, which is the product and the last thing to cut. Our
+own interface and engine together are ~53 kB gz across eighteen missions and a dozen
+screen types.
+
+**Code-splitting, the obvious remaining lever, is closed.** Backlog 8.1 inlined the module
+precisely so `dist/` runs from `file://` inside a locked-down LMS, and dynamic `import()`
+from a file URL is the exact thing that was broken. Lazy-loading the ending and the
+dashboard would re-break the deployment target this was all packaged for.
+
+**The number has deliberately NOT been moved, and this entry is the reason.** `size.mjs`
+says "do not move this to make a build pass" and it is right to. But 94 kB is not
+reachable from here without either dropping React or cutting features, so leaving it is
+leaving a gate that can only ever be red — which this repo has already decided (D-038) is
+worse than no gate. It needs a human call between three options, none of which is free:
+
+1. **Re-baseline with the split**, budgeting framework / interface / engine separately and
+   reporting content rather than capping it. Honest, and makes future drift visible again.
+   Costs the simplicity of one number.
+2. **Swap React for Preact** (~4 kB gz against ~65). Saves roughly 60 kB and would put the
+   whole thing near the original budget. A real migration, and React 19 features in use
+   would need checking.
+3. **Accept it and delete the budget line.** Cheapest, and loses the instrument.
+
+My recommendation is (1), because the measurement above is the useful artefact either way
+and (2) is a large change to buy a number we chose ourselves.
+
+**Reversible:** entirely. Nothing in the build depends on the outcome; `size.mjs` is not
+wired into `npm run validate`.
+
+Two smaller things landed with the measurement. Sourcemaps are excluded from the size
+report, because counting a diagnostic build's `.map` files made the cold-visit total wrong
+by half a megabyte in the direction of alarm. And `tools/scorm-package.mjs` now filters
+them too — `npm run build` emits none, but packaging after a `--sourcemap` run would have
+uploaded this project's full source into someone else's LMS, where it is not ours to
+delete.
+
+---
+
 ## D-069 · The debrief asks one causal question, and refuses to mark it
 Backlog 4.5. Before the threads are revealed, the ending asks: here is what happened in
 month five — which of your earlier decisions led to it? The player picks, the game

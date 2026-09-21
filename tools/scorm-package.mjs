@@ -30,7 +30,13 @@ async function listFiles(dir, base = "") {
 }
 
 const pkg = JSON.parse(await readFile("package.json", "utf8"));
-const files = (await listFiles(DIST)).filter((f) => f !== "imsmanifest.xml");
+/* `.map` is excluded rather than assumed absent. `npm run build` emits none, but
+   `vite build --sourcemap` is a normal diagnostic (see `tools/size.mjs`) and leaves them
+   in `dist/`; packaging after one would upload this project's full source into someone
+   else's LMS, where it is not ours to delete. */
+const files = (await listFiles(DIST)).filter(
+  (f) => f !== "imsmanifest.xml" && !f.endsWith(".map"),
+);
 
 if (!files.includes("index.html")) {
   console.error("✗ dist/index.html is missing — run `npm run build` first");

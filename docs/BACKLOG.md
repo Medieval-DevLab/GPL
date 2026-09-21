@@ -46,7 +46,7 @@ engagement premium is positive, everything in sections 3–6 improves decoration
 | 2.3 | **DONE** · **Disclosure share (weight 5) is still unimplemented** — now counted as unearned rather than omitted, but not built. | `DENSITY-FRAMEWORK.md` §C factor 9 |
 | 2.4 | **DONE** · **`verify.mjs` plays one path**, so path-dependent overflow is invisible. The ending measured 1,867px of overflow on a reviewer's run and 739-in-739 on the harness path. 15 of 16 missions' alternative branches are never rendered in a browser. | QA; reproduced both ways |
 | 2.5 | **DONE** · **The `stations` band was retuned from the documented 5 to 3–4**, which is what lets 3 stations score 10/10. Restore the band or change the document. | ux F2 |
-| 2.6 | **DONE** · **Nothing measures the bundle.** 121.8 kB gzipped against a documented 94 kB in `CLAUDE.md`. | QA F9 |
+| 2.6 | **PART** · **Nothing measures the bundle.** 121.8 kB gzipped against a documented 94 kB in `CLAUDE.md`. **`tools/size.mjs` measures it and now attributes it** — the flat number sent readers to refactor components, which is the wrong place: React is **69% of the whole budget** before this project runs a line, and the next largest source is the writing. Now **171.44 kB**. **Left: a human call on the budget itself** — re-baseline with the split, swap React for Preact (~60 kB back), or drop the line. Code-splitting is closed by 8.1's `file://` requirement. See D-070. | QA F9 |
 
 ## 3 · Accessibility — six AA failures, one Level A
 
