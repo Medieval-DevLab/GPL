@@ -134,11 +134,22 @@ random (floor 1 always an easy fight, floor 9 always treasure, floor 15 always a
 | · | brief · ◆ **HANDOVER · APPLY/REBUTTAL** | decide | **New beat.** See §3 |
 | · | **Cut scene** — *Sarah resigns* | watch | **New.** Done to you |
 | · | brief · ◆ **m10c · reply (call)** · consequence | | Nobody planned for this |
-| · | **Ending debrief** | receive | The existing one |
+| · | **Ending debrief** | receive | The existing one, plus the claim item below |
 
 **Totals:** 18 decisions (17 existing + the handover) · 8 cut scenes · 4 reflections ·
 5 chapter debriefs · 1 ending. `resolving` is gone — folded into the consequence's
 entrance, reclaiming 17 slots.
+
+**One more thing happens inside the ending, on 60.8% of runs.** Before the causal chains
+are revealed, the debrief asks a single question — *here is what happened in delivery,
+which of your decisions led to it?* — and unfolds the chains once it is answered. It is
+not a screen and not a beat: it is a band that occupies the chains' own space, so it
+costs the ending no height. `SCREEN-SPECS.md` §4.7. A run whose threads carry no authored
+wrong answers simply sees the chains directly, which is why the figure is not 100%.
+
+It is the only `decide` in the game with no prediction gate, because it is the only one
+that changes nothing — and **it is not marked**. That is not politeness: a graded
+question is answered defensively, and the point of asking is to make a cohort argue.
 
 ---
 
