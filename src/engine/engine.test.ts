@@ -19,6 +19,7 @@ import {
   playScript,
   possibleSelections,
 } from "./analysis";
+import { codeFromState, decodeRun, replayRun } from "./runcode";
 import { formatIssues, validateContent } from "./validate";
 import { DIMENSIONS, isMission } from "./types";
 
@@ -328,9 +329,22 @@ describe("the game teaches what it claims to teach", () => {
    * nothing else in the game would notice.
    */
   describe("the causal-claim item", () => {
-    it("asks about something that really happened, and the answer really caused it", () => {
+    /**
+     * Skipped rather than passed while no thread carries `insteadOf`.
+     *
+     * The first draft of these tests began `if (!claim) return`, which means they report
+     * green on content that cannot produce an item at all — a gate that passes hardest
+     * when the feature is most absent. A skip is visible in the runner output; a vacuous
+     * pass is not, and this file's own opening argument (D-037) is that a gate nobody has
+     * seen fail is a comment.
+     */
+    const authored = content.threads.some((t) => (t.insteadOf?.length ?? 0) > 0);
+    const when = authored ? it : it.skip;
+
+    when("asks about something that really happened, and the answer really caused it", () => {
       const claim = causalClaim(discounter, content);
-      if (!claim) return; // authoring may not have reached this run's thread yet
+      expect(claim).not.toBeNull();
+      if (!claim) return;
       const threads = causalThreads(discounter, content);
       expect(threads.some((t) => t.soLater === claim.soLater)).toBe(true);
       const answer = claim.candidates.find((c) => c.id === claim.answerId);
@@ -338,18 +352,34 @@ describe("the game teaches what it claims to teach", () => {
       expect(threads.some((t) => t.because === answer?.text)).toBe(true);
     });
 
-    it("offers the wrong answers alongside it, all distinct", () => {
+    when("offers the wrong answers alongside it, all distinct", () => {
       const claim = causalClaim(discounter, content);
+      expect(claim).not.toBeNull();
       if (!claim) return;
       expect(claim.candidates.length).toBeGreaterThanOrEqual(3);
       expect(new Set(claim.candidates.map((c) => c.text)).size).toBe(claim.candidates.length);
       expect(new Set(claim.candidates.map((c) => c.id)).size).toBe(claim.candidates.length);
     });
 
-    it("is identical on a replay of the same run, because the code has to", () => {
-      const a = causalClaim(discounter, content);
-      const b = causalClaim(discounter, content);
-      expect(a).toEqual(b);
+    /**
+     * A real replay, not two calls on one object.
+     *
+     * The first version of this test called `causalClaim` twice on the same state and
+     * asserted the results matched, which a pure function cannot fail — it proved the
+     * function was not reading a clock, and nothing else. The property that actually
+     * matters is that a run reconstructed FROM ITS CODE presents the same item, because
+     * a facilitator pre-reading a cohort's runs and a bug report carrying an exact run
+     * both depend on it, and the candidate order is the one thing here that could
+     * plausibly drift without anyone noticing.
+     */
+    when("survives a round trip through the run code", () => {
+      const code = codeFromState(discounter, content);
+      expect(code).not.toBeNull();
+      const decoded = decodeRun(content, code as string);
+      expect(decoded.ok).toBe(true);
+      if (!decoded.ok) return;
+      const replayed = replayRun(content, decoded.run);
+      expect(causalClaim(replayed, content)).toEqual(causalClaim(discounter, content));
     });
 
     it("is null rather than invented when the run earned no eligible thread", () => {
@@ -359,8 +389,9 @@ describe("the game teaches what it claims to teach", () => {
 
     /* The whole screen is a reflection, not a test. A field named like a mark is the first
        step back towards the grader this game deleted. */
-    it("carries no score, mark or correctness count", () => {
+    when("carries no score, mark or correctness count", () => {
       const claim = causalClaim(discounter, content);
+      expect(claim).not.toBeNull();
       if (!claim) return;
       const keys = Object.keys(claim).join(" ").toLowerCase();
       expect(/score|mark|correct|points|grade/.test(keys)).toBe(false);
