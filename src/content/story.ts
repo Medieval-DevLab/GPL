@@ -233,7 +233,10 @@ const nodes: GameNode[] = [
         when: { all: ["start:connector"] },
         text: "People take your call, which gets us a meeting. It does not tell us whose.",
       },
-      { text: "You have delivered work like this. Find the one where that is the whole argument." },
+      /* A question, like the other two. This one read "Find the one where that is the
+         whole argument", so of the three starting strengths the Builders were the one
+         being told what to pick. */
+      { text: "You have delivered work like this. Which of the three would let that be the whole argument?" },
     ],
     advisor: PRIYA,
     consider: [
@@ -540,7 +543,10 @@ const nodes: GameNode[] = [
       },
       {
         when: { all: ["knows:real_pain"] },
-        text: "You have their complaint data. It is the one thing here they have not read in a pitch.",
+        /* Was "It is the one thing here they have not read in a pitch", which ranks the
+           option set — and only one option can use that flag, so "the one thing here"
+           was a star beside it. The fact about the client stays; the ranking goes. */
+        text: "You have their complaint data. Nobody else pitching this account has read it.",
       },
       { text: "First contact sets what they think we are. It is very hard to move afterwards." },
     ],
@@ -2393,7 +2399,18 @@ const nodes: GameNode[] = [
         id: "m5b-grounded",
         when: { all: ["ops_engaged", "has:data"] },
         tone: "strong",
-        headline: "You bought the two things nobody else will have.",
+        /* "You bought…" until the pedagogy pass: this outcome opens on `all:
+           ["ops_engaged", "has:data"]`, and a build outcome is matched against the flags
+           the player HOLDS, not the components they just ticked. A Builder who took the
+           point-of-view route arrives with both and lands here whatever they fund, so
+           the headline was telling some players what they had purchased and was wrong.
+           The detail and the bullets below were already written as state, which is why
+           only this line needed changing. The full fix is a flag of its own on each of
+           the two components — `funded:ops_workshop`, `funded:data_audit` — so the
+           condition can ask what was bought rather than what is held; that changes
+           branch selection, so it wants its own pass and its own sweep rather than
+           riding along with a copy change. `m5b-persuasion` has the same defect. */
+        headline: "You have the two things nobody else will have.",
         detail:
           "Operations has been in a room with you, and you know what their data can actually support. Neither is impressive in a pitch. Both are the difference between a proposal and a promise.",
         changed: [
@@ -3440,11 +3457,19 @@ const nodes: GameNode[] = [
     ],
     /* Staffing is the beat where the pricing conversation finally arrives in a room with
        the delivery lead in it, so she names it. The second branch is the reason graduates
-       are a reasonable bet on this programme and not on the last one. */
+       are a reasonable bet on this programme and not on the last one.
+
+       The first branch used to read "Before you say contractors: there is no money in
+       this contract for contractors" — and its condition is character for character the
+       condition on `m10b-contractors-broke`. So the colleague fired on exactly the flags
+       that select the hard outcome, named the card it was about to punish, and did it
+       before the decision: G3 wearing a face, and it removed the trade-off from the only
+       players whose earlier discount made it interesting. She still reacts and she still
+       has the stake. She states the position and leaves the choice alone. */
     advisorLine: [
       {
         when: { any: ["discounted", "thin_mitigation"] },
-        text: "Before you say contractors: there is no money in this contract for contractors.",
+        text: "I have been through the commercial case twice. Whatever we do here comes out of what is left of it.",
       },
       {
         when: { any: ["ops_onside", "has:training"] },
@@ -3672,7 +3697,11 @@ const nodes: GameNode[] = [
     consider: [
       "Which of these did you write to win, not to do?",
       "Who has to be told if you take one back?",
-      "What does Aisha stop planning for if you qualify it?",
+      /* First person: `consider` renders inside the colleague block, under her own name
+         and photograph, and the advisor on this beat is Aisha. Asking the player what
+         Aisha would stop planning for, in Aisha's voice, was the one place in fourteen
+         of these lists where the speaker talked about herself in the third person. */
+      "What do I stop planning for if you qualify it?",
     ],
     tip: "I am not trying to catch you out. I am trying to write a plan I can hold.",
     prompt: "She needs one answer to take away. The rest stay exactly as written.",
@@ -4292,15 +4321,19 @@ export const story: Content = {
     {
       needsOutcomes: ["m8-discount", "m9-mitigate-broke"],
       because: "You met the client on price to close the gap.",
+      /* "…had already been spent winning the deal" until the pedagogy pass, which is the
+         answer restated: only one candidate is about winning, so the item was decidable
+         on the echo rather than on the causation. The clause was decoration — the chain
+         still reads without it. */
       soLater:
-        "When the review found a real risk, the money that would have covered it had already been spent winning the deal.",
+        "When the review found a real risk, the money that would have covered it was already gone.",
       /* The near-miss is an expensive programme mistaken for a spent contingency. Every
          run reaches a review finding of some kind, so the decision that shaped WHICH
          finding it was is not the decision that made the finding unaffordable. */
       insteadOf: [
         "You took two weeks of paid discovery rather than pitching the full programme.",
         "You promised to rebuild the systems the whole operation runs on.",
-        "You spent the internal review week on the pitch rather than the commercial case.",
+        "You spent the internal review week on the pitch rather than on putting slack back in the commercial case.",
       ],
     },
     {
@@ -4312,8 +4345,11 @@ export const story: Content = {
     {
       needsOutcomes: ["m7-anchored", "m10-reset-trust"],
       because: "You put an Operations workstream in the proposal before anyone asked for one.",
+      /* The stem used to name Operations, which the answer also names and no distractor
+         could name without becoming true. Saying it the long way keeps the chain
+         readable in the band and stops the item being decidable on one word. */
       soLater:
-        "When delivery needed to be re-planned, Operations was already invested — so a hard conversation was treated as management rather than failure.",
+        "When delivery needed to be re-planned, the people who would have had to absorb it were already inside the programme — so a hard conversation was treated as management rather than failure.",
       /* Two, not three: `m10-reset-trust` also opens on `evidenced` and on `credibility`,
          which rules out every distractor about their own data, the reference visit, the
          point of view and the warm introduction — all of them would have been true. What
@@ -4325,15 +4361,20 @@ export const story: Content = {
     },
     {
       needsOutcomes: ["m7-overreach", "m10-push-fragile"],
-      because: "You promised to rebuild the systems at the centre of their operation with no route into production.",
+      /* The fault clause — "with no route into production" — came off, and the stem lost
+         "could not reach the business it was built for", which was the same sentence
+         said twice. One candidate carrying its own indictment is not a question. What
+         is left is a promise and what happened, both of them true, and the item is now
+         which of four promises produced that. */
+      because: "You promised to rebuild the systems at the centre of their operation.",
       soLater:
-        "Something shipped on the promised date that could not actually reach the business it was built for.",
+        "Something shipped on the promised date. Three weeks later the support queue was worse than it had been before, and two of the delivery team had asked to come off it.",
       /* The pilot and the accepted risk are both absent on purpose: `m10-push-fragile`
          opens on `promised:fast` and on `risk_accepted` as well, so either would have
          been a second true answer. These three are the ambition, the dependency and the
          price — the three things a player blames before they blame the missing stream. */
       insteadOf: [
-        "You put the customer journey redesign in as well, as the most visible piece in the document.",
+        "You put the customer journey redesign in alongside it, as the most visible piece in the document.",
         "You brought in a logistics partner who already runs returns at this scale.",
         "You met their number by coming down on price rather than taking work out.",
       ],
@@ -4344,12 +4385,16 @@ export const story: Content = {
       soLater:
         "You could open the solution conversation with their own evidence, which is why nobody argued with you.",
       /* All three are ways of being believed that are not evidence — the introduction,
-         the reference, the access. The outcome they are wrong about says so itself:
-         "you open with their complaint volumes rather than your credentials". */
+         the reference, the competitor work. The outcome they are wrong about says so
+         itself: "you open with their complaint volumes rather than your credentials".
+         Two of the three come from the fortnight, where two of six are funded, so they
+         cannot both be dismissed from memory the way two single-pick beats can. Sarah
+         is named twice on purpose: one candidate naming a person and three not is a
+         tell of its own. */
       insteadOf: [
-        "You used your warm introduction on thirty minutes in front of the sponsor.",
+        "You used your warm introduction on thirty minutes with Sarah.",
         "You spent a fortnight taking Sarah to a retailer where you had already delivered.",
-        "You proposed a paid discovery, so you were inside the business before you priced it.",
+        "You put a fortnight into working out exactly where the rival's platform stops.",
       ],
     },
 
@@ -4361,10 +4406,12 @@ export const story: Content = {
         "The proposal named his systems and his people, so the person best placed to object had nothing left to object to.",
       /* Three plausible ways to quiet an Operations Director, none of which is giving his
          team a named role. The workshop with his leads is deliberately not among them:
-         it would have quieted him too. */
+         it would have quieted him too. Two of the three say Sarah, because the answer
+         says Marcus and a stem about "his systems and his people" makes the only
+         candidate naming anybody findable without reading it. */
       insteadOf: [
-        "You argued the damage happened after the sale, not on the shop floor.",
-        "You put an eight-week pilot in, so something would be live inside two months.",
+        "You told Sarah the damage happened after the sale, not on the shop floor.",
+        "You put an eight-week pilot in, so Sarah's board would see something inside two months.",
         "You brought in a logistics partner who already runs returns at this scale.",
       ],
     },
@@ -4377,16 +4424,21 @@ export const story: Content = {
     {
       needsOutcomes: ["m3-campaign", "m5b-spread"],
       because: "You went wide to get attention, then spread your two discovery weeks thin.",
+      /* "Breadth twice over." opened this and has come off: the answer is the only
+         candidate naming two decisions, so a stem announcing that there were two of
+         them answered its own question. The rest of the line carries the thread. */
       soLater:
-        "Breadth twice over. You entered the solution phase knowing a little about a lot, which is the position every competitor was also in.",
+        "You entered the solution phase knowing a little about a lot, which is the position every competitor was also in.",
       /* The game has two fortnights in it and only one of them was spent thin, which is
-         the whole near-miss. Both entries are decisions to go and find something out —
-         the wrong answer is that either of them is what left you shallow. The early
-         questions are not offered: spending them on the race rather than the problem
-         genuinely does leave you here. */
+         the whole near-miss. All three are decisions to go and find something out — the
+         wrong answer is that any of them is what left you shallow. The early questions
+         are not offered: spending those on the race rather than the problem genuinely
+         does leave you here. Three rather than two, because all of them come from
+         single-pick beats and two could be dismissed from memory together. */
       insteadOf: [
-        "You spent days working out exactly what the rival had sold them, before answering Sarah.",
+        "You spent days working out exactly what the rival had actually sold them.",
         "You took two weeks of paid discovery rather than pitching the full programme.",
+        "You spent six weeks on Apex before you came back to this one.",
       ],
     },
     {
@@ -4398,8 +4450,13 @@ export const story: Content = {
     {
       needsOutcomes: ["m7-anchored", "m9b-proceed-sound"],
       because: "Operations had people named in the proposal before signature.",
+      /* The reason clause used to be "because the part most likely to fail already had
+         an owner", which is the answer with the nouns changed. This one is the other
+         half of the same outcome's detail — "work you understand" — and it points at
+         the paid discovery rather than at the answer, which is what a reason clause in
+         a stem should do. */
       soLater:
-        "Signing was a defensible decision rather than a hopeful one, because the part most likely to fail already had an owner.",
+        "Signing was a defensible decision rather than a hopeful one, because you were taking on work you already understood.",
       /* Written without "you", because `because` is: a distractor in a different voice
          from the answer is findable on style alone, which is the oldest flaw in multiple
          choice. Each is a real reduction in what signing risked, and none of them gave
@@ -4411,8 +4468,16 @@ export const story: Content = {
       ],
     },
     {
-      needsOutcomes: ["m5b-grounded", "m9a-value-strong"],
-      because: "You bought the two pieces of evidence nobody else would have.",
+      /* Repointed. This rule used to pair `m5b-grounded` with `m9a-value-strong` and
+         credit the fortnight for the award, which was wrong twice over. `m9a-value-strong`
+         opens on `evidenced` or `knows:real_pain` and on neither of the flags
+         `m5b-grounded` needs, so the fortnight was never its cause — and `m5b-grounded`
+         gates on flags rather than on picks, so a Builder who took the point-of-view
+         route arrives holding `has:data` and `ops_engaged` already and the outcome fires
+         whatever they fund. The ending was telling those players they had bought two
+         things they had not. This pair is the chain that actually runs. */
+      needsOutcomes: ["m6-real-evidenced", "m9a-value-strong"],
+      because: "You opened the solution conversation with their complaint volumes rather than your credentials.",
       soLater:
         "At the award you could argue from their own numbers. Procurement did not have to like you; it had to be able to justify you.",
     },
@@ -4423,11 +4488,13 @@ export const story: Content = {
         "Three capable proposals arrived and nothing separated them but price. A scorecard with every column level is decided on cost.",
       /* Three efforts aimed at people, against a decision made on a form. Keeping the
          conventional shape is not here, because that outcome's own prose already says
-         three firms ended up offering the same answer — it would have been true. */
+         three firms ended up offering the same answer — it would have been true. The
+         third says "document" so that the answer is not the only candidate about the
+         thing being scored. */
       insteadOf: [
         "You put a campaign into the market, and kept your senior people free for other work.",
         "You took Sarah to see the work you had already done for another retailer.",
-        "You spent the internal review week making the case land harder with Sarah's board.",
+        "You spent the internal review week making the document argue harder for Sarah's board.",
       ],
     },
 
@@ -4435,45 +4502,62 @@ export const story: Content = {
     {
       needsOutcomes: ["m7-overreach", "m10h-all-loaded"],
       because: "You confirmed every sentence in a proposal that had no route into production.",
+      /* "Aisha planned to all of it" has come off the front: "all of it" and "every
+         sentence" are the same claim, and the two distractors that remained were about
+         staffing and dates, so exactly one candidate was about the document. The stem
+         now says what happened and leaves which decision caused it genuinely open, and
+         it baits the staffing answer rather than the right one. */
       soLater:
-        "Aisha planned to all of it, so the judgement about which promises were real ended up being made by the person who had to keep them.",
-      /* Two recent decisions that left her short and left her informed respectively, and
-         neither of which handed her the judgement. The discount, the pilot, the part
-         taken out to reach their number, the accepted risk and the overruled review are
-         all excluded — `m10h-all-sound`'s `none` list names every one of them, so each
-         is a reason this branch fires rather than its sibling. */
+        "The judgement about which promises were real ended up being made by the person who had to keep them, on her own, in the week she was two people short.",
+      /* Three decisions about the document she inherited, one of them true. The
+         discount, the pilot, the part taken out to reach their number, the accepted
+         risk and the overruled review are all excluded — `m10h-all-sound`'s `none` list
+         names every one of them, so each is a reason this branch fired rather than its
+         sibling. */
       insteadOf: [
+        "You wrote a payback figure into the bid for procurement to score.",
+        "You signed it as it stood rather than reopening the clauses you liked least.",
         "You staffed the gap with two graduates and your own time reviewing their work.",
-        "You took the real dates to the sponsor early, with a re-plan already drafted.",
       ],
     },
     {
       needsOutcomes: ["m6b-outcome-blind", "m10h-payback-right"],
       because: "You tied a third of the fee to a figure nobody had a baseline for.",
+      /* "argue about measurement" has gone, because the answer is the only candidate
+         about a number and the stem was pointing straight at it. What is left is the
+         position — a thing that can only be settled by an argument you will be paying
+         for — and one distractor now gives away part of the fee as well, so "your own
+         fee" stops being diagnostic. */
       soLater:
-        "At the handover the only options were to unsay it or to argue about measurement in month nine with your own fee on the table.",
+        "At the handover the only options were to unsay it or to spend month nine arguing about it, with your own fee riding on how the argument went.",
       /* Three other commitments of the same size, and the item is which kind of promise
          can only be settled by an argument: a date can be checked, a price is a price,
          and a number nobody has defined is a disagreement with a date on it. */
       insteadOf: [
         "You promised something live inside eight weeks, and put the date in the contract.",
         "You committed to rebuilding the returns and support systems the business runs on.",
-        "You came down to procurement's number to close the gap on price.",
+        "You gave up part of the fee to close the gap with the cheaper bid.",
       ],
     },
     {
       needsOutcomes: ["m5b-grounded", "m10h-date-founded"],
-      because: "You spent a fortnight on a workshop and a data audit instead of on the pitch.",
+      /* Was "You spent a fortnight on a workshop and a data audit instead of on the
+         pitch", which is false on the runs that reach `m5b-grounded` holding `has:data`
+         from the Builders strength and `ops_engaged` from the point of view — the
+         outcome gates on flags, not on picks, so it fires whatever they funded. This
+         line states what every such run is actually carrying, which is what the m5b
+         screen told them at the time. */
+      because: "You had Operations in a room and a view of their data before anybody wrote a date down.",
       soLater:
-        "Months later you could say the pilot date out loud and be believed, because the thing it depended on had already been checked by somebody.",
+        "Months later you could say the pilot date out loud and be believed, because it rested on more than your own confidence.",
       /* The first is guaranteed — standing behind the pilot date means a pilot went in
          the proposal — and it is still wrong, because putting a date in a document is
-         not the same as checking what it rests on. The other two buy capacity, which is
+         not the same as knowing what it rests on. The other two buy capacity, which is
          the commonest thing to mistake for having checked. */
       insteadOf: [
         "You put an eight-week pilot in the proposal so something would be live early.",
         "You brought in two experienced contractors at twice the rate to fill the gap.",
-        "You added people and carried the cost yourselves rather than move the date.",
+        "You added people to the programme and carried the cost of them yourselves.",
       ],
     },
   ],

@@ -22,6 +22,7 @@ import {
   reachableExtremes,
   sweep,
   sweepWalk,
+  walkReachable,
 } from "./analysis";
 import { DIMENSIONS, isMission, type GameState } from "./types";
 
@@ -319,4 +320,64 @@ describe("no fake choices, in the states that occur", () => {
        taken on trust. */
     expect(findings.length).toBeLessThanOrEqual(8);
   });
+});
+
+/**
+ * Outcomes that claim credit for something the player may not have bought.
+ *
+ * `m5b` sells a workshop with Operations and a data audit, and `m5b-grounded` gates on
+ * `ops_engaged` and `has:data` — which reads as "you bought both". But `has:data` is also
+ * granted by the Builders starting strength and `ops_engaged` by `m3-pov-hit`, and the
+ * gate cannot tell where a flag came from. So a Builder who took the point-of-view route
+ * arrives already holding both and the outcome fires **whatever they fund**, telling them
+ * in prose that they bought two things they did not buy. That is not a wrong branch; it
+ * is a true branch with a false sentence on it, which is the harder kind to notice.
+ *
+ * Detected here rather than in `validate.ts` because the honest version needs the
+ * reachability walk — authored order is not play order, and the cheap approximation
+ * ("does anything else write this flag?") reports nine where three are real.
+ *
+ * The fix, when someone takes it, is a purchase flag per component — `funded:data_audit`
+ * rather than `has:data` — so the condition can ask what was bought rather than what is
+ * held. That changes branch selection and wants its own sweep, so the three below are
+ * pinned with the state of each instead.
+ */
+describe("outcomes do not claim credit for a purchase that may not have happened", () => {
+  const KNOWN = [
+    /* Prose corrected: the headline now says "You HAVE the two things nobody else will
+       have" rather than "You bought" them. The gate is still unable to tell. */
+    "m5b/m5b-grounded",
+    /* The same defect, prose not yet corrected. `credibility` arrives from the starting
+       advantage and from m3; `knows:rival_gap` from m5. */
+    "m5b/m5b-persuasion",
+    /* Benign on reading: the outcome is about a timeline being thin, and `has:data` there
+       is a condition of the world rather than a purchase it congratulates. Listed so it
+       is a judgement somebody made rather than a gap. */
+    "m7/m7-fast-thin",
+  ];
+
+  it("has no unlisted instance", () => {
+    const content = story;
+    const onEntry = new Map<string, Set<string>>();
+    walkReachable(content, (node, state) => {
+      if (!isMission(node)) return;
+      if (!onEntry.has(node.id)) onEntry.set(node.id, new Set());
+      for (const f of state.flags) onEntry.get(node.id)?.add(f);
+    });
+
+    const found: string[] = [];
+    for (const n of Object.values(content.nodes)) {
+      if (!isMission(n) || n.kind === "choice") continue;
+      const own = new Set<string>();
+      if (n.kind === "investigate") for (const e of n.evidence) for (const f of e.flags ?? []) own.add(f);
+      if (n.kind === "build") for (const c of n.components) for (const f of c.flags ?? []) own.add(f);
+      const held = onEntry.get(n.id) ?? new Set<string>();
+      for (const o of n.outcomes) {
+        const w = o.when;
+        const gates = w ? [...(w.all ?? []), ...(w.any ?? []), ...(w.none ?? [])] : [];
+        if (gates.some((f) => own.has(f) && held.has(f))) found.push(`${n.id}/${o.id}`);
+      }
+    }
+    expect([...new Set(found)].sort()).toEqual([...KNOWN].sort());
+  }, 300_000);
 });
