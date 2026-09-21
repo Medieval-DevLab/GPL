@@ -145,27 +145,38 @@ passes. `advisor.steer` is declared in `types.ts` and used by zero missions. *(Q
 
 ## Status, as of the last commit
 
-**46 of 52 shipped. 4 open, 2 partial.** Counted rather than estimated, by grepping the
-repo for each item.
+**46 of 52 shipped, 3 open, 3 partial.** Counted by parsing the marks in this file
+rather than estimated, which is the only reason it can be trusted — the version of this
+table it replaces claimed section 4 was 0 of 5 and section 6 was 0 of 8 when both were
+finished, and said the ending overflowed by 2,700px after it had been fixed twice. A
+scoreboard nobody recomputes is worse than no scoreboard: it is the thing people quote.
 
 | section | shipped | open |
 |---|---|---|
-| 1 · reading does not pay | 4 of 5 | **1.3** — still no condition reads a meter, so the meters remain write-only for branching |
-| 2 · the instruments | 5 of 6 | **2.5** — the `stations` band is still 3–4 against a documented 5 |
-| 3 · accessibility | 6 of 7 | **3.7** — no small-screen design; desktop-only is declared, not solved |
-| 4 · reading flow | **0 of 5** | all of it. 4.1 continuity still measures 0.50 against 0.85 |
-| 5 · domain truth | 0 of 8, 2 partial | change control, concealment, liability, the m8 gate, the handover |
-| 6 · voice | **0 of 8** | all of it, including a one-line fourth-wall break |
-| 7 · craft | 3 of 7 | the ending screen still overflows by 2,700px |
-| 8 · product surface | 4 of 6 | SCORM deferred by design; `scoreOf` still lives in the UI |
+| 1 · reading does not pay | **5 of 5** | — |
+| 2 · the instruments | 5 of 6, 1 partial | **2.6** — the bundle is measured and attributed, but 94 kB is unreachable while React is 69% of it. Needs a human call: D-070 |
+| 3 · accessibility | 6 of 7 | **3.7** — no small-screen design. Was marked done in error; `NarrowScreen` still renders below 1024px |
+| 4 · reading flow | 4 of 5, 1 partial | **4.4** — m7 and m8 are the last two beats with no reactive surface, down from nine |
+| 5 · domain truth | 5 of 8, 2 partial | **5.3** procurement as a process · **5.5** a value case in money · **5.8** the smaller domain notes |
+| 6 · voice | **8 of 8** | — |
+| 7 · craft | **7 of 7** | the ending fits: 854 → 653, and the claim item lands inside band 3's budget |
+| 8 · product surface | **6 of 6** | SCORM ships, connected and checked end to end |
 | 9 · validator doors | all | — |
 
-**And the gate that started this still fails.** `engagement.test.ts` is red on purpose:
-14 of 18 non-reader runs still reach the top verdict, and the best non-reader still scores
-100. The award beat made the distribution wider at both ends rather than closing it —
-3 of 18 now lose outright, but the survivors collect its winning deltas. Closing it needs
-the outcome economy rebalanced, which is 88 authored deltas and the largest single piece
-of content work left.
+**And the gate that started this is narrower, not closed.** `engagement.test.ts` passes
+— it reports rather than blocks — and the numbers have moved a long way: **3 of 18
+non-reader runs now reach the top verdict, down from 14.** Eleven land on "A workable
+deal", three lose outright at the award, one wins it badly.
+
+But the original defect is intact and it is worth naming precisely, because the headline
+number flatters it: **the meter-greedy policy still reaches 100/100/100 with six badges
+and "A deal worth having", having read nothing.** That single run is why the score was
+deleted, why the debrief refuses to grade, why `scorm.ts` sends no score to an LMS and
+why the new claim item is unmarked. Every one of those is a mitigation of this, not a
+fix for it.
+
+Closing it needs the outcome economy rebalanced — 88 authored deltas — and that remains
+the largest single piece of content work left in the project.
 
 **Two claims in this file were wrong and are corrected above:** 7.4's "0.28 air" was an
 instrument artefact (it measures 0.80 — out of band at the opposite end), and 7.1 does not
