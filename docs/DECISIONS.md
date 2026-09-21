@@ -27,10 +27,22 @@ largest single source is the writing, which is the product and the last thing to
 own interface and engine together are ~53 kB gz across eighteen missions and a dozen
 screen types.
 
-**Code-splitting, the obvious remaining lever, is closed.** Backlog 8.1 inlined the module
-precisely so `dist/` runs from `file://` inside a locked-down LMS, and dynamic `import()`
-from a file URL is the exact thing that was broken. Lazy-loading the ending and the
-dashboard would re-break the deployment target this was all packaged for.
+**Code-splitting, the obvious remaining lever, is closed by the build itself.** Backlog
+8.1 ships one `iife` chunk behind a classic `<script defer>`, because a `type="module"`
+script cannot be fetched from a `file:` URL at all — CORS is not available to the scheme,
+so `dist/` unzipped from a SCORM package or opened off a shared drive was a blank page
+with four console errors. A dynamic import makes Rollup emit a second chunk, and
+`vite.config.ts` **throws at build time** when it sees the resulting `modulepreload`.
+Lazy-loading the ending and the dashboard would trade the deployment target this was all
+packaged for.
+
+That guard checks the shape of the emitted HTML, which is a proxy. `npm run filecheck`
+(new, `tools/file-url-check.mjs`) now checks the outcome: it opens the built
+`dist/index.html` at a real `file://` URL in Chromium and asserts the game reaches an
+interactive title screen with a clean console. It was shown failing on purpose before
+being believed — reverting the script tag to `type="module" crossorigin` reproduces 8.1's
+exact CORS refusal. `npm run scorm` runs it before writing the manifest, so the package
+cannot be built from a `dist/` that would open blank.
 
 **The number has deliberately NOT been moved, and this entry is the reason.** `size.mjs`
 says "do not move this to make a build pass" and it is right to. But 94 kB is not

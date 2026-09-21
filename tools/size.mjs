@@ -307,9 +307,14 @@ async function main() {
      * runtime. The next largest single source is `story.ts`, which is the writing: the
      * product, not overhead, and the last thing to cut.
      *
-     * Code-splitting is the obvious remaining lever and it is closed. D-0xx / backlog 8.1
-     * inlined the module specifically so `dist/` runs from `file://` inside a locked-down
-     * LMS; dynamic `import()` from a file URL is the exact thing that broke.
+     * Code-splitting is the obvious remaining lever and it is closed — not by preference
+     * but by the build. Backlog 8.1 ships the bundle as ONE iife chunk served by a
+     * classic `<script defer>`, because a `type="module"` script cannot be fetched from a
+     * `file:` URL at all: CORS is unavailable to the scheme, so `dist/` opened off a
+     * shared drive or unzipped from a SCORM package was a blank page. A dynamic import
+     * makes Rollup emit a second chunk, and `vite.config.ts` throws at build time when it
+     * sees one. Splitting the ending and the dashboard out would trade the deployment
+     * target this was all packaged for.
      */
     if (split) {
       const total = [...split.byOrigin.values()].reduce((n, x) => n + x, 0);

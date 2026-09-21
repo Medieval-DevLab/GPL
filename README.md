@@ -220,4 +220,5 @@ where nobody could argue with it. See `src/scorm.ts`.
 | `npm run preview` | serve the production build |
 | `npm run verify` | full playthrough in a real browser + screenshots |
 | `npm run validate` | typecheck + test + build |
-| `npm run scorm` | build, then write a SCORM 1.2 manifest into `dist/` |
+| `npm run scorm` | build, check `file://`, then write a SCORM 1.2 manifest into `dist/` |
+| `npm run filecheck` | open the built `dist/` at a real `file://` URL and assert it runs |
