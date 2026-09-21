@@ -81,9 +81,15 @@ designed yet.
 | Consequence | receive | no | 17 | paper | rails + meters | — |
 | **Chapter debrief** | receive | no | 5 | stage | none | — |
 | Ending debrief | receive | no | 1 | paper | rails | — |
+| **Causal-claim item** | decide | no | 0–1 | paper | (a band in the ending) | — |
 
 **18 decisions carry the gate. Nothing else does.** That is the entire mode grammar in one
 column, and it is checkable by a test.
+
+The claim item is the one `decide` that carries no gate, and the State column is why: it
+changes nothing. There is no outcome to predict and nothing to commit to, so a stake
+element there would be ceremony. It is the exception that shows the rule is about state
+rather than about interactivity.
 
 ---
 
@@ -288,7 +294,37 @@ lands here and on the map, not inside the beat.
 | Content | `state.history` filtered to the chapter, plus the sibling outcomes not fired |
 | Exit | to the **map**, where the chapter fills in gold. Closes the loop in the same place every time |
 
-### 4.7 Cut scene — 8 per run
+### 4.7 Causal-claim item — NEW, 0–1 per run
+
+Not a screen. A **band inside the ending debrief**, sitting where the causal threads go,
+before they are revealed. Backlog 4.5.
+
+> This happened in delivery: *{soLater}*. **Which of your decisions led to it?**
+
+The player picks from three or four candidates; the game says which one it was; the
+threads unfold beneath. Present on **60.8% of runs** — a run has to have earned a thread
+that carries authored wrong answers, and one that has not simply shows the threads
+directly.
+
+| Field | Value |
+|---|---|
+| Mode / state | decide / **no**. It changes nothing, which is why it carries no stake element and no gate |
+| Ground / chrome | paper, inherits the ending's |
+| Regions | `claim`, in `threads`' place |
+| Content | `CausalThreadRule.because` / `soLater` / `insteadOf` — all authored, none generated |
+| Primary action | none. Choosing a candidate IS the action; there is no confirm step to add a second decision to a screen that makes none |
+| Fit | **neutral by construction.** Four option rows before the answer, two after — the answer and the player's own pick, with the unchosen dropped. So the band shrinks at the moment the threads appear and a run with the item is no taller than one without. The ending is the tightest screen in the game and this is why it earns its place there rather than below |
+| Accessibility | a labelled list; candidates are buttons before the answer and plain elements after, so no dead tab stops remain; one `aria-live` announces the answer, because the whole band changes in place |
+| Failure | **a mark.** Not a tick, not a total, not "1 of 1", and above all not a green/red pair. `engine.ts` asserts the data carries no score and `claim.tsx` is the other half of that promise — the answer reads "This is the one" and the player's pick reads "Your answer", same type, same weight, accent for the answer because accent is what this interface means by *this is the thing* everywhere else |
+
+**Why it is not a quiz.** The threads band is the payoff of the whole design and costs
+nothing to read, which is its weakness — a section that hands you every chain for free is
+read rather than argued with. Asking first turns the same content into something a cohort
+can disagree over, and disagreement is the only mechanism this game has for making a
+player say their reasoning out loud. That is also the entire reason it must not be
+scored: a graded question is answered defensively.
+
+### 4.8 Cut scene — 8 per run
 
 Specified in full in `GAME-SEQUENCE.md`. The one rule that governs it: **chrome removed** —
 no rails, no meters, no action bar. Subtraction is the signal. The action sits on the scene,
