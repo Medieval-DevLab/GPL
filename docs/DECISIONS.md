@@ -6,6 +6,63 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-071 · The SCORM bridge shipped disconnected, and the test that would have caught it
+`src/scorm.ts`, `src/scorm.test.ts` and `tools/scorm-package.mjs` all landed together.
+Eight tests green. Manifest correct against the 1.2 schema. `npm run scorm` producing a
+package an LMS would accept. **Nothing in `src/` imported any of it**, so the game would
+have launched inside an LMS and reported every learner as *not attempted* for ever.
+
+That is worse than no integration, because a missing integration is visible and a silent
+one is not — the report simply says nobody finished. It also survived a review in which
+I wrote "8.4 DONE" into the backlog, because every artefact I looked at was correct.
+
+**No test could have caught it, and that is the part worth keeping.** `scorm.test.ts`
+drives the bridge against a fake LMS and asserts what crosses it. A bridge with no
+traffic over it is *precisely* what those tests construct: they supply the traffic
+themselves. The unit was never the thing in doubt.
+
+`src/lms.ts` is the missing half — **when** to speak, deliberately separate from
+`scorm.ts`'s **what** to say. Two files because they change for different reasons: the
+protocol changes if SCORM does, the schedule changes if the game's lifecycle does, and
+the protocol has to stay testable with no React anywhere near it.
+
+Four moments. Report arrival (so a learner who opens the module and closes it still shows
+as started); park the run code as the run moves; mark completion at any ending *including
+walking away*; close the session on `pagehide` rather than `beforeunload`, which browsers
+increasingly ignore and which misses the back-forward cache path.
+
+**The resume path is the reason to bother beyond a tick in a report.** `localStorage` is
+per-browser and per-machine, so a learner who starts on a laptop and reopens on a desktop
+was starting a seventy-minute module again. The LMS copy is consulted only when local
+storage is empty, never to override it, and a code from a different content build is
+refused rather than replayed — which the fingerprint inside the code is what makes
+detectable at all.
+
+`nextLmsCall` is a pure function so the schedule can be tested without a DOM: do not
+re-park an unchanged code (some LMSs do a network round trip per `LMSCommit`, and `state`
+changes on every selection toggle), and report completion once.
+
+**The connection test took three drafts to become able to fail**, which is the honest
+part of this entry:
+
+1. imported `App` and asserted the default export was a function — green whether or not
+   App ever calls the bridge, so it would have passed on the very build it exists to catch
+2. matched `useLms(` against the raw source — matched the **commented-out** call, and
+   stayed green when the bridge was unplugged to check
+3. strips comments first, then matches
+
+Exactly the lesson `vite.config.ts` already records for its own HTML guard, which read its
+own rationale as the thing it banned. Verified by unplugging: draft 3 goes red, draft 2
+did not.
+
+**Cost:** a second file for one feature, and a structural test that reads source rather
+than behaviour — which is crude, and will need updating if `App.tsx` is restructured. The
+alternative is rendering App against a fake LMS, which needs a DOM environment this
+project's test setup does not have and would be a heavier dependency than the problem
+warrants. Reversible: delete `lms.ts` and the game loses the LMS, nothing else.
+
+---
+
 ## D-070 · The bundle budget is 82% over, and the number is not the problem — OPEN
 `node tools/size.mjs` reports **171.44 kB of code against the 94 kB in `CLAUDE.md`**. The
 tool has been saying so for a while. What it could not say was *where*, and a single
