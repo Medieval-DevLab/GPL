@@ -45,31 +45,7 @@ import { useState } from "react";
 
 import type { CausalClaim } from "../engine/engine";
 import { SectionTitle } from "./icons";
-
-/* TO JOIN `UI_LABEL`. Interface chrome, so it belongs in `src/ui/shell.tsx` with the rest
-   — kept local only because that file was being consolidated by another worker as this
-   landed, and merging into the middle of that is how a label goes missing.
-
-   Two of these are load-bearing rather than cosmetic. The heading does NOT change when
-   the item is answered, and neither result line borrows the word "led": the band
-   immediately below is headed "What led to what" and carries the same kind of sentence,
-   so two near-identical headings 40px apart read as one section repeating itself. */
-const LABEL = {
-  /** the section heading, in both states */
-  asking: "One thing worth settling",
-  /** frames the consequence being asked about */
-  happened: "This happened in delivery",
-  question: "Which of your decisions led to it?",
-  /** the reassurance, said once and plainly, because the screen looks like a test */
-  noMark: "Not marked. Nobody is scoring this one.",
-  /** the two states an option can end in. Neither is a verdict on the player */
-  whatHappened: "This is the one",
-  whatYouChose: "Your answer",
-  /** when the player got there — stated, never congratulated */
-  samePick: "The first chain below is the one you picked.",
-  /** the bridge into the threads band */
-  andTheRest: "The rest of the chains are below.",
-} as const;
+import { UI_LABEL } from "./shell";
 
 /**
  * One candidate, before the item is answered.
@@ -118,7 +94,7 @@ export function CausalClaimItem({
   return (
     <section data-region="claim">
       <SectionTitle icon="bulb" className="mb-2">
-        {LABEL.asking}
+        {UI_LABEL.claimAsking}
       </SectionTitle>
 
       {/**
@@ -146,22 +122,22 @@ export function CausalClaimItem({
               else, both are named, because the whole value of the item is the gap. */}
           {rightFirstTime ? (
             <p className="text-[15px] leading-snug text-(--color-ink) text-pretty">
-              {LABEL.samePick}
+              {UI_LABEL.claimSamePick}
             </p>
           ) : (
             <>
               <p className="text-[15px] leading-snug text-(--color-ink) text-pretty">
-                <span className="font-bold">{LABEL.whatHappened}: </span>
+                <span className="font-bold">{UI_LABEL.claimAnswer}: </span>
                 {answer?.text}
               </p>
               <p className="mt-1 text-[15px] leading-snug text-(--color-muted) text-pretty">
-                <span className="font-bold">{LABEL.whatYouChose}: </span>
+                <span className="font-bold">{UI_LABEL.claimYours}: </span>
                 {yours?.text}
               </p>
             </>
           )}
           <p className="mt-1 text-[13px] leading-snug text-(--color-muted)">
-            {LABEL.andTheRest}
+            {UI_LABEL.claimRest}
           </p>
         </div>
       ) : (
@@ -175,16 +151,16 @@ export function CausalClaimItem({
            */}
           <div className="border-l-[3px] border-(--color-accent) pl-3">
             <p className="text-[12px] font-bold uppercase tracking-[0.07em] text-(--color-muted)">
-              {LABEL.happened}
+              {UI_LABEL.claimHappened}
             </p>
             <p className="mt-1 text-[15px] leading-snug text-(--color-ink) text-pretty">
               {claim.soLater}
             </p>
             <p className="mt-1.5 text-[15px] font-bold leading-snug text-(--color-ink)">
-              {LABEL.question}{" "}
+              {UI_LABEL.claimQuestion}{" "}
               {/* Said plainly and once. The screen looks like a test and is not one, and
                   a player who thinks they are being marked answers differently. */}
-              <span className="font-normal text-(--color-muted)">{LABEL.noMark}</span>
+              <span className="font-normal text-(--color-muted)">{UI_LABEL.claimNoMark}</span>
             </p>
           </div>
 
@@ -192,7 +168,7 @@ export function CausalClaimItem({
             className="mt-2 grid gap-1.5 sm:grid-cols-2"
             /* A list, and announced as the question's answers, so a screen reader reaching
                this band is told what it is being asked before it reads four sentences. */
-            aria-label={LABEL.question}
+            aria-label={UI_LABEL.claimQuestion}
           >
             {claim.candidates.map((c) => (
               <li key={c.id} className="grid">
@@ -208,7 +184,7 @@ export function CausalClaimItem({
           looking for what moved. */}
       <p aria-live="polite" className="sr-only">
         {settled
-          ? `${LABEL.whatHappened}: ${claim.candidates.find((c) => c.id === claim.answerId)?.text ?? ""}`
+          ? `${UI_LABEL.claimAnswer}: ${claim.candidates.find((c) => c.id === claim.answerId)?.text ?? ""}`
           : ""}
       </p>
     </section>

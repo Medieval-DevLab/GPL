@@ -125,6 +125,27 @@ export const UI_LABEL = {
   decisions: "Your decisions",
   decisionsOpen: "— and what they told you to watch for",
   ledToWhat: "What led to what",
+  /**
+   * The debrief's one causal question (backlog 4.5, `ui/claim.tsx`).
+   *
+   * Two of these are load-bearing rather than cosmetic. `claimAsking` does NOT change
+   * when the item is answered, and no result line borrows the word "led" — `ledToWhat`
+   * heads the band immediately below and carries the same kind of sentence, so two
+   * near-identical headings 40px apart would read as one section repeating itself.
+   *
+   * And neither result line is a verdict. "This is the one" and "Your answer", never
+   * "Correct" and "Wrong": `engine.ts` asserts the item carries no score, and these six
+   * strings are the half of that promise a colour or a word could undo.
+   */
+  claimAsking: "One thing worth settling",
+  claimHappened: "This happened in delivery",
+  claimQuestion: "Which of your decisions led to it?",
+  /** said plainly and once, because the band looks like a test and is not one */
+  claimNoMark: "Not marked. Nobody is scoring this one.",
+  claimAnswer: "This is the one",
+  claimYours: "Your answer",
+  claimSamePick: "The first chain below is the one you picked.",
+  claimRest: "The rest of the chains are below.",
   /** also the performance dashboard's own `<h1>` — the same sentence naming the same thing */
   howYouPlayed: "How you played",
   /** the persistent navigation added when the game gained a hub and a map */

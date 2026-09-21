@@ -44,11 +44,12 @@ the same weight — "This is the one" and "Your answer", never "correct" and "wr
 and no green. `engine.ts` asserts the data carries no score; this file is the half that
 could have reintroduced one with a colour.
 
-**Cost:** `claim.tsx` keeps a local `LABEL` block, against the convention D-073 just
-established, because `shell.tsx` was being consolidated as this landed. It should join
-`UI_LABEL`. And band 3's budget now has a consumer whose height depends on how long the
+**Cost:** band 3's budget now has a consumer whose height depends on how long the
 authored candidates are — four long ones would push it back over, and nothing measures
 that in advance; the fit gate catches it at the next `verify`.
+
+The eight strings joined `UI_LABEL` once `shell.tsx` was free, so the exception D-073's
+convention would have had to carry does not exist.
 
 ---
 
