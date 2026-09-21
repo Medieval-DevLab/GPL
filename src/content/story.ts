@@ -410,8 +410,15 @@ const nodes: GameNode[] = [
         id: "ev-pain",
         label: "The complaints",
         question: "What are customers actually unhappy about?",
+        /* The whole financial spine of the game starts on this card, and starts here
+           deliberately: half a million contacts at roughly five pounds each is the only
+           place the raw figures are introduced, and it is a thing the player SPENDS one
+           of two questions to learn. Everything downstream — the value case at m9a, the
+           premium defence at m8, the payback clause — is arithmetic on these two
+           numbers and adds none of its own. Round rather than precise, because
+           "roughly five pounds" is a credible estimate and "£5.14" is a fabrication. */
         reveals:
-          "Store experience barely registers. The complaints are overwhelmingly post-purchase — deliveries that arrive late, returns that take three weeks, support that cannot see the order. The shop floor is not the problem.",
+          "Store experience barely registers. The complaints are overwhelmingly post-purchase — deliveries that arrive late, returns that take three weeks, support that cannot see the order. Their service team handles about half a million of these a year, at roughly five pounds a contact to answer. The shop floor is not the problem.",
         flags: ["knows:real_pain"],
       },
       {
@@ -1525,7 +1532,11 @@ const nodes: GameNode[] = [
     minutes: 4,
     hero: "hero-negotiation",
     situation: [
-      "Orion comes back. You are thirty percent above the alternative, and procurement has said so in writing.",
+      /* "Thirty percent above" was the whole of the price beat and it is an abstraction:
+         the argument the player is about to have is with a gap, and a gap has a size.
+         £2.6m against £2m keeps the committed thirty percent exactly and makes the
+         number they are defending — six hundred thousand — sayable. */
+      "Orion comes back. You are thirty percent above the alternative — £2.6m against their £2m — and procurement has said so in writing.",
       "Sarah still wants you. She needs something she can take to her board.",
     ],
     presentation: "dialogue",
@@ -1624,7 +1635,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "The difference is defensible, so the price holds.",
             detail:
-              "You are not comparing like with like, and you can show it. The other proposal does not touch the operational work. Procurement does not enjoy it, but Sarah now has a straight answer for her board.",
+              "You are not comparing like with like, and you can show it. The other proposal does not touch deliveries, returns or support, which is where the two and a half million a year of contact handling is going. Set six hundred thousand of difference against an operational saving twice that size every year and the premium stops being a premium. Procurement does not enjoy it, but Sarah now has a straight answer for her board.",
             changed: ["Full margin protected", "The comparison is neutralised"],
             effect: { dims: { profit: 10, win: 1 }, badge: "held_nerve" },
           },
@@ -2671,7 +2682,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "You can offer it because you can measure it.",
             detail:
-              "An outcome deal is only honest if both sides trust the number. You audited their data, so there is a baseline everyone believes. Sarah's board finds it very hard to say no to.",
+              "An outcome deal is only honest if both sides trust the number. You audited their data, so there is a baseline everyone believes: half a million post-purchase contacts a year, counted the same way by them and by you, from the same system. A third of the fee moves against that and both sides know what moving it looks like. Sarah's board finds it very hard to say no to.",
             changed: ["A proposal nobody can compare", "A third of the fee now depends on results"],
             effect: {
               dims: { win: 8, profit: -3, deliver: 1 },
@@ -2684,7 +2695,7 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "You have bet a third of the fee on a number nobody can agree.",
             detail:
-              "The idea is genuinely strong. But there is no trusted baseline for support contacts, so the first argument of the delivery will be about what the measurement means — and you will be having it with your own money on the table.",
+              "The idea is genuinely strong. But nobody has counted the contacts, so there is no baseline either side can point at — your half a million and their half a million will not be the same half a million, and neither of you will find that out until the first measurement. The first argument of the delivery will be about what a support contact is, and you will be having it with a third of the fee on the table.",
             changed: ["A distinctive offer", "A third of the fee tied to an undefined number"],
             effect: { dims: { win: 4, profit: -10, deliver: -4 }, flags: ["outcome_based"] },
           },
@@ -3049,8 +3060,14 @@ const nodes: GameNode[] = [
            carries none: there is always a submission, and for a player who gathered
            nothing it is the only card on the table, with the other three named beside it. */
         requires: { any: ["knows:real_pain", "evidenced", "ops_onside"] },
-        description: "Returns cost Orion a known amount. Show what half of it is worth.",
-        say: "Then let me write that box out of your own numbers — what half the returns problem is worth.",
+        /* This option was called "Build the case in their numbers" and contained no
+           number. It described arithmetic — "returns cost Orion a known amount" — and
+           never did any, which is the defect the whole spine exists to close: the game
+           held the complaint volumes for eleven beats and never once turned them into
+           money. The three outcomes below are the same sum at three different levels of
+           evidence, which is what the existing gates already sorted players into. */
+        description: "Half a million post-purchase contacts a year, at five pounds each. Show what halving that is worth.",
+        say: "Let me write that box out of your own numbers — two and a half million a year, halved.",
         commits: "You are held to an arithmetic you wrote down.",
         pros: ["Scores on value", "Hard to argue with"],
         cons: ["Needs their data", "A number you must hit later"],
@@ -3062,7 +3079,7 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "Your arithmetic, their scepticism.",
             detail:
-              "You have built a payback case out of numbers you assumed rather than numbers they gave you. Foyle marks it unevidenced and scores the cheaper bid higher. The award goes elsewhere.",
+              "The case is built on a contact volume you took from a sector benchmark and a cost per contact you took from another client. Foyle asks where the half a million came from. It is the first question anybody would ask, you cannot answer it out of anything Orion gave you, and he marks the whole case unevidenced and scores the cheaper bid higher. The award goes elsewhere.",
             changed: ["Not selected", "A quarter of pursuit cost written off"],
             effect: { dims: { win: -30, profit: -8 }, flags: ["lost"] },
             next: "end",
@@ -3079,7 +3096,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "You are the only bid with a number attached.",
             detail:
-              "You show Foyle what the current failure costs from his own complaint data, and what removing half of it is worth. He does not have to like you. He has to justify a choice, and you have just written his justification for him.",
+              "You put it in front of him in three lines, out of his own complaint data. Half a million post-purchase contacts a year. About five pounds to answer each one, so two and a half million a year spent answering them. Halve that and Orion keeps one and a quarter million a year, against six hundred thousand of difference between your bid and the cheaper one. The gap pays for itself inside six months, and the whole fee a little past its second year. He does not have to like you. He has to justify a choice, and you have just written his justification for him.",
             changed: ["Selected", "A payback number now in the contract"],
             effect: { dims: { win: 8, profit: 4 }, flags: ["won", "outcome_based"], badge: "connected_dots" },
           },
@@ -3088,7 +3105,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "A good case, lightly evidenced.",
             detail:
-              "The structure is right and the baseline is soft. Foyle scores it above the cheapest bid and below where it could have been, and asks you to stand behind the number in writing.",
+              "The structure is right and the baseline is soft. Half a million contacts a year is the figure a retailer of this size usually runs, and it is not a figure anybody at Orion has counted, so the one and a quarter million rests on your estimate rather than their record. Foyle scores it above the cheapest bid and below where it could have been, and asks you to stand behind the number in writing.",
             changed: ["Selected", "Committed to a payback you estimated"],
             effect: { dims: { win: 4, profit: -2 }, flags: ["won", "outcome_based"] },
           },
@@ -3961,7 +3978,7 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "You take back the one number they trusted.",
             detail:
-              "The payback figure rested on a baseline you had actually audited, which is exactly why Sarah could put it in front of her board. Withdrawing it now does not read as prudence. It reads as a firm that has looked at its own commitment and lost confidence in it, and the first person to say so out loud is you.",
+              "The payback figure rested on a baseline you had actually audited — half a million contacts a year, counted out of their own system — which is exactly why Sarah could put it in front of her board. Withdrawing it now does not read as prudence. It reads as a firm that has looked at its own commitment and lost confidence in it, and the first person to say so out loud is you.",
             changed: [
               "The fee no longer moves with the result",
               "Sarah has to go back to a board that approved it",
@@ -3980,7 +3997,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "She is not pleased, and she is relieved.",
             detail:
-              "Nobody ever agreed what a support contact was. The clause was going to produce its first argument in month nine, with your own fee on the table and no baseline either side could point at. Taking it out now costs you a difficult half hour with a sponsor who defended it. Leaving it in would have cost Aisha the whole of month nine.",
+              "Nobody ever agreed what a support contact was, or counted how many of them there were before you started. So the better part of a million pounds turns on halving a number neither side has ever written down. The clause was going to produce its first argument in month nine, with your own fee on the table and no baseline either side could point at. Taking it out now costs you a difficult half hour with a sponsor who defended it. Leaving it in would have cost Aisha the whole of month nine.",
             changed: [
               "A third of the fee no longer turns on an undefined number",
               "Sarah is cooler, and clear about why",
