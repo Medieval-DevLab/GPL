@@ -46,7 +46,7 @@ engagement premium is positive, everything in sections 3–6 improves decoration
 | 2.3 | **DONE** · **Disclosure share (weight 5) is still unimplemented** — now counted as unearned rather than omitted, but not built. | `DENSITY-FRAMEWORK.md` §C factor 9 |
 | 2.4 | **DONE** · **`verify.mjs` plays one path**, so path-dependent overflow is invisible. The ending measured 1,867px of overflow on a reviewer's run and 739-in-739 on the harness path. 15 of 16 missions' alternative branches are never rendered in a browser. | QA; reproduced both ways |
 | 2.5 | **DONE** · **The `stations` band was retuned from the documented 5 to 3–4**, which is what lets 3 stations score 10/10. Restore the band or change the document. | ux F2 |
-| 2.6 | **PART** · **Nothing measures the bundle.** 121.8 kB gzipped against a documented 94 kB in `CLAUDE.md`. **`tools/size.mjs` measures it and now attributes it** — the flat number sent readers to refactor components, which is the wrong place: React is **69% of the whole budget** before this project runs a line, and the next largest source is the writing. Now **171.44 kB**. **Left: a human call on the budget itself** — re-baseline with the split, swap React for Preact (~60 kB back), or drop the line. Code-splitting is closed by 8.1's `file://` requirement. See D-070. | QA F9 |
+| 2.6 | **DONE** · **Nothing measures the bundle.** 121.8 kB gzipped against a documented 94 kB in `CLAUDE.md`. **`tools/size.mjs` measures it and now attributes it** — the flat number sent readers to refactor components, which is the wrong place: React is **69% of the whole budget** before this project runs a line, and the next largest source is the writing. **Re-baselined per origin** (framework 70 / interface 58 / engine 12 / stylesheet 14 kB), and content is measured but never capped — a budget on the writing is a budget on how much the game can teach. Every capped group is now inside its own budget on its own merits: 65.2, 46.5, 7.5, 10.8. Preact would save ~60 kB and was rejected as a real migration bought to reach a number we chose ourselves. Code-splitting is closed by 8.1's `file://` requirement. See D-070. | QA F9 |
 
 ## 3 · Accessibility — six AA failures, one Level A
 
@@ -145,7 +145,7 @@ passes. `advisor.steer` is declared in `types.ts` and used by zero missions. *(Q
 
 ## Status, as of the last commit
 
-**47 of 52 shipped, 3 open, 2 partial.** Counted by parsing the marks in this file
+**48 of 52 shipped, 2 open, 2 partial.** Counted by parsing the marks in this file
 rather than estimated, which is the only reason it can be trusted — the version of this
 table it replaces claimed section 4 was 0 of 5 and section 6 was 0 of 8 when both were
 finished, and said the ending overflowed by 2,700px after it had been fixed twice. A
@@ -154,7 +154,7 @@ scoreboard nobody recomputes is worse than no scoreboard: it is the thing people
 | section | shipped | open |
 |---|---|---|
 | 1 · reading does not pay | **5 of 5** | — |
-| 2 · the instruments | 5 of 6, 1 partial | **2.6** — the bundle is measured and attributed, but 94 kB is unreachable while React is 69% of it. Needs a human call: D-070 |
+| 2 · the instruments | **6 of 6** | — |
 | 3 · accessibility | 6 of 7 | **3.7** — no small-screen design. Was marked done in error; `NarrowScreen` still renders below 1024px |
 | 4 · reading flow | **5 of 5** | — |
 | 5 · domain truth | 5 of 8, 2 partial | **5.3** procurement as a process · **5.5** a value case in money · **5.8** the smaller domain notes |

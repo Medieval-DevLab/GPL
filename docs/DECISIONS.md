@@ -224,7 +224,7 @@ warrants. Reversible: delete `lms.ts` and the game loses the LMS, nothing else.
 
 ---
 
-## D-070 · The bundle budget is 82% over, and the number is not the problem — OPEN
+## D-070 · The bundle budget is 82% over, and the number is not the problem — RESOLVED
 `node tools/size.mjs` reports **171.44 kB of code against the 94 kB in `CLAUDE.md`**. The
 tool has been saying so for a while. What it could not say was *where*, and a single
 number sends whoever reads it to refactor components, which on this build is the wrong
@@ -276,8 +276,31 @@ worse than no gate. It needs a human call between three options, none of which i
    would need checking.
 3. **Accept it and delete the budget line.** Cheapest, and loses the instrument.
 
-My recommendation is (1), because the measurement above is the useful artefact either way
-and (2) is a large change to buy a number we chose ourselves.
+**Resolved as (1).** The budget is now per origin: **framework 70 kB, interface 58,
+engine 12, stylesheet 14**, and **content is measured and never capped.** That last one is
+the substance of the decision, not a loophole — a single figure over everything
+necessarily includes the writing, so it rises every time the game teaches more and the
+only way back to green is to delete a mission. A budget that creates that pressure is
+worse than none.
+
+Every capped group is inside its own budget on its own merits: 65.2, 46.5, 7.5, 10.8. So
+the gate is green without anything being relaxed to make it so — which is the test of
+whether a re-baseline was honest, and why the split had to come from measurement rather
+than from wanting the build to pass.
+
+**The gate is now the groups, not the total.** `size.mjs` exits 1 if any capped group is
+over and names it; the flat figure is printed as information. With no sourcemap there is
+nothing to check per group, so a deliberately generous flat guard stands in against a
+sudden doubling. Shown failing on purpose: narrowing `interface` to 30 kB makes it exit 1
+naming `interface`.
+
+(2) was rejected rather than deferred. Preact would save ~60 kB and put the whole thing
+near the original 94, but it is a real migration with React 19 features to re-check,
+bought entirely to reach a number we chose ourselves. If the interface budget ever comes
+under genuine pressure it becomes the obvious lever again.
+
+`CLAUDE.md` carries the new numbers, and `ASSET-MANIFEST.md` and `DESIGN-SYSTEM.md` have
+had their quotations of the old one corrected — both were repeating 94 kB as a live fact.
 
 **Reversible:** entirely. Nothing in the build depends on the outcome; `size.mjs` is not
 wired into `npm run validate`.

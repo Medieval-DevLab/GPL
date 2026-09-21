@@ -253,7 +253,8 @@ optional and I would still do it.
 
 Weight, at the specified compressions: roughly **2.4 MB across 27 files**, none of it on
 first paint. The title screen loads no artwork at all, and every plate is `loading="lazy"`.
-For scale, the whole JavaScript and CSS bundle is 94 kB gzipped — the art budget is about
+For scale, the whole JavaScript and CSS bundle is about 173 kB gzipped (D-070 re-baselined
+the budget per origin; it was quoted as 94 kB here) — the art budget is about
 25× the code budget, which is normal for this kind of product and is fine precisely
 because it is lazy and cached. It stops being fine the moment anything eager is added, and
 §7 is largely about that.
@@ -1217,7 +1218,7 @@ chapter debrief or a reflection node, never on a brief and never on a decision.
 
 **1 · File size. This is the decisive number.** A background or ambient loop is
 conventionally budgeted at **5–8 MB**; a still is 100–200 kB. GPL's entire JavaScript and
-CSS bundle is **94 kB gzipped**, and `CLAUDE.md` says to keep it that way. **One 6 MB loop
+CSS bundle is **about 173 kB gzipped**, budgeted per origin since D-070. **One 6 MB loop
 is roughly 64× the whole application.** There is no version of that trade that is worth an
 atmosphere.
 

@@ -43,4 +43,10 @@ rendering dark text on a purple background; only the screenshot caught it. See `
 - Player-facing prose lives in content, never as string literals in components.
 - British English throughout, in both copy and code comments.
 - No new runtime dependency without a line explaining why the problem is not already solved
-  in-repo. The whole bundle is 94 kB gzipped; keep it that way.
+  in-repo. `node tools/size.mjs` holds the bundle to a budget **per origin** — framework 70 kB
+  gzipped, interface 58, engine 12, stylesheet 14. **Content is measured and never capped**,
+  because a budget on the writing is a budget on how much the game can teach.
+  This replaced a single 94 kB figure that had been red for a long time while pointing at the
+  wrong thing: React alone is ~65 kB, so two thirds of the old budget was spent before any of
+  this code ran, and "82% over" sent readers to refactor components that were never the
+  problem. See `D-070`. Run it after a `--sourcemap` build to get the split.

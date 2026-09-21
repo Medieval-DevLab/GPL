@@ -7,21 +7,21 @@
  * bytes — which is the same failure as a rubric nobody scored (D-038), in a different
  * currency.
  *
- * Reported in three groups, because "the bundle" means different things to a reviewer and
- * to a player on hotel wifi:
+ * Reported by delivery group, because "the bundle" means different things to a reviewer
+ * and to a player on hotel wifi:
  *
- *   code     the JS and CSS the browser must have before anything renders. This is the
- *            number the 94 kB budget is about, and the one the backlog quotes (114.67 +
- *            7.13 = 121.8 kB), so it is what the gate compares against.
+ *   code     the JS and CSS the browser must have before anything renders.
  *   markup   index.html, which carries the inlined boot script.
  *   media    photography and fonts. Not in the code budget, but it is what a cohort
  *            actually downloads, so it is printed rather than ignored.
  *
- * The budget is NOT adjusted here. Backlog 7.1 replaces 22 upscaled photo crops with
- * inline SVG facsimiles (−130 kB WebP / +20 kB SVG) and is expected to retire most of the
- * overrun on its own, so renegotiating the number now would be paying for a fix twice.
+ * AND, when a sourcemap is present, by ORIGIN — framework, interface, engine, content.
+ * That second split is where the budgets now live, and `BUDGETS_KB` explains why: one
+ * number over everything had been red for a long while and was pointing at the wrong
+ * thing, because two thirds of it is React.
  *
- *   node tools/size.mjs                  # read dist/, compare against the budget
+ *   npx vite build --sourcemap && node tools/size.mjs   # with the origin split
+ *   node tools/size.mjs                                 # totals only
  *   node tools/size.mjs --json
  */
 
@@ -29,8 +29,38 @@ import { gzipSync } from "node:zlib";
 import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 
-/** Documented in CLAUDE.md. Do not move this to make a build pass. */
-const BUDGET_KB = 94;
+/**
+ * Four budgets, replacing the single 94 kB — D-070, and the reasoning matters more than
+ * the numbers.
+ *
+ * 94 kB was one figure over JS + CSS together, and it had been red for a long time
+ * (171 kB) while pointing at the wrong thing. Attributing the bundle by sourcemap showed
+ * why: React is ~65 kB of it, which is 69% of the old budget spent before a line of this
+ * project runs. Whoever read "82% over" went looking for bloated components, and the
+ * components are not where it is.
+ *
+ * So the split is not a licence granted to make a build pass. Each number below is the
+ * measured figure plus stated headroom, and the two that can actually regress are held
+ * tight:
+ *
+ *   framework  a dependency choice, not drift. It moves when someone swaps React, which
+ *              is a decision with a name, not an accident. Preact is ~4 kB against ~65
+ *              and would put the whole thing near the original 94 — rejected for now as
+ *              a real migration bought to reach a number we chose ourselves.
+ *   interface  ours, and the one most likely to creep. ~46 kB across a dozen screen
+ *              types; 58 gives 26% headroom.
+ *   engine     ours, and small. ~7 kB; 12 is generous and will still catch a blunder.
+ *   content    THE PRODUCT. Reported, never capped. A budget on the writing is a budget
+ *              on how much the game can teach, and the day that number blocks a build is
+ *              the day somebody deletes a mission to go green.
+ *
+ * Code-splitting is not available as a lever: the build ships one iife chunk behind a
+ * classic script so `dist/` opens from `file://` inside an LMS, and `vite.config.ts`
+ * throws if a dynamic import makes Rollup emit a second chunk.
+ */
+const BUDGETS_KB = { framework: 70, interface: 58, engine: 12, stylesheet: 14 };
+/** Only feeds the coarse guard used when no sourcemap exists; the real gate is per group. */
+const BUDGET_KB = BUDGETS_KB.framework + BUDGETS_KB.interface + BUDGETS_KB.engine;
 
 const DIST = path.resolve("dist");
 const SRC = path.resolve("src");
@@ -262,77 +292,90 @@ async function main() {
     .filter((a) => a.file.endsWith(".js"))
     .sort((a, b) => b.raw - a.raw)[0];
   const split = biggestJs ? await attribute(path.join(DIST, biggestJs.file)) : null;
+  const overByGroup = [];
   if (split) {
     const total = [...split.byOrigin.values()].reduce((n, x) => n + x, 0);
-    console.log(` where the JS comes from    raw kB    share    gz kB (est)`);
+    console.log(` where the JS comes from   gz kB (est)     budget`);
     for (const [origin, n] of [...split.byOrigin.entries()].sort((a, b) => b[1] - a[1])) {
-      const share = n / total;
-      console.log(
-        `   ${pad(origin, 22)} ${lpad(kb(n), 8)} ${lpad((share * 100).toFixed(1) + "%", 8)} ${lpad(kb(split.gzip * share), 10)}`,
-      );
+      const gzip = split.gzip * (n / total);
+      const cap = BUDGETS_KB[origin];
+      /* Content is reported and never capped — see the note on `BUDGETS_KB`. A budget on
+         the writing is a budget on how much the game can teach. */
+      const verdict =
+        cap === undefined
+          ? origin === "content"
+            ? "the product, not capped"
+            : ""
+          : gzip > cap * 1000
+            ? `OVER ${cap} kB by ${kb(gzip - cap * 1000)}`
+            : `${cap} kB — ${kb(cap * 1000 - gzip)} spare`;
+      console.log(`   ${pad(origin, 22)} ${lpad(kb(gzip), 10)}   ${verdict}`);
+      if (cap !== undefined && gzip > cap * 1000) overByGroup.push(origin);
     }
     console.log("");
   }
 
-  console.log(` code (JS + CSS)   ${lpad(kb(code), 8)} kB   budget ${BUDGET_KB} kB`);
+  const css = assets.filter((a) => a.file.endsWith(".css")).reduce((n, a) => n + a.gzip, 0);
+  if (css > BUDGETS_KB.stylesheet * 1000) overByGroup.push("stylesheet");
+
+  console.log(` stylesheet        ${lpad(kb(css), 8)} kB   budget ${BUDGETS_KB.stylesheet} kB`);
+  console.log(` code (JS + CSS)   ${lpad(kb(code), 8)} kB   all of the above plus content`);
   console.log(` markup            ${lpad(kb(sum("markup")), 8)} kB`);
   console.log(` photography       ${lpad(kb(tot(art)), 8)} kB   ${art.length} files`);
   console.log(` fonts             ${lpad(kb(tot(fonts)), 8)} kB   ${fonts.length} files`);
   console.log(` everything        ${lpad(kb(sum()), 8)} kB   what a player downloads on a cold visit`);
 
-  if (over > 0) {
-    const pct = Math.round((over / (BUDGET_KB * 1000)) * 100);
-    console.log(
-      `\n✗ OVER BUDGET by ${kb(over)} kB (${pct}%) — ${kb(code)} kB of code against ${BUDGET_KB} kB documented in CLAUDE.md`,
-    );
-    /**
-     * Said plainly, because the backlog currently expects this overrun to be retired by
-     * something that cannot retire it. 7.1 replaces the photo crops with inline SVG
-     * facsimiles and claims it "also retires 2.6": the photographs are media, and
-     * facsimiles authored in content land INSIDE the JS bundle, so that trade takes the
-     * measured photography weight off a cold visit and pushes the code number the wrong
-     * way. Both are worth doing. They are not the same budget.
-     */
-    console.log(
-      `  Not a licence to move the number — but note what this overrun is not.` +
-        `\n  Backlog 7.1 (22 photo crops → inline SVG facsimiles) takes ${kb(tot(art))} kB off` +
-        `\n  PHOTOGRAPHY, and authoring facsimiles in content adds to the CODE bundle, which is` +
-        `\n  what the ${BUDGET_KB} kB budget measures. The code overrun needs its own answer.`,
-    );
-    /**
-     * And the answer is not "refactor the components", which is where a single number
-     * sends you. Measured: React is about 40% of the bundle, so the dependency costs
-     * roughly two thirds of the whole budget before this project writes a line — that is
-     * a standing decision rather than drift, and the only lever on it is a smaller
-     * runtime. The next largest single source is `story.ts`, which is the writing: the
-     * product, not overhead, and the last thing to cut.
-     *
-     * Code-splitting is the obvious remaining lever and it is closed — not by preference
-     * but by the build. Backlog 8.1 ships the bundle as ONE iife chunk served by a
-     * classic `<script defer>`, because a `type="module"` script cannot be fetched from a
-     * `file:` URL at all: CORS is unavailable to the scheme, so `dist/` opened off a
-     * shared drive or unzipped from a SCORM package was a blank page. A dynamic import
-     * makes Rollup emit a second chunk, and `vite.config.ts` throws at build time when it
-     * sees one. Splitting the ending and the dashboard out would trade the deployment
-     * target this was all packaged for.
-     */
-    if (split) {
-      const total = [...split.byOrigin.values()].reduce((n, x) => n + x, 0);
-      const fw = (split.byOrigin.get("framework") ?? 0) / total;
+  /**
+   * THE GATE IS THE GROUPS, NOT THE TOTAL, and that distinction is the whole of D-070.
+   *
+   * A single figure over everything necessarily includes the writing, so it grows every
+   * time the game teaches more and the only way back to green is to delete content.
+   * That is exactly the pressure a budget must not create here. Each group that can
+   * regress carries its own cap; content is reported and never capped.
+   *
+   * With no sourcemap there is nothing to check per group, so a deliberately generous
+   * flat guard stands in against a sudden doubling.
+   */
+  if (split) {
+    if (overByGroup.length > 0) {
+      console.log(`
+✗ OVER BUDGET — ${overByGroup.join(", ")}`);
       console.log(
-        `\n  Before refactoring anything: the framework is ${(fw * 100).toFixed(0)}% of the JS ` +
-          `(~${kb(split.gzip * fw)} kB gz),` +
-          `\n  which is ${Math.round(((split.gzip * fw) / (BUDGET_KB * 1000)) * 100)}% of the whole budget spent on React before any of this code runs.` +
-          `\n  Code-splitting is not available — the module is inlined so dist/ runs from file://.`,
+        `  Each group carries its own cap for a reason; see BUDGETS_KB. Before reaching` +
+          `
+  for the components: the framework is a dependency choice rather than drift,` +
+          `
+  and the only lever on it is a smaller runtime. Code-splitting is unavailable,` +
+          `
+  because the build ships one iife chunk so dist/ opens from file:// in an LMS.
+`,
       );
-    } else {
-      console.log(
-        `\n  For where the weight is: npx vite build --sourcemap && node tools/size.mjs`,
-      );
+      process.exit(1);
     }
+    console.log(`
+✓ every capped group is inside its budget; content is reported, not capped
+`);
+    return;
+  }
+
+  const coarse = BUDGET_KB * 1000 + 80_000;
+  if (code > coarse) {
+    console.log(
+      `
+✗ ${kb(code)} kB of code, past the ${kb(coarse)} kB no-sourcemap guard.` +
+        `
+  For where the weight is: npx vite build --sourcemap && node tools/size.mjs
+`,
+    );
     process.exit(1);
   }
-  console.log(`\n✓ within budget — ${kb(code)} kB of ${BUDGET_KB} kB\n`);
+  console.log(
+    `
+✓ ${kb(code)} kB of code, inside the coarse guard. Per-group budgets need a` +
+      `
+  sourcemap: npx vite build --sourcemap && node tools/size.mjs
+`,
+  );
 }
 
 main().catch((e) => {

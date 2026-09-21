@@ -586,7 +586,7 @@ rather than grey (12.56:1 on the page), which is what gives the title screen and
 interludes — which have no meters and no cards — a mark in the brand's own colour.
 
 The brand's own type is Graphik-Semibold / Graphik Regular (`fontScheme` in the same
-theme file). We ship Inter, because Graphik is licensed and the bundle is 94 kB gzipped.
+theme file). We ship Inter, because Graphik is licensed and the bundle is budgeted tightly (D-070).
 Worth revisiting if a licence exists.
 
 ## Hierarchy rules — enforceable
