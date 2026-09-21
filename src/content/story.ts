@@ -1343,6 +1343,39 @@ const nodes: GameNode[] = [
     situation: [
       "You have a shape. Every element you add makes the proposal more attractive and harder to deliver at the same time.",
     ],
+    /**
+     * Backlog 4.4. One of the two beats in the game that reacted to nothing, on a screen
+     * where what the player already holds is the entire substance of the moment.
+     *
+     * A list rather than a `variant`, because nothing about the SITUATION changes — it is
+     * three of six whatever happened, and the constraint is the beat. What changes is what
+     * the document is being written against, and that is an observation a person makes.
+     *
+     * WHAT THESE DELIBERATELY DO NOT READ. `knows:ops_constraint` is half of
+     * `m7-anchored`'s gate and there is a card on this screen called "Operations
+     * integration workstream", so a colleague who mentions Marcus here is not reacting,
+     * he is pointing — the same defect as the m10b line whose condition was character for
+     * character its outcome's. `has:data` is in `m7-fast-thin`'s `none` for the same
+     * reason. So Arjun reacts to commitments already made elsewhere — the outcome deal,
+     * the partner, the fortnight inside the business — and says nothing about which three.
+     */
+    advisorLine: [
+      {
+        when: { any: ["outcome_based"] },
+        text: "A third of the fee moves with the result now. I am reading this list as a plan, not a menu.",
+      },
+      {
+        when: { any: ["has:partner"] },
+        text: "The partner is in this now. Whatever goes in, somebody tells them on Monday which parts are theirs.",
+      },
+      {
+        when: { any: ["has_access", "landed_small"] },
+        text: "We have had a fortnight inside their business, so nothing on this list has to be guesswork.",
+      },
+      {
+        text: "The three you leave out do not come back later. I would rather that was a decision than an accident.",
+      },
+    ],
     advisor: ARJUN,
     consider: [
       "For each item, who actually delivers it?",
@@ -1505,6 +1538,38 @@ const nodes: GameNode[] = [
       "Procurement has the comparison in writing",
       "The board has seen the lower figure",
       "The difference between proposals is invisible",
+    ],
+    /**
+     * Backlog 4.4, and the harder half of it.
+     *
+     * This is the beat where a steer turns into a recommendation fastest: four routes to
+     * a number are on screen, and `m8-hold-strong` opens on `evidenced`, `ops_onside`,
+     * `reframed` or `knows:rival_gap` while `m8-phase-good` opens on `has_access`,
+     * `ops_onside`, `evidenced` or `landed_small`. A colleague conditioned on any of
+     * those six is reading the answer key aloud three inches from the card it selects.
+     * All six are therefore untouched here.
+     *
+     * What Riya reacts to instead is the shape the deal has already taken — a fee that
+     * is partly conditional, a cost line that does not shrink because somebody asks, a
+     * client who likes you. None of them nominates a route. The first two are facts
+     * about cost, which is the half of a position the player is allowed to see; the
+     * third is her correcting an assumption she has watched cost people money, which is
+     * what a colleague with nine years of this is for.
+     */
+    advisorLine: [
+      {
+        when: { any: ["outcome_based"] },
+        text: "A third of this fee already moves with the result. Some of our price is conditional before we start.",
+      },
+      {
+        when: { any: ["scope:heavy"] },
+        text: "The platform rebuild is the biggest cost line I have signed off this year. Nothing said today makes it smaller.",
+      },
+      {
+        when: { any: ["credibility"] },
+        text: "They like us. I have watched that be worth a great deal in a room and nothing at all in a procurement file.",
+      },
+      { text: "Thirty percent is a number somebody has to explain upwards. The question is which of us ends up doing it." },
     ],
     advisor: RIYA_DEAL,
     consider: [
