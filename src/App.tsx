@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 
 import { story } from "./content/story";
+import { lmsResumeCode, useLms } from "./lms";
 import { decodeRun } from "./engine/runcode";
 import {
   LEGACY_SAVE_KEYS,
@@ -88,7 +89,36 @@ function loadSave(): LoadOutcome {
       window.localStorage.getItem(STORAGE_KEY) ??
       LEGACY_SAVE_KEYS.map((k) => window.localStorage.getItem(k)).find((v) => v !== null) ??
       null;
-    return decodeSave(raw, content);
+    const local = decodeSave(raw, content);
+    if (local.status !== "empty") return local;
+    return fromLms();
+  } catch {
+    return fromLms();
+  }
+}
+
+/**
+ * Nothing in this browser — ask the LMS.
+ *
+ * This is the reason to integrate with an LMS at all beyond a tick in a report.
+ * `localStorage` is per-browser and per-machine, so a learner who starts the module on a
+ * laptop and opens it again on a desktop has, without this, started again — and a
+ * seventy-minute module that silently forgets an hour of work is a module nobody
+ * finishes twice.
+ *
+ * Only consulted when local storage has nothing, never to override it. A run in this
+ * browser is by definition at least as far along as the one the LMS was last told about,
+ * because the LMS copy is written from it.
+ */
+function fromLms(): LoadOutcome {
+  try {
+    const code = lmsResumeCode();
+    if (!code) return { status: "empty" };
+    const read = decodeRun(content, code);
+    /* A code the LMS is holding from a different content build is refused rather than
+       replayed — the fingerprint in the code is what makes that detectable at all. The
+       learner starts again, which is the correct outcome and not a silent one. */
+    return read.ok ? { status: "ok", state: read.state, migrated: false } : { status: "empty" };
   } catch {
     return { status: "empty" };
   }
@@ -166,6 +196,10 @@ export default function App() {
   useEffect(() => {
     setSaved(loadSave());
   }, []);
+
+  /* Report arrival, keep the resume point current, and mark completion at an ending.
+     A no-op when no LMS is present, which is every run outside one. See `lms.ts`. */
+  useLms(state, content);
 
   useEffect(() => {
     if (state.phase === "title") return;
