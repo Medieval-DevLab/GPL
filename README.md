@@ -222,3 +222,4 @@ where nobody could argue with it. See `src/scorm.ts`.
 | `npm run validate` | typecheck + test + build |
 | `npm run scorm` | build, check `file://`, then write a SCORM 1.2 manifest into `dist/` |
 | `npm run filecheck` | open the built `dist/` at a real `file://` URL and assert it runs |
+| `npm run lmscheck` | run the built game against a fake SCORM API and read back what the LMS was told |

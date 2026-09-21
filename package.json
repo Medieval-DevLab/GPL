@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "verify": "node tools/verify.mjs",
     "filecheck": "node tools/file-url-check.mjs",
-    "scorm": "npm run build && node tools/file-url-check.mjs && node tools/scorm-package.mjs",
+    "lmscheck": "node tools/lms-check.mjs",
+    "scorm": "npm run build && node tools/file-url-check.mjs && node tools/lms-check.mjs && node tools/scorm-package.mjs",
     "validate": "tsc --noEmit && vitest run && vite build"
   },
   "dependencies": {
