@@ -64,6 +64,7 @@ import {
   discoveredEvidence,
   quoted,
   radioTabIndex,
+  useTabletBand,
 } from "./shell";
 
 /* ───────────────────────── the stake element ───────────────────────── */
@@ -88,6 +89,11 @@ import {
  * about which option does what, which is G3 and is the one line this screen may not cross.
  */
 export function StakeMark({ inline = false }: { inline?: boolean }) {
+  /* One row in the tablet band too, for the same reason it is one row on a conversation
+     surface: there the pixels come off the thread, here they come off the option row.
+     The mark is the same object either way — same rim, same three pictograms, same
+     sentence — so nothing about what it says depends on which shape it is in. */
+  const oneRow = inline || useTabletBand();
   return (
     <div
       data-region="stake"
@@ -95,7 +101,7 @@ export function StakeMark({ inline = false }: { inline?: boolean }) {
         /* Two rows in the console's question band, where it has a 24px heading and a
            disclosure line beside it and 64px of band to fill. One row on a conversation
            surface, where every pixel it takes comes off the tile wall or the thread. */
-        inline ? "items-center gap-2 py-1.5" : "flex-col gap-1.5 py-2"
+        oneRow ? "items-center gap-2 py-1.5" : "flex-col gap-1.5 py-2"
       }`}
       style={{
         borderColor: "var(--color-accent-ring)",
@@ -388,7 +394,7 @@ function Concerns({ concerns }: { concerns?: string[] }) {
  * read. It survived only inside the button's concatenated name, which is exactly the
  * 240-character run this card is being taken apart to fix.
  */
-function CostRow({ label, value }: { label: string; value: number }) {
+function CostRow({ label, value, inline }: { label: string; value: number; inline?: boolean }) {
   /**
    * TWO defects, one row.
    *
@@ -406,9 +412,12 @@ function CostRow({ label, value }: { label: string; value: number }) {
    * invisible on screen and counted by `tools/measure.mjs`, which is exactly the kind of
    * thing that makes an instrument look wrong when it is not.
    */
+  /* `inline`: the dots sit next to their label instead of out at the card's right edge,
+     so the two costs can share a line where the measure allows and fall onto two where it
+     does not. `flex-1` is what forces a row of its own — it claims the whole width. */
   return (
-    <div className="flex items-center gap-2 text-[12px]">
-      <span className="flex-1 font-medium text-(--color-muted)">{label}</span>
+    <div className={`flex items-center gap-2 text-[12px] ${inline ? "" : "w-full"}`}>
+      <span className={`font-medium text-(--color-muted) ${inline ? "" : "flex-1"}`}>{label}</span>
       <Hidden>
         {value} {UI_LABEL.outOf} 3.
       </Hidden>
@@ -534,9 +543,21 @@ function OptionCard({
           to a 258px-wide card draws 77px tall and centres it, leaving ~27px of EMPTY
           panel above and below. Trimming 8px takes it from the letterbox and never
           touches the drawing, which is why this is not the usual shaving. */}
+      {/* The media band is the drawing's own shape below `lg`, and 124px above it.
+          A facsimile is a 320×96 canvas with no `preserveAspectRatio`, so in a 124px box
+          on a 159px tablet column the drawing renders 48px tall and the other 76px is
+          flat panel — half the card's media is nothing at all, on the one screen at this
+          width that has no room to spare. `aspect-[10/3]` is 320/96, so the box becomes
+          exactly the drawing and 76px goes back to the option row. Nothing is cropped,
+          scaled or dropped; the empty band is. Desktop is left at 124px to the pixel,
+          because the same waste there is paid out of a budget that can afford it and
+          changing it would be a change to the reference screen. */}
       <div className="relative">
         {option.facsimile ? (
-          <Facsimile kind={option.facsimile} className="h-[124px] w-full" />
+          <Facsimile
+            kind={option.facsimile}
+            className="aspect-[10/3] w-full lg:aspect-auto lg:h-[124px]"
+          />
         ) : (
           option.image && (
             <img
@@ -544,13 +565,26 @@ function OptionCard({
               alt=""
               loading="lazy"
               decoding="async"
-              className="h-[124px] w-full object-cover"
+              className="h-[84px] w-full object-cover lg:h-[124px]"
             />
           )
         )}
+        {/* The medallion stops overlapping the media below `lg`, and that is the other
+            half of the aspect-ratio change above.
+            The overlap is a poster device: it works because a 124px panel has 60px of
+            empty ground under the drawing for a disc to sit in. Once the panel is the
+            drawing and nothing else — 48px on a 159px column — a 48px disc pulled up 28
+            lands squarely on the middle of it, and the complaint chart the card exists to
+            show is behind a circle. So in the tablet band the disc sits under the band
+            rather than in it. Costs 28px on a card with media; the beats that have media
+            are the ones with room, and the two that have none are the ones that do not. */}
         <div
           className={`flex justify-center px-3 ${
-            option.facsimile || option.image ? (narrow ? "-mt-7" : "-mt-8") : narrow ? "pt-3" : "pt-4"
+            option.facsimile || option.image
+              ? `mt-1.5 ${narrow ? "lg:-mt-7" : "lg:-mt-8"}`
+              : narrow
+                ? "pt-3"
+                : "pt-4"
           }`}
         >
           <span
@@ -575,7 +609,7 @@ function OptionCard({
       {/* 2 · title — the only thing the mockups centre */}
       <p
         id={titleId(option.id)}
-        className="px-4 pt-2.5 text-center text-[18px] font-bold leading-snug"
+        className={`px-4 text-center text-[18px] font-bold leading-snug ${narrow ? "pt-2" : "pt-2.5"}`}
         style={{ color: selected ? "var(--color-accent-deep)" : "var(--color-ink)" }}
       >
         {option.title}
@@ -593,9 +627,18 @@ function OptionCard({
           Polarity was carried by a tick and a red cross, and the cross is `aria-hidden`,
           so a pro and a con read identically: "Budget looks real", "Two rivals ahead of
           you". Colour and shape alone (1.4.1), and here not even that. */}
-      <div id={`opt-${option.id}-trade`} className="px-4 pt-3">
+      {/* The narrow card's rhythm is 4px inside the list against 10px to the rule above
+          it, where the wide one runs 6 against 12. Both are past the 2:1 that does the
+          grouping (2.5:1 and 2:1), and the tighter pair is the one a 254px card should be
+          using anyway — internal air scales with the object, and this object is 80% of the
+          width it was drawn at. 34px a card, which is m8's whole overrun. */}
+      <div id={`opt-${option.id}-trade`} className={`px-4 ${narrow ? "pt-2.5" : "pt-3"}`}>
         {(option.pros?.length || option.cons?.length) && (
-          <ul className="space-y-1.5 border-t border-(--color-line) pt-3">
+          <ul
+            className={`border-t border-(--color-line) ${
+              narrow ? "space-y-1 pt-2.5" : "space-y-1.5 pt-3"
+            }`}
+          >
             {option.pros?.map((t) => (
               <li key={t} className="flex items-start gap-2 text-[13px] leading-snug">
                 <span className="mt-[2px] shrink-0 text-(--color-good)">
@@ -628,13 +671,28 @@ function OptionCard({
         )}
       </div>
 
-      {/* 5 · what it costs — never what it returns */}
-      <div id={`opt-${option.id}-cost`} className="px-4 pt-3">
+      {/* 5 · what it costs — never what it returns.
+             At a narrow measure the block is one wrapping row rather than a heading over
+             two full-width rows: 86px per card, which over two bands of cards is most of
+             what the tablet decide beat is over by. **Nothing leaves the page.** The group
+             name stays in the accessibility tree as `sr-only` — it is the only thing that
+             frames "Time" and "Investment" as costs for somebody who cannot see that they
+             are under a rule at the foot of a card — and both labels and both magnitudes
+             are rendered exactly as they are at full width. */}
+      <div id={`opt-${option.id}-cost`} className={`px-4 ${narrow ? "pt-2.5" : "pt-3"}`}>
         {option.cost && (
-          <div className="space-y-1.5 border-t border-(--color-line) pt-3">
-            <p className="text-[13px] font-bold text-(--color-ink-soft)">Resource cost</p>
-            <CostRow label="Time" value={option.cost.time} />
-            <CostRow label="Investment" value={option.cost.investment} />
+          <div className={`border-t border-(--color-line) ${narrow ? "pt-2.5" : "pt-3"}`}>
+            <p
+              className={
+                narrow ? "sr-only" : "mb-1.5 text-[13px] font-bold text-(--color-ink-soft)"
+              }
+            >
+              Resource cost
+            </p>
+            <div className={narrow ? "flex flex-wrap gap-x-4 gap-y-1" : "space-y-1.5"}>
+              <CostRow label="Time" value={option.cost.time} inline={narrow} />
+              <CostRow label="Investment" value={option.cost.investment} inline={narrow} />
+            </div>
           </div>
         )}
       </div>
@@ -644,7 +702,7 @@ function OptionCard({
              and the second line was the one being clipped by the console's bottom edge on
              the five-option beat. One word fits, and the card it sits in is the object it
              refers to, so "this option" was doing nothing the position did not. */}
-      <div className={`self-end px-4 ${narrow ? "pb-3 pt-3" : "pb-4 pt-4"}`}>
+      <div className={`self-end px-4 ${narrow ? "pb-2.5 pt-2.5" : "pb-4 pt-4"}`}>
         <CardButton
           selected={selected}
           on="Selected"
@@ -713,10 +771,26 @@ export function CardButton({
   );
 }
 
-/** Column count. Four options at ~205px each is the mockups' own arrangement. */
+/**
+ * Column count. Four options at ~205px each is the mockups' own arrangement.
+ *
+ * In the tablet band the centre is ~543px, so five columns would be 88px and four would
+ * be 114 — narrower than the 163px the narrow card is authored for and narrower than any
+ * measure an 18px title can be set at. So four and five wrap, to 2×2 and to 3+2.
+ *
+ * **Wrapping is not stacking, and the difference is the rule.** Options are columns so
+ * that their checklists line up and the player compares across in one eye movement
+ * (`docs/UI-AUDIT.md` F2); a band of three cards side by side still does that, and the
+ * `subgrid` keeps every card in a band aligned with its neighbours. A single column of
+ * five rows would not, which is why it is not an option at any width.
+ *
+ * Three goes to three columns from `md` rather than wrapping to 2+1: a lone card on a
+ * second row is the worst of both — it costs the height of a wrap and compares with
+ * nothing.
+ */
 function columns(n: number): string {
   if (n <= 2) return "sm:grid-cols-2";
-  if (n === 3) return "sm:grid-cols-2 lg:grid-cols-3";
+  if (n === 3) return "sm:grid-cols-2 md:grid-cols-3";
   if (n === 4) return "sm:grid-cols-2 lg:grid-cols-4";
   if (n === 5) return "sm:grid-cols-3 lg:grid-cols-5";
   return "sm:grid-cols-3";
@@ -731,12 +805,19 @@ function ChoiceList({
   state: GameState;
   onToggle: (id: string) => void;
 }) {
+  /* Called before anything can short-circuit it: `a || useTabletBand()` reads better and
+     is a conditional hook, which React will not have. */
+  const tablet = useTabletBand();
   const options = availableOptions(mission, state);
   const chosen = state.selection[0];
   const anySelected = options.some((o) => o.id === chosen);
   /* `availableOptions`, not `mission.options`: a `requires` gate can take the fifth card
      away, and a card sized for five columns rendered in four would be needlessly small. */
-  const narrow = options.length >= NARROW_COLUMNS;
+  /* …and in the tablet band EVERY card is the narrow one, whatever the count: the widest
+     column that band ever produces is 250px at two across, and most are ~160. `narrow`
+     was always a statement about the measure rather than about the number of siblings —
+     the count was just the only way the measure could get small. */
+  const narrow = tablet || options.length >= NARROW_COLUMNS;
 
   return (
     <RadioGroup
@@ -1052,6 +1133,19 @@ export function DecideBody({
   const need = requiredSelectionCount(mission);
   const have = state.selection.length;
   const ready = have === need;
+  /**
+   * Where the stake mark sits, and it is a height decision rather than a taste one.
+   *
+   * Beside the heading it claims 215px of a 560px band, which takes every question longer
+   * than four words to a second line — 28px, on the screen that is tightest at this
+   * width. On the line below, next to the disclosure, the heading has the whole band and
+   * the mark has a row that was half empty. 33px, on every console decide beat.
+   *
+   * A JS branch rather than two positions with a media query, because there must be
+   * exactly one of these in the DOM: it is `data-region="stake"`, the probe counts it,
+   * and its `Hidden` sentence would otherwise be read out twice.
+   */
+  const stakeBelow = useTabletBand();
 
   return (
     /**
@@ -1097,13 +1191,18 @@ export function DecideBody({
           >
             {mission.question}
           </h1>
-          <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3">
+          <div
+            className={`mt-3 flex flex-wrap gap-3 ${
+              stakeBelow ? "items-center justify-between" : "items-baseline justify-between"
+            }`}
+          >
             <Continuity mission={mission} state={state} fallback={situation[0]} />
             {mission.kind !== "choice" && (
               <Pill tone={ready ? "good" : "accent"}>
                 {mission.kind === "investigate" ? "Choose" : "Pick"} {need} · {have}/{need}
               </Pill>
             )}
+            {stakeBelow && <StakeMark />}
           </div>
         </div>
 
@@ -1111,11 +1210,13 @@ export function DecideBody({
             this is the half of it that sits where the player is actually looking — beside
             the question, at the top of the screen, in the same rim and the same three
             pictograms the chips down there use. */}
-        <StakeMark />
+        {!stakeBelow && <StakeMark />}
       </div>
 
-      {/* Station 4 — the options. The only place on this screen with real word count. */}
-      <div data-region="options" data-decision className="flex-1 px-5 py-5">
+      {/* Station 4 — the options. The only place on this screen with real word count.
+          `py-3` below `lg`: 16px, taken from the band's own outer air rather than from the
+          12px gutter between the cards, which is what does the grouping. */}
+      <div data-region="options" data-decision className="flex-1 px-5 py-3 lg:py-5">
         {mission.kind === "choice" && (
           <ChoiceList mission={mission} state={state} onToggle={onToggle} />
         )}

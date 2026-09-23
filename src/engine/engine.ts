@@ -146,7 +146,6 @@ export function createInitialState(content: Content): GameState {
     badges: [],
     discovered: [],
     selection: [],
-    prediction: null,
     resolution: null,
     history: [],
     completed: [],
@@ -165,7 +164,6 @@ function enterNode(state: GameState, content: Content, id: string): GameState {
     ...state,
     nodeId: id,
     selection: [],
-    prediction: null,
     resolution: null,
   };
 
@@ -236,21 +234,31 @@ export function requiredSelectionCount(mission: Mission): number {
   }
 }
 
-/** Has the player made their selection? Prediction is a separate gate. */
+/** Is the selection complete, distinct and currently available under the authored rules? */
 export function selectionComplete(state: GameState, content: Content): boolean {
   const node = getNode(content, state.nodeId);
   if (!isMission(node) || state.phase !== "decide") return false;
-  return state.selection.length === requiredSelectionCount(node);
+  if (state.selection.length !== requiredSelectionCount(node)) return false;
+  if (new Set(state.selection).size !== state.selection.length) return false;
+  const legal = selectableIds(node, state);
+  return state.selection.every((id) => legal.includes(id));
+}
+
+function selectableIds(mission: Mission, state: GameState): string[] {
+  if (mission.kind === "choice") return availableOptions(mission, state).map((o) => o.id);
+  if (mission.kind === "investigate") return mission.evidence.map((e) => e.id);
+  return mission.components.map((c) => c.id);
 }
 
 export function canCommit(state: GameState, content: Content): boolean {
-  return selectionComplete(state, content) && state.prediction !== null;
+  return selectionComplete(state, content);
 }
 
 /** Toggle an id in the current selection, respecting the mission's limit. */
 export function toggleSelection(state: GameState, content: Content, id: string): GameState {
   const node = getNode(content, state.nodeId);
   if (!isMission(node) || state.phase !== "decide") return state;
+  if (!selectableIds(node, state).includes(id)) return state;
 
   const limit = requiredSelectionCount(node);
   const already = state.selection.includes(id);
@@ -267,16 +275,15 @@ export function toggleSelection(state: GameState, content: Content, id: string):
    */
   if (already && limit === 1) return state;
 
-  // Changing your mind about the choice invalidates the call you made about it.
   if (already) {
-    return { ...state, selection: state.selection.filter((s) => s !== id), prediction: null };
+    return { ...state, selection: state.selection.filter((s) => s !== id) };
   }
   if (limit === 1) {
     // Single-pick missions swap rather than block — less fiddly for the player.
-    return { ...state, selection: [id], prediction: null };
+    return { ...state, selection: [id] };
   }
   if (state.selection.length >= limit) return state;
-  return { ...state, selection: [...state.selection, id], prediction: null };
+  return { ...state, selection: [...state.selection, id] };
 }
 
 /**
@@ -303,46 +310,6 @@ export function chooseSetup(state: GameState, content: Content, optionId: string
     content,
     node.next,
   );
-}
-
-/** Record the player's call on which dimension this will cost most. */
-export function setPrediction(state: GameState, dim: DimensionId): GameState {
-  if (state.phase !== "decide") return state;
-  return { ...state, prediction: state.prediction === dim ? null : dim };
-}
-
-/**
- * Which dimension moved least — smallest movement in either direction.
- *
- * The prediction gate used to ask which dimension this would HURT, which has no answer
- * on the 27-of-85 outcomes where nothing goes backwards — so on most of the game's good
- * beats the player's committed claim was discarded and a compliment shown instead.
- * "Moves least" is always answerable, so the gate now pays off everywhere.
- *
- * The magnitude matters: comparing signed deltas answers the OLD question, returning
- * whichever dimension fell furthest. That shipped, and it meant the screen said
- * "Profitability barely moved" beside a tile reading −14. On the 88 authored outcomes
- * the signed comparison names a falling dimension 61 times and contradicts the printed
- * question 52 times, so the one place the player's reasoning is tested returned noise.
- */
-export function leastMoved(deltas: Record<DimensionId, number>): DimensionId {
-  return leastMovedSet(deltas)[0] as DimensionId;
-}
-
-/**
- * EVERY dimension tied for the smallest movement — which is the honest answer, because
- * the question has more than one on 12 of the 88 authored outcomes.
- *
- * Returning a single winner made the tie-break carry meaning it cannot carry. `reduce`
- * keeps the earlier element on a tie and `DIMENSIONS` starts with `win`, so six of those
- * twelve silently keyed to Winability, and "always answer Winability" scored well above
- * chance. Worse, a meter-greedy run clamps all three meters at 100 by mission 14, after
- * which every remaining beat moves nothing at all — and the screen told the player
- * "Winability held" about a beat in which literally nothing did.
- */
-export function leastMovedSet(deltas: Record<DimensionId, number>): DimensionId[] {
-  const smallest = Math.min(...DIMENSIONS.map((d) => Math.abs(deltas[d])));
-  return DIMENSIONS.filter((d) => Math.abs(deltas[d]) === smallest);
 }
 
 /* ───────────────────────────── resolution ───────────────────────────── */
@@ -405,7 +372,7 @@ function selectionEffects(
 export function commit(state: GameState, content: Content): GameState {
   const node = getNode(content, state.nodeId);
   if (!isMission(node) || state.phase !== "decide") return state;
-  if (state.selection.length !== requiredSelectionCount(node)) return state;
+  if (!selectionComplete(state, content)) return state;
 
   const dimsBefore = { ...state.dims };
 
@@ -440,11 +407,6 @@ export function commit(state: GameState, content: Content): GameState {
     deltas,
     newBadges: [...afterSelection.newBadges, ...afterOutcome.newBadges],
     revealed: sel.revealed,
-    predicted: state.prediction,
-    actualLeastMoved: leastMoved(deltas),
-    /* The verdict is the engine's to decide, not the component's: a prediction is right
-       if it names ANY dimension tied for the smallest movement. */
-    predictionCorrect: state.prediction ? leastMovedSet(deltas).includes(state.prediction) : null,
     nothingMoved: DIMENSIONS.every((d) => deltas[d] === 0),
   };
 
@@ -461,8 +423,6 @@ export function commit(state: GameState, content: Content): GameState {
     lesson,
     dimsBefore,
     dimsAfter: afterOutcome.dims,
-    /* Carried into permanent history so mastery is stable after the beat ends. */
-    predictionCorrect: resolution.predictionCorrect,
   };
 
   return {
@@ -491,20 +451,6 @@ export function advance(state: GameState, content: Content): GameState {
 
     case "brief":
       return isMission(node) ? { ...state, phase: "decide" } : state;
-
-    /**
-     * Nothing produces this phase any more, and it is handled anyway.
-     *
-     * `commit` lands on `consequence` directly, so no run this build plays can be here.
-     * A save written by an earlier build can be, and `decodeSave` rewrites it at the load
-     * boundary — which is the fix, because a state the interface has no screen for is a
-     * dead end no matter what `advance` would have done with it. This case stays as the
-     * backstop for anything that reaches the engine by another road (a hand-edited save,
-     * a future migration that forgets): forward to the beat the state is already holding
-     * the resolution for, rather than silently refusing to move.
-     */
-    case "resolving":
-      return { ...state, phase: "consequence" };
 
     case "consequence": {
       if (!isMission(node)) return state;
@@ -995,6 +941,7 @@ export const ENGINE_READ_FLAGS: ReadonlySet<string> = new Set([
   // the final verdict's two branches
   "walked_away",
   "lost",
+  "won",
   ...LEDGER_RULES.flatMap((r) => [
     ...(r.when.all ?? []),
     ...(r.when.any ?? []),
@@ -1061,7 +1008,8 @@ export function finalVerdict(
   }
   const lowest = DIMENSIONS.reduce((a, b) => (dims[a] <= dims[b] ? a : b));
 
-  if (win < 40) {
+  // A later relationship setback cannot undo the award that actually happened.
+  if (win < 40 && !flags.includes("won")) {
     return {
       title: "You did not win the work",
       summary:

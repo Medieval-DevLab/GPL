@@ -1,5 +1,7 @@
 # GPL design rules
 
+> Current redesign amendment: [Complete game backlog](COMPLETE-GAME-BACKLOG.md) controls desktop presentation and full-game scope. Retain deterministic engine, contextual trade-offs, earned evidence, no outcome preview and accessibility principles below. The old universal shell/rails requirements (E7a/E8), mission totals and statements denying simulation presentation are superseded. Remove the prediction quiz, not the rule that forbids showing outcomes before commitment.
+
 Rules for anyone — human or AI agent — writing content or code for this game.
 Where a rule can be checked by a machine, it is, and the check is named.
 

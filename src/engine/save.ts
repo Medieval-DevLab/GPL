@@ -40,6 +40,8 @@
 import { codeFromState, rulesFingerprint, shapeFingerprint } from "./runcode";
 import {
   DIMENSIONS,
+  BADGE_META,
+  isMission,
   type Content,
   type GameState,
   type HistoryEntry,
@@ -50,9 +52,10 @@ import {
  * The shape of `GameState`, by hand.
  *
  * Bump this when a field is added, removed or reinterpreted — not when content changes,
- * which the fingerprints handle. 4 succeeds the `v3` that lived in the storage key.
+ * which the fingerprints handle. Schema 5 removes the obsolete prediction fields;
+ * schema 4 and bare v3 states are migrated without replaying committed decisions.
  */
-export const SAVE_SCHEMA = 4;
+export const SAVE_SCHEMA = 5;
 
 /** One stable key, forever. The version lives in the envelope now, where it belongs. */
 const KEY_ROOT = "gpl.save";
@@ -141,7 +144,7 @@ export type LoadOutcome =
  * value the boundary can RECOGNISE, not as a phase the game can be in; `adoptPhase`
  * rewrites it on the way through.
  */
-const PHASES: readonly Phase[] = [
+const PHASES: readonly string[] = [
   "title",
   "setup",
   "brief",
@@ -167,12 +170,40 @@ const PHASES: readonly Phase[] = [
  * with nothing on it. That is worse than saying the save could not be read.
  */
 function adoptPhase(state: GameState): GameState | null {
-  if (state.phase !== "resolving") return state;
-  return state.resolution ? { ...state, phase: "consequence" } : null;
+  const old = state as unknown as Record<string, unknown>;
+  if (old.phase === "resolving" && !state.resolution) return null;
+  const clean = { ...old };
+  delete clean.prediction;
+  clean.phase = old.phase === "resolving" ? "consequence" : old.phase;
+  clean.history = state.history.map((entry) => {
+    const copy = { ...entry } as unknown as Record<string, unknown>;
+    delete copy.predictionCorrect;
+    return copy;
+  });
+  if (state.resolution) {
+    const copy = { ...state.resolution } as unknown as Record<string, unknown>;
+    delete copy.predicted;
+    delete copy.actualLeastMoved;
+    delete copy.predictionCorrect;
+    clean.resolution = copy;
+  }
+  return clean as unknown as GameState;
 }
 
 const isStrings = (v: unknown): v is string[] =>
   Array.isArray(v) && v.every((x) => typeof x === "string");
+
+function validDims(value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  const dims = value as Record<string, unknown>;
+  return DIMENSIONS.every((d) => typeof dims[d] === "number" && Number.isFinite(dims[d]) && (dims[d] as number) >= 0 && (dims[d] as number) <= 100);
+}
+
+function validLesson(value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  const lesson = value as Record<string, unknown>;
+  return typeof lesson.principle === "string" && typeof lesson.because === "string" && (lesson.watchFor === undefined || typeof lesson.watchFor === "string");
+}
 
 /**
  * Is this state something this content could actually be in?
@@ -195,15 +226,43 @@ function looksPlayable(state: unknown, content: Content): state is GameState {
     }
   }
   if (!isStrings(s.flags) || !isStrings(s.badges)) return false;
+  if (!s.badges.every((id) => Object.hasOwn(BADGE_META, id))) return false;
   if (!isStrings(s.discovered) || !isStrings(s.selection) || !isStrings(s.completed)) return false;
-  if (s.prediction !== null && typeof s.prediction !== "string") return false;
+  if (new Set(s.selection).size !== s.selection.length) return false;
+  if (!s.completed.every((id) => content.nodes[id] && isMission(content.nodes[id]!))) return false;
+  const node = content.nodes[s.nodeId]!;
+  const phase = s.phase as string;
+  if (phase === "title" && s.nodeId !== content.startNodeId) return false;
+  if (phase === "setup" && node.kind !== "setup") return false;
+  if (phase === "interlude" && node.kind !== "interlude") return false;
+  if (phase === "ending" && node.kind !== "ending") return false;
+  if (["brief", "decide", "consequence", "resolving"].includes(phase) && !isMission(node)) return false;
+  if (isMission(node)) {
+    const legal = node.kind === "choice" ? node.options.map((o) => o.id) : node.kind === "investigate" ? node.evidence.map((e) => e.id) : node.components.map((c) => c.id);
+    const max = node.kind === "choice" ? 1 : node.kind === "investigate" ? node.slots : node.pick;
+    if (s.selection.length > max || !s.selection.every((id) => legal.includes(id))) return false;
+  }
   if (!Array.isArray(s.history)) return false;
   for (const entry of s.history as HistoryEntry[]) {
     if (!entry || typeof entry !== "object") return false;
     if (typeof entry.missionId !== "string" || !content.nodes[entry.missionId]) return false;
     if (!isStrings(entry.chosenIds) || entry.chosenIds.length === 0) return false;
     if (typeof entry.outcomeId !== "string") return false;
+    if (!["strong", "mixed", "hard"].includes(entry.tone)) return false;
+    if (typeof entry.missionTitle !== "string" || typeof entry.chosenLabel !== "string" || typeof entry.headline !== "string" || typeof entry.chapter !== "number") return false;
+    if (!validDims(entry.dimsBefore) || !validDims(entry.dimsAfter) || !validLesson(entry.lesson)) return false;
   }
+  if (phase === "consequence" || phase === "resolving") {
+    const r = s.resolution;
+    if (!r || typeof r !== "object" || !r.outcome || typeof r.outcome !== "object") return false;
+    if (typeof r.chosenLabel !== "string" || !validLesson(r.lesson) || !validDims(r.dimsBefore) || !validDims(r.dimsAfter)) return false;
+    if (!r.deltas || !DIMENSIONS.every((d) => typeof r.deltas[d] === "number" && Number.isFinite(r.deltas[d]))) return false;
+    if (!isStrings(r.newBadges) || !r.newBadges.every((id) => Object.hasOwn(BADGE_META, id)) || !Array.isArray(r.revealed)) return false;
+    if (typeof r.outcome.id !== "string" || typeof r.outcome.headline !== "string" || typeof r.outcome.detail !== "string" || !isStrings(r.outcome.changed)) return false;
+    if (!["strong", "mixed", "hard"].includes(r.outcome.tone)) return false;
+    if (r.outcome.next !== undefined && !content.nodes[r.outcome.next]) return false;
+    if (!r.revealed.every((e) => e && typeof e.id === "string" && typeof e.label === "string" && typeof e.reveals === "string")) return false;
+  } else if (s.resolution !== null) return false;
   return true;
 }
 
@@ -277,12 +336,12 @@ export function decodeSave(raw: string | null | undefined, content: Content): Lo
      refuses it otherwise, so promising it here would be a promise broken one screen later. */
   const replayable = envelope.shape === shapeFingerprint(content) && code !== null;
 
-  if (envelope.schema !== SAVE_SCHEMA) return stale("schema", code, replayable);
+  if (envelope.schema !== SAVE_SCHEMA && envelope.schema !== 4) return stale("schema", code, replayable);
   if (envelope.rules !== rulesFingerprint(content)) return stale("story", code, replayable);
   if (state.phase === "title") return { status: "empty" };
 
   /* `migrated` means "written by an older build and adopted", which a rewritten phase is
      — the state going back is not the state that came in. The interface may say so; what
      matters here is that it does not claim the save arrived current when it did not. */
-  return { status: "ok", state, migrated: state.phase !== envelope.state.phase };
+  return { status: "ok", state, migrated: envelope.schema !== SAVE_SCHEMA || state.phase !== envelope.state.phase };
 }

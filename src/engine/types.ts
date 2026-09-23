@@ -698,7 +698,6 @@ export type Phase =
   | "brief"
   | "interlude"
   | "decide"
-  | "resolving"
   | "consequence"
   | "ending";
 
@@ -716,18 +715,6 @@ export interface HistoryEntry {
   lesson: Lesson;
   dimsBefore: Record<DimensionId, number>;
   dimsAfter: Record<DimensionId, number>;
-  /**
-   * Whether the player read the trade correctly, kept permanently.
-   *
-   * It already existed on `Resolution`, but `enterNode` clears that on leaving the
-   * mission, so it was knowable for the current beat and unknowable a minute later. That
-   * made a mastery rating unstable: `progress.ts` would award three stars on the
-   * consequence screen and two for the same mission seen from the hub. A mastery figure
-   * that changes when you walk away from it is not a mastery figure.
-   *
-   * So it is recorded here, where history is permanent. Costs one boolean per beat.
-   */
-  predictionCorrect: boolean | null;
 }
 
 export interface Resolution {
@@ -740,15 +727,6 @@ export interface Resolution {
   newBadges: BadgeId[];
   /** populated for investigate missions */
   revealed: Evidence[];
-  /** which dimension the player said would move least, before committing */
-  predicted: DimensionId | null;
-  /** which one actually did. Named for the question asked, so the two cannot drift again. */
-  actualLeastMoved: DimensionId | null;
-  /**
-   * Whether the prediction was right — decided here rather than in the component, because
-   * a tie has several right answers and a component comparing two ids cannot know that.
-   */
-  predictionCorrect: boolean | null;
   /** All three deltas are zero, so there is no "one that held" to name. */
   nothingMoved: boolean;
 }
@@ -763,14 +741,6 @@ export interface GameState {
   discovered: string[];
   /** in-progress selection on the current mission */
   selection: string[];
-  /**
-   * The player's call, before committing, on which dimension this will cost most.
-   *
-   * This is the game's "before". Without it the consequence screen can only TELL the
-   * player what happened, which is what made the game feel like it was lecturing. With
-   * it, the consequence confirms or corrects a claim they made themselves.
-   */
-  prediction: DimensionId | null;
   resolution: Resolution | null;
   history: HistoryEntry[];
   /** missions completed, for the progress rail */

@@ -1,188 +1,147 @@
-# Running GPL with a group
+# Facilitating Global Pursuit League
 
-**For whoever is facilitating.** You do not need to have played it, and you do not need to
-know consulting. You do need to know the three things the game refuses to do, because a
-group will ask you about all three within the first ten minutes.
+For adult employees learning how decisions during a pursuit affect the people who deliver it. Allow **70–90 minutes for an individual full delivery run**, plus discussion. This is a planning estimate based on authored activity lengths and reading, not a measured average from a learner study. Learners can pause between chapters. Early endings take less time.
 
-Everything here is about the discussion. The install instructions are at the end.
+## Introduce the exercise
 
----
+Suggested opening:
 
-## 1. What it is, in one paragraph you can read aloud
+> You are leading a fictional client engagement. Choose where to focus, investigate the account, build a proposal, negotiate the terms and live with the commitments. The game remembers what you learn and promise. Make a defensible decision with the information available, then examine what happened. There is no timer and this is not an employee assessment. Some engagements end before delivery; that still completes the simulation.
 
-You are on a pursuit team chasing one client through five chapters — finding them,
-qualifying them, building a proposal, doing the deal, and delivering what you sold.
-Eighteen decisions. Three meters move: **can we win it, is it worth winning, can we
-deliver it**. There is no right answer and there is no score. It takes about **70 minutes**
-played honestly, and the game saves as you go.
+The organisations, character names, dialogue and events are invented. Photographs depict stock models, not the named people or actual Accenture employees; no endorsement is implied. [Photography sources](PHOTO-PROVENANCE.md) accompany the game.
 
----
+This exercise is not a statement of Accenture policy, an approved pricing method, contractual advice or a replacement for actual review processes. Invite learners to identify where their workplace would use different controls or responsibilities.
 
-## 2. The three things it refuses to do
+## What counts as completion
 
-Hold these. They are not omissions and a group will test all of them.
+A normal delivery route contains 18 substantive decisions, plus setup, chapter introductions, story events, four reflection moments and chapter debriefs. The decision count excludes those supporting screens.
 
-**It will not tell anyone they were right.** There is no score, no grade, no leaderboard,
-no percentage. This is deliberate and it was tested: an earlier build had a score, and a
-player optimising for it reached 100/100/100 **without reading a single brief**. Meters
-measure position, not performance. If a participant asks "so how did I do?", the honest
-answer is "you tell me — what did you give up?"
+An engagement can end at procurement in Chapter 4, after decision 13, or when the learner walks away before signing, after decision 14. These are authored endings. The learner reads the result and reaches the final engagement review; the LMS receives completion, just as after delivery. Do not require a learner to force an award or sign an unsuitable contract merely to reach 18/18.
 
-**It will not let anyone win everything.** Every option costs something on another
-dimension. A choice that beat its siblings on all three would fail the build — literally,
-there is a test. So "what was the best option on mission 7" has no answer, and asking the
-group to find one is the one discussion that will go nowhere.
+Completion means the learner reached an ending. It does **not** establish workplace competence, certification or a pass. There is no employee score, leaderboard or pass/fail threshold. The business position indicators describe the fictional engagement: ability to win or sustain the relationship, commercial viability and ability to deliver. They are not percentages of the learner's competence. The game no longer asks the learner to predict them.
 
-**Walking away is a real ending.** Mission 14 lets a player decline the contract. The game
-does not punish this, and one of the seven endings is *You walked away*. If someone takes it,
-do not treat it as quitting. Ask whether the deal had become one worth declining — that is
-the beat the whole middle of the game is building towards.
+Decisions can be better or worse supported in a particular context. “No employee score” does not mean all choices have identical consequences. Discuss the evidence and cost of the choice, not a universal answer key.
 
----
+## Session formats
 
-## 3. The shape of a session
+| Format | Suggested allocation | Use |
+|---|---|---|
+| Individual play plus discussion | 5-minute introduction; 70–90-minute play window; 25-minute discussion | Approximately 100–120 minutes overall |
+| Play before a workshop | 70–90-minute independent allowance; 30–45-minute workshop | Bring the downloaded debrief or run code |
+| Chapter sessions | One chapter, then a short discussion | Keep the same engagement; later choices depend on earlier ones |
+| Paired play | Allow extra time and agree who operates the controls | Ask both participants to state their reasoning; do not assume the solo estimate applies |
 
-### If you have 90 minutes
+For a strict 90-minute meeting, arrange play beforehand or offer a continuation slot. Do not rush slower readers to manufacture completion. Early-ending learners can review their reasoning or explore a different path while others continue.
 
-| | |
+## The five chapters
+
+| Chapter | Decisions in normal order | Capability |
+|---|---|---|
+| 1. Find the right client | m1: client focus; m2: two research questions; m3: first approach | Distinguish size from fit; choose information worth obtaining |
+| 2. Make it an opportunity | m4: qualification; m5: rival response; m5b: two discovery workstreams | Test the brief and allocate limited attention |
+| 3. Build the response | m6: problem framing; m6b: delivery approach; m7: three proposal components; m7b: review | Translate evidence into a proposal the delivery team can stand behind |
+| 4. Make the deal work | m8: price challenge; m9: risk review; m9a: procurement case; m9b: accept, modify or walk away | Connect terms to risk, evidence and willingness to sign |
+| 5. Deliver the promise | m10: month five; m10b: staffing; m10h: commitment handover; m10c: sponsor transition | Own earlier promises and protect continuity |
+
+The journey marks chapter boundaries. The current milestone returns to the active activity; the account file contains prior decisions. The central campaign follows Orion. Choosing Apex or Meridian initially has a cost and an authored return to Orion: Apex does not shortlist the team; Meridian stalls in procurement. Priya's following brief acknowledges the lost time or effort. These are not three separate full campaigns.
+
+## Facilitate without giving away outcomes
+
+Let learners read the arrival and brief. Ask “What are you trying to decide?” before “Which option will you choose?” For navigation help, point to the account file, approach inspection and selection controls. Merely viewing a research question does not reveal its answer; evidence is earned by committing the investigation.
+
+The investigation funds exactly two of five questions. Discovery funds two of six workstreams. The proposal contains three of six components. Selections can change before commitment. Once committed, the outcome is recorded; reviewing it does not undo it.
+
+Some later approaches require earlier evidence or commitments. An unavailable approach reflects the path, not a button to unlock by repeated clicking. Use its requirement explanation and history to discuss where the path diverged. Do not read unopened evidence to a learner during their first run.
+
+There is no software timer and no audio is required. Essential information is readable. Preferences provide reduced motion and larger reading text; browser zoom and keyboard navigation are available. Tab moves focus, Space selects a focused option and Enter activates a button. Allow scrolling and reading time.
+
+## Discussion prompts mapped to actual decisions
+
+Later rows contain spoilers. Use them after the relevant result or during the final review.
+
+| Moment | Ask | Ground the discussion in |
+|---|---|---|
+| m1 → m2, Apex or Meridian | “What did the first pursuit cost, and why are you considering Orion now?” | Actual result and Priya's conditional next brief |
+| m2, investigation | “Which two unknowns could change your mind? What remained uncertain?” | The committed questions and earned findings |
+| m5, rival announcement | “Did evidence change your plan, or did pressure change it?” | Known rival context and the response after the story event |
+| m5b → m6, Operations | “Whose involvement changed what you could credibly propose?” | Earned discovery and the resolved speaker; Marcus may not yet be known |
+| m6b, delivery approach | “What had to be true for this approach to make sense?” | Partner, reuse, outcome-based or conventional approach and its actual result |
+| m7 → m7b, proposal/review | “Which three components did you fund, and what still needed work?” | Actual proposal and review; do not assume a fast pilot or heavy platform |
+| m8 → m10, price/recovery | “What could the team still afford when delivery needed help?” | Commercial terms and later resources, compared across preserved runs |
+| m9 → m9a, risk/procurement | “What argument could the buyer defend in their own process?” | Earned evidence and the actual award/loss outcome |
+| m9b, walk-away | “Name the risk you refused to carry. What supported that refusal?” | Specific walk-away result; refusal can prevent harm or sacrifice viable work |
+| m10 → m10b, recovery/staffing | “Who bore the cost, and what remained unresolved?” | Actual month-five condition and staffing result |
+| m10h, handover | “Which promise can you stand behind? Which now needs conditions?” | The learner's commitment ledger and earned handover alternatives |
+| m10c, sponsor transition | “What would still hold if one relationship disappeared?” | Departure event, broader relationships and continuity decision |
+
+Close with “What would you ask earlier in your next engagement?” and “What promise would you document more precisely?” Ask for one observable workplace action, not a better score.
+
+## Interpret the ending
+
+These are the engine's closing descriptions, not ratings of people. Do not claim a title is common or rare without data from this release and cohort.
+
+| Closing title | Meaning |
 |---|---|
-| 0:00 | Frame it. Section 2, read aloud. Two minutes, no longer |
-| 0:05 | Play, solo, silent |
-| 1:15 | Endings on the table — see below |
-| 1:30 | Close |
+| They chose someone else | Procurement recorded a loss; healthy business indicators cannot override it |
+| You walked away | The team declined the contract; read the prior result to understand whether refusal was supported |
+| You did not win the work | Low-winning-position fallback when no award was recorded; does not undo an actual award |
+| You won it, and it hurt | Delivery viability is severely weak |
+| You won it, but not well | The commercial position is severely weak after accounting for delivery viability |
+| A deal worth having | All three dimensions remained above the model's healthy-position floor |
+| A workable deal | The engagement remains workable with compromises; inspect where strain accumulated |
 
-### If you have half a day
+Recorded loss and walk-away take precedence. A low relationship/winning indicator after an award does not undo it. If delivery and margin are both severely weak, the delivery warning takes precedence. Numeric floors are model rules, not employee targets.
 
-Play solo before the session, or in a first hour. Then spend the rest on §4 and §5. The
-game is the reading; the discussion is the teaching.
+The final review can offer an optional causal-link question when the run has a suitable demonstrated chain. It gives formative feedback about that connection and is not scored. Some runs have no suitable question. Do not treat that as a missed requirement or discuss an unobserved chain as though the learner experienced it.
 
-### Playing in pairs
+## Save, share and explore another path
 
-Works, and changes what you get. Pairs argue before committing, which surfaces reasoning
-that solo play keeps internal. It also roughly doubles the clock. Do not do threes — the
-third person stops participating around chapter three.
+When storage is available, the browser saves the engagement, unfinished selections and presentation state. A portable **run code carries the starting team and committed decisions only**. It does not preserve a draft, reflection response, open drawer or exact screen. Restoring reconstructs the committed history and resumes at the next valid activity. Keep the original build when collecting codes: later rule or content-shape changes can make a code incompatible.
 
----
+Use “Save or restore a run” to copy or enter a code. Codes contain no entered name, but reveal the choices they represent. Downloaded debriefs also contain decision records. Sharing is deliberate; do not collect them as undisclosed performance assessments. An LMS controls enrolment identity and its own records; the game reports completion and the portable run code, not an employee score.
 
-## 4. The discussion, once everyone has finished
+For a what-if comparison:
 
-Start here, not with "what did you get".
+1. Before the decision to compare, copy the code and label it with the build/version and activity.
+2. Play the original choice. Preserve its code or final debrief before replacing the engagement.
+3. Restore the earlier code and choose another available approach.
+4. Compare evidence, commitment and consequence. Keep other choices the same where still available, and note where the alternate path changes what is possible.
 
-**"Read out your ending title."** There are seven. The spread in the room is the entire
-opening move, and you want it visible before anyone explains themselves.
+A completed code reproduces committed choices; it is not a rewind control. To change an earlier decision, restore a code captured before it or restart and repeat earlier choices. “Explore a different path” starts a new engagement with confirmation; it does not silently edit the original record.
 
-| Ending | What it means |
+## Delivery and technical checks
+
+The archive version comes from package.json.
+
+- **Offline:** extract dist-release/gpl-<version>-offline.zip completely, keep its folder structure and open index.html in a desktop browser. Opening HTML inside the ZIP is unsupported. Fonts and photos are local. Saving remains subject to browser storage settings; keep a code when changing machine, folder or browser.
+- **Hosted:** serve all contents of dist/ from the agreed static host. Keep relative asset paths. The host may have access logs; do not describe hosted use as if no infrastructure records requests.
+- **LMS:** import dist-release/gpl-<version>-scorm12.zip as SCORM 1.2. The manifest is at the archive root. Configure completion-based reporting, with no mastery score or pass/fail rule. Test launch, resume, a normal ending and an early ending in the organisation's actual LMS before cohort assignment. A mock API check is not certification of every LMS.
+
+Maintainer rebuild commands, from the repository:
+
+```text
+npm ci
+npm run validate
+npm run verify
+npm run scorm
+```
+
+Use npm.cmd on Windows PowerShell if execution policy blocks npm.ps1. validate runs type checks, automated tests and the production build. verify runs browser verification. scorm rebuilds, checks file launch and test-LMS integration, then creates and verifies offline and SCORM archives. filecheck and lmscheck can also run separately against an existing build. Inspect current reports; this guide does not claim an arbitrary future build has passed them.
+
+## Troubleshooting
+
+| Symptom | Action |
 |---|---|
-| A deal worth having | All three meters ≥ 58. Uncommon, and it should be |
-| A workable deal | The most common. One meter took the strain |
-| You won it, but not well | Margin went |
-| You won it, and it hurt | Delivery went |
-| They chose someone else | Lost at the award, on the argument |
-| You did not win the work | Rare — winability collapsed rather than the award being lost |
-| You walked away | Declined the contract |
+| Browser saving unavailable | Keep the run code before closing; explain its committed-decisions-only limit |
+| Browser and LMS have different engagements | Let the learner identify the intended source; preserve the other code first rather than choosing the furthest progress |
+| Rejected run code | Recopy, confirm original build/version and retain the text; do not guess replacements or claim recovery |
+| Corrupted/old save | Preserve any displayed recovery code, use a valid source if offered, and restart only after preserving recoverable work |
+| Offline images/fonts missing | Re-extract the complete archive; do not copy index.html alone |
+| Commit unavailable | Check selection count, path requirements and the current brief/decision phase |
+| Text difficult to read | Use larger text, zoom, reduced motion and extra time; report clipping with activity, viewport and zoom |
+| LMS remains incomplete | Confirm the learner reached the ending through the LMS; administrator checks SCORM commit/finish results; preserve the code and do not invent a mark |
+| Shared device | Preserve the first learner's code, explicitly start a new engagement, and prefer separate browser profiles |
 
-**Then: "who has a different ending from the person next to them, and where did you
-diverge?"** This is the question that does the work. Two people who diverged at mission 4
-and landed in different endings is the game's whole argument in one exchange.
+## Evidence and limits
 
-**Then, the three that reliably open people up:**
-
-- *"What did you find out that you wish you had found out earlier?"* Chapter 1 spends two
-  questions out of five. Everybody under-buys information, and everybody discovers it in
-  chapter 4.
-- *"Where did you promise something you could not fund?"* This is the handover beat
-  (mission 17). Options are locked if you never paid for them, and the screen names where
-  they could have been earned. **85% of the positions a player can reach by that beat have
-  at least one promise locked**, so in a room of any size somebody will have one.
-- *"Did anyone conceal something?"* Mission 15 offers it. The game lets you, and the
-  consequence arrives later rather than immediately, which is the point.
-
-### The one item the game asks them
-
-Before the ending reveals the causal chains, it asks each player one question: here is
-something that happened in month five — which of your earlier decisions led to it?
-
-**It is not marked and you should not mark it either.** Ask who got it, ask who picked a
-different one and why, and let the disagreement stand if it is a good one. Not everyone is
-asked — a player has to have built a chain for there to be a question about one, and a
-third of runs build none. That asymmetry is worth naming in the room rather than letting
-someone assume they missed a screen.
-
----
-
-## 5. The four things a group usually gets wrong
-
-Useful because you can predict them, so you can ask about them before anyone confesses.
-
-1. **They buy too little information.** Two evidence slots feel like plenty in chapter 1
-   and are not. The proposal is worse three chapters later, and the link is invisible at
-   the time.
-2. **They fund what is visible.** Training and measurement are the cheapest lines to cut
-   and the ones the handover asks about.
-3. **They treat procurement as weather.** Mission 13 puts a named person with a scorecard
-   in front of them. Most players argue value at somebody whose job is comparability.
-4. **They under-rate Operations.** Marcus Reed owns every system that has to change and is
-   easy to never meet.
-
----
-
-## 6. Questions you will be asked, with answers
-
-**"Is there a best path?"** No, and not as a design coyness — it is enforced by a test that
-fails the build. There are better-argued paths.
-
-**"Why don't I get a score?"** Because scoring changed behaviour in the wrong direction
-when it existed. See §2.
-
-**"Can I replay it?"** Yes, and it is worth it — start over from the top bar. The second
-run is where people deliberately buy different information.
-
-**"Did my choices actually matter or is it on rails?"** They matter, and you can prove it
-in front of the room: every run has a **run code** at the ending, 13–14 characters. Two
-players reading theirs out will have different codes. The code replays the whole run
-exactly, so a participant can hand you theirs and you can walk their exact game.
-
-**"What if I can't finish?"** It saves automatically. The run code also carries the run to
-another machine.
-
----
-
-## 7. What it does not teach
-
-Say this if it comes up, rather than letting someone discover it and distrust the rest.
-
-It is one pursuit, one client, one market, and a **fictional** one. It does not carry your
-firm's methodology, pricing model, approval thresholds or delivery model, and it should not
-be used to settle an argument about any of them. Procurement is one named person rather
-than a committee. There is no legal review worth the name.
-
-What it does carry is the shape of the trade: that information bought early is cheaper than
-information bought late, that a promise is a cost, and that the person who delivers it is
-not usually the person who sold it.
-
----
-
-## 8. Running it
-
-The build is a folder of static files. No server, no network, no accounts, no data leaves
-the machine.
-
-**From a shared drive or a web server.** Copy `dist/` and open `index.html`. That is all.
-
-**From an LMS.** `npm run scorm` writes a SCORM 1.2 manifest into `dist/`. Zip the
-**contents** of `dist/` — the manifest must be at the root of the archive, not inside a
-folder — and upload.
-
-What the LMS gets: **completion, and nothing else.** It reports `incomplete` on arrival and
-`completed` at any ending, walking away included. **It reports no score, by design** — if
-your LMS report is expected to show a mark, know now that it will not, and §2 is the reason
-to give. Resume is carried as the run code, which is a handful of characters rather than a
-save file.
-
-**Accessibility.** Keyboard-playable end to end, screen-reader labelled, AA contrast. It
-wants a laptop — below about 1100px wide it will tell the player so rather than render
-something misleading. Tablets in landscape are fine; phones are not.
-
-**Printing the debrief.** The ending prints, and prints expanded — the collapsed run
-history opens in the print stylesheet. Useful if you want people to bring their ending to a
-later session.
+The game supports discussion of connected business decisions. A human study has not demonstrated improved job performance. The current pilot status and ready-to-run protocol are in [LEARNER-EVALUATION.md](LEARNER-EVALUATION.md). Branch tests, visual review and packaging answer different questions from comprehension or transfer; keep those findings distinct when presenting the game.

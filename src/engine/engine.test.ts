@@ -9,8 +9,6 @@ import {
   createInitialState,
   finalVerdict,
   getNode,
-  leastMoved,
-  leastMovedSet,
 } from "./engine";
 import {
   findDominantOptions,
@@ -21,7 +19,7 @@ import {
 } from "./analysis";
 import { codeFromState, decodeRun, replayRun } from "./runcode";
 import { formatIssues, validateContent } from "./validate";
-import { DIMENSIONS, isMission } from "./types";
+import { isMission } from "./types";
 
 const content = story;
 
@@ -617,87 +615,6 @@ describe("no fake choices", () => {
   });
 });
 
-/**
- * The prediction gate is the only place in the game where the player commits a claim and
- * is marked on it, so it is the only thing in the build that can be *wrong* rather than
- * merely unclear.
- *
- * It shipped wrong. The question was changed from "which will this hurt?" to "which will
- * move least?" and the copy to "barely moved", but the key kept comparing signed deltas —
- * which answers the old question and returns whichever dimension fell furthest. Across the
- * 88 authored outcomes it named a falling dimension 61 times, so the screen said
- * "Profitability barely moved" beside a tile reading −14.
- *
- * These assert the key answers the question that is printed on screen.
- */
-describe("the prediction gate", () => {
-  it("names the smallest movement, not the largest fall", () => {
-    expect(leastMoved({ win: 0, profit: -14, deliver: 0 })).not.toBe("profit");
-    expect(leastMoved({ win: 4, profit: -8, deliver: -24 })).toBe("win");
-    expect(leastMoved({ win: -2, profit: 9, deliver: 5 })).toBe("win");
-    expect(leastMoved({ win: 0, profit: 3, deliver: -1 })).toBe("win");
-  });
-
-  it("never names a dimension that moved more than another, in either direction", () => {
-    for (const node of Object.values(content.nodes)) {
-      if (!isMission(node)) continue;
-      const outcomes =
-        node.kind === "choice" ? node.options.flatMap((o) => o.outcomes) : node.outcomes;
-      for (const o of outcomes) {
-        const d = { win: 0, profit: 0, deliver: 0, ...(o.effect.dims ?? {}) };
-        const named = leastMoved(d);
-        for (const other of DIMENSIONS) {
-          expect(
-            Math.abs(d[named]),
-            `${o.id}: says "${named}" moved least, but ${other} moved ${d[other]} vs ${d[named]}`,
-          ).toBeLessThanOrEqual(Math.abs(d[other]));
-        }
-      }
-    }
-  });
-
-  /**
-   * The assertion above is satisfied by a *biased* answer, which is what shipped: `reduce`
-   * keeps the earlier element on a tie and `DIMENSIONS` begins with `win`, so 6 of the 12
-   * tied outcomes keyed to Winability and "always answer Winability" beat chance. A test
-   * that a value is *a* minimum cannot see that. These can.
-   */
-  it("marks every tied minimum correct, not just the first one", () => {
-    // Profit and deliver both move 2; either answer is right, win is not.
-    const tied = { win: -9, profit: 2, deliver: -2 };
-    expect(leastMovedSet(tied).sort()).toEqual(["deliver", "profit"]);
-    expect(leastMovedSet(tied)).not.toContain("win");
-
-    // Nothing moved: all three are equally correct.
-    expect(leastMovedSet({ win: 0, profit: 0, deliver: 0 }).sort()).toEqual([
-      "deliver",
-      "profit",
-      "win",
-    ]);
-  });
-
-  it("does not favour any one dimension across the authored outcomes", () => {
-    const keyed: Record<string, number> = { win: 0, profit: 0, deliver: 0 };
-    let tiedOutcomes = 0;
-    for (const node of Object.values(content.nodes)) {
-      if (!isMission(node)) continue;
-      const outcomes =
-        node.kind === "choice" ? node.options.flatMap((o) => o.outcomes) : node.outcomes;
-      for (const o of outcomes) {
-        const d = { win: 0, profit: 0, deliver: 0, ...(o.effect.dims ?? {}) };
-        const set = leastMovedSet(d);
-        if (set.length > 1) tiedOutcomes++;
-        // On a tie every member must be accepted, so no single id may be the whole answer.
-        for (const id of set) keyed[id] = (keyed[id] as number) + 1;
-      }
-    }
-    // The content genuinely contains ties; if it stops doing so, this test is vacuous.
-    expect(tiedOutcomes).toBeGreaterThan(0);
-    // Every dimension is reachable as a correct answer — no dimension is dead.
-    for (const d of DIMENSIONS) expect(keyed[d], `${d} is never the least-moved`).toBeGreaterThan(0);
-  });
-});
-
 describe("engine mechanics", () => {
   it("starts at the title, then at chapter 0", () => {
     const s0 = createInitialState(content);
@@ -751,7 +668,7 @@ describe("engine mechanics", () => {
     if (!isMission(mission)) throw new Error("expected a mission after chapter 0");
     const selection = possibleSelections(mission, s)[0] as string[];
 
-    const committed = commit({ ...s, selection, prediction: "win" }, content);
+    const committed = commit({ ...s, selection }, content);
     expect(committed.phase).toBe("consequence");
     expect(committed.resolution).not.toBeNull();
     expect(committed.resolution?.dimsBefore).toEqual(s.dims);
@@ -761,15 +678,8 @@ describe("engine mechanics", () => {
     expect(advance(committed, content).nodeId).not.toBe(committed.nodeId);
   });
 
-  /**
-   * No reachable state holds the deleted phase — and one that somehow does still moves.
-   *
-   * The value stays in the `Phase` union on purpose: `save.ts` has to be able to
-   * RECOGNISE a save written by the previous build, and a phase it cannot name is a run
-   * thrown away. This is the pair of facts that keeps that decision honest — nothing in
-   * play produces it, and nothing carrying it is stuck.
-   */
-  it("never produces the resolving phase, and rescues a state that holds it", () => {
+  // Only the save boundary recognises and migrates the removed legacy phase.
+  it("never produces the resolving phase", () => {
     let s = pastSetup(content);
     let guard = 0;
     while (isMission(getNode(content, s.nodeId)) && guard++ < 50) {
@@ -777,11 +687,10 @@ describe("engine mechanics", () => {
       if (!isMission(mission)) break;
       const selection = possibleSelections(mission, s)[0];
       if (!selection) break;
-      const committed = commit({ ...s, selection, prediction: "profit" }, content);
+      const committed = commit({ ...s, selection }, content);
       expect(committed.phase).not.toBe("resolving");
       s = playMission(s, content, selection);
       expect(s.phase).not.toBe("resolving");
     }
-    expect(advance({ ...s, phase: "resolving" }, content).phase).toBe("consequence");
   });
 });

@@ -28,9 +28,8 @@
  * characters and nine.
  *
  * WHAT A CODE DOES NOT CARRY
- * The player's prediction before each commit. It is not in `HistoryEntry` either, so a
- * run code loses nothing a save holds — but it is worth saying plainly, because a run
- * replayed from a code can tell you what happened and not whether the player called it.
+ * Uncommitted draft selections and presentation checkpoints. Local saves retain those;
+ * portable codes replay committed decisions and stop at the next unread brief.
  *
  * PURE. No React, no DOM, no `Date.now`, no `Math.random`, no `fetch` — same law as the
  * rest of `src/engine`, and `runcode.test.ts` now sweeps the whole directory for it.
@@ -312,17 +311,10 @@ function settle(state: GameState, content: Content): GameState {
   return out;
 }
 
-/**
- * Commit one decision and come to rest at the next one.
- *
- * `prediction` is left null rather than filled in with a plausible value. A replay did not
- * make a prediction, and writing one in would put a claim in the resolution that the
- * player never made — the game would then tell them they were right or wrong about
- * something they never said.
- */
+/** Commit one decision and come to rest at the next unread brief. */
 function commitSelection(state: GameState, content: Content, selection: string[]): GameState {
   let s = state.phase === "brief" ? advance(state, content) : state;
-  s = { ...s, selection: [...selection], prediction: null };
+  s = { ...s, selection: [...selection] };
   s = commit(s, content);
   /* `commit` lands on `consequence`, so this is the only advance a replay needs. It was
      two while `resolving` sat in between; `settle` skips interludes but not briefs, so a

@@ -667,7 +667,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "Plenty of interest. Very little of it from Orion.",
             detail:
-              "The campaign performs well by every measure you would put in a report. It generates conversations with people who are interested but cannot buy, and one lukewarm reply from a Orion manager two levels below the sponsor.",
+              "The campaign performs well by every measure you would put in a report. It generates conversations with people who are interested but cannot buy, and one lukewarm reply from an Orion manager two levels below the sponsor.",
             changed: [
               "A lot of activity",
               "Barely any progress on the account you chose",
@@ -2337,7 +2337,7 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "It works until somebody opens the original document.",
             detail:
-              "The immediate pressure disappears. Four weeks later, a Orion manager compares what was delivered with what was proposed and asks a question in writing. The issue is no longer the scope; it is that you did not say.",
+              "The immediate pressure disappears. Four weeks later, an Orion manager compares what was delivered with what was proposed and asks a question in writing. The issue is no longer the scope; it is that you did not say.",
             changed: [
               "Short-term pressure relieved",
               "Trust damaged in a way that is hard to repair",
@@ -2513,9 +2513,9 @@ const nodes: GameNode[] = [
            same experience, and they were being given the same sentence. */
         lesson: {
           principle:
-            "The two least impressive things on that list are the two I would have bought.",
+            "Ground the proposal in what the people and the data can support.",
           because:
-            "Neither a workshop nor a data audit buys you anything in the room. Both mean the proposal you write next describes something real.",
+            "You now have Operations involved and checked data to work from. Whether established earlier or through this investment, that foundation gives the proposal something real to describe.",
           watchFor:
             "The unglamorous option is usually the one that removes an assumption instead of adding a claim.",
         },
@@ -2526,16 +2526,16 @@ const nodes: GameNode[] = [
         tone: "strong",
         headline: "You have built the argument, not the plan.",
         detail:
-          "Sarah has seen the work in a real store and you can name exactly where the rival falls short. You are going to win the room. Nobody has yet checked whether you can deliver what you are about to promise.",
-        changed: ["A strong case with the sponsor", "Nothing tested about delivery"],
+          "You have credible examples of your work and you understand a gap in the rival’s offer. That strengthens the case with Sarah. But the engagement does not yet have both Operations involved and checked client data to ground the delivery plan.",
+        changed: ["A stronger case with the sponsor", "The delivery foundation remains incomplete"],
         effect: { dims: { win: 3, deliver: -3 } },
         lesson: {
           principle:
-            "In a fortnight I can build the argument or I can test the plan. We chose the argument.",
+            "An argument for choosing you is not yet a plan for delivering the work.",
           because:
-            "A reference visit and a benchmark both aim at the room. Nothing you funded asked whether the work is doable.",
+            "Credibility and competitor insight support the buying conversation. They do not replace the combination of operational involvement and checked data needed for delivery.",
           watchFor:
-            "Notice when everything you paid for points at winning rather than at doing.",
+            "Check which delivery assumptions still need evidence, even when the case for choosing you is strong.",
         },
       },
       {
@@ -2543,15 +2543,15 @@ const nodes: GameNode[] = [
         tone: "mixed",
         headline: "Two useful weeks, and the gaps that are left are the ones you chose.",
         detail:
-          "Both pieces of work land. What matters now is the three you did not fund — because the proposal has to be written as though you know those things anyway.",
-        changed: ["Two things you now know", "Three assumptions still standing"],
+          "Both pieces of work land. Four other activities remain unfunded in this window. Check which gaps your earlier work already covered, and make the remaining assumptions explicit in the proposal.",
+        changed: ["Two activities completed", "Four activities left outside this investment"],
         effect: { dims: { win: 1, deliver: 1 } },
       },
     ],
     lesson: {
       principle: "Choosing what we drop is the harder half of this, and it is the half people skip.",
       because:
-        "Every one of those five was worth doing. Choosing two meant deciding which three gaps you were willing to carry into a contract.",
+        "Every one of those six activities was worth considering. Choosing two meant leaving four unfunded in this window. Earlier discoveries may cover some gaps; the rest need to be acknowledged.",
       watchFor: "When you cannot do everything, name what you are choosing to be ignorant about.",
     },
     next: "deb-2",
@@ -3485,7 +3485,7 @@ const nodes: GameNode[] = [
             lesson: {
               principle: "We walked. I want that written down as a decision, not as a failure to make one.",
               because:
-                "By the time you looked at this honestly it had a discount, an unfunded risk and no route into production. Signing it would have been the easy call and the wrong one.",
+                "An unresolved delivery risk or an unsupported commitment had survived into the final deal. Walking away stopped that exposure becoming a signed obligation.",
               watchFor:
                 "Before signing, ask whether you would staff this yourself. If the answer is no, say so while saying no is still cheap.",
             },
@@ -3496,7 +3496,7 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "You walked away from a deal that was fine.",
             detail:
-              "Caution is not the same as judgement. This engagement was in decent shape — the people who had to deliver it were involved and the numbers worked — and you talked yourself out of a year of good work.",
+              "Caution is not the same as judgement. The risks that would justify refusing this deal had not been established in your engagement. You walked away without a specific unresolved commitment to support that decision.",
             changed: [
               "No contract",
               "A quarter of pursuit cost written off",
@@ -3506,7 +3506,7 @@ const nodes: GameNode[] = [
             lesson: {
               principle: "Discipline and nerves look identical from outside. The only way to tell them apart is to check the position we left.",
               because:
-                "Walking away is right when the deal has become bad. This one had not — you refused work you could have delivered well.",
+                "Walking away is justified by a concrete exposure you cannot responsibly accept. In this run, the engagement had not established the unresolved risks that would make refusal the stronger choice.",
               watchFor: "Before you decline, name the specific thing you are unwilling to carry.",
             },
             next: "end",

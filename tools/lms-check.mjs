@@ -41,7 +41,7 @@ await page.addInitScript(() => {
   const w = /** @type {Record<string, unknown>} */ (window);
   const data = /** @type {Record<string, string>} */ ({});
   const calls = /** @type {string[]} */ ([]);
-  w.__lms = { data, calls };
+  w.__lms = { data, calls, failNextCommit: false };
   w.API = {
     LMSInitialize: () => {
       calls.push("init");
@@ -58,6 +58,11 @@ await page.addInitScript(() => {
       return "true";
     },
     LMSCommit: () => {
+      if (w.__lms.failNextCommit) {
+        w.__lms.failNextCommit = false;
+        calls.push("commit-failed");
+        return "false";
+      }
       calls.push("commit");
       return "true";
     },
@@ -94,14 +99,13 @@ const click = async (name) => {
   return true;
 };
 
-await click("Take the brief");
-await click("Start again");
+await click("Begin your engagement");
 await page.waitForTimeout(200);
 /* Chapter 0: pick a starting advantage, then start. */
-const teams = page.locator("button.choice");
+const teams = page.locator('[data-phase="setup"] button[aria-pressed]');
 if ((await teams.count()) > 0) await teams.first().click();
 await page.waitForTimeout(120);
-await click("Start the pursuit");
+await click("Start the pursuit") || await click("Meet your first client");
 await page.waitForTimeout(400);
 
 lms = await read();
@@ -127,6 +131,47 @@ const scoreKeys = lms.calls.filter((c) => c.startsWith("set ") && c.includes("sc
 if (scoreKeys.length > 0) {
   problems.push(`a score was reported: ${scoreKeys.join(", ")}`);
 }
+
+// A real ending, not an injected state, must report completion. The presentation exposes
+// one semantic primary action per screen; decision options remain proper toggle buttons.
+let reachedEnding = false;
+let retriedFailure = false;
+await page.evaluate(() => { window.__lms.failNextCommit = true; });
+for (let step = 0; step < 160; step++) {
+  const screen = page.locator('[data-phase]').first();
+  if (await screen.getAttribute('data-phase') === 'ending') { reachedEnding = true; break; }
+  const primary = page.locator('[data-action="primary"]:visible').first();
+  if (!(await primary.count())) { problems.push(`No primary action at campaign step ${step}`); break; }
+  if (await primary.isDisabled()) {
+    const option = page.locator('main button[aria-pressed="false"]:not(:disabled)').first();
+    if (!(await option.count())) { problems.push(`No selectable approach at campaign step ${step}`); break; }
+    await option.click();
+  } else { await primary.click(); }
+  await page.waitForTimeout(80);
+  const snapshot = await read();
+  if (!retriedFailure && snapshot.calls.includes('commit-failed')) {
+    const committedBeforeRetry = snapshot.calls.filter(c => c === 'commit').length;
+    await page.waitForTimeout(5200);
+    const retried = await read();
+    if (retried.calls.filter(c => c === 'commit').length <= committedBeforeRetry) problems.push('Failed LMS commit was not retried while staying on the same screen');
+    retriedFailure = true;
+  }
+}
+if (!reachedEnding) problems.push('The browser did not reach a terminal outcome');
+if (!retriedFailure) problems.push('The browser did not exercise a failed LMS commit');
+if (reachedEnding) {
+  await page.waitForTimeout(200);
+  lms = await read();
+  if (lms.data['cmi.core.lesson_status'] !== 'completed') problems.push('Ending did not report completed');
+  const commitsBefore = lms.calls.filter(c => c === 'commit').length;
+  await page.waitForTimeout(5200);
+  lms = await read();
+  if (lms.calls.filter(c => c === 'commit').length !== commitsBefore) problems.push('Completed run was redundantly committed by retry timer');
+}
+await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+lms = await read();
+if (!lms.calls.includes('finish')) problems.push('Pagehide did not finish the LMS session');
+if (lms.calls.some(c => c.startsWith('set ') && c.includes('score'))) problems.push('Campaign reported a score');
 
 await browser.close();
 

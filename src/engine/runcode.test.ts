@@ -328,7 +328,7 @@ describe("a run code from a state", () => {
     const state = replayRun(content, run);
     expect(state.phase).toBe("brief");
     expect(state.selection).toEqual([]);
-    expect(state.prediction).toBeNull();
+    expect(state).not.toHaveProperty("prediction");
   });
 
   it("reaches the ending when the run is complete", () => {

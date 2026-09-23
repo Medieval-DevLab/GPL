@@ -225,7 +225,8 @@ const storyModules = import.meta.glob("../content/story.ts", {
   eager: true,
 }) as Record<string, string>;
 const storySource = Object.values(storyModules)[0] as string;
-const allSource = [storySource, ...Object.values(uiModules)].join(" ");
+const contentModules = import.meta.glob("../content/*.ts", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
+const allSource = [...Object.values(contentModules), ...Object.values(uiModules)].join(" ");
 
 describe("artwork", () => {
   it("loaded the manifest", () => {
@@ -242,7 +243,7 @@ describe("artwork", () => {
    * honest fix would have looked like deleting the test.
    */
   it("ships no asset that nothing references", () => {
-    const orphans = artFiles.filter((name) => !allSource.includes(`"${name}"`));
+    const orphans = artFiles.filter((name) => !allSource.includes(`"${name}"`) && !allSource.includes(`${name}.webp`));
     expect(orphans).toEqual([]);
   });
 

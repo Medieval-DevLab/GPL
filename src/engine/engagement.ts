@@ -21,7 +21,7 @@
  * reproducible from its seed. No `Math.random` anywhere in `src/engine`.
  */
 
-import { finalVerdict, getNode, leastMovedSet, scoreOf } from "./engine";
+import { finalVerdict, getNode, scoreOf } from "./engine";
 import { pastSetup, playMission, possibleSelections } from "./analysis";
 import {
   DIMENSIONS,
@@ -152,31 +152,19 @@ export interface PolicyResult {
   verdict: string;
   badges: number;
   threads: number;
-  /** how many of its 16 predictions it got right, if it made any */
-  predictionsRight: number;
-  predictionsMade: number;
 }
 
-/**
- * Play one policy to the end.
- *
- * The prediction is fixed rather than chosen, because a non-reader has no basis for one —
- * and fixing it is how we detect a gate that can be beaten without understanding: if
- * always answering the same dimension scores above chance, the item is biased.
- */
+/** Play one policy to the end, measuring actual outcomes only. */
 export function runPolicy(
   content: Content,
   policy: Policy,
   advantage: string | undefined,
   seed: number,
-  prediction: DimensionId = "win",
 ): PolicyResult {
   activeContent = content;
   try {
     const rng = seeded(seed);
     let s = pastSetup(content, advantage);
-    let right = 0;
-    let made = 0;
     let guard = 0;
 
     while (isMission(getNode(content, s.nodeId)) && guard++ < 40) {
@@ -185,20 +173,7 @@ export function runPolicy(
       const legal = possibleSelections(mission, s);
       if (legal.length === 0) break;
       const selection = policy.pick(legal, mission, s, rng);
-      s = { ...s, prediction };
       s = playMission(s, content, selection);
-      const last = s.history[s.history.length - 1];
-      if (last) {
-        made++;
-        /* The APPLIED delta, clamping included, which is what the player is shown and
-           therefore what the gate must be marked against. */
-        const applied = {
-          win: last.dimsAfter.win - last.dimsBefore.win,
-          profit: last.dimsAfter.profit - last.dimsBefore.profit,
-          deliver: last.dimsAfter.deliver - last.dimsBefore.deliver,
-        };
-        if (leastMovedSet(applied).includes(prediction)) right++;
-      }
     }
 
     const verdict = finalVerdict(s.dims, s.flags);
@@ -210,8 +185,6 @@ export function runPolicy(
       verdict: verdict.title,
       badges: s.badges.length,
       threads: 0,
-      predictionsRight: right,
-      predictionsMade: made,
     };
   } finally {
     activeContent = null;

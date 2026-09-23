@@ -53,6 +53,68 @@ async function load(withLms: ReturnType<typeof fakeLms> | null) {
 }
 
 describe("the SCORM bridge", () => {
+  it("does not acknowledge rejected writes or rejected commits", async () => {
+    const lms = fakeLms();
+    const s = await load(lms);
+    s.scormInit();
+    lms.api.LMSSetValue.mockReturnValueOnce("false");
+    expect(s.scormSuspend("run-one")).toBe(false);
+    expect(s.scormSuspend("run-one")).toBe(true);
+    lms.api.LMSCommit.mockReturnValueOnce("false");
+    expect(s.scormSuspend("run-two")).toBe(false);
+    expect(s.scormSuspend("run-two")).toBe(true);
+    lms.api.LMSSetValue.mockReturnValueOnce("false");
+    expect(s.scormComplete("run-two")).toBe(false);
+    expect(s.scormComplete("run-two")).toBe(true);
+    s.scormSuspend("run-three");
+    lms.api.LMSCommit.mockReturnValueOnce("false");
+    expect(s.scormComplete("run-three")).toBe(false);
+    const commitsAfterFailure = lms.api.LMSCommit.mock.calls.length;
+    expect(s.scormComplete("run-three")).toBe(true);
+    expect(lms.api.LMSCommit.mock.calls.length).toBe(commitsAfterFailure + 1);
+  });
+
+  it("does not duplicate completion after refresh and reopens a restarted attempt", async () => {
+    const lms = fakeLms();
+    lms.data["cmi.core.lesson_status"] = "completed";
+    lms.data["cmi.suspend_data"] = "run-one";
+    const s = await load(lms);
+    s.scormInit();
+    expect(s.scormComplete("run-one")).toBe(true);
+    expect(lms.api.LMSSetValue).not.toHaveBeenCalled();
+    expect(s.scormSuspend("run-two")).toBe(true);
+    expect(lms.data["cmi.core.lesson_status"]).toBe("incomplete");
+    expect(lms.data["cmi.core.exit"]).toBe("suspend");
+    expect(s.scormComplete("run-two")).toBe(true);
+    expect(lms.data["cmi.core.exit"]).toBe("");
+  });
+
+  it("contains exceptions from a broken LMS", async () => {
+    const lms = fakeLms();
+    const s = await load(lms);
+    s.scormInit();
+    lms.api.LMSSetValue.mockImplementation(() => { throw new Error("offline"); });
+    expect(s.scormSuspend("run-one")).toBe(false);
+    expect(s.scormComplete("run-one")).toBe(false);
+  });
+
+  it("tolerates inaccessible cross-origin parent frames", async () => {
+    const s = await load(null);
+    Object.defineProperty(window, "parent", { get() { throw new Error("cross-origin access denied"); } });
+    expect(s.scormInit()).toBe(false);
+  });
+
+  it("can reinitialise after a pagehide/pageshow round trip", async () => {
+    const lms = fakeLms();
+    const s = await load(lms);
+    s.scormInit();
+    s.scormSuspend("run-one");
+    s.scormFinish();
+    expect(s.scormInit()).toBe(true);
+    expect(s.scormResumeCode()).toBe("run-one");
+    expect(s.scormSuspend("run-two")).toBe(true);
+    expect(lms.calls.filter(call => call === "init")).toHaveLength(2);
+  });
   beforeEach(() => {
     vi.resetModules();
   });

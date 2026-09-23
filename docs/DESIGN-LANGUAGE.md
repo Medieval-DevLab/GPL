@@ -1,5 +1,7 @@
 # The mockup design language
 
+> Historical reference, superseded on 22 September 2026 by [Complete game backlog](COMPLETE-GAME-BACKLOG.md), [content coverage](GAME-CONTENT-COVERAGE.md) and [desktop/photo specification](GAME-PHOTO-AND-SCREEN-SPEC.md). Older approval labels, mobile compositions, illustration-only cast, prediction gates and conflicting screen requirements below are not implementation authority.
+
 Extracted from the ten mockups in `Mockups/` by reading all of them, zone by zone.
 This document describes **what the mockups actually do** — it is observation, not proposal.
 `docs/UI-AUDIT.md` is the gap analysis against what we built.

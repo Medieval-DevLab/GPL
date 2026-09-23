@@ -11,7 +11,7 @@
  *
  *   node tools/verify.mjs                 # against http://localhost:5173
  *   node tools/verify.mjs http://host     # against anything else
- *   GPL_VIEWPORT=390x844 node tools/...   # phone pass
+ *   GPL_VIEWPORT=768x1024 node tools/...  # tablet pass, the supported floor
  *   node tools/verify.mjs --all-paths     # three policies, not one (see below)
  *   GPL_PATHS=all node tools/verify.mjs   # same, for CI
  */
@@ -36,18 +36,50 @@ const ALL_PATHS = process.argv.includes("--all-paths") || process.env.GPL_PATHS 
 
 const [vw, vh] = (process.env.GPL_VIEWPORT ?? "1440x900").split("x").map(Number);
 const VIEWPORT = { width: vw || 1440, height: vh || 900 };
-const DESKTOP = VIEWPORT.width >= 1024;
+
 /**
- * "A mission fits one screen" is only enforced at the reference height.
+ * The narrowest viewport the game claims to render, and the reason this is a constant.
+ *
+ * Below it `App.tsx` renders a notice instead of the console — no `h1` reading "GPL", no
+ * "Take the brief" — so every branch of this harness misses and the run died on
+ * `no start button on the title screen`. That is a true statement about a viewport the
+ * product does not support, dressed as a crash, and it is why the documented phone pass
+ * has never played a single beat while `docs/screenshots-390/` sat in the repo looking
+ * like evidence that it had.
+ *
+ * So an unsupported viewport now fails on its own terms, before the browser starts. It
+ * must stay in step with `MIN_SUPPORTED_WIDTH` in `src/App.tsx`: one number, two files,
+ * and the wrong half of that pair is a harness that lies in the other direction.
+ */
+const MIN_SUPPORTED_WIDTH = 768;
+const CONSOLE = VIEWPORT.width >= MIN_SUPPORTED_WIDTH;
+/**
+ * "A mission fits one screen" is only enforced at a reference size.
  *
  * The mockups are drawn for a 1536x1024 window; their densest briefing needs ~835px of
  * working area. At 1440x900 we have ~745px, so matching their type and image scale and
  * fitting 900px are mutually exclusive. We chose their scale: the fit rule is enforced at
  * >=1000px tall, and below that the working area is allowed to scroll inside the console
  * — the chrome still never moves. See docs/DECISIONS.md D-024.
+ *
+ * **The same rule, now with a width.** The tablet band has a reference size of its own:
+ * 820×1180, which is every iPad shipped since 2020 held upright, and which the band is
+ * laid out for. Every one of the 18 beats fits it, so the rule is enforced there. The
+ * supported floor, 768×1024, is the 2013 device — 152px narrower and 156px shorter — and
+ * three beats and the ending do not fit it. Below 820 the rule therefore REPORTS, which
+ * is the same compromise D-024 already makes for a viewport shorter than the reference:
+ * the numbers are printed on every run, and turning the default red is how a gate gets
+ * switched off rather than how it gets satisfied.
+ *
+ * What this is not: D-040's defect, a gate that skips itself. This one runs everywhere,
+ * measures everywhere, prints everywhere, and fails at both reference sizes. The four
+ * known 768px overruns are named with their measurements in D-082, so a fifth is a
+ * regression and can be seen to be one.
  */
 const FIT_MIN_HEIGHT = 1000;
-const ENFORCE_FIT = DESKTOP && VIEWPORT.height >= FIT_MIN_HEIGHT;
+const FIT_MIN_WIDTH = 820;
+const ENFORCE_FIT =
+  VIEWPORT.width >= FIT_MIN_WIDTH && VIEWPORT.height >= FIT_MIN_HEIGHT;
 const SHOTS = path.resolve(
   VIEWPORT.width === 1440 ? "docs/screenshots" : `docs/screenshots-${VIEWPORT.width}`,
 );
@@ -76,7 +108,6 @@ const POLICIES = [
   {
     id: "first",
     label: "first option",
-    predict: "Deliverability",
     /** Click order over n options: the harness's original behaviour. */
     order: (n) => [...Array(n).keys()],
     shotAll: true,
@@ -84,14 +115,12 @@ const POLICIES = [
   {
     id: "last",
     label: "last option",
-    predict: "Winability",
     order: (n) => [...Array(n).keys()].reverse(),
     shotAll: false,
   },
   {
     id: "middle",
     label: "middle option",
-    predict: "Profitability",
     /** Outward from the middle, so multi-select missions still reach their slot count. */
     order: (n) => {
       const out = [];
@@ -131,7 +160,7 @@ async function shot(page, name) {
   const file = path.join(SHOTS, `${String(shotIndex).padStart(2, "0")}-${name}.png`);
   // Not fullPage: the console owns the viewport and scrolls its own working area, so the
   // viewport IS the screen. Overflow is caught by checkFit instead.
-  await page.screenshot({ path: file, fullPage: !DESKTOP });
+  await page.screenshot({ path: file, fullPage: !CONSOLE });
   console.log(`   📸 ${path.basename(file)}`);
 }
 
@@ -154,7 +183,17 @@ async function checkFit(page, where) {
   const fit = await page.evaluate(() => {
     const el = document.querySelector("[data-work-area]");
     if (!el) return null;
-    return { scroll: el.scrollHeight, client: el.clientHeight };
+    /* Anything WIDER than the box that holds it. The console shell is `overflow: hidden`,
+       so a child that does not fit is not scrolled to, it is cut off — see below. */
+    const wide = [...document.querySelectorAll("[data-console] *")]
+      .filter((n) => n.scrollWidth - n.clientWidth > 2 && n.clientWidth > 0)
+      .map((n) => ({
+        tag: n.tagName.toLowerCase(),
+        cls: (typeof n.className === "string" ? n.className : "").slice(0, 40),
+        by: n.scrollWidth - n.clientWidth,
+      }))
+      .slice(0, 3);
+    return { scroll: el.scrollHeight, client: el.clientHeight, wide };
   });
   if (!fit) {
     problems.push(`${where}: no [data-work-area] — the console shell is missing`);
@@ -167,6 +206,27 @@ async function checkFit(page, where) {
       `A mission must fit one screen — see docs/UI-AUDIT.md F1.`;
     if (ENFORCE_FIT) problems.push(note);
     else overflows.push(note);
+  }
+  /**
+   * Sideways overflow is ALWAYS fatal, at every width.
+   *
+   * D-041 is the reason it is measured at all and the reason it is not measured on the
+   * document: the console shell is `overflow: hidden`, which turns a child that is too
+   * wide into an invisible clip rather than a scrollbar — so `document.scrollWidth`
+   * reports no overflow while 250px of the primary action is simply gone. An audit
+   * scored WCAG 1.4.10 a pass at 390px on exactly that reading. Measuring every element
+   * against its own box is what catches it: the closing debrief's eighteen tone marks
+   * were 306px in a 272px column in the tablet band, so the last two decisions of the
+   * run were cut off by the page edge with nothing to say so.
+   *
+   * Not gated on `ENFORCE_FIT`. A screen that scrolls is a screen the player can still
+   * read; a screen that clips is content that is not there.
+   */
+  for (const w of fit.wide) {
+    problems.push(
+      `${where}: <${w.tag} class="${w.cls}…"> is ${w.by}px wider than its box — the ` +
+        `console clips rather than scrolls, so this content is unreachable (D-041).`,
+    );
   }
 }
 
@@ -393,35 +453,18 @@ async function runPath(browser, policy) {
       let clicked = 0;
       for (const i of policy.order(count)) {
         if (clicked >= 4) break;
-        if ((await page.getByText("will move least?", { exact: false }).count()) > 0) break;
         await choices.nth(i).click();
         clicked += 1;
         await page.waitForTimeout(70);
+        if (await commit.isEnabled()) break;
       }
 
       // The prediction is the game's "before" — commit must be gated on it.
-      if (await commit.isEnabled()) {
-        problems.push(tag(`${heading}: Commit was enabled before a prediction was made`));
-      }
       // Each path predicts a different meter; fall back so a missing chip is reported as
       // a missing control rather than silently skipping the gate.
-      let predict = await button(page, policy.predict);
-      if (!predict) {
-        for (const alt of ["Deliverability", "Winability", "Profitability"]) {
-          predict = predict ?? (await button(page, alt));
-        }
-      }
-      if (!predict) {
-        problems.push(tag(`${heading}: no prediction control after selecting`));
-        await shot(page, `${policy.id}-stuck-predict-${run.missions}`);
-        break;
-      }
-      await predict.click();
-      await page.waitForTimeout(70);
-
       if (!(await commit.isEnabled())) {
         problems.push(
-          tag(`${heading}: Commit never enabled after ${clicked} selections + prediction`),
+          tag(`${heading}: Commit never enabled after ${clicked} selections`),
         );
         break;
       }
@@ -496,6 +539,17 @@ async function runPath(browser, policy) {
       if (policy.shotAll && run.debriefs <= 2) await shot(page, `debrief-${run.debriefs}`);
       await checkFit(page, tag(`debrief ${run.debriefs}`));
       await toMap.click();
+      continue;
+    }
+
+    // The map is the required chapter hand-off. The highlighted node is the only live
+    // route, so following it proves the learner is told where they are before entering.
+    const currentMapStep = page.locator('button[aria-current="step"]');
+    if ((await currentMapStep.count()) > 0 && (await currentMapStep.first().isVisible())) {
+      misses = 0;
+      if (policy.shotAll) await shot(page, `map-${run.debriefs}`);
+      await currentMapStep.first().click();
+      await page.waitForTimeout(150);
       continue;
     }
 
@@ -651,6 +705,30 @@ async function runPath(browser, policy) {
 }
 
 async function main() {
+  /**
+   * Refuse an unsupported viewport HERE, in words, rather than in Playwright's words.
+   *
+   * The failure this replaces was `no start button on the title screen` thrown from
+   * inside the run loop, which reads as a defect in the title screen. It is not: at
+   * 390px the product deliberately renders a notice, and a harness that plays the game
+   * has nothing to play. Reported as a failure and not a skip, because the only way to
+   * ask for this viewport is to type it, and silently returning green for a pass that
+   * did not happen is the exact shape of the bug in `docs/screenshots-390/`.
+   */
+  if (!CONSOLE) {
+    console.error(
+      `\n✗ ${VIEWPORT.width}×${VIEWPORT.height} is below the supported minimum of ` +
+        `${MIN_SUPPORTED_WIDTH}px wide.\n\n` +
+        `  Below ${MIN_SUPPORTED_WIDTH}px the game renders the unsupported-screen notice, not the\n` +
+        `  console, so there is no run to play and nothing this harness can check. Phones are\n` +
+        `  not a supported size — see docs/DECISIONS.md D-082 for what that costs and what is\n` +
+        `  still missing.\n\n` +
+        `  The supported band starts at ${MIN_SUPPORTED_WIDTH}×1024:\n` +
+        `    GPL_VIEWPORT=${MIN_SUPPORTED_WIDTH}x1024 node tools/verify.mjs\n`,
+    );
+    process.exit(1);
+  }
+
   await rm(SHOTS, { recursive: true, force: true });
   await mkdir(SHOTS, { recursive: true });
 
@@ -692,9 +770,11 @@ async function main() {
      the summary so they are visible on a green run, which is the only reason they were
      ever found. */
   if (overflows.length) {
-    console.log(
-      `\n⚠ ${overflows.length} fit overrun(s) below the ${FIT_MIN_HEIGHT}px enforcement height:\n`,
-    );
+    const why =
+      VIEWPORT.width < FIT_MIN_WIDTH
+        ? `below the ${FIT_MIN_WIDTH}px reference width — see D-082`
+        : `below the ${FIT_MIN_HEIGHT}px enforcement height`;
+    console.log(`\n⚠ ${overflows.length} fit overrun(s) ${why}:\n`);
     for (const o of overflows) console.log(`  · ${o}`);
   }
 

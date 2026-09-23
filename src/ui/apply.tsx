@@ -34,15 +34,7 @@
  * room, and then the screen narrows to a question. This one opens with the demand instead
  * of a heading because on an apply beat the question is somebody else's.
  *
- * It changes state, so it carries the stake element: `StakeMark` beside the question, and
- * the prediction gate beneath the row once a card is chosen. The gate is in the WORK AREA
- * rather than the action bar, for the same reason the conversation surface moves it there —
- * on this screen the requirement belongs next to the thing it is about.
- *
- * **So the caller must not also render `PredictionStrip` in the action bar.** Two copies
- * of `PREDICTION_QUESTION_ID` would leave the commit button's `aria-describedby` pointing
- * at whichever one the DOM happened to find first. `App.tsx` already makes exactly this
- * exclusion for `isDialogue`; this screen needs the same one.
+ * It changes state, so it carries the stake element: `StakeMark` beside the question.
  *
  * ── what is NOT here ───────────────────────────────────────────────────────────────────
  *
@@ -74,12 +66,11 @@ import { CardButton, StakeMark } from "./mission";
 import {
   BEAT_TITLE_ID,
   Monogram,
-  PREDICTION_QUESTION_ID,
-  PredictionChips,
   RadioGroup,
   UI_LABEL,
   quoted,
   radioTabIndex,
+  useTabletBand,
 } from "./shell";
 
 /**
@@ -391,10 +382,17 @@ const bodyIds = (id: string) => `apply-${id}-say apply-${id}-rests`;
 /** How much of the scenario stands beside the demand. See the call site. */
 const SITUATION_LIMIT = 2;
 
-/** Column count. The whole set, locked included — a lock holds its place in the row. */
+/**
+ * Column count. The whole set, locked included — a lock holds its place in the row.
+ *
+ * Same wrap as the comparison card below `lg`, and for the same reason — see `columns`
+ * in `ui/mission.tsx`. It matters more here: this is the screen the handover is on, five
+ * cards wide, and a locked card has to say what it was *and* where it was available, so
+ * it is the tallest card in the game at the narrowest measure in the game.
+ */
 function columns(n: number): string {
   if (n <= 2) return "sm:grid-cols-2";
-  if (n === 3) return "sm:grid-cols-2 lg:grid-cols-3";
+  if (n === 3) return "sm:grid-cols-2 md:grid-cols-3";
   if (n === 4) return "sm:grid-cols-2 lg:grid-cols-4";
   return "sm:grid-cols-3 lg:grid-cols-5";
 }
@@ -433,7 +431,7 @@ function PlayableCard({
       aria-describedby={bodyIds(option.id)}
     >
       {/* 1 · the move's own pictogram, in the medallion the mockups put on every card */}
-      <div className={`flex justify-center ${narrow ? "pt-2" : "pt-2.5"}`}>
+      <div className={`flex justify-center ${narrow ? "pt-1.5" : "pt-2.5"}`}>
         <span
           aria-hidden="true"
           /* 40px, not the comparison card's 60. That medallion overlaps a 124px
@@ -475,7 +473,10 @@ function PlayableCard({
              live cards ~90px of slack, and it belongs ABOVE this block rather than between
              it and the button — the provenance and the marker are both the card's footer,
              and air between them would break the one group they form. */}
-      <div id={`apply-${option.id}-rests`} className="flex flex-col justify-end px-3.5 pt-3">
+      <div
+        id={`apply-${option.id}-rests`}
+        className={`flex flex-col justify-end px-3.5 ${narrow ? "pt-2.5" : "pt-3"}`}
+      >
         {held.length > 0 ? (
           <div className="border-t border-(--color-line) pt-2.5">
             <p className="flex items-center gap-1.5 text-[12px] font-bold text-(--color-text-strong)">
@@ -507,7 +508,7 @@ function PlayableCard({
       </div>
 
       {/* 5 · the card's own full-width marker, as on every other decide beat */}
-      <div className={`self-end px-3.5 ${narrow ? "pb-2.5 pt-2.5" : "pb-3 pt-3"}`}>
+      <div className={`self-end px-3.5 ${narrow ? "pb-2 pt-2" : "pb-3 pt-3"}`}>
         <CardButton selected={selected} on={UI_LABEL.chosen} off={UI_LABEL.sayThis} />
       </div>
     </button>
@@ -552,7 +553,7 @@ function LockedCard({ option, lock, narrow }: { option: Option; lock: Lock; narr
       }}
     >
       {/* 1 · the padlock stands where the move's pictogram would be */}
-      <div className={`flex justify-center ${narrow ? "pt-2" : "pt-2.5"}`}>
+      <div className={`flex justify-center ${narrow ? "pt-1.5" : "pt-2.5"}`}>
         <span
           aria-hidden="true"
           className={`flex items-center justify-center rounded-full ${
@@ -591,7 +592,7 @@ function LockedCard({ option, lock, narrow }: { option: Option; lock: Lock; narr
           >
             {lock.lead}
           </p>
-          <ul className="mt-1 space-y-1.5">
+          <ul className={`mt-1 ${narrow ? "space-y-1" : "space-y-1.5"}`}>
             {lock.gaps.slice(0, lock.show).map((g) => (
               <li key={g.key} className="text-[12px] leading-snug">
                 <span className="font-bold" style={{ color: "var(--color-text-disabled)" }}>
@@ -615,7 +616,7 @@ function LockedCard({ option, lock, narrow }: { option: Option; lock: Lock; narr
       </div>
 
       {/* 5 · where a live card has its button. The same box, so the row cannot step. */}
-      <div className={`self-end px-3.5 ${narrow ? "pb-2.5 pt-2.5" : "pb-3 pt-3"}`}>
+      <div className={`self-end px-3.5 ${narrow ? "pb-2 pt-2" : "pb-3 pt-3"}`}>
         <span
           className="flex w-full items-center justify-center gap-1.5 border-t-2 py-2.5 text-[13px] font-bold"
           style={{ borderColor: "var(--color-text-disabled)", color: "var(--color-text-disabled)" }}
@@ -629,43 +630,6 @@ function LockedCard({ option, lock, narrow }: { option: Option; lock: Lock; narr
 }
 
 /* ───────────────────────────── the gate ───────────────────────────── */
-
-/**
- * The stake element's interactive half, under the row it is about.
- *
- * The same object as the conversation surface's gate — 2px rim, accent tint, the question
- * at the body step rather than as a caption — because it is the same control doing the
- * same job on a surface that owns it. It re-keys on `nudge`, so pressing a commit button
- * that is not ready answers where the player is looking.
- */
-function ApplyGate({
-  prediction,
-  onPredict,
-  nudge,
-}: {
-  prediction: DimensionId | null;
-  onPredict: (d: DimensionId) => void;
-  nudge: number;
-}) {
-  return (
-    <div
-      key={nudge}
-      /* One row rather than the conversation surface's two. That gate is indented under a
-         reply inside a 560px column; this one has the whole 848px row beneath it, and the
-         two stacked lines were 32px of the 84px by which the selected state overflowed at
-         1440x900. Same object, same rim, same chips — laid out for the space it is in. */
-      className={`mt-3 flex w-fit flex-wrap items-center gap-x-3 gap-y-1.5 rounded-[12px] border-2 px-4 py-2.5 ${
-        nudge > 0 ? "m-land" : "m-swap"
-      }`}
-      style={{ borderColor: "var(--color-accent-ring)", background: "var(--color-accent-tint)" }}
-    >
-      <p id={PREDICTION_QUESTION_ID} className="text-[15px] font-bold text-(--color-ink)">
-        {UI_LABEL.predictQuestion}
-      </p>
-      <PredictionChips prediction={prediction} onPredict={onPredict} />
-    </div>
-  );
-}
 
 /* ───────────────────────────── the screen ───────────────────────────── */
 
@@ -689,16 +653,11 @@ export function isApply(mission: Mission): mission is ChoiceMission {
 export function ApplyScreen({
   mission,
   state,
-  nudge = 0,
   onToggle,
-  onPredict,
 }: {
   mission: Mission;
   state: GameState;
-  /** how many times a commit button that was not ready has been pressed */
-  nudge?: number;
   onToggle: (id: string) => void;
-  onPredict: (d: DimensionId) => void;
 }) {
   /* Not a choice mission: nothing to apply anything to. The caller routes this screen, so
      this is a guard rather than a branch — and the question band renders regardless, so
@@ -708,7 +667,12 @@ export function ApplyScreen({
   const gated = options.some((o) => o.requires);
   const chosen = state.selection[0];
   const anySelected = options.some((o) => o.id === chosen && playable.has(o.id));
-  const narrow = options.length >= NARROW_COLUMNS;
+  /* Narrow by measure, not by count — the tablet band never gives this row a column
+     wider than 250px. See the same line in `ChoiceList`. `tablet` is kept separately
+     because the question band's layout depends on the BAND and not on the card: five
+     options at 1440 are narrow cards in a band that still has room beside the heading. */
+  const tablet = useTabletBand();
+  const narrow = tablet || options.length >= NARROW_COLUMNS;
   const demand = demandOf(mission, state);
   const situation = resolveSituation(mission, state);
   const question = mission.kind === "choice" ? mission.question : mission.title;
@@ -729,7 +693,7 @@ export function ApplyScreen({
       {demand && (
         <section
           data-region="demand"
-          className="m-swap flex items-start gap-5 border-b border-(--color-line) bg-(--color-surface) px-5 py-2.5"
+          className="m-swap flex items-start gap-5 border-b border-(--color-line) bg-(--color-surface) px-5 py-2 lg:py-2.5"
         >
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -739,7 +703,12 @@ export function ApplyScreen({
                 <span className="ml-2 font-medium text-(--color-muted)">{demand.role}</span>
               </span>
             </div>
-            <blockquote className="mt-2 border-l-[3px] border-(--color-accent) pl-3 text-[18px] italic leading-[1.4] text-(--color-ink) text-pretty">
+            {/* 16px below `lg`. The demand is the largest thing on the screen and stays
+                the largest thing on the screen — the heading under it is 24px there and
+                24px here — but at 18px in a 560px band it runs to three lines on the
+                handover, and the three lines are paid for out of a card row that is
+                already the tightest in the game. */}
+            <blockquote className="mt-2 border-l-[3px] border-(--color-accent) pl-3 text-[18px] italic leading-[1.4] text-(--color-ink) text-pretty lg:text-[18px]">
               {quoted(demand.text)}
             </blockquote>
           </div>
@@ -793,15 +762,20 @@ export function ApplyScreen({
                 {playable.size} {UI_LABEL.of} {options.length} {UI_LABEL.onTheTable}
               </Pill>
             )}
+            {/* In the tablet band it drops onto this line, for the reason given on
+                `stakeBelow` in `ui/mission.tsx`: beside a 24px heading in a 560px band it
+                costs the heading a second line, and this row had the space. One of these
+                in the DOM, never two. */}
+            {tablet && <StakeMark />}
           </div>
         </div>
         {/* The work-area half of the stake element, beside the question, exactly as the
             console decide beat has it. The gate below is the interactive half. */}
-        <StakeMark />
+        {!tablet && <StakeMark />}
       </div>
 
       {/* ── what you can put on the table, and what you cannot ────────────────────── */}
-      <div data-region="options" data-decision className="flex-1 px-5 py-4">
+      <div data-region="options" data-decision className="flex-1 px-5 py-2 lg:py-4">
         <RadioGroup
           label={question}
           className={`m-deal grid items-stretch gap-3 ${columns(options.length)}`}
@@ -834,10 +808,6 @@ export function ApplyScreen({
             );
           })}
         </RadioGroup>
-
-        {anySelected && (
-          <ApplyGate prediction={state.prediction} onPredict={onPredict} nudge={nudge} />
-        )}
       </div>
     </div>
   );

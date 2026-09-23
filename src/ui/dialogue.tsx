@@ -27,13 +27,8 @@
  *     you could say is simply how anyone answers on a call. `Option.say` is the same
  *     option in the first person; nothing about the decision, the branching or the state
  *     changes.
- *  3. **The commit gate becomes legible.** The reported bug — "cannot get past Commit to
- *     this" — is a layout defect, not a rules defect: the gate needs a selection *and* a
- *     prediction, and the prediction was a 13px question with three chips wedged into the
- *     bottom bar beside a colleague's photograph, where it read as a legend rather than a
- *     control. Here it is sequential and vertical: pick a reply, the reply highlights, the
- *     question appears indented directly beneath that reply, then the action goes live.
- *     Same `canCommit`, same two requirements, nothing weakened.
+ *  3. **The decision stays in the conversation.** Pick the reply you would actually say,
+ *     then commit it. The interface does not interrupt a real exchange with a separate quiz.
  *
  * NO GAME RULES LIVE HERE. Which voice speaks is `resolveSaidQuote`; which options exist
  * is `availableOptions`; what the gate is remains `canCommit` in `App.tsx`. This file
@@ -47,15 +42,13 @@
 import { useEffect, useRef, useState } from "react";
 
 import { availableOptions, resolveSaidQuote, resolveSituation, resolveAdvisorLine } from "../engine/engine";
-import type { ChoiceMission, DimensionId, GameState, Mission, Option } from "../engine/types";
+import type { ChoiceMission, GameState, Mission, Option } from "../engine/types";
 import { Bullet, Icon, PersonGlyph, Pill, SectionTitle } from "./icons";
 import { StakeMark } from "./mission";
 import {
   BEAT_TITLE_ID,
   Disc,
   Monogram,
-  PREDICTION_QUESTION_ID,
-  PredictionChips,
   RadioGroup,
   UI_LABEL,
   artUrl,
@@ -736,54 +729,6 @@ function ChatThread({
 /* ───────────────────────── the composer ───────────────────────── */
 
 /**
- * The gate, vertical.
- *
- * It renders inside the reply list, indented under the reply it is asking about, and it
- * carries `PREDICTION_QUESTION_ID` — which is what the action bar's `aria-describedby`
- * points at, so the button says what it is waiting for rather than repeating it.
- *
- * It is also the LOUDEST thing on the screen after the replies themselves, and that is a
- * requirement rather than a preference (`SCREEN-SPECS.md` §3): the gate is the only thing
- * in the game that marks a change of state, so on the surface where it lives in the work
- * area it is drawn as a 2px-rimmed object with the question at the body step, not as a
- * caption. It was 13px inside a 1px hairline, and the reported bug — "cannot get past
- * Commit to this" — was somebody not seeing it.
- */
-function PredictionGate({
-  prediction,
-  onPredict,
-  nudge,
-}: {
-  prediction: DimensionId | null;
-  onPredict: (d: DimensionId) => void;
-  /**
-   * How many times the player has pressed a commit button that was not ready.
-   *
-   * Pressing it must answer, and on this surface the answer cannot be in the action bar
-   * because the requirement is not there — it is here, under the reply. Re-keying on the
-   * count restarts the entrance, so the gate lands again where the player is looking.
-   * The same mechanism as `ActionBar`'s own panel, driven by the same counter in
-   * `App.tsx`.
-   */
-  nudge: number;
-}) {
-  return (
-    <div
-      key={nudge}
-      className={`ml-9 mt-2 rounded-[12px] border-2 px-4 py-2.5 ${nudge > 0 ? "m-land" : "m-swap"}`}
-      style={{ borderColor: "var(--color-accent-ring)", background: "var(--color-accent-tint)" }}
-    >
-      <p id={PREDICTION_QUESTION_ID} className="text-[15px] font-bold text-(--color-ink)">
-        {UI_LABEL.predictQuestion}
-      </p>
-      <div className="mt-2">
-        <PredictionChips prediction={prediction} onPredict={onPredict} />
-      </div>
-    </div>
-  );
-}
-
-/**
  * Your reply, as a list of things you could say.
  *
  * Stacked full-width rows in the first person and in quotes — not columns and not cards.
@@ -803,18 +748,12 @@ function Composer({
   mission,
   options,
   chosen,
-  prediction,
-  nudge,
   onToggle,
-  onPredict,
 }: {
   mission: ChoiceMission;
   options: Option[];
   chosen?: string;
-  prediction: DimensionId | null;
-  nudge: number;
   onToggle: (id: string) => void;
-  onPredict: (d: DimensionId) => void;
 }) {
   const anySelected = options.some((o) => o.id === chosen);
 
@@ -863,9 +802,6 @@ function Composer({
                   </span>
                 )}
               </button>
-              {selected && (
-                <PredictionGate prediction={prediction} onPredict={onPredict} nudge={nudge} />
-              )}
             </div>
           );
         })}
@@ -920,18 +856,13 @@ export function DialogueScene({
   mission,
   state,
   phase,
-  nudge,
   onToggle,
-  onPredict,
 }: {
   mission: ChoiceMission;
   state: GameState;
   /** `listen` is the brief beat, `reply` is the decide beat */
   phase: "listen" | "reply";
-  /** blocked presses of the primary action, so the gate can answer one */
-  nudge: number;
   onToggle: (id: string) => void;
-  onPredict: (d: DimensionId) => void;
 }) {
   const turns = conversation(mission, state);
   const live = turns[turns.length - 1];
@@ -1024,10 +955,7 @@ export function DialogueScene({
             mission={mission}
             options={options}
             chosen={chosen}
-            prediction={state.prediction}
-            nudge={nudge}
             onToggle={onToggle}
-            onPredict={onPredict}
           />
         ) : mission.advisor && mission.consider && mission.consider.length > 0 ? (
           <OpenQuestions from={mission.advisor.name} questions={mission.consider} />

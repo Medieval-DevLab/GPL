@@ -266,62 +266,11 @@ export function progressSummary(state: GameState, content: Content): ProgressSum
 
 export type Stars = 0 | 1 | 2 | 3;
 
-/**
- * THE STAR RULE, in one line: three for a strong outcome you saw coming, two for a strong
- * outcome or a mixed one you saw coming, one for playing the beat at all.
- *
- * `predictionCorrect` is whether the player's pre-commit call on which meter would move
- * least turned out right — the game's own "before", and the only signal here that says the
- * player UNDERSTOOD the trade rather than merely landed it.
- *
- * Why tone and prediction, and not a percentage of the meters. Attensi publishes the only
- * star scale in this space and it bands a score: 5 at ≥85%, 4 at ≥70%, 3 at ≥55%, one star
- * for completing a non-simulation task. Mapped to 0–3 that is ≥85 / ≥70 / completed, and
- * the percentage it bands is exactly the thing this project deleted: a single score over
- * three meters, removed because a meter-greedy policy drove it to 100/100/100 without
- * reading a word (D-037, `engagement.ts`). Banding meters would put the stars back on it.
- * `tone` cannot be farmed that way — it is the author's verdict on the branch that actually
- * fired, and the same option is `strong` in one situation and `hard` in another. So the
- * bands are kept and their input is changed: the top band asks for an authored good result
- * AND a correct read, which is what the game teaches.
- *
- * Net dimension movement is available and deliberately unused for the same reason, plus
- * one of its own: an authored `strong` branch may cost net position on purpose — the
- * beachhead trade, thin margin taken knowingly — so demoting it would mark the game's own
- * teaching down.
- *
- * `null` means the prediction was not recorded, and it scores as though the read was right
- * rather than wrong. Any other choice makes three stars unreachable on the surface that
- * cannot see the prediction, which is worse than a coarse rule — see `stars` for why it
- * cannot see it yet.
- */
-export function starsFrom(tone: OutcomeTone, predictionCorrect: boolean | null): Stars {
-  const read = predictionCorrect !== false;
-  return tone === "strong" ? (read ? 3 : 2) : tone === "mixed" ? (read ? 2 : 1) : 1;
+/** Recognition reflects the actual authored outcome, never a prediction. */
+export function starsFrom(tone: OutcomeTone): Stars {
+  return tone === "strong" ? 3 : tone === "mixed" ? 2 : 1;
 }
 
-/**
- * Whether history records how the player's prediction went on this beat. It does not, yet.
- *
- * `predictionCorrect` lives on `Resolution`, which `enterNode` clears on leaving the
- * mission, so it exists for the mission the player is standing on and for no other.
- * `HistoryEntry` carries `tone`, `outcomeId` and the dimensions either side, and nothing
- * about the prediction. Reading the live resolution here is the one thing this must NOT do:
- * it would award three stars on the consequence screen and two for the same mission seen
- * from the hub a minute later, and a mastery figure that changes when you walk away from it
- * is not a mastery figure.
- *
- * So the rule is written in full in `starsFrom` and fed `null` until history records it.
- * Turning it on is two lines and belongs to whoever owns those files: add
- * `predictionCorrect: boolean | null` to `HistoryEntry`, and set it from
- * `resolution.predictionCorrect` where `commit` builds the entry. This reads the field the
- * moment it exists, and `progress.test.ts` pins both sides of that change.
- */
-function recordedPrediction(entry: HistoryEntry): boolean | null {
-  return "predictionCorrect" in entry
-    ? ((entry as { predictionCorrect?: boolean | null }).predictionCorrect ?? null)
-    : null;
-}
 
 /**
  * How well a completed mission went, 0–3. See `starsFrom` for the rule.
@@ -336,7 +285,7 @@ export function stars(state: GameState, content: Content, missionId: string): St
   let entry: HistoryEntry | undefined;
   for (const h of state.history) if (h.missionId === missionId) entry = h;
   if (!entry) return 0;
-  return starsFrom(entry.tone, recordedPrediction(entry));
+  return starsFrom(entry.tone);
 }
 
 /* ───────────────────────────── recognition ───────────────────────────── */

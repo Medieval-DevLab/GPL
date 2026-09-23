@@ -14,7 +14,7 @@
 import { describe, expect, it } from "vitest";
 
 import { story } from "../content/story";
-import { engagementReport, NON_READER_POLICIES, runPolicy } from "./engagement";
+import { engagementReport } from "./engagement";
 
 const content = story;
 
@@ -26,8 +26,7 @@ describe("the engagement gate", () => {
       .map(
         (r) =>
           `  ${r.policy.padEnd(14)} ${String(r.score).padStart(3)}  ` +
-          `${r.dims.win}/${r.dims.profit}/${r.dims.deliver}  ${r.badges} badges  ` +
-          `pred ${r.predictionsRight}/${r.predictionsMade}  ${r.verdict}`,
+          `${r.dims.win}/${r.dims.profit}/${r.dims.deliver}  ${r.badges} badges  ${r.verdict}`,
       )
       .join("\n");
     const verdicts = Object.entries(report.nullPlayer.verdicts)
@@ -129,22 +128,5 @@ describe("the engagement gate", () => {
     /* This clause has moved out of here and into the passing test above. */
   }, 120_000);
 
-  /**
-   * The regression clause learning science asked to keep from their own gate.
-   *
-   * The prediction key is fixed now, but a correctly-keyed question that cannot be
-   * answered from the screen is still a fair coin — game systems measured the cost pips
-   * at r = 0.110 against payoff and pros-minus-cons at r = 0.065. So a policy that always
-   * answers the same dimension must score at chance. Well above it means the item is
-   * biased; well below means it is inverted.
-   */
-  it("keeps a fixed prediction at roughly chance for every non-reader", () => {
-    for (const policy of NON_READER_POLICIES) {
-      const r = runPolicy(content, policy, "s-builder", 1, "profit");
-      if (r.predictionsMade === 0) continue;
-      const rate = r.predictionsRight / r.predictionsMade;
-      expect(rate, `${policy.id} answers "profit" correctly ${Math.round(rate * 100)}% of the time`)
-        .toBeLessThan(0.7);
-    }
-  }, 120_000);
+
 });

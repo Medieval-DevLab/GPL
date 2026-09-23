@@ -570,7 +570,12 @@ export function EndingScreen({ state }: { state: GameState }) {
        so the sections are separated by weight rather than by air. Measured, band by band,
        in the docstring above — the structural savings are the 4-column account and the
        tail row, and this is the last 18px, not the argument. */
-    <div className="m-enter flex min-h-full flex-col px-5 py-2.5">
+    /* `py-2` below `lg`, and the two band gaps below go 16 → 10 with it. Air, not
+       content: the rhythm this screen documents just above is 16/10 against the 20/24/24
+       it replaced, and the tablet band takes the same step again — 10 between bands, 8 at
+       the edge. That is the last 16px between four bands and the bottom of a 1,180px
+       tablet. No entry, no chain and no word of the account is touched. */
+    <div className="m-enter flex min-h-full flex-col px-5 py-2 lg:py-2.5">
       {/* ── band 1 · the verdict, and where it left the three ─────────────────── */}
       <div data-region="verdict" className="flex flex-wrap items-start gap-x-8 gap-y-4">
         <div className="min-w-0 flex-1">
@@ -601,8 +606,16 @@ export function EndingScreen({ state }: { state: GameState }) {
           )}
         </div>
 
-        {/* The one card in band 1, and the only chart on the screen. */}
-        <section data-region="standing" className="card w-full shrink-0 px-4 py-3 lg:w-[468px]">
+        {/* The one card in band 1, and the only chart on the screen.
+            `md:w-[380px]` keeps it BESIDE the verdict in the tablet band instead of
+            wrapping under it. Full width it is a 185px band of its own on top of a 158px
+            one; beside, the two share the taller of the two heights. The three meters
+            need 102px a column at 380 and the widest label ("Deliverability") is 86, so
+            nothing in it wraps that did not wrap at 468. */}
+        <section
+          data-region="standing"
+          className="card w-full shrink-0 px-4 py-3 md:w-[380px] lg:w-[468px]"
+        >
           <SectionTitle icon="chart" className="mb-2">
             {UI_LABEL.endedUp}
           </SectionTitle>
@@ -626,11 +639,11 @@ export function EndingScreen({ state }: { state: GameState }) {
           `flag`, not `layers`: the account is a position, and `layers` belongs to
           Deliverability. */}
       {account.length > 0 && (
-        <section data-region="account" className="mt-4">
+        <section data-region="account" className="mt-2 lg:mt-4">
           <SectionTitle icon="flag" className="mb-2">
             {UI_LABEL.account}
           </SectionTitle>
-          <ul className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-x-8 gap-y-2">
+          <ul className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-x-8 gap-y-1.5 lg:gap-y-2">
             {account.map((e) => (
               <LedgerRow key={e.label} entry={e} size={15} bare />
             ))}
@@ -657,9 +670,16 @@ export function EndingScreen({ state }: { state: GameState }) {
        * is missing: with no left-hand region, `decisions` takes the whole row rather than
        * leaving a 1fr hole where a section used to be.
        */}
+      {/* …and the same row exists in the tablet band, at 300px rather than 468. The
+          argument is the one above and it is stronger at this width, not weaker: these
+          are two short regions, and one under the other spends 340px of an 1,045px page
+          on things that between them fill about a third of it. 300 is what the collapsed
+          decisions disclosure needs — a row of 18 tone marks and one line of text. */}
       <div
-        className={`mt-4 grid gap-x-8 gap-y-5 ${
-          leftColumn && !runListOpen ? "lg:grid-cols-[minmax(0,1fr)_468px]" : ""
+        className={`mt-2 grid gap-x-8 gap-y-5 lg:mt-4 ${
+          leftColumn && !runListOpen
+            ? "md:grid-cols-[minmax(0,1fr)_272px] lg:grid-cols-[minmax(0,1fr)_468px]"
+            : ""
         }`}
       >
         {/* The question and then the chains it is about, in that order and in ONE track.
@@ -731,7 +751,13 @@ export function EndingScreen({ state }: { state: GameState }) {
               onClick={() => setRunListOpen((open) => !open)}
               className="flex w-fit min-h-[24px] cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1.5"
             >
-              <span aria-hidden="true" className="flex items-center gap-1">
+              {/* `flex-wrap`. Eighteen marks at 17px are 306px of row, and in the tablet
+                  band this column is 272 — so the last two decisions of the run were
+                  being clipped by the page edge with no scrollbar, which is D-041's own
+                  finding reappearing one band down. The strip is meant to be read as a
+                  shape across a room; two rows of it still is, and a truncated one is
+                  a different shape. */}
+              <span aria-hidden="true" className="flex flex-wrap items-center gap-1">
                 {state.history.map((h) => (
                   <span key={h.missionId} style={{ color: TONE_MARK[h.tone].colour }}>
                     <Icon name={TONE_MARK[h.tone].icon} size={13} />

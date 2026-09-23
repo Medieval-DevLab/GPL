@@ -1,5 +1,7 @@
 # Screen specifications
 
+> Historical reference, superseded on 22 September 2026 by [Complete game backlog](COMPLETE-GAME-BACKLOG.md), [content coverage](GAME-CONTENT-COVERAGE.md) and [desktop/photo specification](GAME-PHOTO-AND-SCREEN-SPEC.md). Older approval labels, mobile compositions, illustration-only cast, prediction gates and conflicting screen requirements below are not implementation authority.
+
 **For whoever builds a GPL screen.** The template every screen is defined by, then every
 screen defined against it. Companion to `SCREEN-TAXONOMY.md` (what the types are) and
 `GAME-SEQUENCE.md` (where they sit in the run).

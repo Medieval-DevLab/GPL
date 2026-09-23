@@ -94,16 +94,6 @@ const TONE: Record<
  * the live region that speaks the resolution. Two copies of this sentence would drift,
  * and the one that drifted would be the one nobody can see.
  */
-export function predictionVerdict(resolution: Resolution): string | null {
-  const { predicted, actualLeastMoved: actual, predictionCorrect: correct, nothingMoved } = resolution;
-  if (!predicted || !actual || correct === null) return null;
-  // With nothing to separate the three, naming a winner would be inventing one.
-  if (nothingMoved) return "Nothing moved. This one cost you nothing and bought you nothing.";
-  return correct
-    ? `You called it. ${DIMENSION_META[actual].label} barely moved.`
-    : `You said ${DIMENSION_META[predicted].label}. It was ${DIMENSION_META[actual].label} that held.`;
-}
-
 /**
  * Everything the resolution beat says, as one string for the live region.
  *
@@ -125,8 +115,6 @@ export function resolutionAnnouncement(resolution: Resolution): string {
       `${DIMENSION_META[d].label} ${sign}${delta}, ${resolution.dimsAfter[d]} ${UI_LABEL.outOf} 100.`,
     );
   }
-  const verdict = predictionVerdict(resolution);
-  if (verdict) parts.push(sentence(verdict));
   return parts.join(" ");
 }
 
@@ -338,29 +326,6 @@ function ResultBand({
  * The landing is on the icon and only when the call was right — a wrong call is not a
  * thing to give a satisfying little bounce to.
  */
-function YourCall({ resolution }: { resolution: Resolution }) {
-  const text = predictionVerdict(resolution);
-  if (!text) return null;
-
-  const right = resolution.predictionCorrect === true;
-  const colour = right ? "var(--color-good)" : "var(--color-warn)";
-  const tint = right ? "var(--color-good-tint)" : "var(--color-warn-tint)";
-
-  return (
-    <div
-      className="flex items-center gap-2.5 border-b border-(--color-line) px-5 py-2.5"
-      style={{ background: tint }}
-    >
-      <span className={`${right ? "m-land" : "m-arrive"} shrink-0`} style={{ color: colour }}>
-        <Icon name={right ? "check" : "scale"} size={18} />
-      </span>
-      <p className="text-[15px] font-bold" style={{ color: colour }}>
-        {text}
-      </p>
-    </div>
-  );
-}
-
 /* ───────────────────── the colleague's read ───────────────────── */
 
 /**
@@ -379,7 +344,19 @@ function TheRead({ advisor, resolution }: { advisor?: Advisor; resolution: Resol
   return (
     <section
       data-region="read"
-      className="flex min-w-0 flex-1 items-start gap-3.5 border-r border-(--color-line) px-5 py-4"
+      /**
+       * `min-w-[340px]` below `lg` is what makes this pair STACK in the tablet band, and
+       * it is a legibility fix that happens to give height back.
+       *
+       * Side by side in a 560px centre these are two 280px columns, and this one spends
+       * 62px of its own on a portrait and a gap — so the colleague's read, which is the
+       * only part of a consequence that teaches anything, was being set at a 178px
+       * measure. That is ~22 characters: less than half Bringhurst's floor, and it made
+       * the panel 479px tall. Stacked, the same words have 418px and the pair comes out
+       * ~110px SHORTER than it was in two columns. 340 + the sibling's 280 does not fit
+       * in 560, which is how the wrap is expressed without a second layout.
+       */
+      className="flex min-w-[340px] flex-1 items-start gap-3.5 border-b border-(--color-line) px-5 py-4 lg:min-w-0 lg:border-b-0 lg:border-r"
       style={{ background: "var(--color-accent-tint)" }}
     >
       {advisor.photo ? (
@@ -471,9 +448,15 @@ export function ConsequenceScreen({
               {UI_LABEL.youChose}{" "}
               <span className="font-bold text-(--color-ink-soft)">{resolution.chosenLabel}</span>
             </p>
+            {/* 26px below `lg`, and it is the scale following the measure rather than a
+                shave. The 32px step is authored against the 848px column the console
+                gives this headline at 1440; in the tablet band the same headline has
+                428px, where `DESIGN-SYSTEM.md` puts the display step at 26. A three-line
+                32px headline at 428px is the wrong size being used, not the right size
+                being cut. */}
             <h1
               id={BEAT_TITLE_ID}
-              className="mt-1 max-w-[30ch] text-[32px] font-bold leading-[1.1] tracking-[-0.015em] text-(--color-ink) text-pretty"
+              className="mt-1 max-w-[30ch] text-[24px] font-bold leading-[1.1] tracking-[-0.015em] text-(--color-ink) text-pretty lg:text-[32px]"
             >
               {resolution.outcome.headline}
             </h1>
@@ -491,8 +474,6 @@ export function ConsequenceScreen({
         from={from}
         deltas={resolution.deltas}
       />
-
-      <YourCall resolution={resolution} />
 
       {/**
        * What it changed, and what a colleague makes of it — side by side, flush, divided

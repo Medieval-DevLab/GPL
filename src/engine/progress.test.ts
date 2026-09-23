@@ -212,27 +212,16 @@ describe("the star rule", () => {
     expect(scored.filter((n) => n < 1 || n > 3)).toEqual([]);
   });
 
-  /**
-   * Both halves of the rule, now that history feeds both.
-   *
-   * This test used to assert the tone bands ALONE, because `HistoryEntry` did not record
-   * how the prediction went and `stars` had to pass `null`. It now does record it, so a
-   * strong outcome the player misread is a two rather than a three — which is the whole
-   * point of the rule, and the reason the old assertion had to change with it. It failed
-   * the moment the field was added, exactly as intended.
-   */
-  it("bands the outcome tone and the read the branch actually fired", () => {
+  it("bands the actual outcome without a prediction assessment", () => {
     const s = playSome(pastSetup(content), 1);
     const entry = s.history[0];
     expect(entry, "nothing was played, so this asserts nothing").toBeDefined();
     const e = entry as NonNullable<typeof entry>;
-    expect(stars(s, content, e.missionId)).toBe(starsFrom(e.tone, e.predictionCorrect));
+    expect(stars(s, content, e.missionId)).toBe(starsFrom(e.tone));
   });
 
   it("keeps a mastery figure stable after the beat has ended", () => {
-    /* The reason `predictionCorrect` is on `HistoryEntry` and not read off `Resolution`:
-       `enterNode` clears the resolution, so a hub visited a minute later would have
-       scored the same mission differently. Play well past the beat and re-ask. */
+    // History, not the transient resolution, owns the completed outcome.
     const one = playSome(pastSetup(content), 1);
     const first = one.history[0] as NonNullable<(typeof one.history)[0]>;
     const scoredThen = stars(one, content, first.missionId);
@@ -240,22 +229,10 @@ describe("the star rule", () => {
     expect(stars(later, content, first.missionId)).toBe(scoredThen);
   });
 
-  /**
-   * The rule in full, at the unit level.
-   *
-   * `null` still has to mean "scored as a correct read", because a run saved by an older
-   * build has history entries without the field, and the top band must stay reachable for
-   * it rather than every past mission silently dropping a star.
-   */
-  it("takes the top band only when the player also read the trade right", () => {
-    expect(starsFrom("strong", true)).toBe(3);
-    expect(starsFrom("strong", false)).toBe(2);
-    expect(starsFrom("mixed", true)).toBe(2);
-    expect(starsFrom("mixed", false)).toBe(1);
-    expect(starsFrom("hard", true)).toBe(1);
-    // Not recorded scores as a correct read, or the top band is unreachable from the hub.
-    expect(starsFrom("strong", null)).toBe(3);
-    expect(starsFrom("mixed", null)).toBe(2);
+  it("bands only the actual outcome", () => {
+    expect(starsFrom("strong")).toBe(3);
+    expect(starsFrom("mixed")).toBe(2);
+    expect(starsFrom("hard")).toBe(1);
   });
 });
 
@@ -318,4 +295,3 @@ describe("purity", () => {
     expect(s).toEqual(before);
   });
 });
-

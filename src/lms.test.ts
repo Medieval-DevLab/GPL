@@ -14,7 +14,7 @@
 import { describe, expect, it } from "vitest";
 
 import { story } from "./content/story";
-import { nextLmsCall } from "./lms";
+import { nextLmsCall, synchroniseLms, type LmsAcknowledgement } from "./lms";
 import { pastSetup, playMission, possibleSelections } from "./engine/analysis";
 import { advance, createInitialState, getNode } from "./engine/engine";
 import { codeFromState } from "./engine/runcode";
@@ -70,7 +70,7 @@ describe("the LMS bridge is actually connected", () => {
        call `// useLms(state, content)` and stayed green when the bridge was deliberately
        unplugged to check. Three drafts, two of which could not fail. */
     const source = await appSource();
-    expect(source).toMatch(/import\s*\{[^}]*\buseLms\b[^}]*\}\s*from\s*"\.\/lms"/);
+    expect(source).toMatch(/import\s*\{[^}]*\buseLms\b[^}]*\}\s*from\s*["']\.\/lms["']/);
     expect(source).toMatch(/\buseLms\s*\(/);
     /* And the resume path, which is the only reason to integrate beyond a tick in a
        report: `localStorage` is per-machine, so without this a learner who changes
@@ -83,7 +83,7 @@ describe("the LMS bridge is actually connected", () => {
        `scormComplete` itself would put a game rule in the interface and bypass the
        once-only and don't-re-park guards that `nextLmsCall` exists to hold. */
     const source = await appSource();
-    expect(source).not.toMatch(/from\s*"\.\/scorm"/);
+    expect(source).not.toMatch(/from\s*["']\.\/scorm["']/);
     const lms = await import("./lms");
     expect(lms.useLms).toBeTypeOf("function");
     expect(lms.lmsResumeCode).toBeTypeOf("function");
@@ -91,6 +91,29 @@ describe("the LMS bridge is actually connected", () => {
 });
 
 describe("what the LMS is told, and when", () => {
+  it("retries failed writes and acknowledges only a successful suspend", () => {
+    const s = playTo((x) => x.completed.length >= 2);
+    const ack: LmsAcknowledgement = { parked: null, finished: false };
+    synchroniseLms(s, content, ack, () => false);
+    expect(ack.parked).toBeNull();
+    synchroniseLms(s, content, ack, () => true);
+    expect(ack.parked).toBe(codeFromState(s, content));
+  });
+
+  it("retries completion and resets completion for a same-tab second run", () => {
+    const end = playTo((x) => x.phase === "ending");
+    const ack: LmsAcknowledgement = { parked: null, finished: false };
+    synchroniseLms(end, content, ack, () => false);
+    expect(ack.finished).toBe(false);
+    synchroniseLms(end, content, ack, () => true);
+    expect(ack.finished).toBe(true);
+    synchroniseLms(pastSetup(content), content, ack, () => true);
+    expect(ack.finished).toBe(false);
+    let completions = 0;
+    synchroniseLms(end, content, ack, (call) => { if (call.kind === "complete") completions++; return true; });
+    synchroniseLms(end, content, ack, () => { completions++; return true; });
+    expect(completions).toBe(1);
+  });
   it("says nothing at the title screen, where there is no run to resume", () => {
     const fresh = createInitialState(content);
     expect(nextLmsCall(fresh, content, null, false).kind).toBe("none");

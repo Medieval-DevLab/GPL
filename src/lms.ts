@@ -91,25 +91,16 @@ export function useLms(state: GameState, content: Content): void {
      network round trip per `LMSCommit` — and `state` changes on every selection toggle,
      which is many times per beat. Parking the same code repeatedly would turn a
      four-selection mission into a dozen commits that all say the same thing. */
-  const parked = useRef<string | null>(null);
-  const finished = useRef(false);
+  const acknowledgement = useRef<LmsAcknowledgement>({ parked: null, finished: false });
+  const current = useRef({ state, content });
+  current.current = { state, content };
 
   useEffect(() => {
     scormInit();
   }, []);
 
   useEffect(() => {
-    const call = nextLmsCall(state, content, parked.current, finished.current);
-    if (call.kind === "none") return;
-    parked.current = call.code;
-    if (call.kind === "complete") {
-      finished.current = true;
-      /* `scormComplete` parks the code too, so an ending is a resume point and a status
-         change in one commit. */
-      scormComplete(call.code);
-    } else {
-      scormSuspend(call.code);
-    }
+    synchroniseLms(state, content, acknowledgement.current);
   }, [state, content]);
 
   /**
@@ -124,12 +115,38 @@ export function useLms(state: GameState, content: Content): void {
    * situation where that is a virtue — there is no promise to lose.
    */
   useEffect(() => {
-    const leave = () => scormFinish();
+    const flush = () => synchroniseLms(current.current.state, current.current.content, acknowledgement.current);
+    const leave = () => { flush(); scormFinish(); };
+    const retry = window.setInterval(flush, 5000);
+    const returnToPage = () => { scormInit(); flush(); };
     window.addEventListener("pagehide", leave);
+    window.addEventListener("pageshow", returnToPage);
     return () => {
+      window.clearInterval(retry);
       window.removeEventListener("pagehide", leave);
+      window.removeEventListener("pageshow", returnToPage);
       /* Not `scormFinish()` on unmount: in development React mounts twice, and finishing
          a session the game is about to keep using would make every later call a no-op. */
     };
   }, []);
+}
+
+export interface LmsAcknowledgement { parked: string | null; finished: boolean }
+
+/** Only acknowledge successful writes. A new run must report its own completion. */
+export function synchroniseLms(
+  state: GameState,
+  content: Content,
+  acknowledgement: LmsAcknowledgement,
+  send: (call: Exclude<LmsCall, { kind: "none" }>) => boolean = (call) => {
+    if (!scormInit()) return false;
+    return call.kind === "complete" ? scormComplete(call.code) : scormSuspend(call.code);
+  },
+): void {
+  if (state.phase === "title" || state.phase === "setup") acknowledgement.parked = null;
+  if (state.phase !== "ending") acknowledgement.finished = false;
+  const call = nextLmsCall(state, content, acknowledgement.parked, acknowledgement.finished);
+  if (call.kind === "none" || !send(call)) return;
+  acknowledgement.parked = call.code;
+  acknowledgement.finished = call.kind === "complete";
 }

@@ -117,8 +117,6 @@ export const UI_LABEL = {
   openQuestionsFrom: "Open questions from",
   /** a reply that is chosen but not yet committed. The chat surface shows it as a bubble. */
   draft: "Not sent yet",
-  /** the prediction gate's question, asked in two places and therefore written in one */
-  predictQuestion: "Which of the three will move least?",
   /** the closing debrief's section headings and its one disclosure */
   endedUp: "Where you ended up",
   account: "The account",
@@ -493,6 +491,34 @@ export function useReducedMotion(): boolean {
     return () => mq.removeEventListener("change", onChange);
   }, []);
   return reduced;
+}
+
+/**
+ * Is the console in the tablet band — 768 to 1023, where the two rails are one desk?
+ *
+ * A media query in JavaScript rather than a `lg:` utility, and only because three of the
+ * things that have to change here are not CSS. `Icon size` is a number prop, the option
+ * card's marker is a different STRING at a narrow measure ("Select" rather than "Select
+ * this option"), and the stake mark's two-row form is a component variant. Everything
+ * that can be a utility is one; this exists for the three that cannot.
+ *
+ * It matches `lg` from the other side — 1023.98px rather than 1024 — so that a viewport
+ * exactly 1024px wide is desktop by both reckonings. A half-open pair of queries that
+ * disagree at one pixel is a card that renders its wide type in a narrow column.
+ */
+export function useTabletBand(): boolean {
+  const query = "(max-width: 1023.98px)";
+  const [tablet, setTablet] = useState(() =>
+    typeof window === "undefined" ? false : window.matchMedia(query).matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const onChange = () => setTablet(mq.matches);
+    mq.addEventListener("change", onChange);
+    setTablet(mq.matches);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return tablet;
 }
 
 /**
@@ -950,7 +976,20 @@ export function TopBar({
         </div>
       </header>
 
-      <div className="flex shrink-0 justify-center border-b border-(--color-line) py-2 xl:hidden print:hidden">
+      {/**
+       * The stepper's second home, and it is `lg` to `xl` only.
+       *
+       * Above 1280 it is inline in the bar above. Below 1024 it is nowhere: the band is
+       * 62px of a 1024px-tall tablet, and everything it says on a mission beat — which
+       * chapter, how far in — the desk rail says eight pixels to the right, in words, on
+       * every beat ("Chapter 5 · Deliver the promise · Mission 17 of 18"). What is
+       * genuinely lost is the five-chapter arc at a glance, and that is one press away in
+       * the top bar's own Journey, which is on screen at every width.
+       *
+       * 62px is not a rounding error at this size. It is the difference between the
+       * handover's five cards fitting and not.
+       */}
+      <div className="hidden shrink-0 justify-center border-b border-(--color-line) py-2 lg:flex xl:hidden print:hidden">
         <ChapterStepper chapters={chapters} current={currentChapter} compact />
       </div>
     </>
@@ -1001,13 +1040,17 @@ export function Console({
   }, [focusKey]);
 
   return (
-    <div className="lg:h-screen lg:p-3 print:h-auto print:p-0">
+    /* The desk margin and the rounded frame are a DESKTOP affordance: they say the
+       console is an object sitting on a surface. On a tablet the console is the device,
+       so it goes edge to edge — which is also where the 24px of vertical padding and the
+       2px of border come back from, and at 768×1024 those 26px are a row of the ledger. */
+    <div className="md:h-screen lg:p-3 print:h-auto print:p-0">
       {/* `data-console` is the print stylesheet's only hook on the frame. The console
           owns the viewport and scrolls its own work area, which on paper would print one
           screenful and clip the rest — see `@media print` in `index.css`. */}
       <div
         data-console
-        className="flex min-h-screen flex-col overflow-hidden border-(--color-line) bg-(--color-surface) lg:min-h-0 lg:h-full lg:rounded-[18px] lg:border"
+        className="flex min-h-screen flex-col overflow-hidden border-(--color-line) bg-(--color-surface) md:min-h-0 md:h-full lg:rounded-[18px] lg:border"
         style={{ boxShadow: "0 1px 2px rgb(20 18 31/0.04), 0 18px 50px rgb(20 18 31/0.08)" }}
       >
         <LiveRegions {...live} />
@@ -1019,26 +1062,66 @@ export function Console({
             the page, behind the rail's "Find the right client" and "The brief", so a
             screen-reader user navigating by heading met the furniture before the
             situation on all 31 beats. Below `lg` the stack was already content-first. */}
-        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <div data-console-body className="flex min-h-0 flex-1 flex-col md:flex-row">
           <main
             ref={work}
             data-work-area
             tabIndex={-1}
             aria-labelledby={BEAT_TITLE_ID}
-            className="order-1 min-w-0 flex-1 lg:order-2 lg:overflow-y-auto print:overflow-visible"
+            className="order-1 min-w-0 flex-1 md:order-2 md:overflow-y-auto print:overflow-visible"
             style={{ background: "var(--color-canvas)" }}
           >
             {children}
           </main>
-          {left && (
-            <aside className="order-2 shrink-0 border-t border-(--color-line) p-4 lg:order-1 lg:w-[248px] lg:overflow-y-auto lg:border-r lg:border-t-0">
-              {left}
-            </aside>
-          )}
-          {right && (
-            <aside className="order-3 shrink-0 border-t border-(--color-line) p-4 lg:order-3 lg:w-[264px] lg:overflow-y-auto lg:border-l lg:border-t-0">
-              {right}
-            </aside>
+          {/**
+           * TWO RAILS BECOME ONE DESK between 768 and 1023, and it is one DOM either way.
+           *
+           * 248 + 888 + 264 does not go into 768: the rails alone are two thirds of the
+           * window. But the rails are not the part to drop — the left one is where the
+           * player is in the run and the file they paid for, and the right one is the
+           * meters and the ledger, which is the state the game branches on (backlog 4.2).
+           * Losing either would make the tablet a different game rather than a narrower
+           * one.
+           *
+           * So they stack into a single 224px column on the right of the work area, in
+           * the order they are read at desktop, divided by the same 1px rule that divides
+           * every other section of a rail. The work area keeps the left edge, so the spine
+           * the eye returns to after every beat is the screen's own edge.
+           *
+           * `display: contents` at `lg` is what keeps this to one tree. The alternative —
+           * a second copy of the rails behind a media query — is what `useWideEnough` was
+           * written to avoid: two `role="meter"` triples in the accessibility tree, both
+           * claiming to be Winability. The wrapper disappears from the box tree above
+           * 1024 and the two asides go back to being flex children of this row, with their
+           * own `order` and their own widths, exactly as they were.
+           */}
+          {(left || right) && (
+            <div
+              data-rail-group
+              /* 208px, and the floor is measured rather than chosen: the widest thing in
+                 either rail is the Deliverability meter's row — 15px pictogram, 8px gap,
+                 an 86px label, and the value hard right — which needs 141px inside 32px
+                 of padding. 208 leaves 35px of slack and hands 40px to the option row,
+                 which is most of a line of a card's checklist. */
+              className="order-2 flex shrink-0 flex-col overflow-y-auto border-(--color-line) md:order-3 md:w-[208px] md:border-l lg:contents"
+            >
+              {left && (
+                <aside
+                  data-rail
+                  className="shrink-0 border-b border-(--color-line) p-4 lg:order-1 lg:w-[248px] lg:overflow-y-auto lg:border-r lg:border-b-0"
+                >
+                  {left}
+                </aside>
+              )}
+              {right && (
+                <aside
+                  data-rail
+                  className="shrink-0 p-4 lg:order-3 lg:w-[264px] lg:overflow-y-auto lg:border-l"
+                >
+                  {right}
+                </aside>
+              )}
+            </div>
           )}
         </div>
 
@@ -1746,107 +1829,6 @@ export function InsightRail({
 
 /* ───────────────────────────── action bar ───────────────────────────── */
 
-/**
- * The prediction gate — the game's "before".
- *
- * You cannot commit until you have said which of the three this will cost most. It is
- * one tap, and it is what turns the consequence screen from the game telling you what
- * happened into the game answering a question you asked. See docs/ENGAGEMENT-MODEL.md.
- */
-/**
- * While the strip is up, the question IS the outstanding requirement, so the commit
- * button is described by it rather than by a second copy of the same sentence.
- */
-export const PREDICTION_QUESTION_ID = "gpl-prediction-question";
-
-/**
- * The three chips, and the one thing about them that is not negotiable: their accessible
- * names are "Winability", "Profitability" and "Deliverability" and nothing else.
- *
- * Shared by the action bar's strip and by the dialogue surface's vertical gate, because
- * they are the same control in two places and the day they drifted apart is the day the
- * gate behaved differently depending on how the beat was staged. `size` is the only
- * difference: the bar has 66px of height to spend and the composer has room for a target
- * that clears 2.5.8 comfortably.
- */
-export function PredictionChips({
-  prediction,
-  onPredict,
-}: {
-  prediction: DimensionId | null;
-  onPredict: (d: DimensionId) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {DIMENSIONS.map((d) => {
-        const meta = DIMENSION_META[d];
-        const on = prediction === d;
-        return (
-          <button
-            key={d}
-            onClick={() => onPredict(d)}
-            aria-pressed={on}
-            /**
-             * 32px tall and 13px of type, up from 22px and 12px.
-             *
-             * These were 12px labels in a hairline border, and the reported bug is that
-             * they read as a legend rather than as three things to press: the player
-             * selected an option, clicked "Commit to this", nothing happened, and the
-             * only explanation on screen was a caption-sized row beside a colleague's
-             * photograph. A control has to look pressable at a glance — so the target
-             * clears 2.5.8 on the short axis with room to spare, the border is 1.5px,
-             * and the chosen one carries a tick as well as a fill.
-             */
-            className="m-press flex min-h-[32px] items-center gap-1.5 rounded-[10px] border-[1.5px] px-3 py-1.5 text-[13px] font-bold"
-            style={{
-              /* Selected is a tint fill with the dark text token, never white on the
-                 solid: win and profit solids are 3.63:1 and 3.90:1 on white, which is
-                 a fill ratio, not a type ratio. */
-              borderColor: on ? `var(${meta.fillVar})` : "var(--color-border-control)",
-              background: on ? `var(--color-${d}-tint)` : "var(--color-surface)",
-              color: `var(${meta.textVar})`,
-            }}
-          >
-            {/* The pictogram, so the chip carries identity without relying on hue. */}
-            <Icon name={meta.icon} size={15} />
-            {meta.label}
-            {/* The tick's space is RESERVED, not conditional. Adding 20px to the chosen
-                chip made the chip the player had just clicked grow and shove its
-                neighbours — and at 1024px wide it wrapped the row, which measured as a
-                35px overflow of the working area on the beat where the gate opens.
-                `invisible` keeps the box and is not exposed to assistive technology. */}
-            <span className={on ? "" : "invisible"}>
-              <Icon name="check" size={14} />
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-export function PredictionStrip({
-  prediction,
-  onPredict,
-}: {
-  prediction: DimensionId | null;
-  onPredict: (d: DimensionId) => void;
-}) {
-  return (
-    /* Appears the moment a selection completes, so it fades in at the speed of the click
-       that summoned it rather than at the speed of a page transition. */
-    <div className="m-swap flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
-      {/* 15px and ink, up from 13px and ink-soft. It is the only thing standing between
-          the player and the rest of the game, so it is not allowed to be the quietest
-          text in the bar. */}
-      <span id={PREDICTION_QUESTION_ID} className="text-[15px] font-bold text-(--color-ink)">
-        {UI_LABEL.predictQuestion}
-      </span>
-      <PredictionChips prediction={prediction} onPredict={onPredict} />
-    </div>
-  );
-}
-
 const ACTION_HINT_ID = "gpl-action-hint";
 
 /**
@@ -1956,6 +1938,17 @@ export function ActionBar({
    */
   const showAside = aside && !children;
   const gateUp = Boolean(children) || Boolean(hint);
+  /**
+   * Is this bar a gated one at all, whatever state the gate is in?
+   *
+   * `gateUp` is about what is DRAWN in the bar, and on the two restaged beats nothing is:
+   * the apply screen and the conversation surface own the prediction, so once a card is
+   * chosen this bar has no children and no hint, `gateUp` goes false, and the colleague's
+   * steer walked back in — 28px of bar, taken off the work area at exactly the moment the
+   * screen is at its tallest. `disabled` is passed by every beat that can be blocked and
+   * by no other, so it says "this is a decision" regardless of who is drawing the gate.
+   */
+  const gatedBar = disabled !== undefined;
   /* `flex-wrap` matters more than it looks. Three children with fixed widths — a 300px
      advisor card, the prediction strip and a 280px button — give this bar a ~640px hard
      minimum, and the console shell is `overflow-hidden`. Below about 660px the primary
@@ -1979,8 +1972,18 @@ export function ActionBar({
        * three children do not have 1,010px of room and `flex-wrap` would take a second
        * line, which is the defect this is fixing, from the other direction.
        */}
+      {/**
+       * …and it stands down entirely below 1024 once there is a requirement up.
+       *
+       * The same measurement, one band down. A 300px card, a ~250px requirement panel and
+       * a 280px button need 870px of a 728px bar at 768, so the bar took a second row —
+       * 137px against 73px — and the 64px came straight off a decide screen that is the
+       * tightest thing in the game at that width. The steer is good content losing to the
+       * one thing the player has to do, which is the argument already made for the wider
+       * case; the tablet band only makes it sooner.
+       */}
       {showAside && aside && (
-        <div className="flex w-[300px] shrink-0 items-center gap-3 rounded-xl border border-(--color-line) px-3.5 py-2.5 xl:w-[360px]">
+        <div className={`${gatedBar ? "hidden lg:flex" : "flex"} w-[300px] shrink-0 items-center gap-3 rounded-xl border border-(--color-line) px-3.5 py-2.5 xl:w-[360px]`}>
           {aside.photo ? (
             <img
               src={artUrl(aside.photo)}
@@ -2016,7 +2019,16 @@ export function ActionBar({
              now passes through the thing that is stopping it; the first version of this
              fix put the panel where the colleague's card used to be, which is the corner
              the original report says nobody looks at. */
-          className={`ml-auto flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 ${
+          /* `max-w` below `lg` is what makes the wrap happen INSIDE the panel rather than
+             in the bar. Left to its own intrinsic width the panel is 607px — the question
+             and the chips side by side — which with a 280px button needs 907 of a 728px
+             bar, so the bar took a second row. Capped at 372 the question keeps its own
+             line, the chips keep theirs, and the block sits beside the button on one bar
+             row. 468 is the three chips measured — 131 + 141 + 151 and two 6px gaps —
+             plus the panel's own 28px of padding and 2px of rim, not a guess: at 372 the
+             chips wrapped to two rows and the bar came out TALLER than the wrap it was
+             replacing. */
+          className={`ml-auto flex min-w-0 max-w-[468px] flex-wrap items-center gap-x-3 gap-y-1.5 lg:max-w-none ${
             nudge > 0 ? "m-land" : ""
           } ${gated ? "rounded-[12px] border px-3.5 py-2" : ""}`}
           style={
@@ -2058,7 +2070,11 @@ export function ActionBar({
                gate where it was. Only set on a bar that HAS a gate, or every action bar
                in the game would pop on arrival. */
             data-ready={disabled === undefined ? undefined : !gated}
-            className="m-gate m-press flex h-[48px] min-w-[280px] items-center justify-center gap-2.5 rounded-[12px] px-8 text-[15px] font-bold aria-disabled:cursor-not-allowed"
+            /* 232px below `lg`. The label and its arrow are 150px, so 280 is presence
+               rather than fit — and at 768 the bar has 728px to hold a 468px gate, a
+               20px gap and this, which comes to exactly 768. The 48px height, which is
+               what makes it the biggest target on the screen, does not change. */
+            className="m-gate m-press flex h-[48px] min-w-[232px] items-center justify-center gap-2.5 rounded-[12px] px-8 text-[15px] font-bold aria-disabled:cursor-not-allowed lg:min-w-[280px]"
             style={
               gated
                 ? { background: "var(--color-accent-tint)", color: "var(--color-accent-deep)" }

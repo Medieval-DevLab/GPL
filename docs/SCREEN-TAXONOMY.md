@@ -1,5 +1,7 @@
 # Screen taxonomy
 
+> Historical reference, superseded on 22 September 2026 by [Complete game backlog](COMPLETE-GAME-BACKLOG.md), [content coverage](GAME-CONTENT-COVERAGE.md) and [desktop/photo specification](GAME-PHOTO-AND-SCREEN-SPEC.md). Older approval labels, mobile compositions, illustration-only cast, prediction gates and conflicting screen requirements below are not implementation authority.
+
 **For whoever designs or builds a GPL screen.** What screen types exist, what each is for,
 how a player knows which one they are looking at, and how many of each a run should
 contain. Derived from teardowns of marquee titles, not from preference. Where a figure is

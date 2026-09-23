@@ -194,9 +194,9 @@ describe("a save written in the phase that no longer exists", () => {
     const node = getNode(content, s.nodeId);
     if (!isMission(node)) throw new Error("expected a mission");
     const selection = possibleSelections(node, s)[0]!;
-    const committed = commit({ ...s, selection, prediction: "win" }, content);
+    const committed = commit({ ...s, selection }, content);
     expect(committed.resolution).not.toBeNull();
-    return { ...committed, phase: "resolving" };
+    return { ...committed, phase: "resolving" } as unknown as GameState;
   }
 
   it("resumes on the consequence, with the result intact", () => {

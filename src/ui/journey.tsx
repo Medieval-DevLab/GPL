@@ -68,6 +68,7 @@ interface MapMission {
   /** 1-based position in the whole run, which is what the player counts */
   index: number;
   title: string;
+  objective: string;
   minutes: number;
   stageLabel: string;
   state: NodeState;
@@ -146,6 +147,7 @@ export function buildJourney(content: Content, state: GameState): Journey {
       id: m.id,
       index: missions.findIndex((x) => x.id === m.id) + 1,
       title: m.title,
+      objective: m.objective,
       minutes: m.minutes,
       stageLabel: stageLabel(m.stage),
       state: state.completed.includes(m.id) ? "done" : m.id === currentId ? "current" : "locked",
@@ -271,7 +273,9 @@ function MissionNode({
   const isDone = mission.state === "done";
   const isCurrent = mission.state === "current";
   const isLocked = mission.state === "locked";
-  const clickable = !isLocked && Boolean(onSelect);
+  /* The map is a route forward, not free mission replay. Completed nodes explain the
+     road travelled; the highlighted node is the one door into the next learning step. */
+  const clickable = isCurrent && Boolean(onSelect);
 
   /* Gold for done, because it is EARNED; violet+glow for the one you are on. Both carry
      a lip — a solid darker edge under the circle — which is the cheapest "this is a
@@ -652,6 +656,11 @@ export function JourneyMap({
   }
 
   const pct = journey.total === 0 ? 0 : Math.round((journey.doneCount / journey.total) * 100);
+  const currentChapter = journey.currentChapter;
+  const currentMission = journey.currentMission;
+  const chapterStep = currentChapter && currentMission
+    ? currentChapter.missions.findIndex((m) => m.id === currentMission.id) + 1
+    : 0;
 
   return (
     <div
@@ -674,7 +683,9 @@ export function JourneyMap({
             {UI_LABEL.mapTitle}
           </h1>
           <p className="mt-1" style={{ fontSize: "var(--text-sm)", color: T.inkSoft }}>
-            {UI_LABEL.mapLede}
+            {currentChapter && currentMission
+              ? `${currentChapter.eyebrow} · Step ${chapterStep} of ${currentChapter.missions.length}: ${currentMission.objective}`
+              : UI_LABEL.mapLede}
           </p>
         </div>
 

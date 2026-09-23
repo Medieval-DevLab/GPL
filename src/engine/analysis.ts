@@ -342,11 +342,8 @@ export function possibleSelections(mission: Mission, state: GameState): string[]
 
 /** Commit a selection and fast-forward to the next mission (or the ending). */
 export function playMission(state: GameState, content: Content, selection: string[]): GameState {
-  // A prediction is required to commit, but it is purely informational — it never gates
-  // an outcome, so the sweep fixes it rather than branching on it. Were it ever to affect
-  // a branch, this would silently stop covering the alternatives.
   let s: GameState = state.phase === "brief" ? advance(state, content) : state;
-  s = { ...s, selection, prediction: "win" };
+  s = { ...s, selection };
   s = commit(s, content);
   /* One advance, not two: `commit` lands on `consequence` now rather than on `resolving`.
      The loop below would have swallowed a second call — it walks `brief` and `interlude`
@@ -756,7 +753,7 @@ export function findDominantOptions(content: Content): DominanceFinding[] {
  * rather than once per selection, because both callers need to compare selections against
  * each other from the same starting point.
  */
-export function walkReachable(
+export function* walkReachableSteps(
   content: Content,
   visit: (
     mission: Mission,
@@ -764,7 +761,7 @@ export function walkReachable(
     priced: { selection: string[]; after: GameState }[],
   ) => void,
   opts: SweepOptions = {},
-): void {
+): Generator<void, void, void> {
   const keying = keyingFor(content, opts);
   const start = openingState(content);
   let frontier = new Map<string, GameState>([[stateKey(keying, start), start]]);
@@ -807,10 +804,22 @@ export function walkReachable(
           if (!next.has(key)) next.set(key, after);
         }
         visit(node, state, priced);
+        // Callers may yield to their event loop. Scheduling remains outside the engine.
+        yield;
       }
     }
     frontier = next;
   }
+}
+
+/** Synchronous compatibility surface for command-line analysis. */
+export function walkReachable(
+  content: Content,
+  visit: (mission: Mission, state: GameState, priced: { selection: string[]; after: GameState }[]) => void,
+  opts: SweepOptions = {},
+): void {
+  const steps = walkReachableSteps(content, visit, opts);
+  while (!steps.next().done) { /* drain */ }
 }
 
 /* ──────────────── realised dominance, over states that occur ──────────────── */
@@ -841,15 +850,15 @@ export interface RealisedDominance extends DominanceFinding {
  * `CLAUDE.md`: fix a fake choice by giving the weaker option a genuine compensating
  * upside, never by nerfing the stronger one.
  */
-export function findRealisedDominance(
+export function* findRealisedDominanceSteps(
   content: Content,
   threshold = 0.9,
   opts: SweepOptions = {},
-): RealisedDominance[] {
+): Generator<void, RealisedDominance[], void> {
   /** mission → "a>b" → [dominated, compared] */
   const tally = new Map<string, Map<string, [number, number]>>();
 
-  walkReachable(
+  yield* walkReachableSteps(
     content,
     (mission, state, priced) => {
       const pairs = tally.get(mission.id) ?? new Map<string, [number, number]>();
@@ -912,4 +921,11 @@ export function findRealisedDominance(
     }
   }
   return findings.sort((a, b) => b.share - a.share);
+}
+
+export function findRealisedDominance(content: Content, threshold = 0.9, opts: SweepOptions = {}): RealisedDominance[] {
+  const steps = findRealisedDominanceSteps(content, threshold, opts);
+  let step = steps.next();
+  while (!step.done) step = steps.next();
+  return step.value;
 }

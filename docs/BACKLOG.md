@@ -1,4 +1,11 @@
-# Backlog
+# Backlog archive
+
+> Historical reference, superseded on 22 September 2026 by [Complete game backlog](COMPLETE-GAME-BACKLOG.md), [content coverage](GAME-CONTENT-COVERAGE.md) and [desktop/photo specification](GAME-PHOTO-AND-SCREEN-SPEC.md). Older approval labels, mobile compositions, illustration-only cast, prediction gates and conflicting screen requirements below are not implementation authority.
+
+> **Current authoritative backlog:** [UI redesign backlog](UI-REDESIGN-BACKLOG.md).
+>
+> This document is retained as historical audit evidence. Its “shipped” rows, prediction
+> gate references, and old sequencing are not implementation direction for the redesign.
 
 What the nine-perspective audit found and what is still outstanding. Sourced from
 eighteen reviewer reports (round 1 and round 2, one per perspective). Every item here was

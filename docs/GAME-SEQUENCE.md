@@ -1,5 +1,7 @@
 # The game sequence
 
+> Historical reference, superseded on 22 September 2026 by [Complete game backlog](COMPLETE-GAME-BACKLOG.md), [content coverage](GAME-CONTENT-COVERAGE.md) and [desktop/photo specification](GAME-PHOTO-AND-SCREEN-SPEC.md). Older approval labels, mobile compositions, illustration-only cast, prediction gates and conflicting screen requirements below are not implementation authority.
+
 **For whoever builds or sequences a GPL beat.** The complete run, beat by beat, with every
 screen type placed and every mode marked. Companion to `SCREEN-TAXONOMY.md`, which defines
 the types; this places them.

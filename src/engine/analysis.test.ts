@@ -16,17 +16,28 @@ import { story } from "../content/story";
 import { causalThreads, getNode } from "./engine";
 import {
   findRealisedDominance,
+  findRealisedDominanceSteps,
   pastSetup,
   playMission,
   possibleSelections,
   reachableExtremes,
   sweep,
   sweepWalk,
-  walkReachable,
+  walkReachableSteps,
 } from "./analysis";
 import { DIMENSIONS, isMission, type GameState } from "./types";
 
 const content = story;
+
+async function driveSteps<T>(steps: Generator<void, T, void>): Promise<T> {
+  let step = steps.next();
+  let count = 0;
+  while (!step.done) {
+    if (++count % 1000 === 0) await new Promise<void>(resolve => setTimeout(resolve, 0));
+    step = steps.next();
+  }
+  return step.value;
+}
 
 /**
  * One sweep, shared.
@@ -288,9 +299,9 @@ describe("no fake choices, in the states that occur", () => {
      non-zero exit code. */
   let weak: ReturnType<typeof findRealisedDominance>;
   let strong: ReturnType<typeof findRealisedDominance>;
-  beforeAll(() => {
+  beforeAll(async () => {
     // Walked once and filtered twice: two walks are ~30s of solid synchronous CPU.
-    weak = findRealisedDominance(content, 0.75);
+    weak = await driveSteps(findRealisedDominanceSteps(content, 0.75));
     strong = weak.filter((f) => f.share >= 0.9);
   }, 180_000);
 
@@ -356,14 +367,14 @@ describe("outcomes do not claim credit for a purchase that may not have happened
     "m7/m7-fast-thin",
   ];
 
-  it("has no unlisted instance", () => {
+  it("has no unlisted instance", async () => {
     const content = story;
     const onEntry = new Map<string, Set<string>>();
-    walkReachable(content, (node, state) => {
+    await driveSteps(walkReachableSteps(content, (node, state) => {
       if (!isMission(node)) return;
       if (!onEntry.has(node.id)) onEntry.set(node.id, new Set());
       for (const f of state.flags) onEntry.get(node.id)?.add(f);
-    });
+    }));
 
     const found: string[] = [];
     for (const n of Object.values(content.nodes)) {

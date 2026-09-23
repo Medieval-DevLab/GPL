@@ -58,6 +58,7 @@ interface ScormWindow {
 
 let api: ScormApi | null = null;
 let live = false;
+let completedCodeAcknowledged: string | null = null;
 
 /**
  * Walk up the opener and parent chain looking for `window.API`.
@@ -69,9 +70,11 @@ let live = false;
 function findApi(start: ScormWindow | undefined): ScormApi | null {
   let win = start;
   for (let depth = 0; win && depth < 10; depth++) {
-    if (win.API) return win.API;
-    if (win.parent === win) break;
-    win = win.parent;
+    try {
+      if (win.API) return win.API;
+      if (win.parent === win) break;
+      win = win.parent;
+    } catch { return null; } // Cross-origin frames must not prevent standalone play.
   }
   return null;
 }
@@ -81,26 +84,32 @@ export function scormInit(): boolean {
   if (live) return true;
   if (typeof window === "undefined") return false;
   const w = window as unknown as ScormWindow;
-  api = findApi(w) ?? findApi(w.opener ?? undefined);
+  api = findApi(w);
+  if (!api) { try { api = findApi(w.opener ?? undefined); } catch { return false; } }
   if (!api) return false;
+  try {
   live = api.LMSInitialize("") === "true";
   if (live) {
     /* `incomplete` on arrival, so an LMS that reports "not attempted" until told
        otherwise shows the learner as having started. Overwritten by `scormComplete`. */
     const status = api.LMSGetValue("cmi.core.lesson_status");
+    completedCodeAcknowledged = status === "completed" ? api.LMSGetValue("cmi.suspend_data") : null;
     if (!status || status === "not attempted") {
       api.LMSSetValue("cmi.core.lesson_status", "incomplete");
       api.LMSCommit("");
     }
   }
   return live;
+  } catch { live = false; return false; }
 }
 
 /** The run code the LMS is holding for this learner, if any. */
 export function scormResumeCode(): string | null {
   if (!live || !api) return null;
-  const raw = api.LMSGetValue("cmi.suspend_data");
-  return raw && raw.trim().length > 0 ? raw.trim() : null;
+  try {
+    const raw = api.LMSGetValue("cmi.suspend_data");
+    return raw && raw.trim().length > 0 ? raw.trim() : null;
+  } catch { return null; }
 }
 
 /**
@@ -114,8 +123,12 @@ export function scormResumeCode(): string | null {
 export function scormSuspend(runCode: string | null): boolean {
   if (!live || !api || !runCode) return false;
   if (runCode.length > MAX_SUSPEND_DATA) return false;
-  api.LMSSetValue("cmi.suspend_data", runCode);
-  return api.LMSCommit("") === "true";
+  completedCodeAcknowledged = null;
+  return writeAndCommit([
+    ["cmi.suspend_data", runCode],
+    ["cmi.core.lesson_status", "incomplete"],
+    ["cmi.core.exit", "suspend"],
+  ]);
 }
 
 /**
@@ -128,17 +141,35 @@ export function scormSuspend(runCode: string | null): boolean {
  */
 export function scormComplete(runCode: string | null): boolean {
   if (!live || !api) return false;
-  scormSuspend(runCode);
-  api.LMSSetValue("cmi.core.lesson_status", "completed");
-  return api.LMSCommit("") === "true";
+  if (runCode && runCode.length > MAX_SUSPEND_DATA) return false;
+  if (runCode && completedCodeAcknowledged === runCode) return true;
+  const success = writeAndCommit([
+    ...(runCode ? [["cmi.suspend_data", runCode] as [string, string]] : []),
+    ["cmi.core.lesson_status", "completed"],
+    ["cmi.core.exit", ""],
+  ]);
+  if (success) completedCodeAcknowledged = runCode;
+  return success;
+}
+
+/** A failed SetValue is a failure even when the subsequent Commit would succeed. */
+function writeAndCommit(values: [string, string][]): boolean {
+  if (!live || !api) return false;
+  try {
+    for (const [key, value] of values) {
+      if (api.LMSSetValue(key, value) !== "true") return false;
+    }
+    return api.LMSCommit("") === "true";
+  } catch { return false; }
 }
 
 /** Close the session. An LMS may not persist anything until this lands. */
 export function scormFinish(): void {
   if (!live || !api) return;
-  api.LMSCommit("");
-  api.LMSFinish("");
-  live = false;
+  try {
+    api.LMSCommit("");
+    if (api.LMSFinish("") === "true") live = false;
+  } catch { /* Closing an LMS window must never crash the game. */ }
 }
 
 /** Exposed for the test, so the cap is asserted rather than trusted to a comment. */

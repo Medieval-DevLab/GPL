@@ -14,8 +14,7 @@
  * letter grade, not a percentage of quality. One existed, four reviewers asked for its
  * removal independently, and a meter-greedy policy drove it to 100/100/100 without
  * reading a word (D-037). Level and XP survive because they measure turning up, not
- * quality. Prediction accuracy survives because it cannot be farmed: it is the player's
- * own pre-commit call on which meter would move least, scored after the fact.
+ * quality. The dashboard reports learning progress and earned recognition, not a quiz score.
  *
  * THE ARTEFACT is the arc. Every other surface shows a snapshot — three meters, now.
  * Only this one shows the SHAPE of the run: where it climbed, where it turned, and what
@@ -719,20 +718,6 @@ export function PerformanceDashboard({
   const byChapter = chapters(content);
   const range = reachableFor(content);
 
-  /**
-   * How often the player's pre-commit call was right.
-   *
-   * `predictionCorrect` is `null` on any beat where no prediction was recorded, and those
-   * beats are excluded from both halves rather than counted as wrong — a denominator that
-   * includes unanswered questions measures the recorder, not the player. Belongs in
-   * `engine/progress.ts` beside `stars`; it is here only because this file does not own
-   * that module today.
-   */
-  const answered = state.history.filter((h) => h.predictionCorrect !== null);
-  const right = answered.filter((h) => h.predictionCorrect === true).length;
-  const accuracy =
-    answered.length === 0 ? null : Math.round((right / answered.length) * 100);
-
   const earnedBadges = badges.filter((b) => b.earned).length;
 
   return (
@@ -806,16 +791,12 @@ export function PerformanceDashboard({
         </div>
         <div className="relative">
           <Numeral
-            value={accuracy === null ? "–" : accuracy}
-            suffix={accuracy === null ? undefined : "%"}
-            label={UI_LABEL.readTradeRight}
-            note={
-              accuracy === null
-                ? UI_LABEL.noCallsYet
-                : `${right} ${UI_LABEL.of} ${answered.length}`
-            }
-            size={accuracy === null ? "none" : "hero"}
-            tone={accuracy === null ? T.inkSoft : T.energy}
+            value={summary.chapter}
+            total={summary.chapterCount}
+            label={UI_LABEL.chapterReached}
+            note={UI_LABEL.yourPath}
+            size="hero"
+            tone={T.energy}
           />
         </div>
         <div className="relative">

@@ -1094,6 +1094,25 @@
     background: #fff !important;
   }
 
+  /* Paper is ~816 CSS px wide, which is inside the tablet band — so without this the
+     printable debrief would lay itself out as a three-column console and hand the
+     rails a 224px column of an A4 page. The console's row layout moved from `lg` to
+     `md` when the tablet band was built (D-082) and print went through the same gate
+     by accident. `!important` rather than a `print:` utility because both are media
+     queries of the same specificity and which one wins would then be a fact about
+     Tailwind's variant ordering. */
+  [data-console-body] {
+    flex-direction: column !important;
+  }
+
+  [data-rail-group],
+  [data-rail] {
+    width: auto !important;
+    overflow: visible !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+  }
+
   .only-print {
     display: block;
   }

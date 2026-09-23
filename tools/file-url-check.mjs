@@ -22,7 +22,7 @@ import { pathToFileURL } from "node:url";
 import { access } from "node:fs/promises";
 import path from "node:path";
 
-const INDEX = path.resolve("dist/index.html");
+const INDEX = path.resolve(process.argv[2] ?? "dist/index.html");
 
 try {
   await access(INDEX);
@@ -40,18 +40,26 @@ page.on("console", (m) => {
   if (m.type() === "error") errors.push(m.text());
 });
 page.on("pageerror", (e) => errors.push(String(e)));
+page.on("request", (request) => {
+  if (/^https?:/.test(request.url())) errors.push(`Unexpected network dependency: ${request.url()}`);
+});
 
 await page.goto(url);
 /* The title screen's primary action. If the module never executed, this never appears —
    which is precisely the 8.1 failure, and it arrives with no visible error of its own. */
 const started = await page
-  .getByRole("button")
-  .first()
+  .getByRole("button", { name: "Begin your engagement", exact: true })
   .waitFor({ state: "visible", timeout: 15000 })
   .then(() => true)
   .catch(() => false);
 
 const heading = started ? (await page.locator("h1").first().innerText().catch(() => "")).trim() : "";
+if (started) {
+  const broken = await page.locator("img").evaluateAll(images => images.filter(img => img.complete && img.naturalWidth === 0).map(img => img.src));
+  errors.push(...broken.map(src => `Broken packaged image: ${src}`));
+  await page.getByRole("button", { name: "Begin your engagement", exact: true }).click();
+  await page.locator('[data-phase="setup"]').waitFor({ timeout: 5000 }).catch(() => errors.push("Begin did not enter setup"));
+}
 await browser.close();
 
 console.log(`\n  ${url}`);
