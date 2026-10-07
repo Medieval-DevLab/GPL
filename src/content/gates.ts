@@ -1,4 +1,9 @@
-export const EARNED: Record<string, { as: string; where: string }> = {
+/**
+ * `liability` marks a flag that records a cost carried forward — a discount given, a review
+ * overridden — rather than something earned. The interface must never style its presence as
+ * a gain or its absence as a shortfall: "your record does not show a discount" is good news.
+ */
+export const EARNED: Record<string, { as: string; where: string; liability?: true }> = {
   /* chapter 0 — the starting advantage */
   "start:connector": { as: "A warm introduction", where: "Chapter 0 · Your team's strength" },
   "start:builder": { as: "Comparable work already delivered", where: "Chapter 0 · Your team's strength" },
@@ -6,7 +11,7 @@ export const EARNED: Record<string, { as: string; where: string }> = {
 
   /* chapter 1 — find the right client */
   "client:northwind": { as: "A smaller client you can reach", where: "Chapter 1 · Choose a client" },
-  late_start: { as: "A late start on a live pursuit", where: "Chapter 1 · Choose a client" },
+  late_start: { as: "A late start on a live pursuit", where: "Chapter 1 · Choose a client", liability: true },
   spent_effort: { as: "Pursuit effort already spent", where: "Chapter 1 · Choose a client" },
   "knows:real_pain": { as: "Their complaint data", where: "Chapter 1 · Learn what matters" },
   "knows:ops_constraint": { as: "Who owns the systems", where: "Chapter 1 · Learn what matters" },
@@ -14,7 +19,7 @@ export const EARNED: Record<string, { as: string; where: string }> = {
   "knows:budget": { as: "The budget and the deadline", where: "Chapter 1 · Learn what matters" },
   "knows:history": { as: "The programme they cancelled", where: "Chapter 1 · Learn what matters" },
   credibility: { as: "Proof you have done this before", where: "Chapter 1 · Get in the room" },
-  learned_late: { as: "The constraint, found late", where: "Chapter 1 · Get in the room" },
+  learned_late: { as: "The constraint, found late", where: "Chapter 1 · Get in the room", liability: true },
 
   /* chapter 2 — make it an opportunity */
   has_access: { as: "Access to the people who decide", where: "Chapter 2 · Qualify the lead" },
@@ -37,18 +42,18 @@ export const EARNED: Record<string, { as: string; where: string }> = {
   "has:ops_workstream": { as: "An Operations workstream", where: "Chapter 3 · Assemble the offer" },
   "has:training": { as: "Training and adoption", where: "Chapter 3 · Assemble the offer" },
   "has:journey": { as: "The customer journey mapped", where: "Chapter 3 · Assemble the offer" },
-  "promised:fast": { as: "An eight-week pilot", where: "Chapter 3 · Assemble the offer" },
-  "scope:heavy": { as: "A heavy programme", where: "Chapter 3 · Assemble the offer" },
-  unanchored: { as: "A proposal with no route to production", where: "Chapter 3 · Assemble the offer" },
-  fragile_timeline: { as: "A timeline that assumes the data is usable", where: "Chapter 3 · Assemble the offer" },
+  "promised:fast": { as: "An eight-week pilot", where: "Chapter 3 · Assemble the offer", liability: true },
+  "scope:heavy": { as: "A heavy programme", where: "Chapter 3 · Assemble the offer", liability: true },
+  unanchored: { as: "A proposal with no route to production", where: "Chapter 3 · Assemble the offer", liability: true },
+  fragile_timeline: { as: "A timeline that assumes the data is usable", where: "Chapter 3 · Assemble the offer", liability: true },
   reviewed: { as: "A review that cleared it", where: "Chapter 3 · Clear the review" },
-  overrode_review: { as: "A review you overrode", where: "Chapter 3 · Clear the review" },
+  overrode_review: { as: "A review you overrode", where: "Chapter 3 · Clear the review", liability: true },
 
   /* chapter 4 — make the deal work */
-  descoped: { as: "Scope taken out to hold the price", where: "Chapter 4 · Handle the price" },
-  discounted: { as: "A discount given", where: "Chapter 4 · Handle the price" },
-  risk_accepted: { as: "A risk accepted in writing", where: "Chapter 4 · Face the risk review" },
-  thin_mitigation: { as: "A thinner mitigation than the review asked for", where: "Chapter 4 · Face the risk review" },
+  descoped: { as: "Scope taken out to hold the price", where: "Chapter 4 · Handle the price", liability: true },
+  discounted: { as: "A discount given", where: "Chapter 4 · Handle the price", liability: true },
+  risk_accepted: { as: "A risk accepted in writing", where: "Chapter 4 · Face the risk review", liability: true },
+  thin_mitigation: { as: "A thinner mitigation than the review asked for", where: "Chapter 4 · Face the risk review", liability: true },
   "knows:criteria": { as: "How the bid is being scored", where: "Chapter 4 · Win the decision" },
   won: { as: "The award", where: "Chapter 4 · Win the decision" },
   lost: { as: "A pursuit lost at the award", where: "Chapter 4 · Win the decision" },
@@ -57,7 +62,7 @@ export const EARNED: Record<string, { as: string; where: string }> = {
 
   /* chapter 5 — deliver the promise */
   changed_scope: { as: "Scope changed in delivery", where: "Chapter 5 · Month five" },
-  crunched: { as: "A team asked to absorb it", where: "Chapter 5 · Month five" },
-  undisclosed: { as: "Something the client was not told", where: "Chapter 5 · Month five" },
+  crunched: { as: "A team asked to absorb it", where: "Chapter 5 · Month five", liability: true },
+  undisclosed: { as: "Something the client was not told", where: "Chapter 5 · Month five", liability: true },
   broad_base: { as: "More than one person who knows the client", where: "Chapter 5 · The unexpected" },
 };

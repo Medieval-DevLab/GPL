@@ -1,5 +1,7 @@
 # GPL complete game implementation backlog
 
+Current work queue and cross-tab handoff: [../BACKLOG.md](../BACKLOG.md). This file preserves the original scope contract; use the root backlog for current status and next actions.
+
 Status: implemented software and release checks are tracked in IMPLEMENTATION-STATUS.md. This document records the original complete scope; it is not a current completion receipt.
 Audience: Astra and the implementation team. Prepared 22 September 2026.
 

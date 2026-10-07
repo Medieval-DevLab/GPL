@@ -4,9 +4,12 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 
 const targetDirectory = path.resolve("dist/art");
+const cast = ["priya", "riya", "arjun", "aisha", "sarah", "marcus", "declan"];
 const allowed = new Set([
   ...[1, 2, 3, 4, 5].map(chapter => `scene-chapter-${chapter}.webp`),
-  ...["priya", "riya", "arjun", "aisha", "sarah", "marcus", "declan"].map(name => `photo-${name}.webp`),
+  ...cast.map(name => `photo-${name}.webp`),
+  ...cast.map(name => `cut-${name}.webp`),
+  ...["skyline-dusk", "skyline-blue", "tower-night", "windows-night", "warehouse", "storefront-night", "desk-night", "boardroom", "glass-office"].map(name => `env-${name}.webp`),
 ]);
 // Check every required asset before pruning generated output. Missing art is a release blocker.
 for (const name of allowed) await access(path.join(targetDirectory, name));

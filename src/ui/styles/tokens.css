@@ -1,0 +1,101 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   GPL brand system — tokens. See docs/ART-DIRECTION.md for the reasoning.
+
+   The game is staged as a prestige business drama: dark rooms, lit people, paper
+   artefacts you handle, and a colour script that moves through the working day.
+   Four families of colour, and each means exactly one thing:
+
+     ink     the room. Every stage sits on it; nothing on it is data.
+     paper   the artefacts the player handles — dossiers, cards, newspapers, notes.
+     signal  the brand. Logo, title screen, the commitment stamp. Never data.
+     light   the chapter. One accent per chapter grades the photography and
+             carries focus and the primary action for that act.
+
+   Business position (win, profit, delivery) is never colour-coded by hue: each
+   meter has its own glyph and label, so no chapter light can be mistaken for one.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Inter is declared once, in index.html, with the unicode-range that lets arrows and symbols fall back. */
+@font-face { font-family: "Archivo"; src: url("/fonts/archivo-latin-var.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; font-display: swap; }
+@font-face { font-family: "Newsreader"; src: url("/fonts/newsreader-latin-var.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "Newsreader"; src: url("/fonts/newsreader-latin-italic-var.woff2") format("woff2"); font-weight: 200 800; font-style: italic; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("/fonts/jetbrains-mono-latin-var.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+
+:root {
+  /* Ink — a cool blue-black room. 900 is the stage; each step up comes forward. */
+  --ink-950: #06080b;
+  --ink-900: #0b0e13;
+  --ink-850: #10141b;
+  --ink-800: #161b24;
+  --ink-700: #1f2631;
+  --ink-600: #2b3442;
+  --ink-500: #3d4859;
+  --mist-400: #8792a3;   /* tertiary text — 6.1:1 on ink-900 */
+  --mist-300: #aeb7c4;   /* secondary text — 9.6:1 */
+  --mist-100: #e8ecf1;   /* primary text — 16.3:1 */
+  --white: #ffffff;
+
+  /* Paper — warm, slightly aged, so it reads as an object against the room. */
+  --paper-0: #fffdf8;
+  --paper-100: #f4eee3;
+  --paper-200: #e8dfcf;
+  --paper-300: #d3c6af;
+  --graphite: #1c1a17;    /* text on paper — 15:1 */
+  --graphite-2: #5c554a;  /* secondary on paper — 6.3:1 */
+  --note: #ffe17a;        /* sticky note */
+  --manila: #d8b77a;      /* folders */
+
+  /* Signal — the brand. A vermilion that belongs to the title screen and the stamp. */
+  --signal: #ff5a36;
+  --signal-deep: #3a0f06;
+  --brass: #e3b04b;       /* recognition */
+
+  /* State, for deltas. Always paired with ▲/▼ and a sign; colour never carries it alone. */
+  --rise: #72f0b4;
+  --fall: #ff8f80;
+
+  /* Type */
+  --font-ui: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Archivo", "Arial Narrow", "Inter", sans-serif;
+  --font-serif: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  --reading: 17px;
+
+  /* Depth — three planes. World (photograph), cast (people), artefact (what you touch). */
+  --shadow-paper: 0 1px 0 rgba(255, 255, 255, 0.55) inset, 0 2px 3px rgba(0, 0, 0, 0.18), 0 18px 40px -10px rgba(0, 0, 0, 0.55), 0 40px 90px -30px rgba(0, 0, 0, 0.7);
+  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.25), 0 30px 60px -12px rgba(0, 0, 0, 0.7), 0 60px 120px -40px rgba(0, 0, 0, 0.8);
+  --shadow-glass: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 24px 60px -20px rgba(0, 0, 0, 0.7);
+  --glass: rgba(12, 16, 22, 0.72);
+  --glass-strong: rgba(9, 12, 17, 0.88);
+  --hairline: rgba(255, 255, 255, 0.1);
+  --hairline-strong: rgba(255, 255, 255, 0.22);
+
+  /* Motion. Expo-out to arrive, a small overshoot for things that land (cards, stamps). */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-land: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --t-quick: 140ms;
+  --t-base: 280ms;
+  --t-arrive: 620ms;
+
+  --hud-h: 64px;
+  --gutter: clamp(20px, 3.4vw, 56px);
+
+  /* Default light: the brand, used before any chapter begins. */
+  --accent: var(--signal);
+  --accent-deep: var(--signal-deep);
+  --accent-soft: #ffc4b5;
+  --accent-ink: #120503;
+  --grade: #ff7a4f;
+}
+
+/* ── The colour script ────────────────────────────────────────────────────────
+   One working day across five acts. Each light sets the accent, the shadow the
+   photography is pulled towards, and the hue it is graded with. The accent is
+   always light enough for ink text on it (≥ 6:1) and for itself as text on ink.
+   ────────────────────────────────────────────────────────────────────────── */
+[data-chapter="1"] { --accent: #ffb547; --accent-deep: #2a1806; --accent-soft: #ffe2a8; --accent-ink: #1a0f02; --grade: #ff9a2e; } /* Daybreak — the market in the morning */
+[data-chapter="2"] { --accent: #3dd6ea; --accent-deep: #052a33; --accent-soft: #bff4fb; --accent-ink: #021619; --grade: #1fb6d1; } /* Glass — cool analysis */
+[data-chapter="3"] { --accent: #ad91ff; --accent-deep: #1d1342; --accent-soft: #e3d9ff; --accent-ink: #120a2c; --grade: #8a63ff; } /* Studio — the workshop */
+[data-chapter="4"] { --accent: #ff5f8f; --accent-deep: #350a1b; --accent-soft: #ffd0de; --accent-ink: #22040f; --grade: #ff2f6d; } /* Boardroom — evening, pressure */
+[data-chapter="5"] { --accent: #52e3a0; --accent-deep: #07301f; --accent-soft: #c9f8e2; --accent-ink: #03170d; --grade: #1fc77d; } /* Floor — delivery, first light */

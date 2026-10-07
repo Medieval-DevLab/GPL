@@ -36,6 +36,28 @@ These are representative stock locations, not claims about the actual premises o
 
 Use a centred crop as the default; keep a readable gradient behind overlaid text. Scenery should be decorative (`alt=""`) when adjacent live text names the location. Give a standalone scene informative alt text from `SCENE_DESCRIPTIONS`. Portraits beside a visible name can be decorative; otherwise use the fictional character's name with the fiction notice available in About. If a photograph fails, retain the HTML character name/role, task and controls against the solid theme background; never hide the learning content.
 
+## October 2026 additions: locations and cut-outs
+
+Added 8 October 2026 for the presentation rebuild (`D-077`). They are from the same provider and licence, and credited in Help/About from `PHOTO_CREDITS`.
+
+**Locations.** Nine photographs, none with identifiable people, so no stranger competes with the named cast. They were downloaded from the provider's 1920 × 1080 crop endpoint and re-encoded to WebP (quality 74). Photographer credits were read from each source page on 8 October.
+
+| Asset | Photographer and source |
+|---|---|
+| `env-skyline-dusk` | [Bruno Glätsch, 1398003](https://www.pexels.com/photo/photo-of-city-skyline-during-dusk-1398003/) |
+| `env-skyline-blue` | [Marc Onana, 5823946](https://www.pexels.com/photo/city-skyline-during-night-time-5823946/) |
+| `env-tower-night` | [Candid Flaneur, 29931645](https://www.pexels.com/photo/modern-office-building-at-night-with-illuminated-windows-29931645/) |
+| `env-windows-night` | [Line Knipst, 18824803](https://www.pexels.com/photo/lights-in-windows-of-office-skyscraper-at-night-18824803/) |
+| `env-warehouse` | [Maor Attias, 5156696](https://www.pexels.com/photo/boxes-on-shelves-inside-a-warehouse-5156696/) |
+| `env-storefront-night` | [Erik Mclean, 12973623](https://www.pexels.com/photo/store-front-during-nighttime-12973623/) |
+| `env-desk-night` | [Al-Razi Production, 9333180](https://www.pexels.com/photo/a-laptop-and-a-mobile-phone-on-the-wooden-table-in-a-dark-room-9333180/) |
+| `env-boardroom` | [myHQ-Workspaces, 5444180](https://www.pexels.com/photo/office-boardroom-interior-design-5444180/) |
+| `env-glass-office` | [cottonbro studio, 5483051](https://www.pexels.com/photo/black-rolling-chairs-beside-desk-5483051/) |
+
+**Cut-outs** (`cut-<character>.webp`). Each is the same source photograph as the matching `photo-<character>` asset, fetched at 1400 px wide. The background was removed locally with rembg (`isnet-general-use` model), matte noise below alpha 12 cleared, and the image cropped to content with the bottom 12% feathered. It was then re-encoded to WebP (quality 82). These are derivatives of the licensed images: no face was generated, altered or substituted, and identity continuity with the existing portraits is preserved. Face boxes for consistent on-screen scale were measured with OpenCV YuNet (`face_detection_yunet_2023mar`) and stored as `CUTOUT_FRAME` in `src/content/assets.ts`; re-measure if a cut-out is regenerated. The Pexels licence permits modification. The fiction notice and no-endorsement wording apply to cut-outs exactly as to portraits.
+
+The runtime set is now 28 files (3.04 MB): 7 portraits, 7 cut-outs, 5 chapter scenes and 9 locations. `tools/prepare-runtime.mjs` hashes all of them into `dist/runtime-assets.json`.
+
 ## Acquisition and verification
 
 Downloaded directly from the source provider's image endpoint:

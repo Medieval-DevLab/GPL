@@ -47,8 +47,13 @@ import path from "node:path";
  *              is a decision with a name, not an accident. Preact is ~4 kB against ~65
  *              and would put the whole thing near the original 94 — rejected for now as
  *              a real migration bought to reach a number we chose ourselves.
- *   interface  ours, and the one most likely to creep. ~46 kB across a dozen screen
- *              types; 58 gives 26% headroom.
+ *   interface  ours, and the one most likely to creep. Was ~46 kB across a dozen screen
+ *              types with 58 allowed. The October rebuild (D-077) moved composition out of
+ *              components and into the stylesheet: measured 21.0 kB, so 27 (~28% headroom).
+ *   stylesheet was 14 on a ~8 kB sheet that painted one page template. The rebuild ships
+ *              fourteen distinct compositions; measured 16.1 kB, so 18 (~12% headroom).
+ *              Interface + stylesheet together are now capped at 45 kB, down from 72 —
+ *              the presentation budget got tighter, it moved between columns.
  *   engine     ours, and small. ~7 kB; 12 is generous and will still catch a blunder.
  *   content    THE PRODUCT. Reported, never capped. A budget on the writing is a budget
  *              on how much the game can teach, and the day that number blocks a build is
@@ -58,7 +63,7 @@ import path from "node:path";
  * classic script so `dist/` opens from `file://` inside an LMS, and `vite.config.ts`
  * throws if a dynamic import makes Rollup emit a second chunk.
  */
-const BUDGETS_KB = { framework: 70, interface: 58, engine: 12, stylesheet: 14 };
+const BUDGETS_KB = { framework: 70, interface: 27, engine: 12, stylesheet: 18 };
 /** Only feeds the coarse guard used when no sourcemap exists; the real gate is per group. */
 const BUDGET_KB = BUDGETS_KB.framework + BUDGETS_KB.interface + BUDGETS_KB.engine;
 

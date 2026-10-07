@@ -927,6 +927,100 @@ export function causalClaim(state: GameState, content: Content): CausalClaim | n
 }
 
 /**
+ * Why the consequence on screen is the one that happened — the earlier commitments the
+ * selected outcome depended on, read at the consequence beat.
+ *
+ * This is the game's central promise made visible at the moment it is kept: "if something
+ * goes wrong in month five, the player must be able to trace it to the decision that caused
+ * it". Before this, the trace existed only in the final review; on the consequence screen
+ * the same outcome simply arrived, and the player had to take its causes on trust.
+ *
+ * It decides nothing. `commit` has already chosen the outcome; this reads that outcome's own
+ * condition back against the flags the player carried in. Flags set by the selection itself
+ * (two questions investigated, three components funded) are excluded — they are this
+ * decision, not an earlier one, and crediting them as history would misattribute the cause.
+ *
+ *   held    — flags the outcome required (`all`, or the `any` that were present)
+ *   lacked  — flags whose ABSENCE the outcome required (`none`)
+ *
+ * A fallback outcome has no condition of its own, but it is not causeless: outcomes are
+ * first-match, so it landed because the record failed every sibling listed before it. The
+ * first version said "nothing you carried in changed how this landed" there, which was false
+ * on exactly the hard and mixed branches where the teaching matters most (pedagogy audit,
+ * 8 October). `missed` therefore names the nearest earlier sibling and what it needed.
+ *
+ * Polarity is the caller's business: a flag can be an asset or a liability (`EARNED[f].liability`),
+ * and "your record does not show a discount" is good news. The engine reports state only.
+ */
+export interface DimTest {
+  dim: DimensionId;
+  at: "min" | "max";
+  value: number;
+}
+export interface Because {
+  /** flags the selected outcome required, carried in from earlier decisions */
+  held: string[];
+  /** flags whose absence the selected outcome required */
+  lacked: string[];
+  /** meter thresholds the selected outcome required */
+  dims: DimTest[];
+  /**
+   * The nearest other way this decision could have landed — the earlier sibling outcome
+   * whose condition failed by the fewest terms — and exactly what it would have taken.
+   * First-match semantics make this the honest answer for a fallback: it landed this way
+   * because the record met none of the ways listed before it.
+   */
+  missed: { needed: string[]; oneOf: string[]; without: string[]; dims: DimTest[] } | null;
+  /** false when the chosen approach has only one outcome, so no history could have changed it */
+  conditional: boolean;
+}
+
+function dimTests(cond: Condition | undefined): DimTest[] {
+  const tests: DimTest[] = [];
+  for (const d of DIMENSIONS) {
+    if (cond?.min?.[d] !== undefined) tests.push({ dim: d, at: "min", value: cond.min[d]! });
+    if (cond?.max?.[d] !== undefined) tests.push({ dim: d, at: "max", value: cond.max[d]! });
+  }
+  return tests;
+}
+
+export function outcomeBecause(state: GameState, content: Content): Because {
+  const none: Because = { held: [], lacked: [], dims: [], missed: null, conditional: false };
+  const node = content.nodes[state.nodeId];
+  const result = state.resolution;
+  const entry = state.history.at(-1);
+  if (state.phase !== "consequence" || !result || !node || !isMission(node) || entry?.missionId !== node.id) return none;
+  const candidates = node.kind === "choice" ? node.options.find((o) => o.id === entry.chosenIds[0])?.outcomes ?? [] : node.outcomes;
+  const index = candidates.findIndex((o) => o.id === result.outcome.id);
+
+  /* Reconstruct exactly what the conditions were evaluated against: the record after this
+     decision's selection effects, before the outcome's own effects. */
+  const sel = selectionEffects(node, entry.chosenIds).effect;
+  const selFlags = new Set(sel.flags ?? []);
+  const outcomeOnly = new Set((result.outcome.effect.flags ?? []).filter((f) => !selFlags.has(f)));
+  const flagsAt = state.flags.filter((f) => !outcomeOnly.has(f));
+  const dimsAt = applyEffect(sel, result.dimsBefore, [], []).dims;
+
+  const when = result.outcome.when;
+  const own = new Set([...selFlags, ...outcomeOnly]);
+  const held = [...(when?.all ?? []), ...(when?.any ?? []).filter((f) => flagsAt.includes(f))]
+    .filter((f, i, all) => !own.has(f) && all.indexOf(f) === i);
+  const lacked = (when?.none ?? []).filter((f, i, all) => all.indexOf(f) === i);
+
+  let missed: Because["missed"] = null, fewest = Infinity;
+  for (const earlier of candidates.slice(0, Math.max(0, index))) {
+    const c = earlier.when;
+    const needed = (c?.all ?? []).filter((f) => !flagsAt.includes(f));
+    const oneOf = c?.any && !c.any.some((f) => flagsAt.includes(f)) ? [...c.any] : [];
+    const without = (c?.none ?? []).filter((f) => flagsAt.includes(f));
+    const dims = dimTests(c).filter((t) => (t.at === "min" ? dimsAt[t.dim] < t.value : dimsAt[t.dim] > t.value));
+    const size = needed.length + (oneOf.length ? 1 : 0) + without.length + dims.length;
+    if (size > 0 && size < fewest) { fewest = size; missed = { needed, oneOf, without, dims }; }
+  }
+  return { held, lacked, dims: dimTests(when), missed, conditional: candidates.length > 1 };
+}
+
+/**
  * Flags the ENGINE branches on, as opposed to content conditions.
  *
  * `validate.ts` finds dead flags by collecting everything content writes and subtracting

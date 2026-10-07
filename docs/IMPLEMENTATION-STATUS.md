@@ -1,6 +1,8 @@
 # Complete game implementation status
 
-Updated 23 September 2026. The game has been implemented, not merely specified. Technical verification is recorded in [RELEASE-VERIFICATION.md](RELEASE-VERIFICATION.md). Publication/package checks are recorded when actually completed below.
+Current priorities and continuation instructions: [../BACKLOG.md](../BACKLOG.md). The table below maps the original implementation tickets; it does not replace the release-specific working backlog.
+
+Updated 24 September 2026. The game has been implemented, not merely specified. Technical verification is recorded in [RELEASE-VERIFICATION.md](RELEASE-VERIFICATION.md). Publication/package checks are recorded when actually completed below.
 
 The user's later instruction to build and publish with full autonomy supersedes the earlier planning-only and stop-for-mockup-approval stages. It does not establish user approval, human learning efficacy or customer-LMS certification. Those distinctions remain explicit.
 
@@ -58,5 +60,7 @@ The user's later instruction to build and publish with full autonomy supersedes 
 ## Publication and handoff
 
 Sites project identity is persisted in .openai/hosting.json. New-site access remains owner-private. The hosted link is not automatically an organisation-wide sharing grant.
+
+Version 1.0.0 was published successfully on 23 September. Version 1.1.0 adds review/export of saved reflections, an optional locally saved workplace action plan, explicit privacy/portability guidance and a preview/cancel/confirm flow before a run code replaces browser progress. Current archive checksums and deployment receipts live in dist-release/. Regenerable browser evidence lives in docs/screenshots-release/.
 
 Do not call the entire backlog empirically closed until QA-04 and customer acceptance have actually happened. The software and evaluation materials can be delivered without inventing those outcomes.

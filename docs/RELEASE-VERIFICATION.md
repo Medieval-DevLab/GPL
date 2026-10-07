@@ -1,5 +1,52 @@
 # Release verification
 
+## Local build, 8 October 2026: presentation rebuild (unreleased)
+
+This build is not published. The live site still serves 1.0, and no SCORM or offline ZIPs were rebuilt. Changes: VIS-01 (D-077), CAU-01 (D-078), and UI-01, UI-02 and NAV-01 inside the new screens. Engine outcomes, content and run codes are unchanged; `outcomeBecause` reads state and decides nothing.
+
+Checks run on 8 October, all passing:
+
+- **TypeScript and tests.** TypeScript clean. 278 tests in 18 files, including the new `because.test.ts`, which checks causes over 450 seeded runs, and the extended presentation contract (every node has a credited backdrop and every turn has a dressing).
+- **Production build and `file://`.** The production build passes. `npm run filecheck` reached the title from `file://` with a clean console. Font URLs are emitted relative (`../fonts/`).
+- **Browser matrix.** `node tools/verify-game.mjs --matrix` completed eight runs:
+
+  | Viewport | Policy | Decisions | Ending |
+  |---|---|---:|---|
+  | 1440×900 | first | 18 | A workable deal |
+  | 1440×900 | last | 13 | They chose someone else |
+  | 1440×900 | middle, keyboard | 18 | You won it, but not well |
+  | 1440×900 | walk, keyboard | 14 | You walked away |
+  | 1366×768 | first | 18 | A workable deal |
+  | 1440×1024 | first | 18 | A workable deal |
+  | 1920×1080 | first | 18 | A workable deal |
+  | 720×450 (200% reflow) | first | 18 | A workable deal |
+
+  The matrix also passed reload and resume on every screen type, plan export and restore boundaries, utility focus traps, storage denial and image failure. Axe (WCAG 2.1 AA) found **zero violations across 20 screen types**. A first matrix run found one real contrast failure in the evidence folder: "not on file" was shown with opacity, at 3.56:1 and 2.42:1. It was fixed (6.47:1) and re-run.
+- **Mock LMS.** `node tools/lms-check.mjs` passed: initialised, resume code `101D-3F6` (8 characters), completed, no score, and a failed commit retried. It now runs under reduced motion; see the note in the file.
+- **Size.** `node tools/size.mjs` after a `--sourcemap` build: framework 67.3, interface 22.4 of 27, engine 7.5 of 12, stylesheet 17.1 of 18 kB gz. Content 52.0 kB, uncapped. Photography 3.04 MB in 28 runtime files.
+- **Manual review.** Screenshots of all 79 screens of a full run were reviewed at 1440×900, with every screen type checked at 1366×768 and 720×450. A full motion-on playthrough (view transitions, entrances, count-ups) had no console errors and no horizontal overflow.
+
+Still outstanding: SV-02, LMS-01 and CNT-01; rebuilding the packages; publication; the user's visual sign-off; an employee pilot; and manual assistive-technology review.
+
+## Version 1.1.0 — 24 September 2026
+
+Follow-up audit found that saved reflection responses were absent from the final record, and a valid run code could replace browser progress immediately. This release adds:
+
+- Saved reflections in the ending and human-readable debrief export.
+- An optional three-part workplace action plan, bounded to 500 characters per field, retained in local presentation saves. Old schema-1 presentation saves load with empty optional fields.
+- Explicit confidentiality guidance and a distinction between browser notes, downloadable records and decision-only run codes/LMS resume.
+- A non-mutating restore preview, cancellation and explicit replacement confirmation. Successful restore closes the dialog even when the underlying route is unchanged.
+- Regression coverage for plan reload/download, reflection export, old saves, malformed notes and restore boundaries. No gameplay rules, outcomes or scoring were changed.
+
+TypeScript and production build passed. Automated suite: 272 tests in 17 files passed. The actual UI with mock SCORM API reached completion, retained a resume code and reported no score. Both new ZIPs passed entry/hash verification, extraction and offline launch. Employee pilot, manual assistive-technology review and real-LMS acceptance remain external.
+
+| Version 1.1.0 archive | Bytes | SHA-256 |
+|---|---:|---|
+| gpl-1.1.0-offline.zip | 1,089,592 | d477fcfb614a51152df274adca8372d944759f918eef175bb09751c108cc9c3c |
+| gpl-1.1.0-scorm12.zip | 1,090,202 | 4ea523abd9ebc8a9fbd30d65b92f97056f5b98f642ff0792c345afa223de2365 |
+
+## Version 1.0.0 baseline
+
 Date: 23 September 2026. Baseline repository revision: 505bcdd54d302d951877c0f3bf21f22b60c16523. The starting worktree already contained modified game/UI files and prior planning/mockup artifacts. Unrelated preview artifacts and original artwork were preserved.
 
 ## Executed checks

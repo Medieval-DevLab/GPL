@@ -46,8 +46,15 @@ async function verify(page, current, tag, screenshots) {
   assert.equal(failures.overflow, false, tag + ' has horizontal overflow');
   assert.deepEqual(failures.broken, [], tag + ' broken images');
   assert.equal(failures.headings, 1, tag + ' needs one primary heading');
-  assert.equal(await page.getByText(/which.*(winability|winnability|profitability|deliverability).*move/i).count(), 0, 'Prediction question returned');
-  if (screenshots) await page.screenshot({ path: path.join(output, tag + '.png'), fullPage: true, animations: 'disabled' });
+  /* Scoped to single text blocks. Matched against any element, the whole ending tripped it:
+     "Which" in the verdict, the three indicators in the final position, and "move" in a
+     timeline headline, three sections apart. A prediction question lives in one block. */
+  assert.equal(await page.locator('main :is(p, h1, h2, h3, legend, label, button, li, summary)').filter({ hasText: /which.*(winability|winnability|profitability|deliverability).*move/i }).count(), 0, 'Prediction question returned');
+  if (screenshots) {
+    await page.evaluate(() => Promise.all([...document.images].map(i => i.decode?.().catch(() => {}))));
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: path.join(output, tag + '.png'), fullPage: true, animations: 'disabled' });
+  }
   if (!audited.has(current.screen)) {
     const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
     report.accessibility.push({ screen: current.screen, violations: result.violations.map(v => ({ id: v.id, impact: v.impact, description: v.description, nodes: v.nodes.map(n => ({ target: n.target, failure: n.failureSummary })) })) });
@@ -72,6 +79,38 @@ async function run(viewport, policy) {
     if (current.phase === 'ending' && current.screen !== 'journey') {
       const count = await page.locator('.ending-hero').innerText();
       assert.match(count, /decisions made/);
+      if (policy === 'first' && viewport.width === 1440 && viewport.height === 900) {
+        const notes = ['Ask who owns the exception.', 'At the next discovery conversation.', 'An agreed owner and follow-up.'];
+        const labels = ['One thing I will do differently', 'When I will try it', 'How I will know it helped'];
+        for (let i = 0; i < labels.length; i++) await page.getByLabel(labels[i], { exact: true }).fill(notes[i]);
+        assert(await page.locator('.reflection-record article').count() > 0, 'Saved reflections missing from debrief');
+        await page.reload(); await waitForState(page);
+        await page.getByRole('button', { name: /^Continue your engagement/ }).click();
+        for (let i = 0; i < labels.length; i++) assert.equal(await page.getByLabel(labels[i], { exact: true }).inputValue(), notes[i], 'Plan did not survive reload');
+        const downloadEvent = page.waitForEvent('download');
+        await page.getByRole('button', { name: 'Download your debrief', exact: true }).click();
+        const download = await downloadEvent;
+        assert.equal(download.suggestedFilename(), 'gpl-engagement-debrief.txt');
+        const text = await readFile(await download.path(), 'utf8');
+        for (const note of notes) assert(text.includes(note), 'Export omitted plan note');
+        assert(text.includes(await page.locator('.reflection-record article p').first().innerText()), 'Export omitted reflection');
+        await page.locator('.action-plan').screenshot({ path: path.join(output, 'personal-action-plan.png') });
+        await page.getByRole('button', { name: /^Save or restore a run/ }).first().click();
+        const code = await page.getByLabel('Your current run code').inputValue();
+        const before = await page.evaluate(() => localStorage.getItem('gpl.save'));
+        await page.getByLabel('Enter a run code').fill(code);
+        await page.getByRole('button', { name: 'Restore engagement', exact: true }).click();
+        assert.equal(await page.evaluate(() => localStorage.getItem('gpl.save')), before, 'Preview changed the saved engagement');
+        await verify(page, { screen: 'restore-confirmation' }, 'restore-confirmation', true);
+        await page.getByRole('button', { name: 'Keep current engagement', exact: true }).click();
+        assert.equal(await page.evaluate(() => localStorage.getItem('gpl.save')), before, 'Cancel changed the saved engagement');
+        await page.getByRole('button', { name: 'Restore engagement', exact: true }).click();
+        await page.getByRole('button', { name: 'Replace and restore', exact: true }).click();
+        assert.equal(await page.locator('dialog').count(), 0, 'Successful restore left dialog open');
+        assert.equal(await page.getByLabel(labels[0], { exact: true }).inputValue(), '', 'Run code unexpectedly carried private notes');
+        assert.equal(await page.locator('.reflection-record article').count(), 0, 'Run code unexpectedly carried reflections');
+        report.utilities.push('Plan reload/export and reflection export passed; restore preview/cancel preserve exact save; confirmed restore excludes notes');
+      }
       break;
     }
     const primary = page.locator('main [data-action="primary"]').first();
@@ -172,6 +211,9 @@ async function utilities() {
   assert(await offline.locator('.save-warning').count(), 'Storage denial was hidden');
   await offline.locator('[data-choice]').first().click();
   await offline.locator('main [data-action=primary]').click();
+  /* Without reduced motion the change runs through a view transition, which applies the new
+     screen a frame later. Wait for it rather than reading the DOM in the same tick. */
+  await offline.waitForFunction(() => document.querySelector('.gpl-game')?.dataset.screen === 'journey', null, { timeout: 5000 }).catch(() => {});
   assert.equal((await read(offline)).screen, 'journey', 'Storage denial blocked play');
   report.utilities.push('Unavailable storage visibly warned; game remains playable');
   await denied.close();
@@ -182,6 +224,7 @@ async function utilities() {
   await fallback.getByRole('button', { name: /^Begin your engagement/ }).click();
   await fallback.locator('[data-choice]').first().click();
   await fallback.locator('main [data-action=primary]').click();
+  await fallback.waitForFunction(() => document.querySelector('.gpl-game')?.dataset.screen === 'journey', null, { timeout: 5000 }).catch(() => {});
   assert.equal((await read(fallback)).screen, 'journey');
   report.utilities.push('Image-failure fallback keeps live text and controls usable');
   await noImages.close();

@@ -111,6 +111,12 @@ A completed code reproduces committed choices; it is not a rewind control. To ch
 
 ## Delivery and technical checks
 
+### Close with one practical commitment
+
+The final debrief now resurfaces the learner's saved reflection responses. Invite them to review what they noticed, then optionally complete the three-part action plan: one thing to do differently, the occasion to try it, and observable evidence that it helped. Do not require personal disclosure or treat the plan as an assessment.
+
+Action-plan notes stay in the current browser, not the LMS or portable run code. The debrief download includes them alongside the decision record and reflections. Ask learners to avoid confidential information and real client/colleague names, and review notes before choosing to share. Download before restarting or confirming a code restore; either replaces the saved plan. A code-restored engagement correctly reports that no reflections are available rather than inventing responses.
+
 The archive version comes from package.json.
 
 - **Offline:** extract dist-release/gpl-<version>-offline.zip completely, keep its folder structure and open index.html in a desktop browser. Opening HTML inside the ZIP is unsupported. Fonts and photos are local. Saving remains subject to browser storage settings; keep a code when changing machine, folder or browser.

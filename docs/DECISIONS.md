@@ -6,6 +6,101 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-079 · A pedagogy audit of the rebuild, and what it overturned
+The read-only `gpl-pedagogy` reviewer audited the D-077 screens the same day. It found three
+structural faults, all of them mine:
+
+- **The causal panel was false on fallbacks.** It said "nothing you carried in changed how this
+  landed", on exactly the hard branches that most need explaining. Fixed in the engine (D-078,
+  `missed`).
+- **Liabilities were styled as assets.** On the cleanest run in the game, six struck-through
+  coral "misses" (no discount, no overridden review…). `EARNED` now carries `liability`, and
+  liabilities are never ticked, locked or struck.
+- **The interface still lectured.** The consequence captioned "What they would tell you" and
+  "Carry this forward", and the brief had "Objective", unsigned questions, an unsigned
+  assessment and an instruction footer. Every steering sentence now belongs to a named
+  colleague: "Riya, afterwards", "Aisha asks", "Riya's read", "Riya noticed". The "Objective"
+  label is now "The ask".
+
+Also changed:
+- The HUD shows the business indicators only on consequences, debriefs and the journey; over a
+  decision they were a scoreboard.
+- Consequence wash and sound no longer change with outcome tone.
+- The per-card ✓ evidence chips on the argument screen were removed, because they read as a
+  rating.
+- The ending asks its causal question before revealing the threads, takes one answer, and can be
+  skipped.
+- Four decision prompts that told the player how to decide now state the count of options.
+- One pre-decision forecast ("That is hard to score down.") and one narrator verdict ("Honesty
+  is still the right move") were cut from `story.ts`. Prose is outside both run-code
+  fingerprints, so no save or code is invalidated.
+
+**Not done, deliberately.** The audit lists many hard-coded strings in screen components. Most
+were inherited verbatim from the previous `game.tsx`, and the browser gate asserts on several of
+them by exact name. Moving them to content is mechanical but touches the gate; that is the next
+cleanup ticket. **Reversible:** yes. All of this is presentation and prose, apart from
+`liability` in `gates.ts` and the `missed` field.
+
+## D-078 · The consequence screen says why, from the outcome's own condition
+The game's central promise is that a player can trace a consequence to the decision that
+caused it. Until now that trace appeared only in the final review. On each consequence screen
+the outcome simply arrived, and the player had to take its causes on trust, 18 times.
+
+`outcomeBecause(state, content)` in the engine reads the selected outcome's `when` condition
+back against the flags the player carried into the decision. It returns what was **held**
+(`all`, plus whichever `any` were present) and what was **lacked** (`none`). It decides
+nothing, because `commit` has already chosen the outcome. It also returns the meter thresholds the outcome required, and
+**missed**: the earlier sibling outcome that failed by the fewest terms, with exactly what it
+needed. Outcomes are first-match, so this is the honest explanation for a fallback. Flags set by this decision's own
+selection are excluded: they are this decision, not an earlier one. A `conditional` flag
+records whether the chosen approach has more than one outcome, so the screen never says
+"on another path it could have" when no path could.
+
+**Cost:** one engine function, and the screen shows only causes that have an `EARNED` label.
+`because.test.ts` holds the label coverage above 80%, and asserts over 450 seeded runs that
+every named cause was required by the condition and was already carried. **Reversible:**
+delete one section of `Result.tsx`.
+
+## D-077 · The presentation layer is rebuilt as a staged drama, and the budgets re-split
+Shown together, the 78 screens of a run were one composition: beige paper, bordered boxes,
+one photograph per chapter shown three times in a row, and the same palette in all five
+chapters. Full reasoning, references and rules are in `docs/ART-DIRECTION.md`. In summary:
+
+- **Depth.** Four planes on every screen: a graded and drifting world, a cast of
+  background-removed figures, paper artefacts, and a glass HUD.
+- **A colour script.** One light per chapter (daybreak → glass → studio → boardroom → floor).
+  The brand vermilion is reserved for the frames around the story.
+- **Fourteen-plus compositions** in place of one page template, including four brief variants.
+  The brief now arrives as the decision will: an incoming call, messages on a phone, the file
+  on the person across the table, or a dossier.
+- **Assets.** Nine new location photographs from Pexels, credited in `assets.ts` and
+  `PHOTO-PROVENANCE.md`. Seven cut-outs derived from the same licensed portraits at 1400 px
+  using rembg (isnet), with face boxes measured by OpenCV YuNet for consistent scale. Three OFL
+  typefaces, self-hosted.
+- **Implemented backlog items along the way.** UI-01: the argument screen shows your record
+  beside the choices, and what each argument is built on. UI-02: the commitment summary sits
+  beside the commit button. NAV-01: the journey's "Review this act" opens that chapter's record
+  only.
+
+**What it cost.**
+- The single-file `game.tsx` (38 kB on 230 lines) became `game.tsx` plus `parts.tsx` and
+  eleven screen files. The old `game.css` is kept in the scratchpad, not the repository.
+- Stylesheet 8 → 16.1 kB gz; interface JS 46 → 21 kB. The budgets in `size.mjs` and
+  `CLAUDE.md` re-split to stylesheet 18 and interface 27, which lowers the combined
+  presentation cap from 72 kB to 45 kB.
+- Runtime photography rises from 850 kB to 3.0 MB. It is not code-budgeted, but it is real
+  download weight for a cold LMS visit.
+- Two harness adjustments in `verify-game.mjs`. The prediction-question regex is now scoped to
+  single text blocks: it had matched across the whole ending. Screen reads now wait for the
+  view-transition frame. Neither weakens an assertion.
+
+**Rejected:** WebGL or a canvas renderer (the static, offline, SCORM delivery target and the
+accessibility gate both forbid it), illustrated characters (real-photography provenance is a
+non-negotiable in `BACKLOG.md`), and default-on sound.
+
+**Reversible:** yes. The engine, content and session contracts are unchanged apart from D-078.
+Restoring the previous `game.tsx` and `game.css` restores the old presentation.
+
 ## D-076 · The game does arithmetic, and the premium is what pays back — not the fee
 Backlog 5.5. The game contained **no currency figure anywhere**. The value-case option at
 the award was called "Build the case in their numbers" and did no arithmetic; its own

@@ -402,7 +402,7 @@ const nodes: GameNode[] = [
       "Is the ask the same as the problem?",
     ],
     tip: "I would spend one on the money. My last three deals died in procurement, not the pitch.",
-    prompt: "You have time for two. Choose what could change your mind.",
+    prompt: "You have time for two of the five.",
     question: "What do you look into?",
     slots: 2,
     evidence: [
@@ -564,7 +564,7 @@ const nodes: GameNode[] = [
       "Would this work if we knew nothing about them?",
     ],
     tip: "Sarah will not read a white paper. Her deputy will, and he writes her briefings.",
-    prompt: "Match the approach to what you need from the next conversation.",
+    prompt: "Three ways to get the first conversation.",
     question: "How do you approach them?",
     options: [
       {
@@ -802,7 +802,7 @@ const nodes: GameNode[] = [
       "Is there a smaller version to commit to?",
     ],
     tip: "I have qualified two of these off a one-line brief. One paid for the year.",
-    prompt: "Weigh the value against what you would risk to chase it.",
+    prompt: "Three ways to answer a one-line brief.",
     question: "How do you take this forward?",
     options: [
       {
@@ -994,7 +994,7 @@ const nodes: GameNode[] = [
       "What does silence cost us?",
     ],
     tip: "I have seen three of these announcements. Two of them never shipped anything.",
-    prompt: "Decide whether the facts changed, or only the noise.",
+    prompt: "Four ways to answer an announcement.",
     question: "What do you do?",
     options: [
       {
@@ -1390,7 +1390,7 @@ const nodes: GameNode[] = [
       "What happens if Operations says no?",
     ],
     tip: "Aisha will inherit this document. She reads every line and she remembers.",
-    prompt: "Three of six. Each makes the offer stronger somewhere and weaker elsewhere.",
+    prompt: "Three of six.",
     question: "What do you put in?",
     pick: 3,
     components: [
@@ -2136,7 +2136,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "They accept it. They also start checking everything.",
             detail:
-              "Honesty is still the right move, and it still costs you. Without much of a track record to draw on, the client responds by adding governance — weekly reviews, escalation paths, a steering committee.",
+              "Saying it out loud still costs you. Without much of a track record to draw on, the client responds by adding governance — weekly reviews, escalation paths, a steering committee.",
             changed: ["Plan reset", "You are now being managed closely"],
             effect: { dims: { deliver: 4, profit: -5, win: -3 } },
           },
@@ -3018,7 +3018,7 @@ const nodes: GameNode[] = [
         when: { all: ["ops_onside", "evidenced"] },
         situation: [
           "Declan Foyle in procurement has a scorecard, a savings target and two other proposals.",
-          "You are the only bidder whose proposal names the systems that have to change and the people who own them. That is hard to score down.",
+          "You are the only bidder whose proposal names the systems that have to change and the people who own them.",
         ],
       },
     ],

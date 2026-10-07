@@ -3,9 +3,29 @@ import { story } from './content/story';
 import { advance, chooseSetup, createInitialState, toggleSelection } from './engine/engine';
 import { codeFromState } from './engine/runcode';
 import { decodeSave } from './engine/save';
-import { emptyPresentation, presentationFrom, readResume, serialiseSession } from './session';
+import { ACTION_PLAN_LIMIT, emptyActionPlan, emptyPresentation, normaliseActionPlan, presentationFrom, readResume, serialiseSession } from './session';
 const start = () => chooseSetup(advance(createInitialState(story), story), story, 's-connector');
 describe('presentation checkpoints and recovery', () => {
+  it('preserves an optional plan without changing the portable run code', () => {
+    const game = start();
+    const actionPlan = { action: 'Ask about the exception.', occasion: 'Next discovery call', evidence: 'A named decision and agreed follow-up.' };
+    const raw = serialiseSession({ game, presentation: { ...emptyPresentation(), actionPlan } }, story);
+    expect(presentationFrom(raw, game, story).actionPlan).toEqual(actionPlan);
+    const loaded = decodeSave(raw, story);
+    expect(loaded.status).toBe('ok');
+    if (loaded.status === 'ok') expect(codeFromState(loaded.state, story)).toBe(codeFromState(game, story));
+  });
+  it('keeps older schema-1 presentation saves compatible', () => {
+    const game = start();
+    const saved = JSON.parse(serialiseSession({ game, presentation: emptyPresentation() }, story));
+    delete saved.presentation.actionPlan;
+    expect(presentationFrom(JSON.stringify(saved), game, story).actionPlan).toEqual(emptyActionPlan());
+  });
+  it('bounds and validates malformed saved notes', () => {
+    expect(normaliseActionPlan({ action: 'x'.repeat(900), occasion: 4, evidence: 'a\u0000b\nline' })).toEqual({ action: 'x'.repeat(ACTION_PLAN_LIMIT), occasion: '', evidence: 'ab\nline' });
+    expect(normaliseActionPlan(null)).toEqual(emptyActionPlan());
+    expect(normaliseActionPlan('not an object')).toEqual(emptyActionPlan());
+  });
   it('persists chapter map independently of the engine phase', () => {
     const game = start(); const presentation = { ...emptyPresentation(), view: 'map' as const };
     const raw = serialiseSession({ game, presentation }, story);

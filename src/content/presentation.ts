@@ -1,5 +1,5 @@
 import type { CharacterId } from "./characters";
-import { CHAPTER_SCENES, type ChapterNumber, type SceneAsset } from "./assets";
+import { CHAPTER_SCENES, type BackdropAsset, type ChapterNumber, type SceneAsset } from "./assets";
 
 export type ScreenFamily = "setup" | "arrival" | "comparison" | "investigation" | "allocation" | "chat" | "meeting" | "evidence" | "event" | "reflection" | "debrief" | "ending";
 
@@ -16,8 +16,8 @@ export interface ChapterPresentation {
 /** Canonical authored route. Future milestones are previews, never navigation shortcuts. */
 export const CHAPTER_PRESENTATION: readonly ChapterPresentation[] = [
   { chapter: 1, title: "Find the right client", goal: "Choose where to focus, investigate the account and earn a first conversation.", scene: "scene-chapter-1", advisor: "priya", route: ["int-1", "m1", "m2", "m3", "deb-1"], activities: ["Choose a client", "Investigate two questions", "Make the first approach"] },
-  { chapter: 2, title: "Make it an opportunity", goal: "Test whether the opportunity is real before committing your team's time.", scene: "scene-chapter-2", advisor: "riya", route: ["int-2", "m4", "turn-rival", "m5", "refl-rival", "m5b", "deb-2"], activities: ["Qualify the brief", "Respond to new competition", "Allocate the team"] },
-  { chapter: 3, title: "Build the response", goal: "Turn evidence into a solution and a proposal your team can stand behind.", scene: "scene-chapter-3", advisor: "arjun", route: ["int-3", "m6", "m6b", "refl-shape", "m7", "m7b", "deb-3"], activities: ["Frame the real problem", "Explore delivery approaches", "Build and review the proposal"] },
+  { chapter: 2, title: "Make it an opportunity", goal: "Decide how much of your team this opportunity is worth.", scene: "scene-chapter-2", advisor: "riya", route: ["int-2", "m4", "turn-rival", "m5", "refl-rival", "m5b", "deb-2"], activities: ["Qualify the brief", "Respond to new competition", "Allocate the team"] },
+  { chapter: 3, title: "Build the response", goal: "Decide what you will propose, and what you will promise to deliver.", scene: "scene-chapter-3", advisor: "arjun", route: ["int-3", "m6", "m6b", "refl-shape", "m7", "m7b", "deb-3"], activities: ["Frame the real problem", "Explore delivery approaches", "Build and review the proposal"] },
   { chapter: 4, title: "Make the deal work", goal: "Negotiate the commercial terms and decide whether this is a deal worth signing.", scene: "scene-chapter-4", advisor: "riya", route: ["int-4", "m8", "m9", "m9a", "turn-award", "refl-award", "m9b", "deb-4"], activities: ["Negotiate price and scope", "Make the procurement case", "Decide whether to sign"] },
   { chapter: 5, title: "Deliver the promise", goal: "Handle the consequences of your commitments as the engagement changes.", scene: "scene-chapter-5", advisor: "aisha", route: ["int-5", "m10", "refl-month5", "m10b", "m10h", "turn-sarah", "m10c", "deb-5", "end"], activities: ["Respond to delivery pressure", "Own the handover", "Protect continuity"] },
 ];
@@ -74,6 +74,45 @@ export const NODE_PRESENTATION: Readonly<Record<string, NodePresentation>> = {
   m10c: node(5, "meeting", "Choose how to protect continuity through the sponsor transition."),
   "deb-5": node(5, "debrief", "Trace the choices that shaped the final delivery position."),
   end: node(5, "ending", "Review your engagement outcome and take one lesson into your next project."),
+};
+
+/**
+ * Where each beat is staged. A chapter used to be one photograph shown on every screen it
+ * contained, three times in a row, which is a large part of why the game read as one page
+ * repeated 78 times. Locations now move with the story: the market at dusk while choosing a
+ * client, a dark desk for messages, a lit tower for calls, the warehouse once delivery starts.
+ * Decorative only — a backdrop never carries evidence or instructions.
+ */
+export const BACKDROP: Readonly<Record<string, BackdropAsset>> = {
+  setup: "env-glass-office",
+  "int-1": "env-storefront-night", m1: "env-skyline-dusk", m2: "scene-chapter-1", m3: "env-desk-night", "deb-1": "scene-chapter-1",
+  "int-2": "env-skyline-blue", m4: "env-glass-office", "turn-rival": "env-storefront-night", m5: "env-tower-night", "refl-rival": "env-windows-night", m5b: "scene-chapter-2", "deb-2": "scene-chapter-2",
+  "int-3": "scene-chapter-3", m6: "env-tower-night", m6b: "scene-chapter-3", "refl-shape": "env-windows-night", m7: "scene-chapter-3", m7b: "env-desk-night", "deb-3": "scene-chapter-3",
+  "int-4": "env-boardroom", m8: "env-boardroom", m9: "env-desk-night", m9a: "scene-chapter-4", "turn-award": "env-skyline-dusk", "refl-award": "env-windows-night", m9b: "env-skyline-blue", "deb-4": "scene-chapter-4",
+  "int-5": "env-warehouse", m10: "env-warehouse", "refl-month5": "env-windows-night", m10b: "scene-chapter-5", m10h: "scene-chapter-5", "turn-sarah": "env-skyline-dusk", m10c: "env-tower-night", "deb-5": "scene-chapter-5",
+  end: "env-skyline-dusk",
+};
+
+/** Chapter lighting names. The colour script itself lives in the stylesheet as tokens. */
+export const CHAPTER_LIGHT: Readonly<Record<ChapterNumber, string>> = {
+  1: "Daybreak", 2: "Glass", 3: "Studio", 4: "Boardroom", 5: "Floor",
+};
+
+/**
+ * A story turn is a report of something that already happened elsewhere, so each is staged
+ * as the artefact it would actually arrive as: trade press, a forwarded email, an internal
+ * memo. The narration stays the content; the artefact is dressing and invents no facts the
+ * story does not state (08:25 is the story's 08:14 plus the "eleven minutes later").
+ */
+export type TurnDressing =
+  | { format: "press"; masthead: string; section: string; kicker: string }
+  | { format: "mail"; app: string; from: string; subject: string; preview: string; time: string }
+  | { format: "memo"; organisation: string; label: string; subject: string; from: string };
+
+export const TURN_DRESSING: Readonly<Record<string, TurnDressing>> = {
+  "turn-rival": { format: "press", masthead: "The Retail Ledger", section: "Technology · Partnerships", kicker: "This morning" },
+  "turn-award": { format: "mail", app: "Mail", from: "Sarah Lim", subject: "Fwd: Evaluation outcome", preview: "Forwarded message from Orion Retail Procurement. No note added.", time: "08:25" },
+  "turn-sarah": { format: "memo", organisation: "Orion Retail", label: "Internal announcement", subject: "Leadership update", from: "Internal communications" },
 };
 
 export function presentationForNode(nodeId: string): NodePresentation | undefined {

@@ -32,7 +32,13 @@ try {
 }
 
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+/* Reduced motion, because this check is about what the LMS is told, not how screens move.
+   With motion on, a screen change runs through a view transition that applies the new DOM a
+   frame later, and this loop's 80 ms poll would grab the outgoing screen's button mid-swap —
+   a race in the script that no person clicking can reproduce (D-077). The motion path is
+   covered elsewhere: verify-game.mjs's storage-denied and image-failure flows run with motion,
+   and the D-077 release record includes a full motion-on playthrough. */
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
 
 /* The API goes on `window` before the document's own scripts, which is what an LMS does
    and what `findApi`'s discovery walk expects to find. Calls are recorded on the page so

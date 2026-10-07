@@ -44,7 +44,7 @@ rendering dark text on a purple background; only the screenshot caught it. See `
 - British English throughout, in both copy and code comments.
 - No new runtime dependency without a line explaining why the problem is not already solved
   in-repo. `node tools/size.mjs` holds the bundle to a budget **per origin** — framework 70 kB
-  gzipped, interface 58, engine 12, stylesheet 14. **Content is measured and never capped**,
+  gzipped, interface 27, engine 12, stylesheet 18 (re-split in `D-077`). **Content is measured and never capped**,
   because a budget on the writing is a budget on how much the game can teach.
   This replaced a single 94 kB figure that had been red for a long time while pointing at the
   wrong thing: React alone is ~65 kB, so two thirds of the old budget was spent before any of

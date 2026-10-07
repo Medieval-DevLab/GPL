@@ -4,7 +4,7 @@ import { advance, chooseSetup, commit, createInitialState, toggleSelection } fro
 import { decodeRun } from './engine/runcode';
 import { saveKey } from './engine/save';
 import { lmsResumeCode, useLms } from './lms';
-import { emptyPresentation, presentationFrom, readResume, serialiseSession, type ResumeState, type Session } from './session';
+import { emptyPresentation, normaliseActionPlan, presentationFrom, readResume, serialiseSession, type ResumeState, type Session } from './session';
 import { Game } from './ui/game';
 
 export default function App() {
@@ -59,6 +59,7 @@ export default function App() {
     onSetup={() => setSession(s => s.presentation.advantage ? { game: chooseSetup(s.game, story, s.presentation.advantage), presentation: { ...s.presentation, view: 'map' } } : s)}
     onCommit={() => setSession(s => ({ ...s, game: commit(s.game, story) }))}
     onReflect={answer => setSession(s => ({ ...s, presentation: { ...s.presentation, reflections: { ...s.presentation.reflections, [s.game.nodeId]: answer } } }))}
+    onPlan={(key, value) => setSession(s => ({ ...s, presentation: { ...s.presentation, actionPlan: normaliseActionPlan({ ...s.presentation.actionPlan, [key]: value }) } }))}
     onFinish={() => { setHome(true); setResume({ candidates: [{ source: 'local', session }], local: { status: 'empty' }, invalidLms: false }); }}
     onCode={code => {
       const read = decodeRun(story, code);
