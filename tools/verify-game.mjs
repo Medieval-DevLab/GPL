@@ -139,9 +139,13 @@ async function run(viewport, policy) {
         reloads.add('drawer');
       }
       committed.push(current.node);
-    } else if (current.screen === 'reflection') {
-      const answers = page.locator('main button[aria-pressed]');
-      if (await answers.count()) { if (keyboard) { await answers.first().focus(); await page.keyboard.press('Space'); } else await answers.first().click(); }
+    } else if (current.screen === 'chapter-debrief') {
+      /* Reflections are asked at the act break (D-080): answer the first option of each. */
+      const groups = await page.locator('main button[data-reflect]').evaluateAll(es => [...new Set(es.map(e => e.dataset.reflect))]);
+      for (const id of groups) {
+        const answer = page.locator('main button[data-reflect="' + id + '"]').first();
+        if (keyboard) { await answer.focus(); await page.keyboard.press('Space'); } else await answer.click();
+      }
     }
     // Restore every distinct lifecycle state once; the new home is deliberate.
     const reloadKey = current.screen;
@@ -156,7 +160,11 @@ async function run(viewport, policy) {
     if (keyboard) { await primary.focus(); await page.keyboard.press('Enter'); }
     else if (policy === 'first' && current.screen === 'chapter-open' && current.node === 'int-1') {
       await primary.dblclick();
-      assert.equal((await read(page)).phase, 'brief', 'Rapid Continue skipped the brief');
+      /* The brief and the decision are one scene now (D-080): a double-click must land on
+         decision 1 and go no further. */
+      await page.waitForFunction(() => document.querySelector('.gpl-game').dataset.node === 'm1');
+      const landed = await read(page);
+      assert.equal(landed.node + ':' + landed.phase, 'm1:decide', 'Rapid Continue skipped past the first decision');
     } else await primary.click().catch(async error => {
       const failedState = await read(page);
       console.error('Action failed at', prefix, failedState);
@@ -213,8 +221,8 @@ async function utilities() {
   await offline.locator('main [data-action=primary]').click();
   /* Without reduced motion the change runs through a view transition, which applies the new
      screen a frame later. Wait for it rather than reading the DOM in the same tick. */
-  await offline.waitForFunction(() => document.querySelector('.gpl-game')?.dataset.screen === 'journey', null, { timeout: 5000 }).catch(() => {});
-  assert.equal((await read(offline)).screen, 'journey', 'Storage denial blocked play');
+  await offline.waitForFunction(() => document.querySelector('.gpl-game')?.dataset.screen === 'chapter-open', null, { timeout: 5000 }).catch(() => {});
+  assert.equal((await read(offline)).screen, 'chapter-open', 'Storage denial blocked play');
   report.utilities.push('Unavailable storage visibly warned; game remains playable');
   await denied.close();
   const noImages = await browser.newContext({ viewport: { width: 1440, height: 900 } });
@@ -224,8 +232,8 @@ async function utilities() {
   await fallback.getByRole('button', { name: /^Begin your engagement/ }).click();
   await fallback.locator('[data-choice]').first().click();
   await fallback.locator('main [data-action=primary]').click();
-  await fallback.waitForFunction(() => document.querySelector('.gpl-game')?.dataset.screen === 'journey', null, { timeout: 5000 }).catch(() => {});
-  assert.equal((await read(fallback)).screen, 'journey');
+  await fallback.waitForFunction(() => document.querySelector('.gpl-game')?.dataset.screen === 'chapter-open', null, { timeout: 5000 }).catch(() => {});
+  assert.equal((await read(fallback)).screen, 'chapter-open');
   report.utilities.push('Image-failure fallback keeps live text and controls usable');
   await noImages.close();
 }

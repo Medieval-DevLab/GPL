@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { story } from './story';
-import { NODE_PRESENTATION, CHAPTER_PRESENTATION, BACKDROP, TURN_DRESSING } from './presentation';
+import { NODE_PRESENTATION, CHAPTER_PRESENTATION, BACKDROP, TURN_DRESSING, MISSION_RULE, LEDGER_RULE, ACT_QUESTION, RULES } from './presentation';
+import { LEDGER_RULES } from '../engine/engine';
 import { CHARACTERS, characterByName } from './characters';
 import { PHOTO_CREDITS } from './assets';
 describe('complete presentation contract', () => {
@@ -14,6 +15,13 @@ describe('complete presentation contract', () => {
     for (const asset of Object.values(BACKDROP)) expect(PHOTO_CREDITS.some(p => p.asset === asset)).toBe(true);
     const turns = Object.values(story.nodes).filter(n => n.kind === 'interlude' && n.role === 'turn').map(n => n.id).sort();
     expect(Object.keys(TURN_DRESSING).sort()).toEqual(turns);
+  });
+  it('files every decision and every record position under one of the three questions (D-080)', () => {
+    const ids = new Set(RULES.map(r => r.id));
+    for (const id of story.missionOrder) expect(ids.has(MISSION_RULE[id])).toBe(true);
+    for (const rule of LEDGER_RULES) expect(ids.has(LEDGER_RULE[rule.label])).toBe(true);
+    expect(Object.keys(MISSION_RULE).sort()).toEqual([...story.missionOrder].sort());
+    for (const c of story.chapters) expect(ACT_QUESTION[c.number as 1]).toMatch(/\?$/);
   });
   it('has five routes with real nodes and objectives', () => {
     expect(CHAPTER_PRESENTATION).toHaveLength(5);

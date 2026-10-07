@@ -1,11 +1,36 @@
 import { useEffect, useRef, useState } from 'react';
 import { story } from './content/story';
 import { advance, chooseSetup, commit, createInitialState, toggleSelection } from './engine/engine';
+import type { GameState } from './engine/types';
 import { decodeRun } from './engine/runcode';
 import { saveKey } from './engine/save';
 import { lmsResumeCode, useLms } from './lms';
 import { emptyPresentation, normaliseActionPlan, presentationFrom, readResume, serialiseSession, type ResumeState, type Session } from './session';
 import { Game } from './ui/game';
+
+/**
+ * Scene grammar (D-080): a new screen appears only when something happens in the story.
+ *
+ * The engine keeps its full beat sequence. This is presentation flow, and it decides nothing.
+ * Three kinds of engine beat no longer get a screen of their own:
+ *  - a mission's `brief` phase: the situation and the choice are one scene;
+ *  - a mid-chapter `reflection`: its question is asked at the end of the act instead;
+ *  - a `chapter-open` reached from the previous act's debrief: the act break already
+ *    introduces the next act.
+ * Every step still runs through `advance`, so the engine state, run codes and saves are
+ * exactly what they were.
+ */
+function settle(game: GameState, fromDebrief = false): GameState {
+  let g = game;
+  for (let guard = 0; guard < 6; guard++) {
+    const node = story.nodes[g.nodeId];
+    if (g.phase === 'brief') { g = advance(g, story); continue; }
+    if (node?.kind === 'interlude' && node.role === 'reflection') { g = advance(g, story); continue; }
+    if (fromDebrief && node?.kind === 'interlude' && node.role === 'chapter-open') { g = advance(g, story); continue; }
+    break;
+  }
+  return g;
+}
 
 export default function App() {
   const [session, setSession] = useState<Session>(() => ({ game: createInitialState(story), presentation: emptyPresentation() }));
@@ -29,20 +54,22 @@ export default function App() {
     window.addEventListener('pagehide', save);
     return () => window.removeEventListener('pagehide', save);
   }, [session]);
-  const routeKey = [home, session.presentation.view, session.game.nodeId, session.game.phase].join(':');
+  const routeKey = [home, session.presentation.view, session.game.nodeId].join(':');
   useEffect(() => {
     transitionLock.current = false;
     document.getElementById('game-heading')?.focus({ preventScroll: true });
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [routeKey]);
+  /* A commit keeps the scene; only the decision area changes. Release the lock on phase too. */
+  useEffect(() => { transitionLock.current = false; }, [session.game.phase]);
   const node = story.nodes[session.game.nodeId];
   const next = () => {
     if (transitionLock.current) return;
     transitionLock.current = true;
     setSession(s => {
       const current = story.nodes[s.game.nodeId];
-      const game = advance(s.game, story);
-      return { game, presentation: { ...s.presentation, view: current.kind === 'interlude' && current.role === 'chapter-debrief' && game.phase !== 'ending' ? 'map' : 'play' } };
+      const fromDebrief = current.kind === 'interlude' && current.role === 'chapter-debrief';
+      return { game: settle(advance(s.game, story), fromDebrief), presentation: { ...s.presentation, view: 'play' } };
     });
   };
   const reset = () => {
@@ -52,19 +79,19 @@ export default function App() {
   };
   return <Game session={session} node={node} content={story} home={home} resume={resume} saveError={saveError}
     onAdvance={next} onStart={reset}
-    onResume={value => { setSession(value); setHome(false); }}
+    onResume={value => { setSession({ ...value, game: settle(value.game) }); setHome(false); }}
     onView={view => setSession(s => ({ ...s, presentation: { ...s.presentation, view } }))}
     onToggle={id => setSession(s => ({ ...s, game: toggleSelection(s.game, story, id) }))}
     onAdvantage={advantage => setSession(s => ({ ...s, presentation: { ...s.presentation, advantage } }))}
-    onSetup={() => setSession(s => s.presentation.advantage ? { game: chooseSetup(s.game, story, s.presentation.advantage), presentation: { ...s.presentation, view: 'map' } } : s)}
+    onSetup={() => setSession(s => s.presentation.advantage ? { game: chooseSetup(s.game, story, s.presentation.advantage), presentation: { ...s.presentation, view: 'play' } } : s)}
     onCommit={() => setSession(s => ({ ...s, game: commit(s.game, story) }))}
-    onReflect={answer => setSession(s => ({ ...s, presentation: { ...s.presentation, reflections: { ...s.presentation.reflections, [s.game.nodeId]: answer } } }))}
+    onReflect={(nodeId, answer) => setSession(s => ({ ...s, presentation: { ...s.presentation, reflections: { ...s.presentation.reflections, [nodeId]: answer } } }))}
     onPlan={(key, value) => setSession(s => ({ ...s, presentation: { ...s.presentation, actionPlan: normaliseActionPlan({ ...s.presentation.actionPlan, [key]: value }) } }))}
     onFinish={() => { setHome(true); setResume({ candidates: [{ source: 'local', session }], local: { status: 'empty' }, invalidLms: false }); }}
     onCode={code => {
       const read = decodeRun(story, code);
       if (!read.ok) return read.message;
-      setSession({ game: read.state, presentation: presentationFrom(null, read.state, story) });
+      setSession({ game: settle(read.state), presentation: presentationFrom(null, read.state, story) });
       setHome(false);
       return null;
     }} />;

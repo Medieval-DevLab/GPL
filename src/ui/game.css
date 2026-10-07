@@ -1,7 +1,6 @@
-/* GPL stylesheet entry. Layered from tokens to compositions; see docs/ART-DIRECTION.md. */
+/* GPL stylesheet entry. Daylight editorial — see docs/ART-DIRECTION.md (D-080). */
 @import "./styles/tokens.css";
 @import "./styles/base.css";
-@import "./styles/stage.css";
-@import "./styles/screens-frame.css";
-@import "./styles/screens-play.css";
+@import "./styles/scene.css";
+@import "./styles/frames.css";
 @import "./styles/responsive.css";

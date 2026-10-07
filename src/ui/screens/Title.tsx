@@ -1,48 +1,49 @@
 import type { Content } from '../../engine/types';
 import { COPY } from '../../content/interface';
-import { CHAPTER_LIGHT } from '../../content/presentation';
+import { RULES, STORY } from '../../content/presentation';
 import type { ResumeState, Session } from '../../session';
-import { Action, Cutout, Heading, World, pad2 } from '../parts';
+import { Action, Glyph, Heading, art } from '../parts';
 
 /**
- * The title is a poster, not a landing page: the people the player is about to meet stand
- * in the city they will spend the next hour in. Every face here appears in the story.
+ * The title states the whole game in four lines: the client's ask, the question the player
+ * is answering, what is at stake, and the three questions every decision will turn on. A
+ * learner who reads only this screen knows what to listen for for the next hour (D-080).
  */
 export function Title({ content, resume, onResume, onStart }: { content: Content; resume: ResumeState; onResume(s: Session): void; onStart(): void }) {
   const saved = resume.candidates;
-  return <section className="stage scr-title">
-    <World backdrop="env-skyline-dusk" mood="vivid" />
-    <div className="title-cast" aria-hidden="true">
-      <Cutout id="marcus" frame={{ x: '16%', y: 0.2, face: 0.12 }} className="is-back enter-cast" style={{ ['--d' as string]: '420ms' }} />
-      <Cutout id="declan" frame={{ x: '86%', y: 0.16, face: 0.13 }} className="is-back enter-cast" style={{ ['--d' as string]: '520ms' }} />
-      <Cutout id="priya" frame={{ x: '40%', y: 0.13, face: 0.15 }} className="enter-cast" style={{ ['--d' as string]: '160ms', ['--from' as string]: '-40px' }} />
-      <Cutout id="sarah" frame={{ x: '68%', y: 0.3, face: 0.19 }} className="enter-cast" style={{ ['--d' as string]: '300ms' }} />
-    </div>
-    <div className="title-copy">
-      <p className="kicker enter-rise">{COPY.stage.kicker} · {COPY.stage.client}</p>
-      <Heading className="title-head display enter-slam">{COPY.welcome}</Heading>
-      <p className="title-premise enter-rise" style={{ ['--i' as string]: 2 }}>{COPY.premise}</p>
-      <p className="title-role enter-rise" style={{ ['--i' as string]: 3 }}>{COPY.role}</p>
-      {saved.length > 1 && <p className="notice">{COPY.conflict}</p>}
-      <div className="title-actions enter-rise" style={{ ['--i' as string]: 4 }}>
-        {saved.map(s => {
-          const node = content.nodes[s.session.game.nodeId];
-          const where = node.kind === 'ending' ? 'Completed engagement' : 'title' in node ? node.title : 'Engagement in progress';
-          return <div className="resume-choice" key={s.source}>
-            <Action onClick={() => onResume(s.session)}>{saved.length === 1 ? COPY.resume : s.source === 'local' ? 'Continue browser engagement' : 'Continue learning-platform engagement'}</Action>
-            <small>{s.session.game.completed.length} decisions made · {where}</small>
-          </div>;
-        })}
-        {saved.length
-          ? <button className="text-link" onClick={onStart}>{COPY.restart}</button>
-          : <Action onClick={onStart}>{COPY.start}</Action>}
+  return <section className="page scr-title">
+    <div className="frame">
+      <div className="title">
+        <div>
+          <p className="kicker">{COPY.stage.kicker}</p>
+          <Heading className="h1">{COPY.welcome}</Heading>
+          <p className="lead">{STORY.question}</p>
+          <p className="read">{STORY.ask} {STORY.stakes}</p>
+          {saved.length > 1 && <p className="notice">{COPY.conflict}</p>}
+          <div className="title-actions">
+            {saved.map(s => {
+              const node = content.nodes[s.session.game.nodeId];
+              const where = node.kind === 'ending' ? 'Completed engagement' : 'title' in node ? node.title : 'Engagement in progress';
+              return <div className="resume-choice" key={s.source}>
+                <Action onClick={() => onResume(s.session)}>{saved.length === 1 ? COPY.resume : s.source === 'local' ? 'Continue browser engagement' : 'Continue learning-platform engagement'}</Action>
+                <small>{s.session.game.completed.length} decisions made · {where}</small>
+              </div>;
+            })}
+            {saved.length ? <button className="text-link" onClick={onStart}>{COPY.restart}</button> : <Action onClick={onStart}>{COPY.start}</Action>}
+          </div>
+          {resume.local.status === 'stale' && <p className="notice">{resume.local.message}{resume.local.code && <><br />Saved code: <code>{resume.local.code}</code></>}</p>}
+          {resume.invalidLms && <p className="notice">{COPY.invalidLms}</p>}
+          <p className="title-format"><b>{COPY.format}</b> · {COPY.duration}</p>
+        </div>
+        <div>
+          <figure className="photo-frame title-photo"><img src={art('scene-chapter-1')} alt="" /><figcaption>{COPY.stage.client}</figcaption></figure>
+          <p className="kicker" style={{ marginTop: 22 }}>{COPY.stage.threeQuestions}</p>
+          <ul className="three">{RULES.map(r => <li key={r.id}><Glyph name={r.id} /><strong>{r.question}</strong><span>{r.plain}</span></li>)}</ul>
+        </div>
       </div>
-      {resume.local.status === 'stale' && <p className="notice">{resume.local.message}{resume.local.code && <><br />Saved code: <code>{resume.local.code}</code></>}</p>}
-      {resume.invalidLms && <p className="notice">{COPY.invalidLms}</p>}
-      <p className="title-format enter-rise" style={{ ['--i' as string]: 5 }}><b>{COPY.format}</b> · {COPY.duration}</p>
+      <ol className="acts-strip" aria-label="The five acts">
+        {content.chapters.map(c => <li key={c.number} data-chapter={c.number}><small>{COPY.stage.act} {c.number}</small>{c.title}</li>)}
+      </ol>
     </div>
-    <ol className="title-acts enter-fade" style={{ ['--d' as string]: '500ms' }} aria-label="The five chapters">
-      {content.chapters.map(c => <li key={c.number} data-chapter={c.number}><span className="mono">{pad2(c.number)} · {CHAPTER_LIGHT[c.number as 1]}</span>{c.label}</li>)}
-    </ol>
   </section>;
 }

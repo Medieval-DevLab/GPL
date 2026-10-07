@@ -36,6 +36,10 @@ These are representative stock locations, not claims about the actual premises o
 
 Use a centred crop as the default; keep a readable gradient behind overlaid text. Scenery should be decorative (`alt=""`) when adjacent live text names the location. Give a standalone scene informative alt text from `SCENE_DESCRIPTIONS`. Portraits beside a visible name can be decorative; otherwise use the fictional character's name with the fiction notice available in About. If a photograph fails, retain the HTML character name/role, task and controls against the solid theme background; never hide the learning content.
 
+## D-080 update (8 October 2026)
+
+The daylight rebuild removed the six night photographs (`env-skyline-dusk`, `env-skyline-blue`, `env-tower-night`, `env-windows-night`, `env-storefront-night`, `env-desk-night`) and all seven cut-outs from the repository and the runtime set. Photographs are now shown framed, with the place named beneath, never behind text. Three locations remain: `env-warehouse`, `env-boardroom` and `env-glass-office`. The runtime set is 15 files (1.35 MB): 7 portraits, 5 chapter scenes and 3 locations. The table below is kept as the record of what was acquired.
+
 ## October 2026 additions: locations and cut-outs
 
 Added 8 October 2026 for the presentation rebuild (`D-077`). They are from the same provider and licence, and credited in Help/About from `PHOTO_CREDITS`.

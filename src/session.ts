@@ -30,7 +30,6 @@ export function serialiseSession(session: Session, content: Content): string {
 export function presentationFrom(raw: string | null, game: GameState, content: Content): PresentationState {
   const fallback = emptyPresentation();
   const node = content.nodes[game.nodeId];
-  if (node?.kind === 'interlude' && node.role === 'chapter-open') fallback.view = 'map';
   try {
     const p = raw ? JSON.parse(raw).presentation : null;
     if (p?.schema !== 1 || p.nodeId !== game.nodeId || p.phase !== game.phase) return fallback;

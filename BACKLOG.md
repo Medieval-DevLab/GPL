@@ -286,6 +286,8 @@ PowerShell uses `npm.cmd` where npm.ps1 is blocked. Current scripts: `npm.cmd ru
 
 Evidence on 8 October: TypeScript clean; 278 tests in 18 files (prior 1.1 baseline: 272 in 17); production build; the `file://` check; the full browser matrix (`verify-game.mjs --matrix`), whose results are recorded in `docs/RELEASE-VERIFICATION.md`; and a manual screenshot review of all 79 screens at 1440×900, with spot checks at 1366×768 and 720×450.
 
+**Later the same day (D-080).** The user rejected the D-077 look as unreadable, too futuristic, missing a storyline, and full of screen changes that meant nothing. Rebuilt around one story question, three questions and a scene-per-decision grammar in a daylight editorial look. 48 screens per run instead of 79; the engine is unchanged. `docs/ART-DIRECTION.md` now describes the D-080 direction.
+
 Not done:
 - SV-02, LMS-01 and CNT-01 are still READY. SCORM ZIPs were not rebuilt.
 - Nothing has been published; the live site still serves 1.0.
@@ -297,4 +299,5 @@ Next actions:
 2. Fix LMS-01, which is a one-function change in `src/lms.ts`.
 3. SV-02, then CNT-01.
 4. `npm run scorm` and publish through the existing Site identity.
-5. Consider halving the screen count. Each decision is still brief → decide → consequence; showing the brief as a collapsible layer of the decision screen would cut a run from 79 screens to about 61. That is a pacing change and needs learner evidence (PILOT-01) before it ships.
+5. The screen count is done (D-080). Next is word count per decision: the board and the scene are readable, but a decision still carries about 300 words. Cutting option text to one sentence each needs a content pass by the `gpl-content` agent.
+6. Push to GitHub once a remote is configured. This session had no remote and could not run `gh`.

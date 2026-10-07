@@ -27,7 +27,7 @@ Open an extracted offline package's index.html directly, or serve dist/ on a sta
 
 ## Experience
 
-The game is staged as a business drama. Each chapter has its own light, from the market at daybreak to the delivery floor. Each kind of beat has its own composition: case files, incoming calls, message threads, a cork board, a planning wall, the argument across the table, trade press and memos. Every consequence names the earlier commitments it depended on. Interface sound is optional and off by default.
+The whole game answers one question: can you win Orion's work, make it worth winning, and still deliver what you promised? Every decision is filed under one of three questions: win it, make it worth it, deliver it. A board beside every scene shows where you stand on each. A decision is one scene: the situation, the choice and what happened appear on the same screen, and a new screen means the story moved. Every consequence names the earlier commitments it depended on. The look is daylight editorial, with readable type and real photographs framed beside the text. Interface sound is optional and off by default.
 
 The welcome establishes the learner's role. A starting team advantage leads to the five-chapter journey. Every chapter has an arrival and objective. Activities use distinct brief, comparison, investigation, allocation, chat, meeting and evidence-application layouts. Each commitment produces an explained consequence. Reflections, chapter debriefs and a final causal review connect decisions to workplace practice.
 
@@ -49,7 +49,7 @@ Photographs depict stock models in fictional roles, not actual Accenture employe
 - src/content: authored story, interface language, gate explanations, cast, photo credits and presentation metadata.
 - src/session.ts: versioned presentation checkpoint and local/LMS resume arbitration.
 - src/App.tsx: persistence, lifecycle and action orchestration.
-- src/ui/game.tsx: the shell, HUD and screen routing. src/ui/screens/: one composition per kind of beat. src/ui/parts.tsx: world, cut-out, meter and action parts. src/ui/styles/: tokens (brand palette and colour script), stage (depth planes), compositions and reflow. See [art direction](docs/ART-DIRECTION.md). Older UI files are retained as historical implementation, not imported by the production entry point.
+- src/ui/game.tsx: the shell, HUD and screen routing. src/ui/screens/: the scene (all 18 decisions), the board, the act break, story turns and the frames around them. src/ui/parts.tsx: shared parts. src/ui/styles/: tokens, base, scene, frames and reflow. See [art direction](docs/ART-DIRECTION.md). Older UI files are retained as historical implementation, not imported by the production entry point.
 - src/lms.ts and scorm.ts: retry-safe completion and resume reporting.
 - tools/verify-game.mjs: current browser gate. tools/verify.mjs is the historical UI harness.
 - .openai/hosting.json: persistent Sites project identity and static output configuration; no credentials.

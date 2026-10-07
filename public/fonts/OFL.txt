@@ -92,7 +92,5 @@ FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
 
 ----
-Archivo, Newsreader and JetBrains Mono (public/fonts/*-var.woff2) are also licensed under the SIL Open Font License 1.1.
-Archivo: Copyright 2016 The Archivo Project Authors (https://github.com/Omnibus-Type/Archivo)
+Newsreader (public/fonts/newsreader-*.woff2) is also licensed under the SIL Open Font License 1.1.
 Newsreader: Copyright 2020 The Newsreader Project Authors (https://github.com/productiontype/Newsreader)
-JetBrains Mono: Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono)

@@ -1,4 +1,5 @@
 import type { CharacterId } from "./characters";
+import type { DimensionId } from "../engine/types";
 import { CHAPTER_SCENES, type BackdropAsset, type ChapterNumber, type SceneAsset } from "./assets";
 
 export type ScreenFamily = "setup" | "arrival" | "comparison" | "investigation" | "allocation" | "chat" | "meeting" | "evidence" | "event" | "reflection" | "debrief" | "ending";
@@ -77,21 +78,101 @@ export const NODE_PRESENTATION: Readonly<Record<string, NodePresentation>> = {
 };
 
 /**
- * Where each beat is staged. A chapter used to be one photograph shown on every screen it
- * contained, three times in a row, which is a large part of why the game read as one page
- * repeated 78 times. Locations now move with the story: the market at dusk while choosing a
- * client, a dark desk for messages, a lit tower for calls, the warehouse once delivery starts.
- * Decorative only — a backdrop never carries evidence or instructions.
+ * The story's spine. Every screen hangs off one question, and every decision is filed under
+ * one of the three questions the game already measures. Before this, a run carried 53
+ * different lesson sentences and 50 record labels, and a player could recall none of it
+ * (D-080). Three questions can be carried out of the room.
+ *
+ * `ask` is the client's own words. It deliberately does not reveal the real need behind it
+ * (that is earned in chapters 1 and 3), so stating it up front gives the line of thought
+ * without answering any decision.
  */
-export const BACKDROP: Readonly<Record<string, BackdropAsset>> = {
-  setup: "env-glass-office",
-  "int-1": "env-storefront-night", m1: "env-skyline-dusk", m2: "scene-chapter-1", m3: "env-desk-night", "deb-1": "scene-chapter-1",
-  "int-2": "env-skyline-blue", m4: "env-glass-office", "turn-rival": "env-storefront-night", m5: "env-tower-night", "refl-rival": "env-windows-night", m5b: "scene-chapter-2", "deb-2": "scene-chapter-2",
-  "int-3": "scene-chapter-3", m6: "env-tower-night", m6b: "scene-chapter-3", "refl-shape": "env-windows-night", m7: "scene-chapter-3", m7b: "env-desk-night", "deb-3": "scene-chapter-3",
-  "int-4": "env-boardroom", m8: "env-boardroom", m9: "env-desk-night", m9a: "scene-chapter-4", "turn-award": "env-skyline-dusk", "refl-award": "env-windows-night", m9b: "env-skyline-blue", "deb-4": "scene-chapter-4",
-  "int-5": "env-warehouse", m10: "env-warehouse", "refl-month5": "env-windows-night", m10b: "scene-chapter-5", m10h: "scene-chapter-5", "turn-sarah": "env-skyline-dusk", m10c: "env-tower-night", "deb-5": "scene-chapter-5",
-  end: "env-skyline-dusk",
+export const STORY = {
+  client: "Orion Retail",
+  ask: "Orion wants a partner to “improve the customer experience”. Nobody has said what that means.",
+  question: "Can you win Orion’s work, make it worth winning, and still deliver what you promised?",
+  stakes: "Every promise you make to win it, your team will have to keep.",
+} as const;
+
+export interface Rule { id: DimensionId; question: string; name: string; plain: string }
+/** The three questions, in the order a pursuit meets them. Names match `COPY.dimensions`. */
+export const RULES: readonly Rule[] = [
+  { id: "win", question: "Can we win it?", name: "Win it", plain: "Who you know, what you know, and why they would choose you." },
+  { id: "profit", question: "Is it worth winning?", name: "Make it worth it", plain: "What it costs you, and what you give away to get it." },
+  { id: "deliver", question: "Can we deliver it?", name: "Deliver it", plain: "Whether the people, data and plan behind each promise exist." },
+];
+export const ruleOf = (id: DimensionId): Rule => RULES.find((r) => r.id === id)!;
+
+/** Which of the three questions each decision is really about. Its lesson is filed under it. */
+export const MISSION_RULE: Readonly<Record<string, DimensionId>> = {
+  m1: "win", m2: "win", m3: "win",
+  m4: "profit", m5: "win", m5b: "profit",
+  m6: "deliver", m6b: "profit", m7: "deliver", m7b: "deliver",
+  m8: "profit", m9: "deliver", m9a: "win", m9b: "profit",
+  m10: "deliver", m10b: "deliver", m10h: "deliver", m10c: "win",
 };
+
+/**
+ * Every position the engine's ledger can report, filed under one question. The ledger is the
+ * player's record in plain language; this is what turns it into a board of three columns.
+ * Keyed by label because the label is the ledger's identity; `presentation.test.ts` fails if a
+ * ledger rule is added without a home here.
+ */
+export const LEDGER_RULE: Readonly<Record<string, DimensionId>> = {
+  "You got in on trust": "win", "You got in on evidence": "win", "You got in on the argument": "win",
+  "They chose you": "win", "How you were scored": "win", "Their real problem": "win",
+  "The rival's blind spot": "win", "Argued from their data": "win", "They take your word": "win",
+  "You chose the ground": "win", "Inside the business": "win", "Their brief, as written": "win",
+  "Discount given": "profit", "Scope removed": "profit", "A partner who does this": "profit",
+  "A payback number, in writing": "profit", "A narrow first job": "profit",
+  "Who can stop this": "deliver", "The last attempt": "deliver", "Operations is in the room": "deliver",
+  "Operations invested": "deliver", "The review is answered": "deliver", "You overruled the review": "deliver",
+  "Risk accepted": "deliver", "Mitigation underfunded": "deliver", "Platform rebuild promised": "deliver",
+  "A route into Operations": "deliver", "Measurement is covered": "deliver", "Adoption is funded": "deliver",
+  "Eight weeks promised": "deliver", "No route to production": "deliver", "Timeline assumes access": "deliver",
+};
+
+/** One question per act, each a step towards `STORY.question`. Asks; never answers (G3b). */
+export const ACT_QUESTION: Readonly<Record<ChapterNumber, string>> = {
+  1: "Which client is worth your team’s quarter, and how do you get in the room?",
+  2: "Is this a real opportunity, and how much of your team should it get?",
+  3: "What will you propose, and what will you promise to deliver?",
+  4: "What terms can you sign and still keep your word?",
+  5: "Can your team keep the promises you made to win?",
+};
+
+/**
+ * Where each beat happens. A screen's place changes only when the story moves somewhere, so
+ * a change of place is itself information. Photographs are framed as photographs, with the
+ * place named beneath — never full-bleed behind text (readability audit, D-080).
+ */
+const PLACE = {
+  office: { photo: "env-glass-office", name: "Your team’s office" },
+  store: { photo: "scene-chapter-1", name: "One of Orion’s 210 stores" },
+  projectRoom: { photo: "scene-chapter-2", name: "Your project room" },
+  workshop: { photo: "scene-chapter-3", name: "The proposal workshop" },
+  orionRoom: { photo: "scene-chapter-4", name: "Orion’s meeting room" },
+  headOffice: { photo: "env-boardroom", name: "Orion head office" },
+  depot: { photo: "env-warehouse", name: "Orion’s distribution centre" },
+  delivery: { photo: "scene-chapter-5", name: "The delivery team’s room" },
+} as const satisfies Record<string, { photo: BackdropAsset; name: string }>;
+type PlaceId = keyof typeof PLACE;
+
+const SCENE_PLACE: Readonly<Record<string, PlaceId>> = {
+  setup: "office", "int-1": "store", m1: "office", m2: "store", m3: "office", "deb-1": "store",
+  "int-2": "projectRoom", m4: "projectRoom", "turn-rival": "store", m5: "headOffice", "refl-rival": "projectRoom", m5b: "projectRoom", "deb-2": "projectRoom",
+  "int-3": "workshop", m6: "headOffice", m6b: "workshop", "refl-shape": "workshop", m7: "workshop", m7b: "office", "deb-3": "workshop",
+  "int-4": "orionRoom", m8: "orionRoom", m9: "office", m9a: "orionRoom", "turn-award": "headOffice", "refl-award": "office", m9b: "headOffice", "deb-4": "orionRoom",
+  "int-5": "depot", m10: "depot", "refl-month5": "delivery", m10b: "delivery", m10h: "delivery", "turn-sarah": "headOffice", m10c: "headOffice", "deb-5": "delivery",
+  end: "store",
+};
+
+export const placeOf = (nodeId: string) => PLACE[SCENE_PLACE[nodeId] ?? "office"];
+
+/** Kept for the presentation contract: every node has a credited photograph. */
+export const BACKDROP: Readonly<Record<string, BackdropAsset>> = Object.fromEntries(
+  Object.entries(SCENE_PLACE).map(([id, place]) => [id, PLACE[place].photo]),
+);
 
 /** Chapter lighting names. The colour script itself lives in the stylesheet as tokens. */
 export const CHAPTER_LIGHT: Readonly<Record<ChapterNumber, string>> = {

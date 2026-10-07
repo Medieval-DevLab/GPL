@@ -1,174 +1,99 @@
-# Art direction: a prestige business drama
+# Art direction: a daylight business story
 
-October 2026. Supersedes the visual sections of `DESIGN-LANGUAGE.md`, `DESIGN-SYSTEM.md`,
-`SCREEN-SYSTEM.md` and `VISUAL-LANGUAGE-AND-WORLD.md`. Their rules about evidence, attribution,
-no outcome preview and accessibility still stand. Decision record: `D-077`.
+8 October 2026. This document describes how GPL looks and moves, and why. It replaces the dark,
+cinematic direction of D-077, which was itself replaced the same day by D-080. Rules on evidence,
+attribution, outcome previews and accessibility in `DESIGN-RULES.md` still apply.
 
-## The problem this replaces
+## What went wrong, measured
 
-Seen together, the 78 screens of a full run were one composition repeated: a beige page of
-bordered text boxes. Three facts explain most of it.
+The user found the D-077 build "gorgeous" but unreadable, too futuristic, and impossible to
+follow. A diagnostic run measured every visible word across a full playthrough at 1440×900,
+including its real contrast against the pixels behind it:
 
-1. **One plane.** Everything sat on the same surface, so there was no foreground, background
-   or object to handle. Depth was a 1 px border.
-2. **No colour script.** All five chapters used the same warm paper and teal ink. Every act
-   looked identical, so progress never registered.
-3. **One layout family.** Briefs, decisions, consequences, debriefs and events were the same
-   page with different words. Each chapter also used a single photograph, shown three times in
-   a row.
+| Measure | D-077 (dark) | D-080 (daylight) |
+|---|---:|---:|
+| Screens per run | 79 | 48 |
+| Screens before the first decision | 5 | 3 |
+| Non-decision screens between decisions | 2–5 | 1–2 |
+| Words below 14 px | 34% | 0% |
+| Words on rotated surfaces | 39% | 0% |
+| Words set over photographs | 20% | 0% |
+| Words in tracked monospace capitals | 12% | 0% |
+| Words failing real contrast | 11% | 0%¹ |
+| Distinct layouts for a decision | 14 | 1 |
 
-## What was studied
+¹ The diagnostic flags about 2% of words. All of them were scrolled under the sticky command
+bar when the screenshot was taken; none is visible text with low contrast.
 
-Official screenshots from about 35 titles were pulled from their store pages and laid out as
-contact sheets. Developer interviews and talk write-ups were read for technique rather than
-taste; sources are in `D-077`. The games that informed specific decisions:
+The structural cause mattered more than any single visual choice. The game had no spine: 18
+standalone cases, 53 different lesson sentences, 50 record labels, and 14 layouts. A screen
+changed because the format changed, not because the story did.
 
-| Game | Technique taken |
+## The spine
+
+- **One question** on the title, the journey and the ending: *Can you win Orion's work, make it
+  worth winning, and still deliver what you promised?* (`STORY` in `presentation.ts`).
+- **Three questions** under it, matching the three indicators the engine already tracks: *Can
+  we win it? Is it worth winning? Can we deliver it?* (`RULES`).
+  - Every decision is filed under one of them (`MISSION_RULE`). Its consequence says so: "Filed
+    under Can we deliver it?".
+  - Every position in the player's record is filed under one too (`LEDGER_RULE`). A test fails
+    if a new ledger rule is added without a home.
+- **One question per act** (`ACT_QUESTION`), each a step towards the main one.
+
+## Scene grammar: a new screen means the story moved
+
+- **A decision is one scene.** The situation and the choice share a screen. Committing does not
+  change the screen: the room's answer takes the situation's place, and the board marks what
+  changed (*New*) and what caused it (*Why*).
+- **One layout for all 18 decisions.** The place and the people sit on the left, the decision in
+  the centre and the board on the right. Only the place, the people and how they reach you ("On
+  a call", "In a message", "Across the table") change between scenes, so the change is
+  information.
+- **An act break is one screen.** It replaces the old debrief → journey map → chapter opener
+  sequence. It shows what the act decided (one line per decision, filed under a question), the
+  act's reflection question (which used to interrupt mid-act), the next act's question, and the
+  board with the deal's position.
+- **Story turns keep a screen**, because news arriving from elsewhere is the situation changing.
+- **The journey map is on request** (the progress track in the header), never forced.
+
+None of this changes the engine. `App.tsx` `settle()` advances through the brief phase, the
+mid-act reflection beat and the next act's opener with ordinary `advance` calls, so state,
+saves and run codes are exactly what they were.
+
+## The board ("Where you stand")
+
+The player's record, in the engine's own plain-language positions (`ledger`), filed under the
+three questions and always in the same place. It replaces the hidden 50-label account file as
+the thing a learner carries in their head.
+
+- At most four cards per question. Detail shows only where it is news; older cards are labels.
+- Values appear only on a consequence, an act break, the journey and the ending, never over a
+  decision (G9).
+- Liabilities are reported as positions, never styled as gains or shortfalls.
+
+## The look
+
+A good business magazine, not a game HUD.
+
+| Element | Choice |
 |---|---|
-| Disco Elysium | Dialogue in a tall column beside a visible world. Short, scannable lines. |
-| Persona 5 (Atlus) | A separate layout for every menu, never a shared panel. One loud colour per act. Extreme contrast in type scale. Text readable on the first frame of a transition. |
-| Citizen Sleeper 1 and 2 | State displayed as instruments (segmented clocks, ticks) placed next to the decision they bear on. |
-| Suzerain | World events arrive as newspapers and documents. |
-| Papers, Please; Orwell; Not For Broadcast | The tools of the job are the interface: desk, documents, stamp. |
-| Hades | Characters as cut-out figures in front of the scene. A portrait is a presence, not an avatar. |
-| Reigns | Persistent meters that react, without ever forecasting a choice. |
-| 80 Days | The chosen option becomes part of the record; nothing previews where it leads. |
-| Pixar colour scripts | Colour carries the arc: each act has its own light. |
-| Schell's interest curve | Peaks need valleys. Quiet beats (reflection) must look quiet. |
-
-The anti-patterns these developers name have all occurred in this project before: legibility
-sacrificed to style (Persona's first menus), "everything is a container", and juice that wastes
-time. The rules below guard against each.
-
-## Brand system
-
-Four colour families, and each means exactly one thing (`src/ui/styles/tokens.css`):
-
-| Family | Values | Meaning |
-|---|---|---|
-| **Ink** | `#0b0e13` stage, `#161b24` → `#3d4859` raised | The room. Never carries data. |
-| **Paper** | `#f4eee3`, note yellow `#ffe17a`, manila `#d8b77a` | Artefacts the player handles. |
-| **Signal** | vermilion `#ff5a36` | The brand: title, logo, frames around the story, the stamp. |
-| **Light** | one accent per chapter | Grades the photography, carries focus and the primary action for that act. |
-
-Rise and fall deltas use mint `#72f0b4` and coral `#ff8f80`. They always come with ▲/▼ and a
-sign, so colour never carries the meaning alone.
-
-### The colour script
-
-The five acts run through one working day:
-
-| Chapter | Light | Accent | Mood |
-|---|---|---|---|
-| 1 · Find client | Daybreak | amber `#ffb547` | the market in the morning |
-| 2 · Opportunity | Glass | cyan `#3dd6ea` | cool analysis |
-| 3 · Solution | Studio | violet `#ad91ff` | the workshop |
-| 4 · Deal | Boardroom | rose `#ff5f8f` | evening, pressure |
-| 5 · Delivery | Floor | mint `#52e3a0` | the shop floor, first light |
-
-Every accent is at least 6.5:1 against its ink text, and every accent used as text on the stage
-is at least 6:1. The ratios were computed rather than asserted, and axe found no violations in
-the browser gate. A chapter's light applies only inside that chapter. The frames around the
-story (title, journey, team select, ending) use the brand signal.
-
-### Type
-
-| Role | Face | Why |
-|---|---|---|
-| Display | Archivo, condensed (wdth 62–78%), 800–900 weight | Headline weight without width: titles can be enormous and still fit. |
-| Document | Newsreader | Paper artefacts read as documents, and voices read as voices. |
-| Interface and body | Inter | Unchanged. The reading face the existing measurements were taken in. |
-| Labels | JetBrains Mono, tracked uppercase | Case-file metadata, kickers, HUD. |
-
-All four are SIL OFL, self-hosted in `public/fonts` and recorded in `OFL.txt`. Nothing is
-fetched at runtime.
-
-## Depth: four planes
-
-Every screen is composed back to front (`stage.css`):
-
-1. **World.** The location photograph, desaturated and pulled into the chapter light with a
-   `color` blend, then a light bloom, vignette, animated grain and a slow 38-second drift. Five
-   moods (room, dim, blur, night, vivid) set how present the room is.
-2. **Cast.** Background-removed figures of the same licensed portraits, rim-lit in the chapter
-   colour and seated with a cast shadow. They are framed by the face (see below).
-3. **Artefacts.** Paper with tooth, tape, pins, polaroids, sticky notes, index cards, folders,
-   phones, a cork board, a planning wall, a stamp.
-4. **HUD.** Glass, always on top: brand, chapter, an 18-tick progress strip grouped by act, and
-   tools. The three business indicators appear in the HUD only where they explain something:
-   on consequences, chapter debriefs and the journey. Over a brief or a decision they would be
-   dashboard furniture and a scoreboard to optimise (G9; the original scope contract).
-
-### Framing people by the face
-
-The seven source photographs are cropped very differently. Priya is nearly full length; Sarah
-is head and shoulders. At equal heights they read as a giant and a child. Each cut-out's face
-box was measured with OpenCV's YuNet detector and stored in `CUTOUT_FRAME`. A screen asks for
-"face here, this big", and the figure is scaled to that. A figure's base never floats: a close
-crop sits lower in the frame, as nearer the camera.
-
-## Screen families
-
-Each kind of beat has its own composition. Only the question header and the command bar are
-shared, so the player always knows where to look and what commits.
-
-| Beat | Composition |
-|---|---|
-| Title | A cast poster over the city at dusk; the five acts as a light strip. |
-| Team select | Three tall cut-corner cards; the chosen one floods with the brand colour. |
-| Journey | A "season" of five skewed episode panels, each graded in its own light. |
-| Chapter open | The one screen flooded with the chapter colour. Mixed-voice title type, with the guide standing in the scene. |
-| Brief: paperwork | A case file, a polaroid, a colleague's sticky note and an index card of questions. |
-| Brief: call | An incoming call ringing, with your notes beside it. |
-| Brief: messages | A phone with the messages arriving, beside the context. |
-| Brief: argument | The person you face, their challenge, and the file you keep on them. |
-| Decide: table | Approaches dealt as cards; the chosen card lifts and is underlined in light. |
-| Decide: board | Questions pinned to a cork board around the client, with red string to what you chose. |
-| Decide: plan | Components as magnets on a planning wall. |
-| Decide: chat | The person in the room; the thread in a column; your replies as outgoing bubbles. |
-| Decide: call | The speaker on camera with captions and your colleague's aside; your lines in a column. |
-| Decide: case | Across the table from the person to persuade; your record in a folder; each argument shows what it is built on. |
-| Consequence | Your choice stamped; the deal's position counts up on dials; what happened; **why it landed this way**, including what the nearest other outcome needed; then your colleague, afterwards, in their own words with nothing captioned "lesson". |
-| Story turn | The artefact it would arrive as: a trade-press front page, a lock-screen email, an internal memo. |
-| Reflection | Night, one lit window, a notebook page. Deliberately the quietest screen in the game. |
-| Debrief | "Closed" stamp; the act's decisions as a chain of filed cards; how the act moved the deal. |
-| Ending | A cover with the verdict and final position, then the report: causal threads, a timeline coloured by act, reflections, the plan. |
-
-## Motion and feedback
-
-- **Easing.** Expo-out (`cubic-bezier(.16, 1, .3, 1)`) for arrivals; a small overshoot
-  (`.34, 1.56, .64, 1`) for things that land, such as cards and stamps. Never linear.
-- **Entrances** are staggered by role: the headline slams in, cards are dealt, paper slides
-  in, the cast walks in, the stamp lands, the chapter title wipes.
-- **Screen changes** use the View Transitions API where it exists. On commit, the chosen card
-  morphs into the stamped card on the consequence screen.
-- **Numbers count.** On a consequence, the HUD and dials count from before to after, under one
-  wash in the chapter light. The wash is not coloured by outcome tone: a mint/coral flood graded
-  the decision before a word was read (pedagogy audit, 8 October).
-- **Reduced motion** (the system setting or the in-game preference) shows the finished screen
-  with no animation. The resting state is the CSS default, so nothing depends on an animation
-  completing.
-
-### Sound
-
-Synthesised with Web Audio; there are no audio files. Four cues: select, page, stamp and
-shutter. Every consequence gets the same page cue. Rise and fall cues were cut because a
-verdict sound is a buzzer. Sound is **off by default** and nothing depends on it. The game is played at desks,
-and constant interface sound is an irritant its own sources warn about.
+| Page | Warm paper `#f6f3ed`, white cards, hairline `#ded7ca` |
+| Text | Ink `#16181c` (16:1); secondary `#474c55` (7.8:1); tertiary `#5c616a` (5.6:1, 14 px minimum) |
+| Accent | One per act, used for the act label, the active question, the selected option and the primary action. Act 1 amber `#985400`, act 2 teal `#0b6673`, act 3 indigo `#4a42ad`, act 4 crimson `#a32547`, act 5 green `#1d6c45`. All are at least 5.8:1 as text on white, and white is at least 5.8:1 on them. |
+| Brand | Vermilion `#c2381e`, on the frames around the story only |
+| Type | Newsreader (serif) for headlines and voices; Inter for reading and interface. Reading text 17–18 px, nothing below 14 px. No tracked capitals, no rotation, no condensed display face. |
+| Photographs | Daylight only, framed as photographs with the place named in live text beneath. Never full-bleed, never behind text. Night cityscapes and background-removed cut-outs were removed. |
+| Motion | A fade and a 10 px rise on entry; a two-second outline on new board cards; a cross-fade between scenes. Nothing loops. Reduced motion shows finished screens. |
+| Sound | Off by default. Select, page, stamp and act-change cues only. |
 
 ## Rules that keep this from decaying
 
-- A new beat gets a composition, not a container. If it really is paperwork, it uses the
-  dossier.
-- Colour comes only from tokens. A chapter's light applies only inside that chapter.
-- Opacity never means "missing" or "locked"; use text, a strike or a glyph. The browser gate
-  failed exactly this once.
-- Cut-outs are placed only through `<Cutout frame>`, never by raw height.
-- Every new screen is captured at 1440×900, 1366×768 and 720×450 and looked at.
-
-## Voice rules from the pedagogy audit (8 October)
-
-- The interface never voices advice, praise or "the lesson". Anything that steers comes from a named colleague, with face and job title: steers, the questions card ("Aisha asks"), assessments ("Riya's read"), lessons ("Riya, afterwards") and badges ("Riya noticed").
-- Liabilities (`EARNED[f].liability`) are never styled as gains, and their absence is never styled as a shortfall: no ✓, no lock, no strike.
-- No per-option evidence ticks on decision cards. A row of ✓s reads as a rating. The record lives in the folder.
-- The ending asks its causal question before the threads that answer it. It takes one answer, then reveals. Players can skip it and still see every thread.
+- A new beat is a scene in the same layout, or it does not get a screen.
+- No text over a photograph, no rotated text, nothing below 14 px, no tracked capitals.
+- Every new decision gets a `MISSION_RULE`, and every new ledger rule a `LEDGER_RULE`; the tests
+  enforce both.
+- Anything that steers comes from a named colleague. The interface reports; it never advises
+  (G9b).
+- Re-run the readability diagnostic (`docs/RELEASE-VERIFICATION.md` describes it) after any
+  layout change, and look at the screenshots.

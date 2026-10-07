@@ -32,11 +32,11 @@ describe('presentation checkpoints and recovery', () => {
     expect(decodeSave(raw, story).status).toBe('ok');
     expect(presentationFrom(raw, game, story).view).toBe('map');
   });
-  it('does not force a reopened chapter cinematic back onto the map', () => {
+  it('opens a restored engagement on its scene, with the map only on request (D-080)', () => {
     const game = start();
     const raw = serialiseSession({ game, presentation: emptyPresentation() }, story);
     expect(presentationFrom(raw, game, story).view).toBe('play');
-    expect(presentationFrom(null, game, story).view).toBe('map');
+    expect(presentationFrom(null, game, story).view).toBe('play');
   });
   it('preserves an uncommitted selection', () => {
     let game = advance(advance(start(), story), story);

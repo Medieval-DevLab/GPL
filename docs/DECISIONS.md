@@ -6,6 +6,47 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-080 · One story, one scene, daylight: the D-077 look was the wrong answer
+The user played D-077 and called it gorgeous, but said:
+- the text was not readable in most places;
+- the screens were too futuristic for a learning game;
+- there were too many screens before any step;
+- there was "too much info without any cohesiveness or line of thought and nobody can recall all
+  that";
+- "Screen change should mean something."
+
+A diagnostic measured all of it. Figures are in `docs/ART-DIRECTION.md`. In short, 34% of words
+were below 14 px and 39% sat on tilted cards. 79 screens carried 18 decisions, which came with 53
+lesson sentences and 50 record labels and no thread through them. The dark, neon, monospace
+look came from my own choice of science-fiction references (Citizen Sleeper, Persona), which
+suit a stylised game, not professionals learning a job.
+
+**Decided, with the user:** keep all 18 decisions, restructure around one story, and move to a
+daylight editorial look.
+- **Spine.** One story question; three questions (win, worth it, deliver) mapped onto the
+  engine's existing three indicators; every decision and every ledger position filed under one
+  of them; one question per act.
+- **Scene grammar.** The situation and the choice are one scene, and the outcome appears in the
+  same scene. An act break replaces debrief, journey and next opener. The journey map is on
+  request. Mid-act reflections moved to the act break. A run is 48 screens, down from 79.
+- **The board.** The engine's `ledger`, filed under the three questions, always on screen. It
+  marks *New* and *Why* after each decision.
+- **The look.** Paper and ink, one accent per act, serif headlines, 17–18 px reading text,
+  daylight photographs in frames. Removed: dark stages, glows, cut-outs, grain, monospace
+  labels, rotation, night photography, and two typefaces.
+
+**Engine untouched.** Everything is presentation, and `settle()` in `App.tsx` advances skipped
+beats through the ordinary engine, so saves and run codes stay valid. One session test changed:
+a restored game now opens on its scene rather than the map.
+
+**What it cost.**
+- The D-077 compositions are gone: thirteen screen files and four stylesheets.
+- The six night photographs, the seven cut-outs, Archivo and JetBrains Mono were removed from
+  the repository. They remain in the `cff5a2a` history if anyone wants them back.
+- Runtime photography fell from 3.04 MB to 1.35 MB.
+
+**Reversible:** yes, by reverting to `cff5a2a`. Not recommended.
+
 ## D-079 · A pedagogy audit of the rebuild, and what it overturned
 The read-only `gpl-pedagogy` reviewer audited the D-077 screens the same day. It found three
 structural faults, all of them mine:

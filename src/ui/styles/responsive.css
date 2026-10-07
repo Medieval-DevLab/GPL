@@ -1,123 +1,32 @@
-/* Desktop-first. Compositions keep their character down to 1366×768 and reflow to one
-   column at 200% zoom (720×450), where staging gives way entirely to reading order. */
-
-@media (max-height: 820px) {
-  .desk { gap: 60px; padding-top: 12px; }
-  .desk-side { gap: 12px; }
-  .polaroid { width: min(240px, 100%); }
-  .sticky { padding: 14px 18px 12px; }
-  .sticky-line { font-size: 17px; }
-  .index-card { padding: 12px 18px 10px; gap: 8px; }
-  .index-card li { font-size: 15px; }
-  .case-challenge p { font-size: 16px; }
-  .folder li { padding: 7px 0; font-size: 13px; }
-  .call-column .decide-head h1 { font-size: clamp(26px, 2.6vw, 38px); }
-  .call-column .decide-prompt { font-size: 15px; margin-top: 4px; }
-  .replies-line .reply { padding: 10px 14px 10px 16px; }
-  .replies-line .reply .choice-desc { gap: 6px; }
-  .reply-say { font-size: 15.5px; }
-  .decide-head { padding-top: 14px; padding-bottom: 8px; }
-  .decide-head h1 { font-size: clamp(30px, 3.2vw, 48px); }
-  .card { padding: 18px 20px 16px; gap: 10px; }
-  .card-line { font-size: 15px; }
-  .result-grid { padding-top: 16px; gap: 26px; }
-  .result-headline { font-size: clamp(32px, 3.2vw, 52px); }
-  .result-detail { font-size: 19px; }
-  .lesson-frame { height: 110px; }
-  .dossier { padding: 24px 32px 22px; }
-  .dossier-title { font-size: clamp(30px, 2.8vw, 42px); }
-  .dossier-text p { font-size: var(--reading); }
-  .chapter-title { font-size: clamp(56px, 7.4vw, 124px); }
-  .newspaper { padding: 18px 34px 20px; }
-  .press-headline { font-size: clamp(34px, 3.8vw, 56px); }
-  .team-card { min-height: 290px; padding: 20px 22px 18px; }
-  .season { min-height: 400px; }
-}
-
+/* Desktop first; reflows to one column at 200% zoom (720×450). Reading order never changes:
+   place, decision, board. */
 @media (max-width: 1280px) {
-  .hud { gap: 14px; }
-  .hud-chapter { display: none; }
-  .meter { min-width: 84px; }
-  .result-grid { grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(280px, 320px); gap: 26px; }
-  .case-wrap { grid-template-columns: minmax(0, 0.8fr) minmax(230px, 270px) minmax(0, 1.3fr); }
+  .scene { grid-template-columns: 230px minmax(0, 1fr) 310px; gap: 26px; }
+  .act-break { grid-template-columns: minmax(0, 1fr) 310px; }
+  .hud-act strong { max-width: 260px; }
 }
-
 @media (max-width: 1100px) {
-  .table { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .result-grid { grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); }
-  .lesson { grid-column: 1 / -1; }
-  .lesson-frame { display: none; }
-  .chat-wrap { grid-template-columns: minmax(0, 0.7fr) minmax(0, 1fr); }
-  .call-wrap, .case-wrap { grid-template-columns: 1fr; }
-  .case-opponent, .call-video { min-height: 360px; }
-  .call-column, .arguments { max-height: none; }
-  .desk { grid-template-columns: 1fr; }
-  .desk-side { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); justify-items: stretch; }
-  .wall-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .plan-wrap { grid-template-columns: 1fr; }
-  .turn-grid { grid-template-columns: 1fr; }
-  .title-cast { opacity: 0.45; }
-  .setup-cards { grid-template-columns: 1fr; }
-  .team-card { min-height: 0; }
+  .scene { grid-template-columns: minmax(0, 1fr) 300px; }
+  .place { grid-column: 1 / -1; position: static; grid-template-columns: 220px minmax(0, 1fr); align-items: start; }
+  .title, .act, .turn, .ending-cover { grid-template-columns: 1fr; gap: 28px; }
+  .team-cards { grid-template-columns: 1fr; }
 }
-
 @media (max-width: 760px) {
-  :root { --hud-h: 56px; --gutter: 16px; }
-  .hud { gap: 8px; padding: 0 10px; }
-  .hud-brand { font-size: 20px; }
-  .hud-track .ticks, .meter .label, .meter .bar { display: none; }
-  .hud-meters { gap: 0; padding: 2px; }
-  .meter { min-width: 0; grid-template-columns: 16px auto; padding: 2px 6px; column-gap: 4px; }
-  .meter svg { width: 16px; height: 16px; grid-row: auto; }
-  .meter .value { font-size: 15px; }
+  :root { --hud-h: 54px; --gutter: 16px; --t-h1: 30px; }
+  .hud { gap: 10px; padding: 0 10px; }
+  .hud-act, .hud-track .ticks { display: none; }
   .icon-button { width: 34px; height: 34px; }
-  .stage { min-height: 0; }
-  .cutout, .cast-name, .title-cast, .setup-team, .flood-number, .press-stack { display: none; }
-  .title-copy { padding: 24px 0 24px; margin-right: var(--gutter); }
-  .title-acts { position: static; grid-template-columns: 1fr; padding: 0 var(--gutter) 20px; }
-  .title-head, .ending-cover h1 { font-size: 44px; }
-  .journey-head, .debrief-head, .decide-head { flex-direction: column; align-items: flex-start; }
-  .season { flex-direction: column; min-height: 0; }
-  .episode, .episode.is-current { flex: none; min-height: 200px; clip-path: none; }
-  .episode-body { position: relative; }
-  .chapter-title { font-size: 48px; }
-  .chapter-agenda ol { grid-template-columns: 1fr; }
-  .chapter-action { flex-direction: column; align-items: flex-start; }
-  .flood img { width: 100%; opacity: 0.25; clip-path: none; }
-  .table, .wall-grid { grid-template-columns: 1fr; grid-auto-flow: row; }
-  .plan-wrap:has(> .plan-side) { grid-template-columns: 1fr; }
-  .card { rotate: 0deg; }
-  .table-wrap .steer { margin-top: 0; align-self: stretch; }
-  .board { min-height: 0; display: grid; gap: 14px; padding: 18px; }
-  .board-hub, .strings { display: none; }
-  .pin-card { position: relative; left: auto !important; top: auto !important; translate: none; width: auto; }
-  .board-wrap .steer { position: static; max-width: none; }
-  .chat-wrap { grid-template-columns: 1fr; padding: 0 var(--gutter); }
-  .chat-cast { display: none; }
-  .messenger, .call-video { max-height: none; min-height: 0; }
-  .call-video { min-height: 280px; }
-  .call-aside { position: static; margin: 8px; max-width: none; }
-  .call-self { display: none; }
-  .case-opponent { min-height: 0; }
-  .case-challenge { position: static; clip-path: none; }
-  .result-grid { grid-template-columns: 1fr; }
-  .chain { flex-direction: column; gap: 18px; }
-  .chain-card:not(:last-child)::after { content: "↓"; top: auto; bottom: -24px; right: 50%; translate: 50% 0; }
-  .newspaper { padding: 16px 18px; rotate: 0deg; }
-  .masthead { grid-template-columns: 1fr; text-align: left; }
-  .masthead > :last-child { text-align: left; }
-  .press-body { grid-template-columns: 1fr; }
-  .press-columns { columns: 1; }
-  .notebook { padding: 22px 20px 20px 34px; background-image: repeating-linear-gradient(transparent 0 33px, rgba(60, 90, 160, 0.16) 33px 34px); }
+  .scene, .act-break { grid-template-columns: 1fr; padding-top: 18px; }
+  .place { grid-template-columns: 1fr; }
+  .place-photo img { aspect-ratio: 16 / 9; }
+  .board { position: static; max-height: none; }
+  .cmd-bar { position: static; flex-wrap: wrap; }
+  .cmd-bar .primary { width: 100%; justify-content: space-between; }
+  .acts-strip { grid-template-columns: 1fr; }
+  .act-row { grid-template-columns: 1fr; }
+  .act-row img { width: 100%; }
   .thread-pair { grid-template-columns: 1fr; }
   .thread-arrow { rotate: 90deg; }
-  .cmd-bar, .stage > .cmd-bar, .decide-bar, .ending-bar { position: static; flex-wrap: wrap; padding: 16px var(--gutter) 20px; background: none; }
-  .cmd-bar .primary { width: 100%; }
-  .plan-summary ol { display: none; }
-  .card.is-selected::before { display: none; }
-  .decide-head::before { display: none; }
-  .ending-hero { min-height: 0; padding: 30px var(--gutter); }
-  .ending-position b { font-size: 40px; }
-  .dossier { padding: 20px; rotate: 0deg; }
-  .team-name { font-size: 36px; }
+  .tradeoffs { grid-template-columns: 1fr; }
+  .frame { padding-top: 24px; }
 }

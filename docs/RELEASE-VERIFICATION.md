@@ -1,5 +1,18 @@
 # Release verification
 
+## Local build, 8 October 2026: one story, one scene, daylight (D-080, unreleased)
+
+Not published. This replaces the D-077 presentation below.
+
+- **TypeScript and tests.** TypeScript clean. 279 tests in 18 files, including the new spine contract: every decision and every ledger position is filed under one of the three questions.
+- **Browser matrix** (`verify-game.mjs --matrix`). All eight runs passed at 1440×900, 1366×768, 1440×1024, 1920×1080 and 720×450. They reached all four ending types: a workable deal (18 decisions), lost at the award (13), won but not well (18) and walked away (14). Keyboard runs passed. Reload and resume, restore, plan export, focus traps, storage denial and image failure all passed. Axe found zero violations across 17 screen types after one fix: the scrollable board is now keyboard-focusable. The harness now answers reflections at the act break and expects the scene grammar: a double-click at the opener must land on decision 1, and setup leads to the act opener.
+- **Mock LMS.** Completion reported, resumable, no score.
+- **`file://`.** Launches with a clean console.
+- **Size.** Interface 15.6 of 27 kB, engine 7.9 of 12, stylesheet 6.8 of 18 kB gz. Cold download 2.04 MB, down from 3.88.
+- **Readability diagnostic.** Every visible word across a full run, with real contrast measured against the rendered pixels; figures are in `docs/ART-DIRECTION.md`. Results: 48 screens per run (was 79); nothing below 14 px, rotated or over photographs (was 34%, 39% and 20%); one decision layout (was 14).
+
+Still outstanding: cutting per-decision word count (a content pass), SV-02, LMS-01, CNT-01, packaging, publication, the employee pilot and manual assistive-technology review. Push to GitHub is waiting for a remote.
+
 ## Local build, 8 October 2026: presentation rebuild (unreleased)
 
 This build is not published. The live site still serves 1.0, and no SCORM or offline ZIPs were rebuilt. Changes: VIS-01 (D-077), CAU-01 (D-078), and UI-01, UI-02 and NAV-01 inside the new screens. Engine outcomes, content and run codes are unchanged; `outcomeBecause` reads state and decides nothing.
