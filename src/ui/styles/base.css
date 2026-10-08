@@ -34,7 +34,8 @@ img { display: block; max-width: 100%; }
 .primary:not(:disabled):hover { filter: brightness(1.08); }
 .primary:not(:disabled):hover .arrow { transform: translateX(4px); }
 .primary:not(:disabled):active { transform: translateY(1px); }
-.primary:disabled { background: var(--paper-2); color: var(--ink-3); box-shadow: none; border: 1px solid var(--line); }
+/* Not yet available, rather than broken: the act's own colour, pale (D-087). */
+.primary:disabled { background: var(--accent-tint); color: var(--accent); box-shadow: none; border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
 .secondary, .ghost { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); font-weight: 600; font-size: 15px; color: var(--ink); white-space: nowrap; }
 .secondary:hover, .ghost:hover { border-color: var(--accent); }
 .secondary.is-strong { background: var(--accent); border-color: var(--accent); color: #fff; }

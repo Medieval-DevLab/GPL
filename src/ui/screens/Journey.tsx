@@ -5,14 +5,16 @@ import { ACT_QUESTION, CHAPTER_PRESENTATION, MILESTONE, MYSTERY, RULES, placeOf 
 import { CHARACTERS } from '../../content/characters';
 import { Action, Backdrop, Heading, Portrait } from '../parts';
 import { flagsSetBy, handOf, stageNameOf, type Card } from '../cards';
+import { ActView } from './Views';
 
 /**
  * The trail (D-083): home base between decisions.
  *
  * Every stop on the journey has a name, and the map shows them all at once: the five stages of
  * a deal in their own colours, the stops you have passed (ticked), where you are, and what lies
- * ahead. Below it, the next stop: who is with you there and what you decide. Beside that, your
- * hand: what you have earned and what you owe, each card saying where it next matters.
+ * ahead. Below it, the next stop: who is with you there and what you decide. Beside that, the
+ * act's own picture of the system (D-087), and your hand: what you have earned and what you owe,
+ * each card saying where it next matters.
  *
  * Laid out like a board-game track, two rows snaking through the stages, because a player
  * who can see the whole road can tell how far they have come and why the next step matters.
@@ -20,9 +22,27 @@ import { flagsSetBy, handOf, stageNameOf, type Card } from '../cards';
 type Status = 'done' | 'here' | 'ahead' | 'missed';
 interface Stop { id: string; chapter: number; event: boolean; status: Status }
 
+/**
+ * The board's rows, from however many acts the content has. Ten stops or fewer fit one row. More
+ * than that snake back on a second row, split between acts so the first row holds the first half
+ * of the stops (an act never breaks across the turn).
+ */
+function rowsOf(stops: Stop[]): Stop[][] {
+  if (stops.length <= 10) return [stops];
+  const acts = [...new Set(stops.map(s => s.chapter))];
+  let count = 0, cut = acts.length - 1;
+  for (let i = 0; i < acts.length - 1; i++) {
+    count += stops.filter(s => s.chapter === acts[i]).length;
+    if (count >= stops.length / 2) { cut = i + 1; break; }
+  }
+  const first = new Set(acts.slice(0, cut));
+  return [stops.filter(s => first.has(s.chapter)), stops.filter(s => !first.has(s.chapter))];
+}
+
 function stopsOf(state: GameState, content: Content): Stop[] {
   const ended = state.phase === 'ending';
-  const all = CHAPTER_PRESENTATION.flatMap(p => p.route.filter(id => MILESTONE[id]).map(id => ({ id, chapter: p.chapter, event: content.nodes[id]?.kind === 'interlude' })));
+  /* Only acts and stops this content has: the presentation table may still list an act it dropped. */
+  const all = CHAPTER_PRESENTATION.filter(p => content.chapters.some(c => c.number === p.chapter)).flatMap(p => p.route.filter(id => MILESTONE[id] && content.nodes[id]).map(id => ({ id, chapter: p.chapter, event: content.nodes[id]?.kind === 'interlude' })));
   const at = all.findIndex(s => s.id === state.nodeId);
   const firstOpen = all.findIndex(s => !s.event && !state.completed.includes(s.id));
   const here = ended ? -1 : at >= 0 ? at : firstOpen;
@@ -50,7 +70,7 @@ export function Journey({ state, content, node, currentChapter, onPlay, onReview
   const hand = handOf(state, content);
   const have = hand.filter(c => c.pile === 'strength'), owe = hand.filter(c => c.pile === 'promise');
   const fresh = new Set(justHappened ? flagsSetBy(content, justHappened.missionId, justHappened.outcomeId) : []);
-  const rows = [stops.filter(s => s.chapter <= 3), stops.filter(s => s.chapter > 3)];
+  const rows = rowsOf(stops);
   const solved = MYSTERY.clues.some(f => state.flags.includes(f));
 
   return <section className="page trail" data-chapter={chapter}>
@@ -69,7 +89,7 @@ export function Journey({ state, content, node, currentChapter, onPlay, onReview
       </li>)}</ul>
     </header>
 
-    <div className="trail-board" role="group" aria-label={T.kicker}>
+    <div className={'trail-board' + (rows.length === 1 ? ' is-one-row' : '')} role="group" aria-label={T.kicker}>
       {rows.map((row, r) => <div key={r} className={'trail-board-row' + (r === 1 ? ' is-back' : '')}>
         {CHAPTER_PRESENTATION.filter(p => row.some(s => s.chapter === p.chapter)).map(p => {
           const inRegion = row.filter(s => s.chapter === p.chapter);
@@ -112,6 +132,8 @@ export function Journey({ state, content, node, currentChapter, onPlay, onReview
           <Action onClick={onPlay}>{state.completed.length === 0 && !justHappened ? T.begin : T.go + ': ' + (here ? MILESTONE[here.id] : '')}</Action>
         </>}
       </article>
+
+      <ActView state={state} content={content} chapter={chapter} />
 
       <aside className="trail-hand" aria-labelledby="hand-title">
         <h2 id="hand-title" className="mini-head">{T.hand}</h2>

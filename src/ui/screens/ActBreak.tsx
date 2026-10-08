@@ -1,13 +1,23 @@
+import { useEffect, useRef, useState } from 'react';
 import type { Chapter, Content, GameState, Interlude } from '../../engine/types';
 import type { ChapterNumber } from '../../content/assets';
 import { COPY } from '../../content/interface';
 import { ACT_QUESTION, CHAPTER_PRESENTATION, MISSION_RULE, placeOf, ruleOf } from '../../content/presentation';
 import { CHARACTERS } from '../../content/characters';
 import { Action, Backdrop, Heading, castId, pad2 } from '../parts';
+import { VIEWS } from '../../content/views';
+import { settledOf } from '../ledger';
 import { Figure, Measures, RuleMark } from './FrameParts';
+import { SystemMap } from './SystemMap';
+import { ActView, PromiseCalendar } from './Views';
 
 /**
  * The act break: one screen where three used to be (debrief → map → next opener, D-080).
+ *
+ * It opens on the act as a system (D-087): the cause-and-effect map, with a guess before the
+ * reveal. When the engine has settled the promise ledger, the calendar then plays out, one
+ * promise at a time. Each of those steps moves on like a spoken line (`data-line-next`), so
+ * keyboard, pointer and the release harness move through it the same way.
  *
  * The act's decisions are filed as a chain of cards, one leading into the next, and the act
  * is stamped closed. Beside it, how the act moved the deal. Below, the act's guide sits down
@@ -20,6 +30,30 @@ export function ActBreak({ node, state, content, reflections, onReflect, onNext 
 }) {
   const F = COPY.frames.actBreak;
   const n = node.chapter as ChapterNumber;
+  const settled = !!settledOf(state);
+  const [step, setStep] = useState<'map' | 'calendar' | 'summary'>('map');
+  /* A new step is a new page of the same screen: take focus to its heading, as a route would. */
+  const moved = useRef(false);
+  useEffect(() => { if (moved.current) document.getElementById('game-heading')?.focus({ preventScroll: true }); moved.current = true; }, [step]);
+  if (step !== 'summary') {
+    const M = VIEWS.map, C = VIEWS.calendar, map = step === 'map';
+    return <section className="page fs f-map">
+      <Backdrop photo={placeOf(node.id).photo} focus="deep" />
+      <header className="f-map-head sheet">
+        <p className="f-kicker">{COPY.stage.act} {n} {COPY.stage.of} {content.chapters.length} · {map ? M.kicker : C.playTitle}</p>
+        <Heading className="f-h1">{node.title}</Heading>
+        <p className="f-read">{map ? M.lead : C.playLead}</p>
+      </header>
+      {/* Beside the map, the act's own picture as the act closes: the scales tipped, the faces turned. */}
+      {map ? <div className="f-map-body"><SystemMap state={state} content={content} chapter={node.chapter} />{!settled && <ActView state={state} content={content} chapter={node.chapter} />}</div>
+        : <div className="f-cal sheet"><PromiseCalendar state={state} content={content} play /></div>}
+      <div className="f-map-foot">
+        <button className="primary" data-action="primary" data-line-next onClick={event => { if (event.detail < 2) setStep(map && settled ? 'calendar' : 'summary'); }}>
+          {map && settled ? M.toCalendar : M.next}
+        </button>
+      </div>
+    </section>;
+  }
   const decisions = state.history.filter(h => h.chapter === node.chapter);
   const first = decisions[0], lastDecision = decisions.at(-1);
   const prompts = Object.values(content.nodes).filter((x): x is Interlude => x.kind === 'interlude' && x.role === 'reflection' && x.chapter === node.chapter);
@@ -33,7 +67,7 @@ export function ActBreak({ node, state, content, reflections, onReflect, onNext 
     <Figure id={castId(guide.name)} className="f-break-guide" enter="left" delay={900} box={{ left: 0, width: 'var(--guide-w)', top: '46%', bottom: 0 }} frame={{ x: '52%', y: 0.12, face: 0.3 }} />
 
     <header className="f-break-head sheet">
-      <p className="f-kicker">{COPY.stage.act} {n} {COPY.stage.of} 5 · {F.closed}</p>
+      <p className="f-kicker">{COPY.stage.act} {n} {COPY.stage.of} {content.chapters.length} · {F.closed}</p>
       <Heading className="f-h1">{node.title}</Heading>
       {!summed && node.body.map((line, i) => <p key={i} className="f-read">{line}</p>)}
       <span className="f-stamp" aria-hidden="true"><small>{COPY.stage.act} {n}</small>{F.stamp}</span>
@@ -76,7 +110,7 @@ export function ActBreak({ node, state, content, reflections, onReflect, onNext 
     <aside className="f-next sheet" data-chapter={next?.number} aria-labelledby="next-heading">
       {next ? <>
         <div className="f-next-band">
-          <p>{F.next} · {COPY.stage.act} {next.number} {COPY.stage.of} 5</p>
+          <p>{F.next} · {COPY.stage.act} {next.number} {COPY.stage.of} {content.chapters.length}</p>
           <h2 id="next-heading">{nextOpen?.title ?? next.title}</h2>
         </div>
         <p className="f-next-q">{ACT_QUESTION[next.number as ChapterNumber]}</p>

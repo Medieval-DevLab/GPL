@@ -112,6 +112,19 @@ function setByEntry(content: Content, missionId: string, outcomeId: string, chos
   return [...flagsSetBy(content, missionId, outcomeId), ...picked.filter(p => chosenIds.includes(p.id)).flatMap(p => p.flags ?? [])];
 }
 
+/** Where in the run a card was made: the index of the decision that put it in your hand, or -1. */
+export const madeAt = (state: GameState, content: Content, flag: string) =>
+  state.history.findIndex(h => setByEntry(content, h.missionId, h.outcomeId, h.chosenIds).includes(flag));
+
+/** The first decision after `after` that read the card, as an index into the history, or -1. */
+export function readAt(state: GameState, content: Content, flag: string, after: number): number {
+  for (let i = after + 1; i < state.history.length; i++) {
+    const { opens, steers } = reads(content.nodes[state.history[i].missionId]);
+    if (opens.has(flag) || steers.has(flag)) return i;
+  }
+  return -1;
+}
+
 /**
  * One act as a system (D-084): what came into it from earlier, what it decided, and what it
  * sends forward. Incoming: cards earned before this act that this act's decisions read.
