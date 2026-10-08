@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { story } from './content/story';
 import { advance, getNode } from './engine/engine';
 import { isMission } from './engine/types';
-import { pastSetup, playMission, possibleSelections } from './engine/analysis';
+import { pastSetup, playMission, playScript, possibleSelections } from './engine/analysis';
 import { emptyPresentation, type Session } from './session';
 import { debriefText, reflectionRecord } from './debrief';
 
@@ -32,14 +32,31 @@ describe('portable learner debrief', () => {
     for (const node of Object.values(story.nodes)) {
       if (node.kind === 'interlude' && node.role === 'reflection' && node.responses?.length) session.presentation.reflections[node.id] = node.responses[0];
     }
-    expect(reflectionRecord(session, story).map(r => r.chapter)).toEqual([2, 3, 4, 5]);
+    /* One unscored guess per act, at its break (D-086). */
+    expect(reflectionRecord(session, story).map(r => r.chapter)).toEqual([1, 2, 3, 4]);
   });
   it('includes actual decisions and a non-certification notice', () => {
+    /* The first-listed path loses the work at the price push, so it is six decisions long. */
     const session = completed(); const text = debriefText(session, story);
-    expect(session.game.history).toHaveLength(18);
+    const n = session.game.history.length;
+    expect(n).toBe(session.game.completed.length);
+    expect(n).toBeGreaterThan(0);
     for (const h of session.game.history) expect(text).toContain(h.chosenLabel);
-    expect(text).toContain('18 decisions made');
+    expect(text).toContain(`${n} decisions made`);
     expect(text).toContain('No certification or pass score');
+  });
+  it('records the content ending, its extra lines and the promise calendar (D-086)', () => {
+    const game = playScript(story, [
+      ['d1-delivery', 'd1-complaints'], ['d2-found', 'd2-marcus'], ['d3-two', 'd3-paid'], ['d4-reframe', 'd4-figures'],
+      ['d5-after-sale', 'd5-month-five', 'd5-by-day'], ['d6-half', 'd6-drop-nothing', 'd6-ops-lead'], ['d7-no-late-fee', 'd7-sign'], ['d8-tell', 'd8-contractors'],
+    ], 's-connector');
+    expect(game.phase).toBe('ending');
+    const text = debriefText({ game, presentation: emptyPresentation() }, story);
+    expect(text).toContain('8 decisions made');
+    expect(text).toContain('We kept our promises, and it paid');
+    expect(text).toContain('Sarah has asked us to bid for next year’s work.');
+    expect(text).toContain('HOW EVERY PROMISE CAME DUE');
+    expect(text).toContain('Month 5 · Kept. We had planned around the summer freeze.');
   });
   it('exports validated reflections and the optional plan in the same record', () => {
     const session = completed();

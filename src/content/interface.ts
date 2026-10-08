@@ -3,8 +3,8 @@ export const COPY = {
   brand: 'Global Pursuit League', subtitle: 'A business simulation',
   welcome: 'Every promise has a future.',
   premise: 'Lead a client engagement from the first conversation to delivery. Read the room, find the evidence and make the calls. The people — and your promises — stay with you.',
-  role: 'You are the pursuit lead.', format: '5 chapters · 18 decisions · Your progress saved',
-  duration: 'Allow around 70–90 minutes. You can play one chapter at a time.',
+  role: 'You are the pursuit lead.', format: '4 acts · 8 decisions · Your progress saved',
+  duration: 'Allow around 40 minutes. You can play one act at a time.',
   start: 'Begin your engagement', resume: 'Continue your engagement', journey: 'Your journey', enter: 'Enter chapter', back: 'Return to your activity',
   next: 'Continue', begin: 'Begin the chapter', choices: 'Explore your approaches', commit: 'Commit to this approach', send: 'Send this reply', investigate: 'Investigate these questions', assemble: 'Commit this plan', setup: 'Start the pursuit',
   record: 'Your account file', help: 'How to play', settings: 'Preferences', close: 'Close', restart: 'Start a new engagement',
@@ -81,7 +81,7 @@ export const COPY = {
   },
   stage: {
     from: 'from',
-    kicker: 'A business story in five acts',
+    kicker: 'A business story in four acts',
     client: 'Orion Retail · 210 stores',
     threeQuestions: 'Every decision turns on three questions',
     act: 'Act',
@@ -145,7 +145,7 @@ export const COPY = {
     complete: 'Your complete engagement is ready to review.',
     agenda: 'In this act',
     advisorFor: 'With you on this act',
-    episodes: 'Five acts, one engagement',
+    episodes: 'Four acts, one engagement',
     journeyTitle: 'The whole engagement',
     done: 'Complete',
     here: 'You are here',
@@ -176,7 +176,7 @@ export const COPY = {
     to: 'to',
     noChange: 'No change',
     title: {
-      acts: 'The five acts',
+      acts: 'The four acts',
       completed: 'Completed engagement',
       inProgress: 'Engagement in progress',
       continueLocal: 'Continue browser engagement',
@@ -202,6 +202,14 @@ export const COPY = {
       decision: 'Decision',
       next: 'Next',
       after: 'After',
+      /** Under the act's guess (D-086): it is not a test, and the answer follows it. */
+      guessNote: 'Unscored. Guess first, then hear what decided it.',
+      spine: 'The one idea under all four acts',
+    },
+    /** The promise calendar (D-086): how each promise card came due. */
+    calendar: {
+      title: 'How every promise came due',
+      empty: 'No promise in your hand came due.',
     },
     turn: {
       now: 'now',
@@ -277,7 +285,7 @@ export const COPY = {
   helpItems: [
     ['Listen, decide, hear why', 'Each decision is one scene. Your colleague and the client explain the situation; you choose; then your colleague tells you what happened, why, and what to keep. Ask them for their questions at any time while you choose.'],
     ['Three questions', 'Every decision is about winning the work, making it worth winning, or delivering what you promised. “Where you stand” shows your record under each, and marks what each decision changed.'],
-    ['Five connected acts', 'The engagement runs from finding a client to delivering your promise. Each act asks one question; the act break shows what you decided and what comes next.'],
+    ['Four connected acts', 'The engagement runs from finding out what is really wrong to keeping your promises. Each act teaches one idea; at the act break you guess what decided it, then your colleague tells you.'],
     ['Decisions have a memory', 'Earlier discoveries and commitments can change later conversations.'],
     ['Keep your account file close', 'Reopen the brief, inspect earned evidence and review your commitments at any time. Reviewing information never changes your decision.'],
     ['Play at your pace', 'There is no timer and no audio required. Space, Enter or the right arrow moves a conversation on; number keys pick an option; Tab moves between controls. Your draft is saved in this browser.'],

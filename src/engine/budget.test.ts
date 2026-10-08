@@ -34,9 +34,11 @@ import {
   randomVerdicts,
   sampledBudget,
   scaleAuthoredGains,
-  TOP_VERDICT,
+  topVerdict,
 } from "./budget";
 import { DIMENSIONS, type BuildMission, type Content, type Lesson } from "./types";
+import { playScript } from "./analysis";
+import { finalVerdict, scoreOf } from "./engine";
 
 const content = story;
 
@@ -73,7 +75,8 @@ describe("the delta budget, over random play", () => {
     expect(budget.mismatches).toBe(0);
     expect(budget.missions.length).toBe(content.missionOrder.length);
     expect(budget.whole.magnitude).toBeGreaterThan(0);
-    expect(verdicts.verdicts[TOP_VERDICT] ?? 0).toBeGreaterThan(0);
+    /* The story names its own endings (D-086), so the top one is asked of the story. */
+    expect(verdicts.verdicts[topVerdict(content)] ?? 0).toBeGreaterThan(0);
   }, 120_000);
 });
 
@@ -82,16 +85,21 @@ describe("scaling the gains", () => {
     const scaled = scaleAuthoredGains(content, 0.5, ["win"]);
     const authored = new Map<string, number>();
     const rescaled = new Map<string, number>();
+    /* Every authored write the scaler can reach: a lever setting's own bars and every
+       outcome's, for each kind — the eight-decision story is all lever decisions (D-086),
+       so a collector that read only choice outcomes would compare nothing at all. */
     const collect = (c: Content, into: Map<string, number>) => {
+      const note = (id: string, dims: Partial<Record<(typeof DIMENSIONS)[number], number>> | undefined) => {
+        for (const d of DIMENSIONS) {
+          const v = dims?.[d];
+          if (v !== undefined) into.set(`${id}.${d}`, v);
+        }
+      };
       for (const node of Object.values(c.nodes)) {
-        if (node.kind !== "choice") continue;
-        for (const option of node.options) {
-          for (const outcome of option.outcomes) {
-            for (const d of DIMENSIONS) {
-              const v = outcome.effect.dims?.[d];
-              if (v !== undefined) into.set(`${outcome.id}.${d}`, v);
-            }
-          }
+        if (node.kind === "choice") for (const option of node.options) for (const o of option.outcomes) note(o.id, o.effect.dims);
+        if (node.kind === "levers") {
+          for (const l of node.levers) for (const s of l.options) note(s.id, s.dims);
+          for (const o of node.outcomes) note(o.id, o.effect.dims);
         }
       }
     };
@@ -204,11 +212,18 @@ describe("the informed player", () => {
 
   it("returns a script that replays to the score it claims", () => {
     const best = bestWitnessedPlay(content, 24);
-    expect(best.script.length).toBeGreaterThan(8);
+    /* Long enough to have reached an ending — the story can end at decision 6 or 7 — and
+       then actually replayed, which is what the name of this test claims (D-086). */
+    expect(best.script.length).toBeGreaterThanOrEqual(6);
     expect(best.verdict.length).toBeGreaterThan(0);
     for (const d of DIMENSIONS) {
       expect(best.dims[d]).toBeGreaterThanOrEqual(0);
       expect(best.dims[d]).toBeLessThanOrEqual(100);
     }
+    const replayed = playScript(content, best.script, best.advantage);
+    expect(replayed.phase).toBe("ending");
+    expect(replayed.dims).toEqual(best.dims);
+    expect(scoreOf(replayed.dims)).toBe(best.score);
+    expect(finalVerdict(replayed.dims, replayed.flags, content).title).toBe(best.verdict);
   }, 120_000);
 });

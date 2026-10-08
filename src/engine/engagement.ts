@@ -176,7 +176,7 @@ export function runPolicy(
       s = playMission(s, content, selection);
     }
 
-    const verdict = finalVerdict(s.dims, s.flags);
+    const verdict = finalVerdict(s.dims, s.flags, content);
     return {
       policy: policy.id,
       reads: policy.reads,

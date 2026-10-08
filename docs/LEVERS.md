@@ -126,3 +126,51 @@ export interface EndingRule { id: string; title: string; summary: string; when?:
 
 `finalVerdict` uses `content.endings` when it is present; the existing logic stays for content
 without it. The ending screen shows the title and summary, plus every extra whose `when` holds.
+
+### As built (D-086)
+
+The engine implements the addendum as written, with these extensions. Each one is a superset of
+the contract, so content written to the contract above is still valid.
+
+- **`Conditions`.** `voidWhen`, `keptWhen` and `lateWhen` take a condition or a list of conditions,
+  all of which must hold. The results clause is kept only with Orion's own figures (one of two
+  cards) *and* a plan for the freeze (one of three), and one `any` cannot carry both.
+- **`kept` may be a list of lines,** first match wins, the last unconditional, like `advisorLine`.
+  The fixed price is always kept, and the calendar says who paid for it.
+- **Order.** Rules settle in `dueMonth` order, ties in authored order. Each rule reads the record
+  as the rules before it left it, and each effect is clamped as it lands.
+- **Once per run.** `settle` may sit on an interlude or on the ending. A run that passes a second
+  settle beat does not settle again.
+- **`finalVerdict(dims, flags, content?)`** returns `{ title, summary, id?, extras }`.
+- **The record board is content too:** `Content.ledger?: LedgerRule[]`. The engine's built-in
+  table named the first story's flags.
+- **`lockOf(condition, state)`** says why a setting is shut: `needs` (the `all` cards missing),
+  `oneOf` (the `any` list, when none is held), `held` (the `none` cards held) and `dims`. The
+  interface names these and never works them out.
+- **Three content fields.** `Mission.thinkAloud` is the modelled decision's worked example,
+  spoken as the last line of the brief. `Chapter.idea` is the act's idea, which every lesson in
+  the act carries word for word. `Interlude.reveal` holds the lines a debrief keeps back until the
+  act's guess is answered.
+
+**The validator** also checks the following:
+- every promise rule's card is set somewhere, and every flag its conditions read is set;
+- one rule per card;
+- a line for every status the rule can reach (void, late and broken), and none for a status it
+  cannot;
+- a settle beat exists if there are rules, and rules exist if there is a settle beat;
+- endings end unconditionally, and no unconditional ending sits before the last;
+- ending ids are unique, and every extra has a condition;
+- one idea per act, word for word;
+- model, prompt, let go: the first lever decision of an act thinks aloud and gives no hint, the
+  second gives exactly one, and none carries a `tip` or an `advisorLine`;
+- 40 words of situation on every variant, and 120 before the panel opens.
+
+Once content carries its own board, a flag that decides a branch and is neither a named card nor
+a board position is an error.
+
+**The sweep** keys on every flag and bar the calendar and the endings read, from the first decision
+on. It records every ending, extra, settled status and calendar line some reachable run reaches,
+and any lever that a reachable state leaves with one open setting.
+
+**Run codes** are unchanged in shape. The rules fingerprint adds the promise rules, the ending
+conditions and `settle`. Content without them keeps every older fingerprint.

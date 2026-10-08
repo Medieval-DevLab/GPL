@@ -1,7 +1,7 @@
 import type { Chapter, Content, GameState, Interlude } from '../../engine/types';
 import type { ChapterNumber } from '../../content/assets';
 import { COPY } from '../../content/interface';
-import { ACT_QUESTION, CHAPTER_PRESENTATION, MISSION_RULE, placeOf, ruleOf } from '../../content/presentation';
+import { ACT_QUESTION, CHAPTER_PRESENTATION, MISSION_RULE, STORY, placeOf, ruleOf } from '../../content/presentation';
 import { CHARACTERS } from '../../content/characters';
 import { Action, Backdrop, Heading, castId, pad2 } from '../parts';
 import { Figure, Measures, RuleMark } from './FrameParts';
@@ -28,6 +28,9 @@ export function ActBreak({ node, state, content, reflections, onReflect, onNext 
   const guide = prompts[0]?.advisor ?? CHARACTERS[CHAPTER_PRESENTATION[n - 1].advisor];
   /* An act with a reflection is asked it; an act without one is summed up, by the same person. */
   const summed = prompts.length === 0;
+  /* Guess, then see (D-086): what decided the act is held back until every guess is in, then
+     the guide says it, and the act's idea, in their own voice. */
+  const guessed = prompts.every(r => !!reflections[r.id]);
   return <section className="page fs f-break" style={{ ['--n' as string]: decisions.length }}>
     <Backdrop photo={placeOf(node.id).photo} focus="soft" />
     <Figure id={castId(guide.name)} className="f-break-guide" enter="left" delay={900} box={{ left: 0, width: 'var(--guide-w)', top: '46%', bottom: 0 }} frame={{ x: '52%', y: 0.12, face: 0.3 }} />
@@ -69,8 +72,13 @@ export function ActBreak({ node, state, content, reflections, onReflect, onNext 
             </button>;
           })}
         </div>
-        <p className="f-note">{COPY.reflectionNote}</p>
+        <p className="f-note">{node.reveal ? F.guessNote : COPY.reflectionNote}</p>
       </section>)}
+      {/* The live region is there before the guess, so the reveal is announced when it lands. */}
+      {node.reveal && <div className="f-reveal-lines" aria-live="polite">
+        {guessed && node.reveal.map((line, i) => <p key={i} className="f-talk-line">“{line}”</p>)}
+        {guessed && <p className="f-spine"><span className="sr-only">{F.spine}: </span>{STORY.spine}</p>}
+      </div>}
     </div>
 
     <aside className="f-next sheet" data-chapter={next?.number} aria-labelledby="next-heading">

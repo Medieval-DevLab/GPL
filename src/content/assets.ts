@@ -1,7 +1,14 @@
 import type { CharacterId } from "./characters";
 
-export type ChapterNumber = 1 | 2 | 3 | 4 | 5;
-export type SceneAsset = `scene-chapter-${ChapterNumber}`;
+/** Four acts since D-086. */
+export type ChapterNumber = 1 | 2 | 3 | 4;
+/**
+ * The five chapter photographs, named for the five-chapter story they were licensed for. The
+ * number is the photograph's, not the act's: act four opens on the delivery team, which is
+ * `scene-chapter-5`, and the client meeting room in `scene-chapter-4` stays as a place.
+ */
+export type SceneNumber = 1 | 2 | 3 | 4 | 5;
+export type SceneAsset = `scene-chapter-${SceneNumber}`;
 /** Daylight locations with no identifiable people, so no stranger competes with the cast (D-080). */
 export type EnvironmentId = "warehouse" | "boardroom" | "glass-office";
 export type EnvironmentAsset = `env-${EnvironmentId}`;
@@ -12,8 +19,7 @@ export type CutoutAsset = `cut-${CharacterId}`;
 export type PhotoAsset = `photo-${CharacterId}` | BackdropAsset | CutoutAsset;
 
 export const CHAPTER_SCENES: Readonly<Record<ChapterNumber, SceneAsset>> = {
-  1: "scene-chapter-1", 2: "scene-chapter-2", 3: "scene-chapter-3",
-  4: "scene-chapter-4", 5: "scene-chapter-5",
+  1: "scene-chapter-1", 2: "scene-chapter-2", 3: "scene-chapter-3", 4: "scene-chapter-5",
 };
 
 export const SCENE_DESCRIPTIONS: Readonly<Record<BackdropAsset, string>> = {

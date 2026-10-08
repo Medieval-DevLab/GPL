@@ -120,11 +120,12 @@ describe("a save that has stopped being good", () => {
     const raw = encodeSave(state, content);
 
     const restructured = structuredClone(content) as Content;
-    const choice = Object.values(restructured.nodes).find(
-      (n) => isMission(n) && n.kind === "choice" && n.options.length > 2,
+    /* One setting gone from one lever (D-086): every combination after it indexes differently. */
+    const panel = Object.values(restructured.nodes).find(
+      (n) => isMission(n) && n.kind === "levers" && n.levers.some((l) => l.options.length > 2),
     );
-    if (!choice || !isMission(choice) || choice.kind !== "choice") throw new Error("no choice");
-    choice.options.splice(1, 1);
+    if (!panel || !isMission(panel) || panel.kind !== "levers") throw new Error("no lever decision");
+    panel.levers.find((l) => l.options.length > 2)!.options.splice(1, 1);
 
     const outcome = decodeSave(raw, restructured);
     expect(outcome.status).toBe("stale");

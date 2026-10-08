@@ -26,14 +26,16 @@ describe('the trail and the hand (D-083)', () => {
   it('can say where every strength card comes from', () => {
     const cards = Object.keys(EARNED).filter(f => isCard(f) && pileOf(f) === 'strength');
     for (const f of cards) expect(sourceOf(story, f), f).toBeTruthy();
-    expect(sourceOf(story, 'knows:real_pain')).toBe(MILESTONE.m2);
+    /* The real problem is found in week one, so that is where its card says it comes from. */
+    expect(sourceOf(story, 'knows:after_sale')).toBe(MILESTONE.d1);
   });
 
   it('keeps the mystery solvable, and tells a fresh run where each starting card next matters', () => {
     for (const f of MYSTERY.clues) expect(sourceOf(story, f), f).toBeTruthy();
-    const state = { ...createInitialState(story), flags: ['start:builder', 'credibility'] };
+    const state = { ...createInitialState(story), flags: ['start:builder'] };
     const hand = handOf(state, story);
-    expect(hand.map(c => c.flag)).toContain('credibility');
-    expect(hand.find(c => c.flag === 'credibility')?.next?.at).toBeTruthy();
+    expect(hand.map(c => c.flag)).toContain('start:builder');
+    /* The Builders' card opens "Partly on results" in the offer (STORY-V2, setup). */
+    expect(hand.find(c => c.flag === 'start:builder')?.next).toEqual({ kind: 'opens', at: MILESTONE.d5 });
   });
 });

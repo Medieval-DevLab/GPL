@@ -101,14 +101,14 @@ export function Game(props: Props) {
   const openFile = (chapterNumber?: number) => setDrawer({ kind: 'file', chapter: chapterNumber });
   const start = () => { if (props.resume.candidates.length || state.phase !== 'title') setDrawer({ kind: 'restart' }); else go(props.onStart, 'page'); };
   const advance = () => go(props.onAdvance, 'page');
-  const commit = () => { before.current = { node: state.nodeId, labels: ledger(state).map(e => e.label) }; cue('stamp'); props.onCommit(); };
+  const commit = () => { before.current = { node: state.nodeId, labels: ledger(state, content).map(e => e.label) }; cue('stamp'); props.onCommit(); };
 
   let body: ReactNode = null;
   if (atHome) body = <Title content={content} resume={props.resume} onResume={s => go(() => props.onResume(s), 'page')} onStart={start} />;
   else if (atMap) body = <Journey state={state} content={content} node={node} currentChapter={currentChapter} onPlay={() => go(() => props.onView('play'), 'page')} onReview={openFile} />;
   else if (node.kind === 'setup') body = <Setup node={node} selected={presentation.advantage} onPick={id => { cue('select'); props.onAdvantage(id); }} onConfirm={() => go(props.onSetup, 'stamp')} />;
   else if (node.kind === 'interlude' && node.role === 'chapter-debrief') body = <ActBreak node={node} state={state} content={content} chapter={chapter} reflections={presentation.reflections} onReflect={(id, a) => { cue('select'); props.onReflect(id, a); }} onNext={advance} />;
-  else if (node.kind === 'interlude' && node.role === 'turn') body = <Turn node={node} onNext={advance} />;
+  else if (node.kind === 'interlude' && node.role === 'turn') body = <Turn node={node} settled={state.settled} onNext={advance} />;
   else if (node.kind === 'interlude') body = <ChapterOpen node={node} chapter={chapter} onBegin={advance} />;
   else if (mission && (state.phase === 'decide' || state.phase === 'consequence' || state.phase === 'brief')) body = <Scene mission={mission} state={state} content={content} chapter={chapter}
     before={before.current?.node === state.nodeId ? before.current.labels : undefined}
@@ -159,7 +159,7 @@ function Hud({ session, content, atHome, atMap, chapterNumber, chapterTitle, onM
   const state = session.game;
   const playing = !atHome && state.phase !== 'setup' && state.phase !== 'title';
   const nowId = state.phase === 'decide' || state.phase === 'consequence' ? state.nodeId : undefined;
-  const records = ledger(state).length;
+  const records = ledger(state, content).length;
   const seen = useRef(records);
   const [fresh, setFresh] = useState(false);
   useEffect(() => { if (records > seen.current) setFresh(true); seen.current = records; }, [records]);

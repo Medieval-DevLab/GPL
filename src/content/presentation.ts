@@ -1,6 +1,7 @@
 import type { CharacterId } from "./characters";
 import type { DimensionId } from "../engine/types";
 import { CHAPTER_SCENES, type BackdropAsset, type ChapterNumber, type SceneAsset } from "./assets";
+import { SPINE } from "./story";
 
 export type ScreenFamily = "setup" | "arrival" | "comparison" | "investigation" | "allocation" | "chat" | "meeting" | "evidence" | "event" | "reflection" | "debrief" | "ending";
 
@@ -14,13 +15,16 @@ export interface ChapterPresentation {
   activities: readonly string[];
 }
 
-/** Canonical authored route. Future milestones are previews, never navigation shortcuts. */
+/**
+ * Canonical authored route: four acts, two decisions each (D-086). Future milestones are
+ * previews, never navigation shortcuts. Each act's guide is the colleague who leads its first,
+ * modelled decision.
+ */
 export const CHAPTER_PRESENTATION: readonly ChapterPresentation[] = [
-  { chapter: 1, title: "Find the right client", goal: "Pick one company to chase, find out what it needs, and get a first meeting.", scene: "scene-chapter-1", advisor: "priya", route: ["int-1", "m1", "m2", "m3", "deb-1"], activities: ["Pick a client", "Find out two things", "Ask for a first meeting"] },
-  { chapter: 2, title: "Make it an opportunity", goal: "Decide whether Orion is worth chasing, and how many of your people to put on it.", scene: "scene-chapter-2", advisor: "riya", route: ["int-2", "m4", "turn-rival", "m5", "refl-rival", "m5b", "deb-2"], activities: ["Decide how hard to chase", "Answer a rival firm", "Choose where your people go"] },
-  { chapter: 3, title: "Build the response", goal: "Write the proposal: what you will do for Orion, how, and what you promise.", scene: "scene-chapter-3", advisor: "arjun", route: ["int-3", "m6", "m6b", "refl-shape", "m7", "m7b", "deb-3"], activities: ["Name Orion’s real problem", "Choose how the work gets done", "Write and check the proposal"] },
-  { chapter: 4, title: "Make the deal work", goal: "Agree a price and terms, find out if Orion chooses you, and decide whether to sign.", scene: "scene-chapter-4", advisor: "riya", route: ["int-4", "m8", "m9", "m9a", "turn-award", "refl-award", "m9b", "deb-4"], activities: ["Agree the price and what is included", "Make the case to Orion’s buyer", "Decide whether to sign"] },
-  { chapter: 5, title: "Deliver the promise", goal: "Do the work you signed up for, as each promise comes due.", scene: "scene-chapter-5", advisor: "aisha", route: ["int-5", "m10", "refl-month5", "m10b", "m10h", "turn-sarah", "m10c", "deb-5", "end"], activities: ["Deal with trouble on the project", "Fill a gap in the team", "Keep the work going when people leave"] },
+  { chapter: 1, title: "Understand before you offer", goal: "Find out what is really wrong at Orion, then open the first meeting with it.", scene: CHAPTER_SCENES[1], advisor: "priya", route: ["int-1", "d1", "d2", "guess-1", "deb-1"], activities: ["Choose who to talk to and what to read", "Open the first meeting with Sarah"] },
+  { chapter: 2, title: "Not every deal is worth winning", goal: "Decide how much of the team Orion is worth, and which deal we chase.", scene: CHAPTER_SCENES[2], advisor: "riya", route: ["int-2", "d3", "d4", "guess-2", "deb-2"], activities: ["Choose how many people go, and whether we study", "Answer a rival’s demo"] },
+  { chapter: 3, title: "Trade, don’t give", goal: "Write the offer once, then answer Orion’s buyer when he pushes on price.", scene: CHAPTER_SCENES[3], advisor: "arjun", route: ["int-3", "d5", "d6", "guess-3", "deb-3"], activities: ["Build the offer, clause by clause", "Answer on price, and ask for something back"] },
+  { chapter: 4, title: "Promise only what your team can deliver", goal: "Sign or walk away, then keep every promise as it comes due in month five.", scene: CHAPTER_SCENES[4], advisor: "aisha", route: ["int-4", "d7", "d8", "calendar", "guess-4", "deb-4", "end"], activities: ["Change one clause, then sign or walk", "Decide what to do when month five slips"] },
 ];
 
 export interface NodePresentation {
@@ -39,59 +43,46 @@ function node(chapter: ChapterNumber, screen: ScreenFamily, goal: string, adviso
 /** Entry objectives describe the task without forecasting which choice succeeds. */
 export const NODE_PRESENTATION: Readonly<Record<string, NodePresentation>> = {
   setup: node(1, "setup", "Choose the starting strength of the team you will lead."),
-  "int-1": node(1, "arrival", "Understand your role and the three decisions ahead."),
-  m1: node(1, "comparison", "Choose one organisation for your team's initial attention."),
-  m2: node(1, "investigation", "Choose two questions to investigate before making an approach."),
-  m3: node(1, "chat", "Choose how to open the client conversation using what you know."),
-  "deb-1": node(1, "debrief", "Review how your focus and research shaped the first conversation."),
-  "int-2": node(2, "arrival", "Move from an interested client to a qualified opportunity."),
-  m4: node(2, "comparison", "Decide how far to commit before the brief is fully understood."),
-  "turn-rival": node(2, "event", "Read the announcement before deciding how to respond."),
-  m5: node(2, "meeting", "Respond to the rival's move with an approach you can support."),
-  "refl-rival": node(2, "reflection", "Consider what competitive pressure changed in your reasoning."),
-  m5b: node(2, "allocation", "Allocate your team to two discovery workstreams."),
-  "deb-2": node(2, "debrief", "Review what you chose to learn and what remains uncertain."),
-  "int-3": node(3, "arrival", "Translate the opportunity into a practical response."),
-  m6: node(3, "meeting", "Frame the problem your proposal will address."),
-  m6b: node(3, "comparison", "Choose an approach to delivering the solution."),
-  "refl-shape": node(3, "reflection", "Consider the assumptions behind the approach you chose."),
-  m7: node(3, "allocation", "Select three components for the proposal your team will deliver."),
-  m7b: node(3, "chat", "Respond to the internal review of your proposal."),
-  "deb-3": node(3, "debrief", "Read back what the proposal now commits your team to."),
-  "int-4": node(4, "arrival", "Turn the proposal into terms both sides can work with."),
-  m8: node(4, "meeting", "Respond to the price challenge and define the terms of your offer."),
-  m9: node(4, "chat", "Decide how to handle the risk identified before signature.", "aisha"),
-  m9a: node(4, "evidence", "Build the procurement case from evidence you have earned."),
-  "turn-award": node(4, "event", "Read the panel's decision and what it asks of your team."),
-  "refl-award": node(4, "reflection", "Consider what winning the work means for the promises you made."),
-  m9b: node(4, "chat", "Decide whether to accept, modify or walk away from the deal."),
-  "deb-4": node(4, "debrief", "Review the commercial terms and commitments going into delivery."),
-  "int-5": node(5, "arrival", "Take responsibility for delivering the commitments already made."),
-  m10: node(5, "chat", "Choose how to respond to the delivery situation in month five."),
-  "refl-month5": node(5, "reflection", "Connect the current delivery pressure to earlier commitments."),
-  m10b: node(5, "comparison", "Choose how to cover the staffing gap and its practical cost."),
-  m10h: node(5, "evidence", "Use your actual commitment record to answer the handover challenge."),
-  "turn-sarah": node(5, "event", "Read the sponsor's update before planning the next step."),
-  m10c: node(5, "meeting", "Choose how to protect continuity through the sponsor transition."),
-  "deb-5": node(5, "debrief", "Trace the choices that shaped the final delivery position."),
-  end: node(5, "ending", "Review your engagement outcome and take one lesson into your next project."),
+  "int-1": node(1, "arrival", "Understand your role and what this act asks."),
+  d1: node(1, "investigation", "Choose who to talk to and what to read in week one."),
+  d2: node(1, "meeting", "Choose how to open the first meeting with what you know."),
+  "guess-1": node(1, "reflection", "Guess which choice decided how Sarah left."),
+  "deb-1": node(1, "debrief", "See what decided how Sarah left the first meeting."),
+  "int-2": node(2, "arrival", "Decide what the deal is worth to us before we chase it."),
+  d3: node(2, "allocation", "Choose how much of the team Orion gets, and whether we study first."),
+  d4: node(2, "meeting", "Answer a rival’s demo with an approach you can support."),
+  "guess-2": node(2, "reflection", "Guess which choice settled what the bid is about."),
+  "deb-2": node(2, "debrief", "See what settled which deal we are chasing."),
+  "int-3": node(3, "arrival", "Write the offer once, then defend it on price.", "riya"),
+  d5: node(3, "allocation", "Choose what the offer fixes, how fast, and how Orion pays."),
+  d6: node(3, "meeting", "Answer Orion’s buyer on price, and choose what we ask back.", "riya"),
+  "guess-3": node(3, "reflection", "Guess which choice decided how Declan chose."),
+  "deb-3": node(3, "debrief", "See what we gave, and what we got back."),
+  "int-4": node(4, "arrival", "Take responsibility for every promise in the offer."),
+  d7: node(4, "evidence", "Change one clause, then sign or walk away."),
+  d8: node(4, "chat", "Choose what to tell Sarah and who covers the gap in month five."),
+  calendar: node(4, "event", "See how every promise came due."),
+  "guess-4": node(4, "reflection", "Guess which earlier choice shaped month five most."),
+  "deb-4": node(4, "debrief", "Trace each promise back to the choice that made it."),
+  end: node(4, "ending", "Review your engagement and take one idea into your next project."),
 };
 
 /**
- * The story's spine. Every screen hangs off one question, and every decision is filed under
- * one of the three questions the game already measures. Before this, a run carried 53
- * different lesson sentences and 50 record labels, and a player could recall none of it
- * (D-080). Three questions can be carried out of the room.
+ * The story's spine. Every screen hangs off one question, and the one sentence the game
+ * wants carried out of the room is `spine`, word for word on the title, at every act break
+ * and at the end (`docs/STRATEGY.md` §2.1).
  *
  * `ask` is the client's own words. It deliberately does not reveal the real need behind it
- * (that is earned in chapters 1 and 3), so stating it up front gives the line of thought
- * without answering any decision.
+ * (that is earned in week one), so stating it up front gives the line of thought without
+ * answering any decision.
  */
 export const STORY = {
   client: "Orion Retail",
   ask: "You lead a six-person team at a consultancy, a firm that companies pay to fix their problems. Orion Retail, a chain of 210 shops, wants help to “improve the customer experience”, and nobody there agrees what that means.",
   question: "Can you win Orion’s work, make it worth winning, and still deliver what you promised?",
-  stakes: "Every promise you make to win the work, your own colleagues will have to keep.",
+  /** What is at stake, said once beside the ask. Since D-086 it is the spine itself. */
+  stakes: SPINE,
+  spine: SPINE,
 } as const;
 
 export interface Rule { id: DimensionId; question: string; name: string; plain: string }
@@ -103,42 +94,46 @@ export const RULES: readonly Rule[] = [
 ];
 export const ruleOf = (id: DimensionId): Rule => RULES.find((r) => r.id === id)!;
 
-/** Which of the three questions each decision is really about. Its lesson is filed under it. */
+/**
+ * Which of the three questions each decision is really about. Act 1 is the Win question,
+ * act 2 the Worth question, act 3 Worth against Win — the offer is a matter of cost, the
+ * price push of who chooses us — and act 4 the Deliver question.
+ */
 export const MISSION_RULE: Readonly<Record<string, DimensionId>> = {
-  m1: "win", m2: "win", m3: "win",
-  m4: "profit", m5: "win", m5b: "profit",
-  m6: "deliver", m6b: "profit", m7: "deliver", m7b: "deliver",
-  m8: "profit", m9: "deliver", m9a: "win", m9b: "profit",
-  m10: "deliver", m10b: "deliver", m10h: "deliver", m10c: "win",
+  d1: "win", d2: "win",
+  d3: "profit", d4: "profit",
+  d5: "profit", d6: "win",
+  d7: "deliver", d8: "deliver",
 };
 
 /**
- * Every position the engine's ledger can report, filed under one question. The ledger is the
- * player's record in plain language; this is what turns it into a board of three columns.
- * Keyed by label because the label is the ledger's identity; `presentation.test.ts` fails if a
- * ledger rule is added without a home here.
+ * Every position the record board can show, filed under one question. Keyed by label, the
+ * ledger's identity; `presentation.test.ts` fails if a position is added without a home here.
  */
 export const LEDGER_RULE: Readonly<Record<string, DimensionId>> = {
-  "You got in on trust": "win", "You got in on evidence": "win", "You got in on the argument": "win",
-  "They chose you": "win", "How you were scored": "win", "Their real problem": "win",
-  "The rival's blind spot": "win", "Argued from their data": "win", "They take your word": "win",
-  "You chose the ground": "win", "Inside the business": "win", "Their brief, as written": "win",
-  "Discount given": "profit", "Scope removed": "profit", "A partner who does this": "profit",
-  "A payback number, in writing": "profit", "A narrow first job": "profit",
-  "Who can stop this": "deliver", "The last attempt": "deliver", "Operations is in the room": "deliver",
-  "Operations invested": "deliver", "The review is answered": "deliver", "You overruled the review": "deliver",
-  "Risk accepted": "deliver", "Mitigation underfunded": "deliver", "Platform rebuild promised": "deliver",
-  "A route into Operations": "deliver", "Measurement is covered": "deliver", "Adoption is funded": "deliver",
-  "Eight weeks promised": "deliver", "No route to production": "deliver", "Timeline assumes access": "deliver",
+  "You got in on trust": "win", "You got in on results": "win", "You got in on the argument": "win",
+  "What’s really wrong": "win", "The complaint figures": "win", "Who scores the bids": "win",
+  "Who else is bidding": "win", "Sarah trusts us": "win", "Sarah has doubts": "win",
+  "Declan has met us": "win", "The bid: after the sale": "win", "The bid: the shops": "win",
+  "Orion chose us": "win", "Declan didn’t want us": "win", "Sarah heard it from us": "win",
+  "Sarah wasn’t told": "win", "A promise broken": "win",
+  "What Orion will spend": "profit", "Four people on the bid": "profit", "£300,000 off our price": "profit",
+  "£600,000 off our price": "profit", "A second year, signed": "profit", "The price won’t change": "profit",
+  "A third of our fee on results": "profit", "£20,000 a week if we’re late": "profit",
+  "Two contractors, at our cost": "profit", "Orion pays for extra weeks": "profit",
+  "Who runs deliveries": "deliver", "We’ve seen inside Orion": "deliver", "Marcus has met us": "deliver",
+  "Marcus’s manager on our team": "deliver", "The trial, traded away": "deliver", "100 shops, not 210": "deliver",
+  "Screens and an app promised": "deliver", "A new app promised": "deliver", "Refunds in five days promised": "deliver",
+  "A trial by week eight": "deliver", "Every date a month later": "deliver", "A signed contract": "deliver",
+  "The team on weekends": "deliver",
 };
 
 /** One question per act, each a step towards `STORY.question`. Asks; never answers (G3b). */
 export const ACT_QUESTION: Readonly<Record<ChapterNumber, string>> = {
-  1: "Which company should your team chase, and how do you get a first meeting?",
-  2: "Is Orion worth chasing, and how many of your people should work on it?",
-  3: "What will you offer Orion, and what exactly will you promise?",
-  4: "What price and terms will you agree to, and will you sign?",
-  5: "Can your team do everything you promised in order to win?",
+  1: "What is really wrong at Orion, and how do we show Sarah we know it?",
+  2: "How much of our team is Orion worth, and which deal do we chase?",
+  3: "What do we promise, and what do we get back for every cut?",
+  4: "Do we sign, and can our team keep every promise when it comes due?",
 };
 
 /**
@@ -150,13 +145,12 @@ export const ACT_QUESTION: Readonly<Record<ChapterNumber, string>> = {
 export const ACT_BRIEFING: Readonly<Record<ChapterNumber, readonly string[]>> = {
   1: [
     "Watch the three bars. Win is how likely the client is to choose us. Worth is whether the deal makes our firm money. Deliver is whether our people can really do what we promise.",
-    "They pull against each other. Promise more and we win more easily, but the work gets harder. Charge less and we win more easily, but earn less.",
-    "You will not be on your own. Riya runs our team and its money, Arjun designs what we sell, and Aisha runs the project once it is signed.",
+    "Each decision is two or three small levers. Every setting shows which bars it moves, and which way, before you commit.",
+    "You will not be on your own. Riya runs our team and its money, Arjun designs what we sell, and Aisha runs the work once it is signed.",
   ],
   2: ["We have six people. Every week they spend chasing Orion is a week they are not on work that already pays."],
-  3: ["Anything you write into the proposal, Aisha’s team will have to do later."],
-  4: ["Orion will push the price down. Every pound we give away comes straight out of what this deal is worth to us."],
-  5: ["Every promise in the contract now has a date on it and one of my people doing it."],
+  3: ["Anything you write into the offer, Aisha’s team will have to do later."],
+  4: ["Every promise in the contract now has a date on it and one of my people doing it."],
 };
 
 /**
@@ -168,7 +162,7 @@ const PLACE = {
   office: { photo: "env-glass-office", name: "Your team’s office" },
   store: { photo: "scene-chapter-1", name: "One of Orion’s 210 stores" },
   projectRoom: { photo: "scene-chapter-2", name: "Your project room" },
-  workshop: { photo: "scene-chapter-3", name: "The proposal workshop" },
+  workshop: { photo: "scene-chapter-3", name: "The offer workshop" },
   orionRoom: { photo: "scene-chapter-4", name: "Orion’s meeting room" },
   headOffice: { photo: "env-boardroom", name: "Orion head office" },
   depot: { photo: "env-warehouse", name: "Orion’s distribution centre" },
@@ -177,11 +171,11 @@ const PLACE = {
 type PlaceId = keyof typeof PLACE;
 
 const SCENE_PLACE: Readonly<Record<string, PlaceId>> = {
-  setup: "office", "int-1": "store", m1: "office", m2: "store", m3: "office", "deb-1": "store",
-  "int-2": "projectRoom", m4: "projectRoom", "turn-rival": "store", m5: "headOffice", "refl-rival": "projectRoom", m5b: "projectRoom", "deb-2": "projectRoom",
-  "int-3": "workshop", m6: "headOffice", m6b: "workshop", "refl-shape": "workshop", m7: "workshop", m7b: "office", "deb-3": "workshop",
-  "int-4": "orionRoom", m8: "orionRoom", m9: "office", m9a: "orionRoom", "turn-award": "headOffice", "refl-award": "office", m9b: "headOffice", "deb-4": "orionRoom",
-  "int-5": "depot", m10: "depot", "refl-month5": "delivery", m10b: "delivery", m10h: "delivery", "turn-sarah": "headOffice", m10c: "headOffice", "deb-5": "delivery",
+  setup: "office",
+  "int-1": "store", d1: "office", d2: "headOffice", "guess-1": "office", "deb-1": "store",
+  "int-2": "projectRoom", d3: "projectRoom", d4: "office", "guess-2": "projectRoom", "deb-2": "projectRoom",
+  "int-3": "workshop", d5: "workshop", d6: "orionRoom", "guess-3": "workshop", "deb-3": "workshop",
+  "int-4": "delivery", d7: "orionRoom", d8: "depot", calendar: "delivery", "guess-4": "delivery", "deb-4": "delivery",
   end: "store",
 };
 
@@ -194,14 +188,14 @@ export const BACKDROP: Readonly<Record<string, BackdropAsset>> = Object.fromEntr
 
 /** Chapter lighting names. The colour script itself lives in the stylesheet as tokens. */
 export const CHAPTER_LIGHT: Readonly<Record<ChapterNumber, string>> = {
-  1: "Daybreak", 2: "Glass", 3: "Studio", 4: "Boardroom", 5: "Floor",
+  1: "Daybreak", 2: "Glass", 3: "Studio", 4: "Floor",
 };
 
 /**
  * A story turn is a report of something that already happened elsewhere, so each is staged
  * as the artefact it would actually arrive as: trade press, a forwarded email, an internal
  * memo. The narration stays the content; the artefact is dressing and invents no facts the
- * story does not state (08:25 is the story's 08:14 plus the "eleven minutes later").
+ * story does not state.
  */
 export type TurnDressing =
   | { format: "press"; masthead: string; section: string; kicker: string }
@@ -209,9 +203,7 @@ export type TurnDressing =
   | { format: "memo"; organisation: string; label: string; subject: string; from: string };
 
 export const TURN_DRESSING: Readonly<Record<string, TurnDressing>> = {
-  "turn-rival": { format: "press", masthead: "The Retail Ledger", section: "Technology · Partnerships", kicker: "This morning" },
-  "turn-award": { format: "mail", app: "Mail", from: "Sarah Lim", subject: "Fwd: Evaluation outcome", preview: "Forwarded message from Orion Retail Procurement. No note added.", time: "08:25" },
-  "turn-sarah": { format: "memo", organisation: "Orion Retail", label: "Internal announcement", subject: "Leadership update", from: "Internal communications" },
+  calendar: { format: "memo", organisation: "Northgate", label: "Delivery calendar", subject: "Month five: every promise comes due", from: "Aisha Khan" },
 };
 
 export function presentationForNode(nodeId: string): NodePresentation | undefined {
@@ -229,53 +221,33 @@ export function chapterPresentation(chapter: number): ChapterPresentation | unde
  */
 export const MILESTONE: Readonly<Record<string, string>> = {
   setup: "Your team’s strength",
-  m1: "Choose the client",
-  m2: "Research Orion",
-  m3: "Get the first meeting",
-  m4: "Decide how hard to chase",
-  "turn-rival": "A rival strikes",
-  m5: "Answer the rival",
-  m5b: "Spend the team’s fortnight",
-  m6: "Pick the problem to solve",
-  m6b: "Shape the offer",
-  m7: "Fill the proposal",
-  m7b: "Pass our own review",
-  m8: "Hold the price",
-  m9: "Fix the gap before signing",
-  m9a: "Win Orion’s scoring",
-  "turn-award": "Orion decides",
-  m9b: "Sign or walk away",
-  m10: "Month five slips",
-  m10b: "Fill two empty seats",
-  m10h: "Hand over the promises",
-  "turn-sarah": "Sarah resigns",
-  m10c: "Keep the work alive",
+  d1: "Find what is really wrong",
+  d2: "The first meeting",
+  d3: "How much do we bet?",
+  d4: "The rival’s demo",
+  d5: "Build the offer",
+  d6: "The price push",
+  d7: "Sign or walk",
+  d8: "Month five",
+  calendar: "Every promise comes due",
 };
 
 /**
- * Side-by-side facts for a choice that is a comparison (D-083). The first decision is
- * picking a client, and a newcomer can only pick well if the three are described on the same
- * rows. Facts only: no row says which client is right; each one has a real upside.
+ * Side-by-side facts for a choice that is a comparison (D-083). The eight-decision story has
+ * no decision between named alternatives of the same kind — every lever setting carries its
+ * own detail line — so there is nothing to lay out in rows. Kept as a capability.
  */
-export const COMPARE: Readonly<Record<string, readonly { label: string; values: Readonly<Record<string, string>> }[]>> = {
-  m1: [
-    { label: "What they want", values: { "o-northwind": "A better experience for shoppers across 210 shops", "o-apex": "New systems for its factories", "o-meridian": "Better contact with patients at a small hospital group" } },
-    { label: "Size of the prize", values: { "o-northwind": "Large, and the budget is already set", "o-apex": "The largest of the three", "o-meridian": "The smallest today, and it could grow" } },
-    { label: "Have we done this before?", values: { "o-northwind": "Yes: similar work for other retailers", "o-apex": "No: it needs factory engineering", "o-meridian": "Not in healthcare" } },
-    { label: "Who we are up against", values: { "o-northwind": "Two firms already talking to them", "o-apex": "Specialists with factory clients", "o-meridian": "Few rivals" } },
-    { label: "How fast they decide", values: { "o-northwind": "This quarter", "o-apex": "A six-week bid", "o-meridian": "Months of approvals" } },
-  ],
-};
+export const COMPARE: Readonly<Record<string, readonly { label: string; values: Readonly<Record<string, string>> }[]>> = {};
 
 /**
  * The question under the whole story (D-083). Orion's brief is one vague line; what is really
- * wrong (customers angry about what happens after they buy) is there to be found, and finding
- * it is what makes the later choices make sense. The map keeps it open as a case file until
- * the player holds one of the clues.
+ * wrong (customers angry about what happens after they buy) is there to be found in week one,
+ * and finding it is what makes the later choices make sense. The map keeps it open as a case
+ * file until the player knows.
  */
 export const MYSTERY = {
   question: "What is really wrong at Orion?",
-  unknown: "Nobody knows yet. Orion’s brief says “improve the customer experience”. That could mean the shops, the website, or something nobody has looked at.",
-  solved: "Customers are not unhappy with the shops. They are angry about what happens after they buy: late deliveries, slow refunds and a helpline nobody answers.",
-  clues: ["knows:real_pain", "evidenced"],
+  unknown: "Nobody knows yet. Orion’s brief says “improve the customer experience”. That could mean the shops, the app, or something nobody has looked at.",
+  solved: "Customers are not unhappy with the shops. They are angry about what happens after they buy: late deliveries, slow refunds and a helpline that cannot see the order.",
+  clues: ["knows:after_sale"],
 } as const;

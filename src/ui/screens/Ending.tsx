@@ -73,7 +73,8 @@ export function Ending({ session, content, onPlan, onCode, onHome, onAgain }: { 
   const [skipped, setSkipped] = useState(false);
   const asked = causalClaim(state, content) !== null;
   const speaker = (missionId: string) => { const n = content.nodes[missionId]; return n && 'advisor' in n ? n.advisor?.name : undefined; };
-  const verdict = finalVerdict(state.dims, state.flags); const threads = causalThreads(state, content);
+  /* The content's own ending, and every extra whose condition held (D-086). */
+  const verdict = finalVerdict(state.dims, state.flags, content); const threads = causalThreads(state, content);
   const start = state.history[0]?.dimsBefore;
   return <section className="page f-ending">
     <div className="fs f-cover">
@@ -89,6 +90,8 @@ export function Ending({ session, content, onPlan, onCode, onHome, onAgain }: { 
         <p className="f-kicker">{COPY.stage.endKicker}</p>
         <Heading className="f-verdict-h">{verdict.title}</Heading>
         <p className="f-verdict-summary">{verdict.summary}</p>
+        {verdict.extras.map(x => <p key={x} className="f-verdict-extra">{x}</p>)}
+        <p className="f-spine">{STORY.spine}</p>
         <p className="f-verdict-count"><b>{state.completed.length}</b> {E.made}</p>
         <p className="f-verdict-question"><span>{COPY.stage.setOut}</span> {STORY.question}</p>
         <Measures to={state.dims} from={start} label={COPY.position} className="f-final" />
@@ -98,6 +101,12 @@ export function Ending({ session, content, onPlan, onCode, onHome, onAgain }: { 
 
     <div className="f-report" id="report" tabIndex={-1}>
       <p className="f-report-title">{E.reportTitle}</p>
+      {/* The promise calendar, as it came due (D-086). Interim, until the calendar view exists. */}
+      {state.settled && <section className="f-end-section f-promises" aria-labelledby="promises-heading">
+        <h2 id="promises-heading" className="f-h2">{COPY.frames.calendar.title}</h2>
+        {state.settled.length ? <ul>{state.settled.map(r => <li key={r.flag} className={'is-' + r.status}><small>{r.due}</small> {r.line}</li>)}</ul>
+          : <p className="f-end-lead">{COPY.frames.calendar.empty}</p>}
+      </section>}
       <Attribution state={state} content={content} answer={answer} onAnswer={setAnswer} />
       {asked && !answer && !skipped && <p className="f-reveal"><button className="secondary" onClick={() => setSkipped(true)}>{COPY.stage.revealThreads}</button></p>}
       {(!asked || answer || skipped) && <section className="f-end-section">

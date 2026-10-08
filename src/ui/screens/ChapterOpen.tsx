@@ -3,7 +3,7 @@ import type { Chapter, Interlude } from '../../engine/types';
 import type { ChapterNumber } from '../../content/assets';
 import { COPY } from '../../content/interface';
 import { ACT_BRIEFING, ACT_QUESTION, CHAPTER_PRESENTATION, placeOf } from '../../content/presentation';
-import { CHARACTERS } from '../../content/characters';
+import { CHARACTERS, characterByName } from '../../content/characters';
 import { Backdrop, Heading } from '../parts';
 import type { Line } from '../script';
 import { DialogueBox } from './Dialogue';
@@ -18,7 +18,9 @@ import { Figure, VoicedTitle, useAdvanceKeys } from './FrameParts';
 export function ChapterOpen({ node, chapter, onBegin }: { node: Interlude; chapter: Chapter; onBegin(): void }) {
   const n = node.chapter as ChapterNumber;
   const p = CHAPTER_PRESENTATION[n - 1];
-  const guide = CHARACTERS[p.advisor];
+  /* Whoever the content says opens the act; the act's guide when it says nothing. Act three
+     is opened by Riya and guided by Arjun (D-086). */
+  const guide = characterByName(node.advisor?.name) ?? CHARACTERS[p.advisor];
   const place = placeOf(node.id);
   const say = (text: string, note?: string): Line => ({ who: guide.name, role: guide.role, text, voice: 'say', note });
   const lines = [...node.body.map(t => say(t)), ...(ACT_BRIEFING[n] ?? []).map(t => say(t)), say(ACT_QUESTION[n], COPY.frames.open.question)];
@@ -27,7 +29,7 @@ export function ChapterOpen({ node, chapter, onBegin }: { node: Interlude; chapt
   useAdvanceKeys();
   return <section className="page fs f-open">
     <Backdrop photo={place.photo} />
-    <Figure id={p.advisor} className="f-open-guide" enter="right" delay={650} box={{ left: '52%', right: 0, top: 0, bottom: 0 }} frame={{ x: '50%', y: 0.08, face: 0.19 }} />
+    <Figure id={guide.id} className="f-open-guide" enter="right" delay={650} box={{ left: '52%', right: 0, top: 0, bottom: 0 }} frame={{ x: '50%', y: 0.08, face: 0.19 }} />
     <p className="f-place">{place.name}</p>
 
     <div className="f-flood" data-n={n}>
