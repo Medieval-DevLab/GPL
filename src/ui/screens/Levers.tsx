@@ -129,13 +129,10 @@ export function LeverPanel({ mission, state, content, onToggle, onCommit, ask }:
       </div>
     </div>
     <div className="commit-bar">
-      <div>
-        <p role="status">{mission.levers.map((lever, i) => {
-          const s = settings.find(o => lever.options.includes(o));
-          return <span key={lever.id}>{i > 0 && ' · '}{s ? <b>{s.label}</b> : <span className="is-unset">{lever.label}: {L.notSet}</span>}</span>;
-        })}</p>
-        <p className="levers-keys">{L.keys}</p>
-      </div>
+      <p role="status">{mission.levers.map((lever, i) => {
+        const s = settings.find(o => lever.options.includes(o));
+        return <span key={lever.id}>{i > 0 && ' · '}{s ? <b>{s.label}</b> : <span className="is-unset">{lever.label}: {L.notSet}</span>}</span>;
+      })}<span className="sr-only">. {L.keys}</span></p>
       <Action onClick={onCommit} disabled={!canCommit(state, content)}>{COPY.commit}</Action>
     </div>
   </div>;

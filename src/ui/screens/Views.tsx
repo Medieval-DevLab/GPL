@@ -54,7 +54,7 @@ export function Scales({ state }: { state: GameState }) {
     {cards.length ? <ul>{cards.map(f => <li key={f}>{title(f)}</li>)}</ul> : <p className="pan-empty">{S.none}</p>}
   </div>;
   return <div className="scales" style={{ ['--tilt' as string]: tilt }}>
-    <div className="scales-rig" aria-hidden="true"><i className="beam" /><i className="post" /></div>
+    <i className="scales-rig" aria-hidden="true" />
     <div className="scales-pans">{pan(S.gave, gave, 'gave')}{pan(S.got, got, 'got')}</div>
     <p className="scales-read" role="status">{!gave.length && !got.length ? S.empty : tilt > 0 ? S.moreGiven : tilt < 0 ? S.moreGot : S.even}</p>
   </div>;

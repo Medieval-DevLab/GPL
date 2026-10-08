@@ -12,10 +12,10 @@
 .is-promise, .pan-gave li, .levers-held li { --c-line: var(--owe-line); --c-bg: var(--owe-bg); --c-ink: var(--fall); }
 
 /* ── The lever panel: one structure, four mediums ── */
-.choose-levers { top: calc(var(--title-b, 150px) + 10px); gap: 10px; }
+.choose-levers { top: calc(var(--title-b, 150px) + 10px); bottom: 12px; gap: 8px; }
 .choose-levers .choose-body { padding: 0 2px 2px; }
 .choose-levers .commit-bar { padding-block: 8px; }
-.levers { display: grid; gap: 7px; padding: 10px 18px 14px; border-radius: 14px; }
+.levers { display: grid; gap: 5px; padding: 10px 18px 14px; border-radius: 14px; }
 .m-contract, .m-calendar { background: var(--sheet); box-shadow: var(--sheet-shadow); border: 1px solid var(--line); }
 .levers-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
 .levers-medium { padding: 3px 12px; border-radius: 6px; background: var(--ink); color: #fff; font-size: 15px; font-weight: 750; }
@@ -25,11 +25,11 @@
 .levers-held li, .chip, .sm-card, .pan li { border: 1.5px solid var(--c-line, var(--line)); background: var(--c-bg, var(--card)); }
 .levers-held li { padding: 2px 10px; border-radius: 999px; font-size: 14px; }
 .levers-held b, .chip b { color: var(--c-ink); }
-.lever { display: grid; gap: 6px; }
+.lever { display: grid; gap: 4px; }
 .lever-label { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; justify-self: start; font-size: 16px; font-weight: 700; line-height: 1.2; }
 .lever-n { font-size: 14px; font-weight: 650; color: var(--accent); }
 .lever-options { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); grid-template-rows: auto auto auto; gap: 0 10px; }
-.lever-opt { position: relative; grid-row: span 3; display: grid; grid-template-rows: subgrid; row-gap: 5px; align-content: start; padding: 5px 6px 6px; border-radius: 10px; background: var(--card); border: 1.5px solid var(--line); }
+.lever-opt { position: relative; grid-row: span 3; display: grid; grid-template-rows: subgrid; row-gap: 3px; align-content: start; padding: 5px 6px 6px; border-radius: 10px; background: var(--card); border: 1.5px solid var(--line); }
 .lever-hit { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 36px; padding: 4px 12px; border-radius: 8px; border: 1.5px solid var(--accent); background: var(--card); color: var(--accent); font-size: 16px; font-weight: 700; line-height: 1.25; text-align: left; }
 .lever-hit::after { content: ""; position: absolute; inset: 0; z-index: 1; }
 .lever-mark { flex: none; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 2px solid; font-size: 14px; line-height: 1; }
@@ -39,17 +39,16 @@
 .lever-opt.is-locked { background: var(--paper-2); }
 .is-locked .lever-hit { border: 1.5px dashed var(--line-strong); background: none; color: var(--ink-3); }
 .lever-detail, .lever-facts { padding: 0 4px; }
-.lever-detail { font-size: 15px; line-height: 1.4; color: var(--ink-2); }
+.lever-detail { font-size: 15px; line-height: 1.35; color: var(--ink-2); }
 .lever-facts { display: flex; flex-wrap: wrap; align-items: center; align-content: start; gap: 5px; }
 .lever-facts .lock-note { flex-basis: 100%; font-size: 14px; }
-.touch li, .chip { padding: 0 8px; border-radius: 999px; font-size: 14px; line-height: 20px; }
+.touch li, .chip { padding: 0 8px; border-radius: 999px; font-size: 14px; line-height: 19px; }
 .touch li { display: inline-flex; align-items: center; gap: 4px; padding-left: 6px; border: 1px solid var(--line-strong); background: var(--card); font-weight: 650; }
 .touch i { width: 10px; height: 10px; border-radius: 50%; background: var(--q-c); }
 .touch .up span { color: var(--rise); }
 .touch .down span { color: var(--fall); }
 .choose-levers .commit-bar p { font-size: 16px; color: var(--ink); }
-.commit-bar .is-unset, .commit-bar .levers-keys { font-weight: 500; color: var(--ink-3); }
-.choose-levers .commit-bar .levers-keys { font-size: 14px; }
+.commit-bar .is-unset { font-weight: 500; color: var(--ink-3); }
 
 /* Act 1 · a research board: index cards pinned to cork, each lever on a sticky note */
 .m-research .lever-label { padding: 3px 14px; background: var(--note); }
@@ -86,8 +85,7 @@
 /* ── The act break, first step: the act as a system ── */
 .f-map { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 16px; }
 .f-map-head { padding: 16px 26px; border-top: 5px solid var(--accent); }
-.f-map-head .f-read { margin-top: 4px; font-size: 17px; }
-.f-map-foot { display: flex; justify-content: flex-end; }
+.f-map-foot { justify-self: end; }
 .f-map-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: 16px; align-items: start; }
 .f-cal { align-self: start; padding: 20px 22px; }
 .sysmap { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 64px; align-items: start; padding: 18px 24px 22px; }
@@ -102,13 +100,12 @@
 .sm-decision { border: 2px solid var(--accent); background: var(--card); }
 .sm-decision.is-guess { box-shadow: 0 0 0 4px var(--accent-tint); }
 .sm-n { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; font-weight: 700; color: var(--accent); }
-.sm-n em { padding: 0 8px; border-radius: 999px; background: var(--ink); color: #fff; font-style: normal; }
+.sm-n em { font-style: normal; color: var(--ink); }
 .sm-empty, .sm-guessed { font-size: 15px; color: var(--ink-2); }
 .sm-done b { color: var(--ink); }
 .sm-guess { gap: 10px; padding: 14px 16px; border-radius: 12px; border: 2px dashed var(--accent); background: var(--accent-tint); }
 .sm-guess-q { font-size: 17px; font-weight: 700; line-height: 1.35; }
 .sm-guess-options .secondary { white-space: normal; padding-block: 8px; }
-.sm-guess .text-button { justify-self: start; }
 
 /* ── The trail's act view ── */
 .people, .scales, .pan ul, .person-text { display: grid; gap: 8px; }
@@ -125,9 +122,7 @@
 .person.is-against { --p: var(--fall); border-color: #e2938b; background: var(--owe-bg); }
 :is(.is-onside, .is-against) .person-status { color: #fff; }
 
-.scales-rig { position: relative; height: 50px; }
-.scales-rig .post { position: absolute; left: calc(50% - 15px); bottom: 0; border: 15px solid transparent; border-top: 0; border-bottom: 32px solid var(--ink-2); }
-.scales-rig .beam { position: absolute; left: 14%; right: 14%; top: 14px; height: 6px; border-radius: 3px; background: var(--ink); transform: rotate(calc(var(--tilt) * -6deg)); }
+.scales-rig { display: block; height: 6px; margin: 18px 14% 10px; border-radius: 3px; background: var(--ink); box-shadow: 0 8px 0 -2px var(--ink-2); transform: rotate(calc(var(--tilt) * -6deg)); }
 .scales-pans { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .pan { display: grid; align-content: start; gap: 6px; padding: 8px 10px 12px; border: 1.5px solid var(--line); border-top: 4px solid var(--ink); border-radius: 0 0 18px 18px; background: var(--paper); }
 .pan-gave { transform: translateY(calc(var(--tilt) * 6px)); }
