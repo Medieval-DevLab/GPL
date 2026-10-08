@@ -31,14 +31,20 @@ export function Backdrop({ photo, focus = 'room' }: { photo: string; focus?: 'ro
  * frame's height) and `face` its height. A close crop is allowed to grow at most 30% past the
  * target and then sits lower, as nearer the camera; it never floats.
  */
-export interface Frame { x: string; y: number; face: number; close?: boolean }
+/**
+ * `pin` keeps the face exactly at `y` and sizes the figure only so its lower edge reaches
+ * `floor` (the top of the dialogue box), where it fades. Floor-anchoring a bust photo dropped the
+ * face behind the dialogue box on short windows (user, D-090).
+ */
+export interface Frame { x: string; y: number; face: number; close?: boolean; pin?: boolean; floor?: number }
 export function Cutout({ id, frame, className = '', style }: { id: CharacterId | undefined; frame: Frame; className?: string; style?: React.CSSProperties }) {
   if (!id) return null;
   const m = CUTOUT_FRAME[id];
   const byFace = frame.face / m.size, toFloor = (1 - frame.y) / (1 - m.top);
-  const height = toFloor <= byFace ? byFace : frame.close ? toFloor : Math.min(toFloor, byFace * 1.3);
-  const top = toFloor <= byFace || frame.close ? frame.y - m.top * height : 1 - height;
-  return <img className={'cutout ' + className} data-cast={id} src={art('cut-' + id)} alt="" decoding="async" onError={hideOnError}
+  const height = frame.pin ? Math.max(byFace, ((frame.floor ?? 0.7) - frame.y) / (1 - m.top))
+    : toFloor <= byFace ? byFace : frame.close ? toFloor : Math.min(toFloor, byFace * 1.3);
+  const top = frame.pin || toFloor <= byFace || frame.close ? frame.y - m.top * height : 1 - height;
+  return <img className={'cutout ' + (frame.pin ? 'is-pinned ' : '') + className} data-cast={id} src={art('cut-' + id)} alt="" decoding="async" onError={hideOnError}
     style={{ height: (height * 100).toFixed(2) + '%', top: (top * 100).toFixed(2) + '%', left: frame.x, translate: (-m.centre * 100).toFixed(1) + '% 0', ...style }} />;
 }
 

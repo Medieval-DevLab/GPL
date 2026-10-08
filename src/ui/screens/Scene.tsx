@@ -5,7 +5,7 @@ import { availableOptions, canCommit, requiredSelectionCount, resolveAdvisorLine
 import { COPY } from '../../content/interface';
 import { EARNED } from '../../content/gates';
 import { COMPARE, RULES, placeOf } from '../../content/presentation';
-import { Action, Backdrop, Cutout, Glyph, Heading, Portrait, castId, firstName } from '../parts';
+import { Action, Backdrop, Cutout, Glyph, Heading, Pips, Portrait, castId, firstName } from '../parts';
 import { briefLines, castOf, outcomeLines, type Line } from '../script';
 import { cardsFrom, sourceOf } from '../cards';
 import { DialogueBox, Thread } from './Dialogue';
@@ -91,25 +91,37 @@ export function Scene(props: Props) {
   const threadWithAdvisor = inChat && !counterpart;
   if (advisor && !threadWithAdvisor) room.push({ id: castId(advisor.name), name: advisor.name, side: family === 'case' || inCall || inChat ? 'right' : 'left' });
   if (counterpart && !inCall && !inChat && stage.k !== 'after') room.push({ id: castId(counterpart.name), name: counterpart.name, side: family === 'case' ? 'left' : 'right' });
-  const solo = room.length === 1;
+  /* While you choose, the person you are answering keeps a column of their own on the left and
+     the options take the rest, so no panel is ever drawn over them. On a call or a thread the
+     person is already on the device. */
+  const choosing = stage.k === 'choose';
+  const onStage = choosing ? (inCall || inChat ? [] : room.slice(counterpart && room[1] ? 1 : 0, (counterpart && room[1] ? 1 : 0) + 1).map(p => ({ ...p, side: 'left' as const }))) : room;
+  const solo = onStage.length === 1;
 
   /* Everything below the question is placed from the question card's real bottom edge, not a
      guessed one: a question that wraps, or a short window, used to slide the choices and the
      result underneath it. Presentation only. */
   const sceneRef = useRef<HTMLElement>(null), titleRef = useRef<HTMLElement>(null);
+  const [geo, setGeo] = useState({ titleB: 150, height: 800 });
   useLayoutEffect(() => {
     const scene = sceneRef.current, title = titleRef.current;
     if (!scene || !title) return;
-    const place = () => scene.style.setProperty('--title-b', Math.ceil(title.offsetTop + title.offsetHeight) + 'px');
+    const place = () => {
+      const titleB = Math.ceil(title.offsetTop + title.offsetHeight);
+      scene.style.setProperty('--title-b', titleB + 'px');
+      setGeo(g => g.titleB === titleB && g.height === scene.clientHeight ? g : { titleB, height: scene.clientHeight });
+    };
     place();
-    const watch = new ResizeObserver(place); watch.observe(title);
+    const watch = new ResizeObserver(place); watch.observe(title); watch.observe(scene);
     return () => watch.disconnect();
   }, []);
+  /* A face is never behind the question card: on a short window the fixed 21% put it there. */
+  const faceY = Math.min(0.42, Math.max(0.21, (geo.titleB + 32) / Math.max(geo.height, 1)));
   return <section ref={sceneRef} className={'page scene2 fam-' + family + ' st-' + stage.k}>
     <Backdrop photo={place.photo} focus={stage.k === 'brief' ? 'room' : stage.k === 'card' ? 'deep' : 'soft'} />
     <div className="cast" aria-hidden="true">
-      {room.map(p => <Cutout key={p.name} id={p.id}
-        frame={{ x: p.side === 'left' ? (solo ? '33%' : '19%') : (solo && !inCall && !inChat ? '74%' : '82%'), y: 0.21, face: 0.16 }}
+      {onStage.map(p => <Cutout key={p.name} id={p.id}
+        frame={{ x: choosing ? 'calc(var(--gutter) + var(--cast-col) / 2)' : p.side === 'left' ? (solo ? '33%' : '19%') : (solo && !inCall && !inChat ? '74%' : '82%'), y: faceY, face: choosing ? 0.15 : 0.16, pin: true, floor: choosing ? 0.8 : 0.72 }}
         className={'actor side-' + p.side + (speaking === p.name ? ' is-speaking' : speaking ? ' is-quiet' : '')} />)}
     </div>
 
@@ -159,12 +171,14 @@ function LockNote({ option, content }: { option: Option; content: Content }) {
 }
 
 function Weigh({ option }: { option: Option }) {
-  if (!option.pros?.length && !option.cons?.length) return null;
-  /* Always open: what an option gives and what it costs is the logic of the decision, not a footnote. */
-  return <dl className="weigh">
-    {option.pros?.length ? <div className="gain"><dt><span aria-hidden="true">▲</span> {COPY.stage.offers}</dt><dd>{option.pros.join(' · ')}</dd></div> : null}
-    {option.cons?.length ? <div className="cost"><dt><span aria-hidden="true">▼</span> {COPY.stage.givesUp}</dt><dd>{option.cons.join(' · ')}</dd></div> : null}
-  </dl>;
+  if (!option.pros?.length && !option.cons?.length && !option.cost) return null;
+  /* Gains and costs as tags you can scan, not sentences joined with dots: the logic of a choice
+     should read at a glance (user, D-090). Effort and investment as pips. */
+  return <div className="weigh">
+    {option.pros?.length ? <ul className="chips gain" aria-label={COPY.stage.offers}>{option.pros.map(p => <li key={p}><span aria-hidden="true">▲</span>{p}</li>)}</ul> : null}
+    {option.cons?.length ? <ul className="chips cost" aria-label={COPY.stage.givesUp}>{option.cons.map(c => <li key={c}><span aria-hidden="true">▼</span>{c}</li>)}</ul> : null}
+    {option.cost && <p className="effort"><span>{COPY.stage.effort} <Pips value={option.cost.time} label={COPY.stage.effort} /></span><span>{COPY.stage.investment} <Pips value={option.cost.investment} label={COPY.stage.investment} /></span></p>}
+  </div>;
 }
 
 interface Item { id: string; title: string; line: string; spoken: boolean; option?: Option; enabled: boolean; tag?: string; facts?: { label: string; value: string }[] }
@@ -203,12 +217,21 @@ function Ask({ mission, state }: { mission: Mission; state: GameState }) {
   const steer = resolveAdvisorLine(mission, state);
   const asks = [...(steer ? [steer] : []), ...(mission.consider ?? []), ...(mission.tip ? [mission.tip] : [])];
   const [n, setN] = useState(-1);
+  /* Advice you asked for goes away when you act on it: picking an option closes it (user, D-090). */
+  const picked = state.selection.join('|');
+  useEffect(() => { setN(-1); }, [picked]);
   if (!mission.advisor || !asks.length) return null;
   const who = firstName(mission.advisor.name);
-  return <div className="ask">
-    <button className="ask-button" onClick={() => setN(i => (i + 1) % asks.length)}><Portrait name={mission.advisor.name} className="sm" /><span>{n < 0 ? COPY.say.ask + ' ' + who : COPY.say.askAgain}</span></button>
-    {n >= 0 && <p className="ask-bubble" key={n} aria-live="polite"><b>{who}</b>“{asks[n]}”</p>}
-  </div>;
+  return <>
+    <div className="ask">
+      <button className="ask-button" aria-expanded={n >= 0} onClick={() => setN(i => (i + 1) % asks.length)}><Portrait name={mission.advisor.name} className="sm" /><span>{n < 0 ? COPY.say.ask + ' ' + who : COPY.say.askAgain}</span></button>
+    </div>
+    {/* In the flow, below the row: it pushes the options down instead of covering them. */}
+    {n >= 0 && <div className="ask-bubble" key={n} aria-live="polite">
+      <p><b>{who}</b>“{asks[n]}”</p>
+      <button className="ask-close" onClick={() => setN(-1)} aria-label={COPY.say.closeAdvice}>×</button>
+    </div>}
+  </>;
 }
 
 function Choose(props: Props & { family: Family }) {

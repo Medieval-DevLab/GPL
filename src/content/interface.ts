@@ -59,6 +59,7 @@ export const COPY = {
     filed: 'Filed under',
     takeaway: 'The takeaway',
     whyNote: 'Why it went this way',
+    closeAdvice: 'Close the advice',
     next: 'Next',
     skip: 'Skip to the choice',
     skipAll: 'Show all',

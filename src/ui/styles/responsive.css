@@ -16,7 +16,7 @@
 }
 /* The top bar never runs off the edge: it gives up decoration in order — bars, then the
    record label, then the dots — and always keeps the map, the three numbers and the tools. */
-@media (min-width: 1680px) { .hud-stage:not(.is-here) .name { display: inline; color: inherit; } }
+@media (max-width: 1366px) { .hud-stage:not(.is-here) .dots { display: none; } }
 @media (max-width: 1440px) {
   .hud { gap: 14px; }
   .hud-record { white-space: nowrap; }
@@ -61,7 +61,7 @@
   .chat-stage { height: 340px; }
   .st-brief .chat-stage { bottom: auto; }
   .choose-body { overflow: visible; }
-  .picks-table, .picks-board, .picks-plan, .case-grid, .outcome-grid, .weigh > div { grid-template-columns: 1fr; gap: 0; }
+  .picks-table, .picks-board, .picks-plan, .case-grid, .outcome-grid { grid-template-columns: 1fr; }
   .slots { grid-auto-flow: row; }
   .ask { flex-wrap: wrap; }
   .ask-bubble { position: static; width: auto; }
