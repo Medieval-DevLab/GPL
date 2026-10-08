@@ -175,6 +175,8 @@ function itemsOf(mission: Mission, state: GameState): Item[] {
   const facts = COMPARE[mission.id];
   if (mission.kind === 'choice') return mission.options.map(o => ({ id: o.id, title: o.title, line: o.description, spoken: false, option: o, enabled: allowed.has(o.id), facts: facts?.map(r => ({ label: r.label, value: r.values[o.id] ?? '' })) }));
   if (mission.kind === 'investigate') return mission.evidence.map(e => ({ id: e.id, title: e.label, line: e.question, spoken: false, enabled: true }));
+  /* Interim, so the union typechecks until the lever panel exists (D-084): every setting as a pick, tagged with its lever. The engine keeps one per lever and refuses a locked setting. */
+  if (mission.kind === 'levers') return mission.levers.flatMap(l => l.options.map(o => ({ id: o.id, title: o.label, line: o.detail, spoken: false, enabled: true, tag: l.label })));
   return mission.components.map(c => ({ id: c.id, title: c.title, line: c.description, spoken: false, enabled: true, tag: c.tag }));
 }
 

@@ -55,6 +55,8 @@ export type ActivityId =
   | "chat"
   | "thread"
   | "apply"
+  /** a lever panel: one setting on each of two or three levers (D-084) */
+  | "levers"
   | "choice";
 
 /** One mission, reduced to what a path or a map needs to draw it. */
@@ -85,6 +87,7 @@ export interface MissionEntry {
 function activityOf(mission: Mission): ActivityId {
   if (mission.kind === "investigate") return "investigate";
   if (mission.kind === "build") return "build";
+  if (mission.kind === "levers") return "levers";
   if (mission.presentation === "apply") return "apply";
   return mission.presentation === "dialogue" ? (mission.surface ?? "call") : "choice";
 }

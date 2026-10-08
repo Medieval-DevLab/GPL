@@ -18,6 +18,7 @@
 import { describe, expect, it } from "vitest";
 
 import { story } from "../content/story";
+import { EARNED } from "../content/gates";
 import {
   LESSON_OVERLAP_LIMIT,
   SAY_TITLE_OVERLAP_LIMIT,
@@ -46,8 +47,11 @@ const firstChoice = (c: Content): ChoiceMission => {
   return m;
 };
 
+/** The story's named cards, as `engine.test.ts` passes them — see `ValidateOptions`. */
+const CARDS = { cards: Object.keys(EARNED) };
+
 const errorsOf = (c: Content): Issue[] =>
-  validateContent(c).filter((i) => i.severity === "error");
+  validateContent(c, CARDS).filter((i) => i.severity === "error");
 
 const key = (i: Issue) => `${i.where}: ${i.message}`;
 
@@ -79,7 +83,7 @@ const longText = (n: number): string => Array.from({ length: n }, () => "filler"
  * legitimately carries two classes of warning today. */
 
 const warningsOf = (c: Content): Issue[] =>
-  validateContent(c).filter((i) => i.severity === "warning");
+  validateContent(c, CARDS).filter((i) => i.severity === "warning");
 
 const BASELINE_WARNINGS = new Set(warningsOf(story).map(key));
 
@@ -195,7 +199,7 @@ describe("the content as authored", () => {
    * not a soft landing for a check that fires today.
    */
   it("raises warnings only in the three classes that already have owners", () => {
-    const unowned = validateContent(story).filter(
+    const unowned = validateContent(story, CARDS).filter(
       (i) =>
         i.severity === "warning" &&
         !/is set but never read/.test(i.message) &&

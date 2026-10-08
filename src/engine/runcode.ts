@@ -17,7 +17,8 @@
  * WHY THE CODE IS SHORT
  * The decisions are not encoded independently. At each beat the game itself knows exactly
  * how many selections were legal — three or four options, or C(5,2)=10 ways to spend two
- * investigation slots, or C(6,3)=20 ways to build a proposal — so each decision is stored
+ * investigation slots, or C(6,3)=20 ways to build a proposal, or at most 3 × 3 × 3 = 27
+ * combinations of lever settings (D-084) — so each decision is stored
  * as an index into that list and the indices are packed in mixed radix. That is why both
  * functions here take `content`: the radices come from the game, and a code that did not
  * know them would have to spell out the option ids and would run to five times the length.
@@ -147,6 +148,22 @@ function missionText(m: Mission, rules: boolean): string {
               : ""
           }`,
         );
+      for (const oc of m.outcomes) parts.push(rules ? outcomeRules(oc) : outcomeShape(oc));
+      break;
+    case "levers":
+      /* Shape: every lever, every setting and its lock, in authored order — because the
+         digit for a lever decision is an index into the cartesian product of the open
+         settings, and moving a setting or a lock changes what that index means. Rules
+         add each setting's immediate effect, which decides where a replay lands. */
+      for (const l of m.levers) {
+        parts.push(`l:${l.id}`);
+        for (const o of l.options)
+          parts.push(
+            `s:${o.id}|${condText(o.requires)}${
+              rules ? `|${effectText({ dims: o.dims, flags: o.flags })}` : ""
+            }`,
+          );
+      }
       for (const oc of m.outcomes) parts.push(rules ? outcomeRules(oc) : outcomeShape(oc));
       break;
   }

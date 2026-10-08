@@ -33,6 +33,7 @@ function reads(node: GameNode): { opens: Set<string>; steers: Set<string> } {
     named(o.requires).forEach(f => opens.add(f));
     o.outcomes.forEach(x => named(x.when).forEach(f => steers.add(f)));
   }
+  if (node.kind === 'levers') node.levers.forEach(l => l.options.forEach(o => named(o.requires).forEach(f => opens.add(f))));
   if ('outcomes' in node && Array.isArray(node.outcomes)) node.outcomes.forEach((x: { when?: Condition }) => named(x.when).forEach(f => steers.add(f)));
   if ('variants' in node && Array.isArray(node.variants)) node.variants.forEach((v: { when?: Condition }) => named(v.when).forEach(f => steers.add(f)));
   return { opens, steers };
@@ -82,7 +83,7 @@ export function sourceOf(content: Content, flag: string): string | undefined {
   for (const id of content.missionOrder) {
     const node = content.nodes[id];
     const outcomes = node.kind === 'choice' ? node.options.flatMap(o => o.outcomes) : 'outcomes' in node && Array.isArray(node.outcomes) ? node.outcomes : [];
-    const parts: { flags?: string[] }[] = node.kind === 'investigate' ? node.evidence : node.kind === 'build' ? node.components : [];
+    const parts: { flags?: string[] }[] = node.kind === 'investigate' ? node.evidence : node.kind === 'build' ? node.components : node.kind === 'levers' ? node.levers.flatMap(l => l.options) : [];
     const sets = (outcomes as { effect?: { flags?: string[] } }[]).some(o => o.effect?.flags?.includes(flag)) || parts.some(e => e.flags?.includes(flag));
     if (sets) return MILESTONE[id];
   }
@@ -95,7 +96,8 @@ export function cardsFrom(state: GameState, content: Content): Card[] {
   const r = state.resolution;
   if (!r) return [];
   const node = content.nodes[state.nodeId];
-  const built = node.kind === 'build' ? node.components.filter(c => state.selection.includes(c.id)).flatMap(c => c.flags ?? []) : [];
+  const built = node.kind === 'build' ? node.components.filter(c => state.selection.includes(c.id)).flatMap(c => c.flags ?? [])
+    : node.kind === 'levers' ? node.levers.flatMap(l => l.options).filter(o => state.selection.includes(o.id)).flatMap(o => o.flags ?? []) : [];
   const flags = new Set([...(r.outcome.effect.flags ?? []), ...r.revealed.flatMap(e => e.flags ?? []), ...built]);
   return handOf(state, content).filter(c => flags.has(c.flag));
 }
@@ -106,7 +108,7 @@ export interface ActLinks { decisions: { id: string; name: string; chose: string
 /** The flags one past decision put in your hand: from its outcome, and from what it picked. */
 function setByEntry(content: Content, missionId: string, outcomeId: string, chosenIds: readonly string[]): string[] {
   const node = content.nodes[missionId];
-  const picked: { id: string; flags?: string[] }[] = node.kind === 'investigate' ? node.evidence : node.kind === 'build' ? node.components : [];
+  const picked: { id: string; flags?: string[] }[] = node.kind === 'investigate' ? node.evidence : node.kind === 'build' ? node.components : node.kind === 'levers' ? node.levers.flatMap(l => l.options) : [];
   return [...flagsSetBy(content, missionId, outcomeId), ...picked.filter(p => chosenIds.includes(p.id)).flatMap(p => p.flags ?? [])];
 }
 

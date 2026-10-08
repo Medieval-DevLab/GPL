@@ -31,7 +31,7 @@
  */
 
 import { walkReachable, openingState, playMission, possibleSelections, type SweepOptions } from "./analysis";
-import { advance, chooseSetup, finalVerdict, getNode, scoreOf } from "./engine";
+import { advance, chooseSetup, finalVerdict, getNode, leverSettings, scoreOf } from "./engine";
 import { seeded } from "./engagement";
 import {
   DIMENSIONS,
@@ -91,16 +91,30 @@ function zeroByDim(): Record<DimensionId, number> {
   return { win: 0, profit: 0, deliver: 0 };
 }
 
-/** The selection's own effect on the meters — build missions only; the rest write nothing. */
-function selectionDims(mission: Mission, selection: readonly string[]): Record<DimensionId, number> {
+/**
+ * The selection's own writes to the meters, in the order the engine applies them.
+ *
+ * `build` is one write — its components are summed and land together. `levers` is one
+ * write per lever, in lever order, because the engine applies each setting as its own step
+ * and the clamp can tell the difference (see `applySteps` in `engine.ts`). The other kinds
+ * write nothing until the outcome.
+ */
+function selectionWrites(mission: Mission, selection: readonly string[]): Record<DimensionId, number>[] {
+  if (mission.kind === "levers") {
+    return leverSettings(mission, selection).map((o) => {
+      const dims = zeroByDim();
+      for (const d of DIMENSIONS) dims[d] = o.dims?.[d] ?? 0;
+      return dims;
+    });
+  }
+  if (mission.kind !== "build") return [];
   const dims = zeroByDim();
-  if (mission.kind !== "build") return dims;
   for (const id of selection) {
     const component = mission.components.find((c) => c.id === id);
     if (!component) continue;
     for (const d of DIMENSIONS) dims[d] += component.dims?.[d] ?? 0;
   }
-  return dims;
+  return [dims];
 }
 
 function outcomeById(mission: Mission, id: string): Outcome | undefined {
@@ -128,7 +142,7 @@ export function accountDecision(
   before: Record<DimensionId, number>,
   outcomeId: string,
 ): DeltaSample {
-  const sel = selectionDims(mission, selection);
+  const sel = selectionWrites(mission, selection);
   const outcome = outcomeById(mission, outcomeId);
   const out = zeroByDim();
   for (const d of DIMENSIONS) out[d] = outcome?.effect.dims?.[d] ?? 0;
@@ -149,7 +163,7 @@ export function accountDecision(
 
   for (const d of DIMENSIONS) {
     let value = before[d];
-    for (const write of [sel[d], out[d]]) {
+    for (const write of [...sel.map((w) => w[d]), out[d]]) {
       if (write === 0) continue;
       sample.writes += 1;
       sample.magnitude += Math.abs(write);
@@ -171,8 +185,9 @@ export function accountDecision(
        does: `applyEffect` only touches dimensions the effect names, so an untouched meter
        keeps its exact value. Rounding it here would invent drift. */
     sample.recomputed[d] = value;
-    sample.authoredByDim[d] = sel[d] + out[d];
-    sample.authored += sel[d] + out[d];
+    const authored = sel.reduce((total, w) => total + w[d], 0) + out[d];
+    sample.authoredByDim[d] = authored;
+    sample.authored += authored;
     sample.applied += value - before[d];
   }
 
@@ -491,8 +506,8 @@ export interface ScaledContent {
  * Scaling `win` and `deliver` alone leaves profit where it is — and needs a much lower k to
  * move the verdict share, because the verdict reads the mean of all three.
  *
- * Touches outcome effects, `build` component stats and chapter 0's opening advantage —
- * every place content writes a meter. Chapter 0 is included because it is a real write
+ * Touches outcome effects, `build` component stats, lever settings and chapter 0's opening
+ * advantage — every place content writes a meter. Chapter 0 is included because it is a real write
  * (the opening advantage is worth up to 5 points) and excluding it would quietly exempt
  * the one write every single run takes.
  */
@@ -526,6 +541,7 @@ export function scaleAuthoredGains(
     }
     if (!isMission(node)) continue;
     if (node.kind === "build") for (const c of node.components) rescale(c.dims);
+    if (node.kind === "levers") for (const l of node.levers) for (const o of l.options) rescale(o.dims);
     const outcomes = node.kind === "choice" ? node.options.flatMap((o) => o.outcomes) : node.outcomes;
     for (const outcome of outcomes) rescale(outcome.effect.dims);
   }

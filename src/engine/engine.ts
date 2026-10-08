@@ -21,6 +21,9 @@ import {
   type GameNode,
   type GameState,
   type HistoryEntry,
+  type Lever,
+  type LeverMission,
+  type LeverOption,
   type Mission,
   type Option,
   type Outcome,
@@ -135,6 +138,76 @@ function applyEffect(
   return { dims: nextDims, flags: nextFlags, badges: nextBadges, newBadges };
 }
 
+/**
+ * Apply a list of effects in order, each clamped as it lands.
+ *
+ * One step for every kind but `levers`, which is one step per lever: the contract
+ * (`docs/LEVERS.md`) applies each chosen setting "in lever order", and the order is only
+ * observable at the clamp — a +5 then a −5 from 98 ends at 95, the same two summed first
+ * would end at 98. Each lever's movement is a separate, attributable write, so it is
+ * applied as one.
+ */
+function applySteps(
+  steps: readonly Effect[],
+  dims: Record<DimensionId, number>,
+  flags: readonly string[],
+  badges: readonly BadgeId[],
+): Applied {
+  let acc: Applied = { dims: { ...dims }, flags: [...flags], badges: [...badges], newBadges: [] };
+  for (const step of steps) {
+    const next = applyEffect(step, acc.dims, acc.flags, acc.badges);
+    acc = { ...next, newBadges: [...acc.newBadges, ...next.newBadges] };
+  }
+  return acc;
+}
+
+/* ───────────────────────────── levers ───────────────────────────── */
+
+/**
+ * Which bars a setting moves, and which way — never by how much.
+ *
+ * The *Reigns* dot, and the reason a lever panel can be telegraphed without breaking G3:
+ * this is the immediate, deterministic effect of the setting itself, which lands whatever
+ * the outcome turns out to be. The outcome stays unpreviewed. Zero entries are omitted, so
+ * an empty object means "this setting moves no bar on its own".
+ */
+export function leverTouches(option: LeverOption): Partial<Record<DimensionId, 1 | -1>> {
+  const out: Partial<Record<DimensionId, 1 | -1>> = {};
+  for (const d of DIMENSIONS) {
+    const v = option.dims?.[d];
+    if (v === undefined || v === 0 || Number.isNaN(v)) continue;
+    out[d] = v > 0 ? 1 : -1;
+  }
+  return out;
+}
+
+/** The lever an option id belongs to, or undefined if no lever on this mission has it. */
+export function leverOf(mission: LeverMission, optionId: string): Lever | undefined {
+  return mission.levers.find((l) => l.options.some((o) => o.id === optionId));
+}
+
+/**
+ * The settings a selection makes, in lever order — at most one per lever.
+ *
+ * Lever order rather than selection order, so the history, the label and the commit bar
+ * read the same however the player happened to click: "Hold · Drop the pilot · Ask for a
+ * named lead". A lever with nothing selected contributes nothing; `selectionComplete`
+ * refuses to commit in that case, so a committed selection always yields one per lever.
+ */
+export function leverSettings(mission: LeverMission, selection: readonly string[]): LeverOption[] {
+  const out: LeverOption[] = [];
+  for (const lever of mission.levers) {
+    const chosen = lever.options.find((o) => selection.includes(o.id));
+    if (chosen) out.push(chosen);
+  }
+  return out;
+}
+
+/** Is this setting open in this state? A locked one is shown, named and unselectable. */
+export function leverOptionOpen(option: LeverOption, state: GameState): boolean {
+  return evaluateCondition(option.requires, state.flags, state.dims);
+}
+
 /* ───────────────────────────── lifecycle ───────────────────────────── */
 
 export function createInitialState(content: Content): GameState {
@@ -231,6 +304,11 @@ export function requiredSelectionCount(mission: Mission): number {
       return mission.slots;
     case "build":
       return mission.pick;
+    case "levers":
+      /* One setting per lever. The count alone is not sufficient — two settings of one
+         lever is the right number and the wrong selection — so `selectionComplete` also
+         checks that every lever is covered. */
+      return mission.levers.length;
   }
 }
 
@@ -241,13 +319,28 @@ export function selectionComplete(state: GameState, content: Content): boolean {
   if (state.selection.length !== requiredSelectionCount(node)) return false;
   if (new Set(state.selection).size !== state.selection.length) return false;
   const legal = selectableIds(node, state);
-  return state.selection.every((id) => legal.includes(id));
+  if (!state.selection.every((id) => legal.includes(id))) return false;
+  if (node.kind === "levers") {
+    return node.levers.every(
+      (l) => l.options.filter((o) => state.selection.includes(o.id)).length === 1,
+    );
+  }
+  return true;
 }
 
 function selectableIds(mission: Mission, state: GameState): string[] {
-  if (mission.kind === "choice") return availableOptions(mission, state).map((o) => o.id);
-  if (mission.kind === "investigate") return mission.evidence.map((e) => e.id);
-  return mission.components.map((c) => c.id);
+  switch (mission.kind) {
+    case "choice":
+      return availableOptions(mission, state).map((o) => o.id);
+    case "investigate":
+      return mission.evidence.map((e) => e.id);
+    case "build":
+      return mission.components.map((c) => c.id);
+    case "levers":
+      return mission.levers.flatMap((l) =>
+        l.options.filter((o) => leverOptionOpen(o, state)).map((o) => o.id),
+      );
+  }
 }
 
 export function canCommit(state: GameState, content: Content): boolean {
@@ -259,6 +352,21 @@ export function toggleSelection(state: GameState, content: Content, id: string):
   const node = getNode(content, state.nodeId);
   if (!isMission(node) || state.phase !== "decide") return state;
   if (!selectableIds(node, state).includes(id)) return state;
+
+  /**
+   * A lever is a radio group of its own: setting it replaces that lever's previous
+   * setting and leaves the other levers alone. Re-setting the current one is a no-op, for
+   * the same reason as a single-pick card below — a radio cannot be unchecked by
+   * activating it. The selection is kept in lever order, so what the commit bar lists and
+   * what history records are the same sequence whatever the click order.
+   */
+  if (node.kind === "levers") {
+    const lever = leverOf(node, id);
+    if (!lever || state.selection.includes(id)) return state;
+    const siblings = new Set(lever.options.map((o) => o.id));
+    const kept = state.selection.filter((s) => !siblings.has(s));
+    return { ...state, selection: leverSettings(node, [...kept, id]).map((o) => o.id) };
+  }
 
   const limit = requiredSelectionCount(node);
   const already = state.selection.includes(id);
@@ -314,10 +422,33 @@ export function chooseSetup(state: GameState, content: Content, optionId: string
 
 /* ───────────────────────────── resolution ───────────────────────────── */
 
+/**
+ * What a selection does on its own, before any outcome is chosen.
+ *
+ *   steps   — the effects to apply, in order. One for every kind but `levers`, which has
+ *             one per lever; see `applySteps` for why the order is observable.
+ *   flags   — every flag the steps set, for `outcomeBecause` to tell this decision's own
+ *             cards from the ones carried in.
+ *   ids     — the selection in its canonical order. Selection order for the older kinds,
+ *             which is what history has always recorded; lever order for levers.
+ */
 function selectionEffects(
   mission: Mission,
   selection: readonly string[],
-): { effect: Effect; revealed: Evidence[]; label: string } {
+): { steps: Effect[]; flags: string[]; ids: string[]; revealed: Evidence[]; label: string } {
+  if (mission.kind === "levers") {
+    const settings = leverSettings(mission, selection);
+    const flags: string[] = [];
+    for (const o of settings) for (const f of o.flags ?? []) if (!flags.includes(f)) flags.push(f);
+    return {
+      steps: settings.map((o) => ({ dims: { ...o.dims }, flags: [...(o.flags ?? [])] })),
+      flags,
+      ids: settings.map((o) => o.id),
+      revealed: [],
+      label: settings.map((o) => o.label).join(" · "),
+    };
+  }
+
   const dims = zeroDims();
   const flags: string[] = [];
   const revealed: Evidence[] = [];
@@ -351,17 +482,28 @@ function selectionEffects(
     if (opt) labels.push(opt.title);
   }
 
-  return { effect: { dims, flags }, revealed, label: labels.join(" + ") };
+  return {
+    steps: [{ dims, flags }],
+    flags,
+    ids: [...selection],
+    revealed,
+    label: labels.join(" + "),
+  };
 }
 
 /**
  * Commit the current selection.
  *
  * Order matters and is deliberate:
- *   1. apply the selection's own effects (component stats, evidence flags)
+ *   1. apply the selection's own effects (component stats, evidence flags, and each lever
+ *      setting's dims and flags in lever order)
  *   2. select the outcome against that updated state — so an outcome can react to
- *      what the player just discovered or built
+ *      what the player just discovered, built or set
  *   3. apply the outcome's effects
+ *
+ * `dimsBefore` is taken before step 1, so the resolution's deltas include what the
+ * selection itself moved — for a lever decision, the settings' own bars as well as the
+ * outcome's.
  *
  * A commit lands on `consequence`, not on `resolving`. It used to take the phase between
  * them, and that phase was a screen: one second of "seeing what happens…" holding 17 of a
@@ -377,7 +519,7 @@ export function commit(state: GameState, content: Content): GameState {
   const dimsBefore = { ...state.dims };
 
   const sel = selectionEffects(node, state.selection);
-  const afterSelection = applyEffect(sel.effect, state.dims, state.flags, state.badges);
+  const afterSelection = applySteps(sel.steps, state.dims, state.flags, state.badges);
 
   const candidates: readonly Outcome[] =
     node.kind === "choice"
@@ -416,7 +558,7 @@ export function commit(state: GameState, content: Content): GameState {
     stage: node.stage,
     chapter: node.chapter,
     chosenLabel: sel.label,
-    chosenIds: [...state.selection],
+    chosenIds: sel.ids,
     outcomeId: outcome.id,
     tone: outcome.tone,
     headline: outcome.headline,
@@ -995,11 +1137,11 @@ export function outcomeBecause(state: GameState, content: Content): Because {
 
   /* Reconstruct exactly what the conditions were evaluated against: the record after this
      decision's selection effects, before the outcome's own effects. */
-  const sel = selectionEffects(node, entry.chosenIds).effect;
-  const selFlags = new Set(sel.flags ?? []);
+  const sel = selectionEffects(node, entry.chosenIds);
+  const selFlags = new Set(sel.flags);
   const outcomeOnly = new Set((result.outcome.effect.flags ?? []).filter((f) => !selFlags.has(f)));
   const flagsAt = state.flags.filter((f) => !outcomeOnly.has(f));
-  const dimsAt = applyEffect(sel, result.dimsBefore, [], []).dims;
+  const dimsAt = applySteps(sel.steps, result.dimsBefore, [], []).dims;
 
   const when = result.outcome.when;
   const own = new Set([...selFlags, ...outcomeOnly]);

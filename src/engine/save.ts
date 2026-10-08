@@ -238,9 +238,22 @@ function looksPlayable(state: unknown, content: Content): state is GameState {
   if (phase === "ending" && node.kind !== "ending") return false;
   if (["brief", "decide", "consequence", "resolving"].includes(phase) && !isMission(node)) return false;
   if (isMission(node)) {
-    const legal = node.kind === "choice" ? node.options.map((o) => o.id) : node.kind === "investigate" ? node.evidence.map((e) => e.id) : node.components.map((c) => c.id);
-    const max = node.kind === "choice" ? 1 : node.kind === "investigate" ? node.slots : node.pick;
+    const legal =
+      node.kind === "choice" ? node.options.map((o) => o.id)
+      : node.kind === "investigate" ? node.evidence.map((e) => e.id)
+      : node.kind === "build" ? node.components.map((c) => c.id)
+      : node.levers.flatMap((l) => l.options.map((o) => o.id));
+    const max =
+      node.kind === "choice" ? 1
+      : node.kind === "investigate" ? node.slots
+      : node.kind === "build" ? node.pick
+      : node.levers.length;
     if (s.selection.length > max || !s.selection.every((id) => legal.includes(id))) return false;
+    /* A half-set lever panel is a legal draft; two settings on one lever is not a state
+       `toggleSelection` can produce, so it did not come from this build. */
+    if (node.kind === "levers" && node.levers.some((l) => l.options.filter((o) => s.selection!.includes(o.id)).length > 1)) {
+      return false;
+    }
   }
   if (!Array.isArray(s.history)) return false;
   for (const entry of s.history as HistoryEntry[]) {
