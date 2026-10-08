@@ -8,6 +8,7 @@ const cast = ["priya", "riya", "arjun", "aisha", "sarah", "marcus", "declan"];
 const allowed = new Set([
   ...[1, 2, 3, 4, 5].map(chapter => `scene-chapter-${chapter}.webp`),
   ...cast.map(name => `photo-${name}.webp`),
+  ...cast.map(name => `cut-${name}.webp`),
   ...["warehouse", "boardroom", "glass-office"].map(name => `env-${name}.webp`),
 ]);
 // Check every required asset before pruning generated output. Missing art is a release blocker.

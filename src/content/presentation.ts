@@ -142,6 +142,23 @@ export const ACT_QUESTION: Readonly<Record<ChapterNumber, string>> = {
 };
 
 /**
+ * What the act's guide says when the act opens, after the act's own opening lines. Spoken by a
+ * named colleague, never by the interface (G9b). Act 1 is where a newcomer learns what the
+ * game is measuring, so it is said by a person, once, in plain words. Nothing here forecasts
+ * an outcome; the lines name what to watch, not what to pick.
+ */
+export const ACT_BRIEFING: Readonly<Record<ChapterNumber, readonly string[]>> = {
+  1: [
+    "Every call you make moves three things: whether we can win it, whether it is worth winning, and whether we can actually deliver it.",
+    "They pull against each other. You will rarely get all three, so decide which one you are spending.",
+  ],
+  2: ["Interest is not an opportunity. Before we put people on this, I want to know it is real."],
+  3: ["This is where talk becomes a promise. Whatever goes in the proposal, someone on our side has to deliver."],
+  4: ["Price, risk and the award all land in this act. Each one is a trade."],
+  5: ["Everything we promised to win this is now somebody’s Monday morning. Let us see what holds."],
+};
+
+/**
  * Where each beat happens. A screen's place changes only when the story moves somewhere, so
  * a change of place is itself information. Photographs are framed as photographs, with the
  * place named beneath — never full-bleed behind text (readability audit, D-080).

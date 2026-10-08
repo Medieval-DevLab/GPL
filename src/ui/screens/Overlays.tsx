@@ -5,6 +5,7 @@ import { ledger, resolveAdvisorLine, resolveSaidQuote, resolveSituation } from '
 import { codeFromState, decodeRun } from '../../engine/runcode';
 import { COPY } from '../../content/interface';
 import { PHOTO_CREDITS, PHOTO_LICENCE } from '../../content/assets';
+import { Board } from './Board';
 
 export function Modal({ title, children, onClose }: { title: string; children: ReactNode; onClose(): void }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -33,15 +34,16 @@ export function History({ state, content, chapter }: { state: GameState; content
  * one while playing chapter three shows chapter one, named as such, and nothing else.
  */
 export function AccountFile({ state, content, mission, chapter }: { state: GameState; content: Content; mission?: Mission; chapter?: number }) {
-  const [tab, setTab] = useState(chapter ? 'Decisions' : mission ? 'Brief' : 'Decisions');
+  const [tab, setTab] = useState(chapter ? 'Decisions' : 'Where you stand');
   if (chapter) return <><p className="file-scope">{COPY.stage.chapterReview} {chapter} · {content.chapters[chapter - 1]?.title}</p><History state={state} content={content} chapter={chapter} /></>;
-  const tabs = [...(mission ? ['Brief'] : []), 'Evidence', 'Commitments', 'Decisions', 'Recognition'];
+  const tabs = ['Where you stand', ...(mission ? ['Brief'] : []), 'Evidence', 'Decisions', 'Recognition'];
   const evidence = Object.values(content.nodes).flatMap(n => n.kind === 'investigate' ? n.evidence.filter(e => state.discovered.includes(e.id)) : []);
   const entries = ledger(state);
   const quote = mission ? resolveSaidQuote(mission, state) : undefined;
   const advice = mission ? resolveAdvisorLine(mission, state) : undefined;
   return <>
     <div className="tab-row" aria-label="Account file sections">{tabs.map(t => <button key={t} aria-pressed={t === tab} onClick={() => setTab(t)}>{t}{t === 'Evidence' && ' · ' + evidence.length}</button>)}</div>
+    {tab === 'Where you stand' && <Board state={state} content={content} values />}
     {tab === 'Brief' && mission && <>
       <h3>{mission.title}</h3><p>{mission.objective}</p>
       {resolveSituation(mission, state).map((line, i) => <p key={i}>{line}</p>)}

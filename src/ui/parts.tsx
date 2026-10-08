@@ -2,6 +2,7 @@
 import type { ReactNode } from 'react';
 import type { DimensionId } from '../engine/types';
 import { characterByName, type CharacterId } from '../content/characters';
+import { CUTOUT_FRAME } from '../content/assets';
 
 export const art = (asset: string) => './art/' + asset + '.webp';
 export const castId = (name: string | undefined): CharacterId | undefined => characterByName(name)?.id;
@@ -11,6 +12,35 @@ export const DIMENSION_ORDER: readonly DimensionId[] = ['win', 'profit', 'delive
 
 /** Hide a failed image rather than show a broken icon; the live text never depends on it. */
 const hideOnError = (event: React.SyntheticEvent<HTMLImageElement>) => { event.currentTarget.style.visibility = 'hidden'; };
+
+/**
+ * The room: the location photograph, full-bleed and in natural colour. Decorative — the place
+ * is always named in live text. `focus` softens it when the player is reading or choosing, so
+ * the room stays present without competing with the words (depth of field, not darkness).
+ */
+export function Backdrop({ photo, focus = 'room' }: { photo: string; focus?: 'room' | 'soft' | 'deep' }) {
+  return <div className={'backdrop is-' + focus} aria-hidden="true">
+    <img src={art(photo)} alt="" decoding="async" onError={hideOnError} />
+    <div className="backdrop-shade" />
+  </div>;
+}
+
+/**
+ * A person standing in the room. Framed by the face, in the coordinates of the containing
+ * frame: `x` is where the face is centred, `y` where the top of the face sits (fraction of the
+ * frame's height) and `face` its height. A close crop is allowed to grow at most 30% past the
+ * target and then sits lower, as nearer the camera; it never floats.
+ */
+export interface Frame { x: string; y: number; face: number; close?: boolean }
+export function Cutout({ id, frame, className = '', style }: { id: CharacterId | undefined; frame: Frame; className?: string; style?: React.CSSProperties }) {
+  if (!id) return null;
+  const m = CUTOUT_FRAME[id];
+  const byFace = frame.face / m.size, toFloor = (1 - frame.y) / (1 - m.top);
+  const height = toFloor <= byFace ? byFace : frame.close ? toFloor : Math.min(toFloor, byFace * 1.3);
+  const top = toFloor <= byFace || frame.close ? frame.y - m.top * height : 1 - height;
+  return <img className={'cutout ' + className} data-cast={id} src={art('cut-' + id)} alt="" decoding="async" onError={hideOnError}
+    style={{ height: (height * 100).toFixed(2) + '%', top: (top * 100).toFixed(2) + '%', left: frame.x, translate: (-m.centre * 100).toFixed(1) + '% 0', ...style }} />;
+}
 
 /** A photograph framed as a photograph, with the place named in live text beneath it. */
 export function Place({ photo, name, detail, className = '' }: { photo: string; name: string; detail?: string; className?: string }) {

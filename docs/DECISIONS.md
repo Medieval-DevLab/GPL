@@ -6,6 +6,74 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-081 · Information is performed by people, not handed over in boxes
+The user's verdict on D-080: readable, but "containers everywhere and there's no immersion or
+transitions or layering". "Whenever we have info coming up, I would rather have a character
+come and explain it." "Too many Priya's messages, absolutely incoherent." "All screens are the
+same now, you have stripped the game off its entire personality."
+
+**Root cause, stated plainly.** Three builds in a row treated a delivery problem as a layout
+problem. Every version handed the player documents: all the information on screen at once, in
+boxes of equal weight, with characters as thumbnails beside quotes. D-080 also fixed
+readability by deleting the staging, when the fault was only small, tilted text over
+photographs.
+
+**Decided.**
+- **Performed scenes.** A decision is played out in one room with the people in it. Your
+  colleague explains the situation one line at a time in a large, solid dialogue box, and the
+  client speaks their own lines (`ui/script.ts` builds the lines from content and decides
+  nothing).
+- **The medium.** The choice arrives in the decision's own medium: cards on the table, replies
+  beside a video call, a message thread on a phone, pins on a cork board, magnets on a planning
+  wall, arguments beside an evidence folder.
+- **The moment.** Committing lands a title card while the deal's three measures count up and
+  the record's new entries pop in. Then the colleague explains what happened, why (one sentence
+  built from `outcomeBecause`, including the nearer alternative) and the takeaway, filed under
+  one of the three questions.
+- **Interactive.** "Ask <colleague>" brings out their questions and anecdotes (the old
+  `consider`/`tip` content, now in a person's voice). Number keys pick options; Space, Enter or
+  → moves the conversation on.
+- **The cast and staging are back, in natural form.** Background-removed figures (no rim light),
+  full-bleed daylight rooms, depth of field while reading or choosing, entrance motion for
+  people, lines, cards and results. Reduced motion shows finished frames.
+- **The HUD carries what is at stake:** the three measures as live bars, and "Your record", which
+  opens the board ("Where you stand") in a drawer.
+- **Frames by a design agent:** a cast poster for the title, team select, acts that open with
+  the guide speaking the act's purpose, act breaks with filed decisions and the reflection asked
+  by the guide, story turns as artefacts, a route-style journey and a report-style ending.
+- **Script by a content agent:** a rewrite for spoken delivery, within the validator's rules,
+  with rule fields untouched. Situations are at most two sentences, outcome details at most
+  three, and headlines at most ten words. Each principle answers the question it is filed under.
+  Measured against `4843cab`:
+  - the longest outcome detail went from 106 words to 53;
+  - outcome detail overall fell 15% (4,388 to 3,724 words);
+  - the longest headline went from 14 words to 10.
+  
+  Base situations grew slightly (517 to 571 words) while their longest fell from 42 to 38:
+  two-sentence situations are fuller sentences, not fewer of them.
+- **Figures are stated as a person would say them.** The m8 price gap went from “£2.6m against
+  £2m” to “£600,000 above the cheaper bid, thirty percent more”. Separately, `paginate()` no
+  longer splits a sentence at a decimal point or an ellipsis (`ui/script.test.ts`).
+- **A brief always ends with the colleague.** A beat without its own `advisorLine` (m6, m10)
+  falls back to the colleague's standing quote. This is the old renderer's chain, and a test
+  holds it for all 18 decisions.
+
+**Backlog closed along the way.**
+- LMS-01: a different completed run restored in the same tab is now reported. Acknowledgement is
+  tied to the run's code.
+- SV-02: the restart dialog shows each saved engagement's real code and offers its record for
+  download; an unfinished record says it is in progress.
+- CNT-01: m10h said "Aisha's team starts on Monday" after m10 and m10b had already put the
+  team five months into delivery. It is now the month-six re-plan, and Aisha asks which
+  promises still stand.
+
+**Cost.** Roughly ten clicks per decision instead of three; "Skip to the choice" and "Show all"
+keep it fast. The cut-outs return to the runtime set (+0.76 MB). The release harness plays
+through lines with the primary action.
+
+**Reversible:** yes. This is presentation and prose only; the engine and run-code fingerprints
+are unchanged.
+
 ## D-080 · One story, one scene, daylight: the D-077 look was the wrong answer
 The user played D-077 and called it gorgeous, but said:
 - the text was not readable in most places;

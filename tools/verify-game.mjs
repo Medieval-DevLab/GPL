@@ -36,6 +36,16 @@ const utilitiesOnly = process.argv.includes('--utilities-only');
 const waitForState = async page => page.locator('.gpl-game').waitFor();
 const read = page => page.locator('.gpl-game').evaluate(el => ({ screen: el.dataset.screen, node: el.dataset.node, phase: el.dataset.phase }));
 const key = s => [s.screen, s.node, s.phase].join(':');
+/* Scenes are performed one line at a time (D-081). Play through the lines the way a player
+   does — with the primary action — before acting on the screen. */
+async function drain(page, keyboard) {
+  for (let i = 0; i < 60; i++) {
+    const next = page.locator('main [data-line-next]').first();
+    if (!(await next.count())) return;
+    if (keyboard) { await next.focus(); await page.keyboard.press('Enter'); } else await next.click();
+  }
+  throw new Error('Lines never ended');
+}
 async function verify(page, current, tag, screenshots) {
   await page.evaluate(() => document.fonts.ready);
   const failures = await page.evaluate(() => ({
@@ -113,6 +123,7 @@ async function run(viewport, policy) {
       }
       break;
     }
+    await drain(page, keyboard);
     const primary = page.locator('main [data-action="primary"]').first();
     if (current.phase === 'setup') {
       const options = page.locator('main [data-choice]');
@@ -157,6 +168,7 @@ async function run(viewport, policy) {
       assert.deepEqual(await page.locator('main [data-choice][aria-pressed=true]').evaluateAll(es => es.map(e => e.dataset.choice)), draft);
       reloads.add(reloadKey);
     }
+    await drain(page, keyboard);
     if (keyboard) { await primary.focus(); await page.keyboard.press('Enter'); }
     else if (policy === 'first' && current.screen === 'chapter-open' && current.node === 'int-1') {
       await primary.dblclick();

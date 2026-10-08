@@ -1,201 +1,277 @@
+import { useEffect, useRef, useState } from 'react';
 import type { Chapter, Condition, Content, GameState, Mission, Option } from '../../engine/types';
 import { BADGE_META } from '../../engine/types';
-import { availableOptions, canCommit, outcomeBecause, requiredSelectionCount, resolveAdvisorLine, resolveSaidQuote, resolveSituation, type DimTest } from '../../engine/engine';
+import { availableOptions, canCommit, ledger, requiredSelectionCount } from '../../engine/engine';
 import { COPY } from '../../content/interface';
 import { EARNED } from '../../content/gates';
-import { MISSION_RULE, placeOf, ruleOf } from '../../content/presentation';
-import { Action, Glyph, Heading, Paras, Pips, Place, Portrait, firstName } from '../parts';
-import { Board } from './Board';
+import { RULES, placeOf } from '../../content/presentation';
+import { Action, Backdrop, Cutout, Glyph, Heading, Pips, Portrait, castId, firstName } from '../parts';
+import { briefLines, castOf, outcomeLines, type Line } from '../script';
+import { DialogueBox, Thread } from './Dialogue';
+
+export type Family = 'table' | 'board' | 'plan' | 'chat' | 'call' | 'case';
+/** Which medium a decision happens in. Presentation only — the engine never sees this. */
+export function familyOf(mission: Mission): Family {
+  if (mission.kind === 'investigate') return 'board';
+  if (mission.kind === 'build') return 'plan';
+  if (mission.presentation === 'apply') return 'case';
+  if (mission.presentation === 'dialogue') return mission.surface === 'call' ? 'call' : 'chat';
+  return 'table';
+}
+
+type Stage = { k: 'brief'; i: number } | { k: 'choose' } | { k: 'card' } | { k: 'after'; i: number };
 
 interface Props {
   mission: Mission; state: GameState; content: Content; chapter: Chapter; before?: readonly string[];
   onToggle(id: string): void; onCommit(): void; onNext(): void; onFile(): void;
 }
 
-/** How the person reaches you. The scene layout never changes; only this label does. */
-function medium(mission: Mission) {
-  if (mission.presentation === 'apply') return COPY.stage.facing;
-  if (mission.presentation === 'dialogue') return mission.surface === 'call' ? COPY.stage.onCall : COPY.stage.message;
-  return undefined;
-}
-
 /**
- * Who is in the room, and what they said. The client when the client is speaking; otherwise
- * your colleague. A forwarded client message stays attributed to the client.
- */
-function people(mission: Mission, state: GameState) {
-  const quote = resolveSaidQuote(mission, state);
-  const advice = resolveAdvisorLine(mission, state);
-  const internal = mission.room === 'internal' || !quote;
-  if (!internal && quote) return { lead: { name: quote.speaker, role: quote.role, words: quote.text }, forwarded: undefined, steer: mission.advisor && advice ? { name: mission.advisor.name, role: mission.advisor.role, words: advice } : undefined };
-  return {
-    lead: mission.advisor && advice ? { name: mission.advisor.name, role: mission.advisor.role, words: advice } : undefined,
-    forwarded: quote, steer: undefined,
-  };
-}
-
-/**
- * The scene: one layout for all eighteen decisions (D-080).
+ * A decision, performed (D-081). One scene, four stages, and the screen never jumps:
  *
- * The brief and the decision used to be two screens showing the same people saying the same
- * things. Now the situation and the choice share one scene, and committing does not change
- * the screen — the room answers in the same place the options were, and the board on the
- * right marks what changed and why. A new screen means the story moved.
+ *   brief   the people in the room explain, one line at a time
+ *   choose  the options arrive in the scene's own medium; your colleague can be asked
+ *   card    what happened lands as a title card while the deal's three measures move
+ *   after   your colleague tells you what happened, why, and what to keep
+ *
+ * Every word comes from content via ui/script.ts; this component only stages it.
  */
 export function Scene(props: Props) {
-  const { mission, state, content, chapter } = props;
+  const { mission, state, content } = props;
+  const family = familyOf(mission);
+  const brief = briefLines(mission, state);
+  const after = state.phase === 'consequence' ? outcomeLines(mission, state, content) : [];
+  const [stage, setStage] = useState<Stage>(() =>
+    state.phase === 'consequence' ? { k: 'card' } : state.selection.length || brief.length === 0 ? { k: 'choose' } : { k: 'brief', i: 0 });
+  const phase = useRef(state.phase);
+  useEffect(() => { if (phase.current !== state.phase) { phase.current = state.phase; if (state.phase === 'consequence') setStage({ k: 'card' }); } }, [state.phase]);
+
+  const { advisor, counterpart } = castOf(mission, state);
   const place = placeOf(mission.id);
-  const who = people(mission, state);
-  const via = medium(mission);
   const index = content.missionOrder.indexOf(mission.id) + 1;
-  const result = state.phase === 'consequence' ? state.resolution : null;
-  return <section className="page scr-scene">
-    <div className="scene">
-      <div className="place">
-        <Place photo={place.photo} name={place.name} detail={COPY.stage.act + ' ' + chapter.number + ' · ' + chapter.label} />
-        {who.lead && <div className="person enter" style={{ ['--i' as string]: 1 }}>
-          <Portrait name={who.lead.name} />
-          <strong>{who.lead.name}</strong>
-          <small>{who.lead.role}</small>
-          {via && <p className="medium">{via}</p>}
-          <blockquote>“{who.lead.words}”</blockquote>
-          {who.forwarded && <p className="meta">{COPY.stage.forwarded} {who.forwarded.speaker}, {who.forwarded.role}: “{who.forwarded.text}”</p>}
-        </div>}
-      </div>
+  const line: Line | undefined = stage.k === 'brief' ? brief[stage.i] : stage.k === 'after' ? after[stage.i] : undefined;
+  const speaking = line?.who;
+  const nextBrief = () => setStage(s => s.k === 'brief' && s.i + 1 < brief.length ? { k: 'brief', i: s.i + 1 } : { k: 'choose' });
+  const nextAfter = () => setStage(s => s.k === 'after' && s.i + 1 < after.length ? { k: 'after', i: s.i + 1 } : s);
+  const lastAfter = stage.k === 'after' && stage.i === after.length - 1;
+  const inCall = family === 'call' && (stage.k === 'brief' || stage.k === 'choose');
+  const inChat = family === 'chat' && (stage.k === 'brief' || stage.k === 'choose');
 
-      <div className="decision">
-        <header className="decision-head">
-          <div className="row"><p className="kicker">{COPY.stage.decision} {index} {COPY.stage.of} {content.missionOrder.length}</p>
-            <button className="ghost" onClick={props.onFile}><Glyph name="file" />{COPY.audit}</button></div>
-          <Heading className="h1">{mission.question}</Heading>
-        </header>
-        {/* After you commit, the situation has been read and acted on: the room's answer takes its place
-            at the top, and the brief stays one click away in the account file. */}
-        {!result && <Paras lines={resolveSituation(mission, state)} className="read situation" />}
-        {!result && who.steer && <div className="steer"><Portrait name={who.steer.name} className="sm" /><div><p>“{who.steer.words}”</p><small>{who.steer.name} · {who.steer.role}</small></div></div>}
-        {result ? <Outcome {...props} /> : <Choices {...props} />}
-      </div>
+  /* When the stage changes inside the scene, keep keyboard and screen-reader focus with it. */
+  const firstStage = useRef(true);
+  useEffect(() => {
+    if (firstStage.current) { firstStage.current = false; return; }
+    const target = stage.k === 'card' ? document.getElementById('outcome-heading') : stage.k === 'choose' ? document.querySelector<HTMLElement>('main [data-choice]:not(:disabled)') : document.querySelector<HTMLElement>('main [data-action="primary"]');
+    target?.focus({ preventScroll: true });
+  }, [stage.k]);
 
-      <Board state={state} content={content} before={props.before} onMore={props.onFile} />
+  /* Play by keyboard: Space, Enter or → moves the conversation on; number keys pick an option.
+     Only when nothing else has focus, so it never fights a button, a field or a drawer. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (e.altKey || e.ctrlKey || e.metaKey || document.querySelector('dialog[open]')) return;
+      if (t && t !== document.body && !t.matches('h1, h2, main, section, [data-choice]')) return;
+      if ((stage.k === 'brief' || stage.k === 'card' || stage.k === 'after') && [' ', 'Enter', 'ArrowRight'].includes(e.key)) {
+        const next = document.querySelector<HTMLButtonElement>('main [data-action="primary"]');
+        if (next && !next.disabled) { e.preventDefault(); next.click(); }
+      } else if (stage.k === 'choose' && /^[1-9]$/.test(e.key)) {
+        const pick = document.querySelectorAll<HTMLButtonElement>('main [data-choice]')[+e.key - 1];
+        if (pick && !pick.disabled) { e.preventDefault(); pick.click(); pick.focus(); }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [stage.k]);
+
+  /* Who stands in the room. In a call or a thread the client is on the device, not in the room. */
+  const room: { id: ReturnType<typeof castId>; name: string; side: 'left' | 'right' }[] = [];
+  /* A thread with your colleague is the colleague: they are on the phone, not also in the room. */
+  const threadWithAdvisor = inChat && !counterpart;
+  if (advisor && !threadWithAdvisor) room.push({ id: castId(advisor.name), name: advisor.name, side: family === 'case' || inCall || inChat ? 'right' : 'left' });
+  if (counterpart && !inCall && !inChat && stage.k !== 'after') room.push({ id: castId(counterpart.name), name: counterpart.name, side: family === 'case' ? 'left' : 'right' });
+  const solo = room.length === 1;
+
+  return <section className={'page scene2 fam-' + family + ' st-' + stage.k}>
+    <Backdrop photo={place.photo} focus={stage.k === 'brief' ? 'room' : stage.k === 'card' ? 'deep' : 'soft'} />
+    <div className="cast" aria-hidden="true">
+      {room.map(p => <Cutout key={p.name} id={p.id}
+        frame={{ x: p.side === 'left' ? (solo ? '33%' : '19%') : (solo && !inCall && !inChat ? '74%' : '82%'), y: 0.21, face: 0.16 }}
+        className={'actor side-' + p.side + (speaking === p.name ? ' is-speaking' : speaking ? ' is-quiet' : '')} />)}
     </div>
-    <footer className="cmd-bar">
-      {result
-        ? <><button className="text-link" onClick={props.onFile}>{COPY.stage.fileLink}</button><Action onClick={props.onNext}>{COPY.next}</Action></>
-        : <><p role="status">{selectionStatus(mission, state)}</p><Action onClick={props.onCommit} disabled={!canCommit(state, content)}>{commitLabel(mission)}</Action></>}
-    </footer>
+
+    <header className="scene-title">
+      <p className="scene-where"><span>{place.name}</span><span>{COPY.stage.decision} {index} {COPY.stage.of} {content.missionOrder.length}</span></p>
+      <Heading className="scene-q">{mission.question}</Heading>
+      <button className="chip-button" onClick={props.onFile}><Glyph name="file" />{COPY.audit}</button>
+    </header>
+
+    {inCall && counterpart && <CallFrame name={counterpart.name} role={counterpart.role} speaking={speaking === counterpart.name} />}
+    {inChat && <div className="chat-stage"><Thread lines={brief} upTo={stage.k === 'brief' ? stage.i : brief.length - 1} title={counterpart?.name ?? advisor?.name ?? ''} subtitle={counterpart?.role ?? advisor?.role} /></div>}
+
+    {stage.k === 'brief' && line && <DialogueBox className={inCall ? 'as-caption' : inChat ? 'as-chat' : ''} line={line} index={stage.i} count={brief.length} last={false} lastLabel={COPY.say.next} onNext={nextBrief} onSkip={() => setStage({ k: 'choose' })} />}
+
+    {stage.k === 'choose' && <Choose {...props} family={family} />}
+    {stage.k === 'card' && <OutcomeCard state={state} before={props.before} onNext={() => setStage(after.length ? { k: 'after', i: 0 } : { k: 'card' })} />}
+    {stage.k === 'after' && line && <>
+      <DialogueBox line={line} index={stage.i} count={after.length} last={lastAfter} lastLabel={COPY.next} onNext={lastAfter ? props.onNext : nextAfter} onSkip={() => setStage({ k: 'after', i: after.length - 1 })} skipLabel={COPY.say.skipAll} />
+      {line.voice === 'lesson' && state.resolution!.newBadges.map(id => <p key={id} className="toast"><Glyph name="spark" /><span>{firstName(advisor?.name) ?? ''} {COPY.stage.noticed}: <b>{BADGE_META[id].label}</b> · {BADGE_META[id].note}</span></p>)}
+    </>}
   </section>;
 }
 
-function commitLabel(mission: Mission) {
-  return mission.kind === 'investigate' ? COPY.investigate : mission.kind === 'build' ? COPY.assemble : mission.presentation === 'dialogue' ? COPY.send : COPY.commit;
+function CallFrame({ name, role, speaking }: { name: string; role: string; speaking: boolean }) {
+  return <div className={'call-frame' + (speaking ? ' is-speaking' : '')}>
+    <div className="call-video">
+      <Cutout id={castId(name)} frame={{ x: '50%', y: 0.1, face: 0.3, close: true }} />
+      <p className="call-lower"><span className="live">● {COPY.say.live}</span><strong>{name}</strong><small>{role}</small></p>
+      <div className="call-self"><span aria-hidden="true">{COPY.say.you.slice(0, 1)}</span><small>{COPY.say.cameraOff}</small></div>
+    </div>
+  </div>;
 }
 
-function selectionStatus(mission: Mission, state: GameState) {
-  const need = requiredSelectionCount(mission);
-  return (need === 1 ? COPY.stage.pickOne : COPY.stage.pickExactly + ' ' + (COPY.stage.numbers[need] ?? need)) + ' · ' + state.selection.length + ' ' + COPY.stage.of + ' ' + need + ' ' + COPY.stage.selected;
-}
+/* ── Choosing ─────────────────────────────────────────────────────────────── */
 
-function needs(condition: Condition | undefined) {
-  return { all: condition?.all ?? [], any: condition?.any ?? [] };
-}
+function needs(condition: Condition | undefined) { return { all: condition?.all ?? [], any: condition?.any ?? [] }; }
 
 function LockNote({ option }: { option: Option }) {
   const { all, any } = needs(option.requires);
   const flags = [...all, ...any];
-  if (flags.length > 0 && flags.every(f => EARNED[f]?.liability)) return <div className="lock-note"><b>{COPY.stage.lockedTitle}</b><span>{COPY.stage.liabilityGate}</span></div>;
-  return <div className="lock-note">
-    <b>{COPY.stage.lockedTitle}</b>
-    {all.map(f => <span key={f}>{COPY.stage.needs}: {EARNED[f]?.as ?? 'an earlier commitment'}{EARNED[f] && <small>{EARNED[f].where}</small>}</span>)}
-    {any.length > 0 && <span>{COPY.stage.needsOne}: {any.map(f => EARNED[f]?.as ?? 'an earlier commitment').join(' or ')}</span>}
-  </div>;
+  if (flags.length > 0 && flags.every(f => EARNED[f]?.liability)) return <p className="lock-note"><Glyph name="lock" /><span><b>{COPY.stage.lockedTitle}.</b> {COPY.stage.liabilityGate}</span></p>;
+  const what = [...all.map(f => EARNED[f]?.as ?? 'an earlier commitment'), ...(any.length ? [COPY.say.oneOf + ' ' + any.map(f => EARNED[f]?.as ?? 'an earlier commitment').join(' ' + COPY.say.or + ' ')] : [])];
+  return <p className="lock-note"><Glyph name="lock" /><span><b>{COPY.stage.lockedTitle}.</b> {COPY.stage.needs}: {what.join('; ')}.</span></p>;
 }
 
-/** Title, one sentence and what it costs. Pros, cons and effort are one tap away (G3c). */
-function Choices({ mission, state, onToggle }: Props) {
-  const multi = mission.kind !== 'choice';
+function Weigh({ option }: { option: Option }) {
+  if (!option.pros?.length && !option.cons?.length && !option.cost) return null;
+  return <details className="weigh"><summary>{COPY.stage.tradeoffs}</summary>
+    <div className="weigh-body">
+      {option.pros?.length ? <ul className="pro" aria-label={COPY.stage.offers}>{option.pros.map(p => <li key={p}>{p}</li>)}</ul> : null}
+      {option.cons?.length ? <ul className="con" aria-label={COPY.stage.givesUp}>{option.cons.map(c => <li key={c}>{c}</li>)}</ul> : null}
+      {option.cost && <p className="effort"><span>{COPY.stage.effort} <Pips value={option.cost.time} label={COPY.stage.effort} /></span><span>{COPY.stage.investment} <Pips value={option.cost.investment} label={COPY.stage.investment} /></span></p>}
+    </div>
+  </details>;
+}
+
+interface Item { id: string; title: string; line: string; spoken: boolean; option?: Option; enabled: boolean; tag?: string }
+
+function itemsOf(mission: Mission, state: GameState): Item[] {
   const allowed = new Set(mission.kind === 'choice' ? availableOptions(mission, state).map(o => o.id) : []);
-  interface Item { id: string; title: string; line: string; say: boolean; option?: Option; enabled: boolean; tag?: string }
   const spoken = mission.presentation === 'dialogue' || mission.presentation === 'apply';
-  const items: Item[] = mission.kind === 'choice'
-    ? mission.options.map(o => ({ id: o.id, title: o.title, line: spoken && o.say ? '“' + o.say + '”' : o.description, say: spoken && !!o.say, option: o, enabled: allowed.has(o.id) }))
-    : mission.kind === 'investigate'
-      ? mission.evidence.map(e => ({ id: e.id, title: e.label, line: e.question, say: false, enabled: true }))
-      : mission.components.map(c => ({ id: c.id, title: c.title, line: c.description, say: false, enabled: true, tag: c.tag }));
-  return <div className="choose">
-    <p className="choose-label">{mission.prompt ?? (multi ? '' : COPY.stage.pickOne)}</p>
-    <ol className="choices" aria-label={mission.question}>
-      {items.map((it, i) => {
-        const on = state.selection.includes(it.id);
-        return <li key={it.id} className={'choice enter' + (multi ? ' multi' : '') + (on ? ' is-selected' : '') + (!it.enabled ? ' is-locked' : '')} style={{ ['--i' as string]: i }}>
-          <button className="choice-hit" data-choice={it.id} aria-pressed={on} disabled={!it.enabled} aria-describedby={'d-' + it.id} onClick={() => onToggle(it.id)}>
-            <span className="choice-mark" aria-hidden="true">{on ? '✓' : i + 1}</span>
-            <span className="choice-title">{it.title}</span>
-          </button>
-          <div className="choice-body" id={'d-' + it.id}>
-            <p className={'choice-line' + (it.say ? ' say' : '')}>{it.line}</p>
-            {it.tag && <p className="meta">{it.tag}</p>}
-            {it.option && (it.enabled ? <Cost option={it.option} /> : <LockNote option={it.option} />)}
-          </div>
-        </li>;
-      })}
-    </ol>
+  if (mission.kind === 'choice') return mission.options.map(o => ({ id: o.id, title: o.title, line: spoken && o.say ? o.say : o.description, spoken: spoken && !!o.say, option: o, enabled: allowed.has(o.id) }));
+  if (mission.kind === 'investigate') return mission.evidence.map(e => ({ id: e.id, title: e.label, line: e.question, spoken: false, enabled: true }));
+  return mission.components.map(c => ({ id: c.id, title: c.title, line: c.description, spoken: false, enabled: true, tag: c.tag }));
+}
+
+/** A choosable thing. The button carries the short name; the rest describes it. */
+function ChoiceItem({ it, n, on, multi, onToggle, className = '' }: { it: Item; n: number; on: boolean; multi: boolean; onToggle(): void; className?: string }) {
+  return <li className={'pick ' + className + (on ? ' is-on' : '') + (!it.enabled ? ' is-locked' : '')} style={{ ['--i' as string]: n }}>
+    <button className="pick-hit" data-choice={it.id} aria-pressed={on} disabled={!it.enabled} aria-describedby={'d-' + it.id} onClick={onToggle}>
+      <span className={'pick-mark' + (multi ? ' multi' : '')} aria-hidden="true">{on ? '✓' : n + 1}</span>
+      <span className="pick-title">{it.title}</span>
+    </button>
+    <div className="pick-body" id={'d-' + it.id}>
+      <p className={'pick-line' + (it.spoken ? ' spoken' : '')}>{it.spoken ? '“' + it.line + '”' : it.line}</p>
+      {it.tag && <p className="pick-tag">{it.tag}</p>}
+      {it.option && (it.enabled ? <>{it.option.commits && <p className="pick-cost"><b>{COPY.stage.commits}:</b> {it.option.commits}</p>}<Weigh option={it.option} /></> : <LockNote option={it.option} />)}
+    </div>
+  </li>;
+}
+
+/** Your colleague, asked: their questions first, then the story behind them. Optional, and in their voice. */
+function Ask({ mission }: { mission: Mission }) {
+  const asks = [...(mission.consider ?? []), ...(mission.tip ? [mission.tip] : [])];
+  const [n, setN] = useState(-1);
+  if (!mission.advisor || !asks.length) return null;
+  const who = firstName(mission.advisor.name);
+  return <div className="ask">
+    <button className="ask-button" onClick={() => setN(i => (i + 1) % asks.length)}><Portrait name={mission.advisor.name} className="sm" /><span>{n < 0 ? COPY.say.ask + ' ' + who : COPY.say.askAgain}</span></button>
+    {n >= 0 && <p className="ask-bubble" key={n} aria-live="polite"><b>{who}</b>“{asks[n]}”</p>}
   </div>;
 }
 
-function Cost({ option }: { option: Option }) {
-  const hasMore = !!(option.pros?.length || option.cons?.length || option.cost);
-  return <>
-    {option.commits && <p className="choice-cost"><b>{COPY.stage.commits}:</b> {option.commits}</p>}
-    {hasMore && <details className="choice-more">
-      <summary>{COPY.stage.tradeoffs}</summary>
-      <div className="tradeoffs">
-        {option.pros?.length ? <div><h4>{COPY.stage.offers}</h4><ul className="pro">{option.pros.map(p => <li key={p}>{p}</li>)}</ul></div> : null}
-        {option.cons?.length ? <div><h4>{COPY.stage.givesUp}</h4><ul className="con">{option.cons.map(c => <li key={c}>{c}</li>)}</ul></div> : null}
-        {option.cost && <p className="effort"><span>{COPY.stage.effort} <Pips value={option.cost.time} label={COPY.stage.effort} /></span><span>{COPY.stage.investment} <Pips value={option.cost.investment} label={COPY.stage.investment} /></span></p>}
-      </div>
-    </details>}
-  </>;
+function Choose(props: Props & { family: Family }) {
+  const { mission, state, content, family, onToggle } = props;
+  const items = itemsOf(mission, state);
+  const multi = mission.kind !== 'choice';
+  const need = requiredSelectionCount(mission);
+  const commitLabel = mission.kind === 'investigate' ? COPY.investigate : mission.kind === 'build' ? COPY.assemble : mission.presentation === 'dialogue' ? COPY.send : COPY.commit;
+  const list = <ol className={'picks picks-' + family} aria-label={mission.question} style={{ ['--n' as string]: items.length }}>
+    {items.map((it, i) => <ChoiceItem key={it.id} it={it} n={i} on={state.selection.includes(it.id)} multi={multi} onToggle={() => onToggle(it.id)} className={family === 'board' ? 'pin' : family === 'plan' ? 'magnet' : ''} />)}
+  </ol>;
+  const chosen = state.selection.map(id => items.find(it => it.id === id)?.title).filter(Boolean) as string[];
+  return <div className={'choose choose-' + family}>
+    <div className="choose-head">
+      <p className="choose-kicker">{COPY.say.choose}{mission.prompt ? ' · ' + mission.prompt : ''}</p>
+      <Ask mission={mission} />
+    </div>
+    <div className="choose-body">
+      {family === 'board' ? <div className="corkboard">{list}</div>
+        : family === 'plan' ? <div className="planwall"><ol className="slots" aria-hidden="true">{Array.from({ length: need }, (_, i) => <li key={i} className={chosen[i] ? 'is-filled' : ''}>{chosen[i] ?? '—'}</li>)}</ol>{list}</div>
+          : family === 'case' ? <div className="case-grid"><Folder mission={mission} state={state} />{list}</div>
+            : list}
+    </div>
+    <div className="commit-bar">
+      <p role="status">{need === 1 ? COPY.stage.pickOne : COPY.stage.pickExactly + ' ' + (COPY.stage.numbers[need] ?? need)} · {state.selection.length} {COPY.stage.of} {need} {COPY.stage.selected}</p>
+      <Action onClick={props.onCommit} disabled={!canCommit(state, content)}>{commitLabel}</Action>
+    </div>
+  </div>;
 }
 
-/**
- * What happened, in the order the game teaches (G5): what you chose → what happened → why it
- * landed this way → what your colleague makes of it, filed under one of the three questions.
- */
-function Outcome({ mission, state, content }: Props) {
-  const result = state.resolution!;
-  const because = outcomeBecause(state, content);
-  const rule = ruleOf(MISSION_RULE[mission.id] ?? 'win');
-  const advisor = mission.advisor;
-  const dimLine = (t: DimTest) => COPY.dimensions[t.dim].label + ' ' + t.value + ' ' + (t.at === 'min' ? COPY.stage.atLeast : COPY.stage.atMost);
-  const label = (f: string) => EARNED[f]?.as;
-  const held = because.held.map(label).filter(Boolean) as string[];
-  const lacked = because.lacked.map(label).filter(Boolean) as string[];
-  const missed = because.missed;
-  const missedText = missed ? [
-    ...missed.needed.map(label).filter(Boolean),
-    ...(missed.oneOf.length ? [COPY.stage.missedOneOf + ' ' + missed.oneOf.map(label).filter(Boolean).join(' or ')] : []),
-    ...missed.dims.map(dimLine),
-  ] as string[] : [];
-  const missedWithout = missed ? missed.without.map(label).filter(Boolean) as string[] : [];
-  return <div className="outcome" aria-live="polite">
-    <p className="outcome-chose">{COPY.stage.youChose}: <b>{result.chosenLabel}</b></p>
-    <h2 className="h2 enter" id="outcome-heading" tabIndex={-1}>{result.outcome.headline}</h2>
-    <p className="read enter" style={{ ['--i' as string]: 1 }}>{result.outcome.detail}</p>
-    <ul className="changed enter" style={{ ['--i' as string]: 2 }} aria-label={COPY.stage.changed}>{result.outcome.changed.map(x => <li key={x}>{x}</li>)}</ul>
-    <section className="why enter" style={{ ['--i' as string]: 3 }}>
-      <h3>{COPY.stage.because}</h3>
-      {held.length > 0 && <p>{COPY.stage.becauseHeld}: <b>{held.join('; ')}</b>.</p>}
-      {lacked.length > 0 && <p>{COPY.stage.becauseLacked}: <b>{lacked.join('; ')}</b>.</p>}
-      {because.dims.length > 0 && <p>{COPY.stage.becauseDims}: <b>{because.dims.map(dimLine).join('; ')}</b>.</p>}
-      {(missedText.length > 0 || missedWithout.length > 0) && <p>{COPY.stage.missedWith}: <b>{missedText.join('; ')}</b>{missedWithout.length > 0 && <>{missedText.length ? ' — ' : ''}{COPY.stage.missedWithout} <b>{missedWithout.join('; ')}</b></>}.</p>}
-      {!held.length && !lacked.length && !because.dims.length && !missedText.length && !missedWithout.length && <p>{because.conditional ? COPY.stage.becauseNone : COPY.stage.becauseFixed}</p>}
-    </section>
-    <section className="afterwards enter" style={{ ['--i' as string]: 4 }} aria-label={(firstName(advisor?.name) ?? '') + ' ' + COPY.stage.afterwards}>
-      <Portrait name={advisor?.name} />
-      <small>{advisor ? firstName(advisor.name) + ', ' + COPY.stage.afterwards : COPY.stage.afterwardsAlone}</small>
-      <blockquote>“{result.lesson.principle}”</blockquote>
-      <p className="filed">{COPY.stage.filedUnder} <b>{rule.question}</b></p>
-    </section>
-    {result.newBadges.map(id => <p className="noticed" key={id}><Glyph name="spark" />{advisor ? firstName(advisor.name) + ' ' + COPY.stage.noticed : COPY.stage.noticed}: <b>{BADGE_META[id].label}</b> — {BADGE_META[id].note}</p>)}
+/** What you bring to an argument: the evidence the options draw on, from your record. */
+function Folder({ mission, state }: { mission: Mission; state: GameState }) {
+  if (mission.kind !== 'choice') return null;
+  const flags = [...new Set(mission.options.flatMap(o => [...needs(o.requires).all, ...needs(o.requires).any]))].filter(f => EARNED[f]);
+  return <aside className="folder" aria-label={COPY.say.onRecord}>
+    <p className="folder-tab">{COPY.say.onRecord}</p>
+    {flags.length === 0 ? <p>{COPY.stage.evidenceNone}</p> : <ul>{flags.map(f => {
+      const has = state.flags.includes(f), liability = !!EARNED[f].liability;
+      return <li key={f} className={liability ? 'is-neutral' : has ? 'is-held' : 'is-missing'}>
+        <Glyph name={liability ? 'file' : has ? 'check' : 'lock'} /><span><strong>{EARNED[f].as}</strong><small>{has ? EARNED[f].where : liability ? COPY.stage.notInRecord : COPY.stage.missing}</small></span>
+      </li>;
+    })}</ul>}
+  </aside>;
+}
+
+/* ── The moment it lands ──────────────────────────────────────────────────── */
+
+function useCount(from: number, to: number, delay: number) {
+  const [v, setV] = useState(from);
+  useEffect(() => {
+    const still = !!document.querySelector('.reduce-motion') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (still || from === to) { setV(to); return; }
+    let raf = 0; const t0 = performance.now() + delay;
+    const tick = (t: number) => { const k = Math.min(1, Math.max(0, (t - t0) / 900)); setV(Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3)))); if (k < 1) raf = requestAnimationFrame(tick); };
+    raf = requestAnimationFrame(tick); return () => cancelAnimationFrame(raf);
+  }, [from, to, delay]);
+  return v;
+}
+
+function Gauge({ label, from, to, i }: { label: string; from: number; to: number; i: number }) {
+  const v = useCount(from, to, 500 + i * 140);
+  const d = to - from;
+  return <li className={'gauge' + (d > 0 ? ' up' : d < 0 ? ' down' : '')} style={{ ['--i' as string]: i }}>
+    <span className="gauge-label">{label}</span>
+    <span className="gauge-bar" aria-hidden="true"><i style={{ width: v + '%' }} /></span>
+    <span className="gauge-value">{v}<span className="sr-only"> {COPY.stage.of} 100</span></span>
+    <span className="gauge-delta">{d > 0 ? '▲ +' + d : d < 0 ? '▼ −' + -d : COPY.say.noChange}</span>
+  </li>;
+}
+
+function OutcomeCard({ state, before, onNext }: { state: GameState; before?: readonly string[]; onNext(): void }) {
+  const r = state.resolution!;
+  const added = before ? ledger(state).filter(e => !before.includes(e.label)) : [];
+  return <div className="outcome-card" role="group" aria-labelledby="outcome-heading">
+    <p className="outcome-chose">{COPY.say.youChose}: <b>{r.chosenLabel}</b></p>
+    <h2 className="outcome-head" id="outcome-heading" tabIndex={-1}>{r.outcome.headline.split(' ').map((w, i) => <span key={i} style={{ ['--w' as string]: i }}>{w} </span>)}</h2>
+    <div className="outcome-grid">
+      <ul className="gauges" aria-label={COPY.position}>{RULES.map((rule, i) => <Gauge key={rule.id} i={i} label={rule.question} from={r.dimsBefore[rule.id]} to={r.dimsAfter[rule.id]} />)}</ul>
+      <div className="outcome-side">
+        <p className="mini-head">{COPY.say.whatsDifferent}</p>
+        <ul className="changed">{r.outcome.changed.map((x, i) => <li key={x} style={{ ['--i' as string]: i }}>{x}</li>)}</ul>
+        {added.length > 0 && <><p className="mini-head">{COPY.say.addedToRecord}</p><ul className="added">{added.map((e, i) => <li key={e.label} style={{ ['--i' as string]: i }}>{e.label}</li>)}</ul></>}
+      </div>
+    </div>
+    <div className="outcome-foot"><button className="primary" data-action="primary" data-line-next onClick={event => { if (event.detail < 2) onNext(); }}><span>{COPY.say.hearWhy}</span><span className="arrow" aria-hidden="true">→</span></button></div>
   </div>;
 }

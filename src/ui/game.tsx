@@ -12,7 +12,9 @@ import { isMission, type Content, type GameNode } from '../engine/types';
 import { ledger } from '../engine/engine';
 import { codeFromState } from '../engine/runcode';
 import { COPY } from '../content/interface';
+import { RULES } from '../content/presentation';
 import type { ActionPlan, ResumeState, Session } from '../session';
+import { debriefText } from '../debrief';
 import { Glyph } from './parts';
 import { play, type Cue } from './sound';
 import { Title } from './screens/Title';
@@ -37,6 +39,12 @@ type Drawer = { kind: 'file'; chapter?: number } | { kind: 'help' | 'settings' |
 const readFlag = (key: string, on: string) => { try { return localStorage.getItem(key) === on; } catch { return false; } };
 const writeFlag = (key: string, value: string) => { try { localStorage.setItem(key, value); } catch { /* the preference still applies for this session */ } };
 const systemStill = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } };
+
+function downloadRecord(saved: Session, content: Content) {
+  const url = URL.createObjectURL(new Blob([debriefText(saved, content)], { type: 'text/plain;charset=utf-8' }));
+  const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'gpl-engagement-debrief.txt'; anchor.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 /** Screen changes cross-fade through the View Transitions API where it exists; otherwise they simply change. */
 function transition(change: () => void, still: boolean) {
@@ -121,21 +129,40 @@ export function Game(props: Props) {
       {drawer.kind === 'code' && <RunCode state={state} content={content} onCode={props.onCode} onRestored={() => setDrawer(null)} />}
       {drawer.kind === 'restart' && <>
         <p>{COPY.restartWarning}</p>
-        {codeFromState(state, content) && <p>Your current code: <code>{codeFromState(state, content)}</code></p>}
+        {/* SV-02: from the home screen the active state is empty; what would be lost is the saved
+            engagement. Show its real code and let the learner keep its record before replacing it. */}
+        {(state.phase === 'title' || props.home ? props.resume.candidates.map(c => c.session) : [session]).map((saved, i, all) => {
+          const code = codeFromState(saved.game, content);
+          const source = all.length > 1 ? (props.resume.candidates[i]?.source === 'lms' ? COPY.keep.lms : COPY.keep.browser) : COPY.keep.yours;
+          return code ? <div className="file-entry" key={i}>
+            <small>{source} · {saved.game.completed.length} {COPY.keep.decisions} · {saved.game.phase === 'ending' ? COPY.keep.complete : COPY.keep.inProgress}</small>
+            <p>{COPY.keep.code} <code>{code}</code></p>
+            <div className="dialog-actions"><button className="secondary" onClick={() => downloadRecord(saved, content)}>{COPY.keep.download}</button></div>
+          </div> : null;
+        })}
         <div className="dialog-actions"><button className="secondary" onClick={() => setDrawer(null)}>Keep this engagement</button><button className="secondary is-strong" onClick={() => { setDrawer(null); go(props.onStart, 'page'); }}>Start a new engagement</button></div>
       </>}
     </Modal>}
   </div>;
 }
 
-/** Where you are in the story — act and progress — and the tools. Nothing that scores you. */
+/**
+ * Where you are and what is at stake: the act, your progress, the deal's three measures and
+ * your record. The measures are the state of the deal, not a score; they sit here because a
+ * player has to see what their decisions are moving (D-081).
+ */
 function Hud({ session, content, atHome, atMap, chapterNumber, chapterTitle, onMap, onFile, onHelp, onSettings, onCode }: {
   session: Session; content: Content; atHome: boolean; atMap: boolean; chapterNumber?: number; chapterTitle: string;
   onMap(): void; onFile(): void; onHelp(): void; onSettings(): void; onCode(): void;
 }) {
   const state = session.game;
-  const playing = !atHome && state.phase !== 'setup';
+  const playing = !atHome && state.phase !== 'setup' && state.phase !== 'title';
   const nowId = state.phase === 'decide' || state.phase === 'consequence' ? state.nodeId : undefined;
+  const records = ledger(state).length;
+  const seen = useRef(records);
+  const [fresh, setFresh] = useState(false);
+  useEffect(() => { if (records > seen.current) setFresh(true); seen.current = records; }, [records]);
+  const moving = state.phase === 'consequence' ? state.resolution?.deltas : undefined;
   return <header className="hud">
     <a className="hud-brand" href="#game-heading" aria-label={COPY.brand}>gpl<i /></a>
     {chapterNumber && <div className="hud-act"><small>{COPY.stage.act} {chapterNumber} {COPY.stage.of} 5</small><strong>{chapterTitle}</strong></div>}
@@ -143,8 +170,13 @@ function Hud({ session, content, atHome, atMap, chapterNumber, chapterTitle, onM
       <span className="ticks" aria-hidden="true">{content.chapters.map(c => <span className="act" key={c.number}>{c.missionIds.map(id => <i key={id} className={'tick' + (state.completed.includes(id) && id !== nowId ? ' done' : id === nowId ? ' now' : '')} />)}</span>)}</span>
       <span className="count" aria-hidden="true">{state.completed.length}/{content.missionOrder.length}</span>
     </button>}
+    {playing && <div className="hud-gauges" role="group" aria-label={COPY.position}>
+      {RULES.map(r => <span key={r.id} className={'hud-gauge' + (moving?.[r.id] ? ' is-moving' : '')} title={r.question}>
+        <span>{COPY.dimensions[r.id].short}</span><span className="bar" aria-hidden="true"><i style={{ width: state.dims[r.id] + '%' }} /></span><b>{state.dims[r.id]}</b>
+      </span>)}
+    </div>}
     <nav className="hud-tools" aria-label="Game tools" style={playing ? undefined : { marginLeft: 'auto' }}>
-      {!atHome && <button className="icon-button" onClick={onFile} aria-label={COPY.record} title={COPY.record}><Glyph name="file" /></button>}
+      {!atHome && state.phase !== 'title' && <button className={'hud-record' + (fresh ? ' is-new' : '')} onClick={() => { setFresh(false); onFile(); }} aria-label={COPY.record + ', ' + records}><Glyph name="file" /><span>{COPY.say.record}</span><span className="n">{records}</span></button>}
       <button className="icon-button" onClick={onHelp} aria-label={COPY.help} title={COPY.help}><Glyph name="help" /></button>
       <button className="icon-button" onClick={onSettings} aria-label={COPY.settings} title={COPY.settings}><Glyph name="settings" /></button>
       <button className="icon-button" onClick={onCode} aria-label={COPY.code} title={COPY.code}><Glyph name="save" /></button>

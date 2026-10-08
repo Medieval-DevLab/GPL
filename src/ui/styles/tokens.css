@@ -51,11 +51,12 @@
 
   --accent: var(--signal);
   --accent-tint: #fbe9e4;
+  --accent-light: #ff9f87;   /* the accent as text/marks on the dark HUD */
 }
 
 /* One accent per act. Each is ≥ 5.8:1 as text on white and as a background for white text. */
-[data-chapter="1"] { --accent: #985400; --accent-tint: #f8eddc; }
-[data-chapter="2"] { --accent: #0b6673; --accent-tint: #e1f0f1; }
-[data-chapter="3"] { --accent: #4a42ad; --accent-tint: #ebe9f8; }
-[data-chapter="4"] { --accent: #a32547; --accent-tint: #f8e6eb; }
-[data-chapter="5"] { --accent: #1d6c45; --accent-tint: #e3f1e9; }
+[data-chapter="1"] { --accent: #985400; --accent-tint: #f8eddc; --accent-light: #f2b45a; }
+[data-chapter="2"] { --accent: #0b6673; --accent-tint: #e1f0f1; --accent-light: #5fc3cf; }
+[data-chapter="3"] { --accent: #4a42ad; --accent-tint: #ebe9f8; --accent-light: #a9a2f0; }
+[data-chapter="4"] { --accent: #a32547; --accent-tint: #f8e6eb; --accent-light: #f08aa6; }
+[data-chapter="5"] { --accent: #1d6c45; --accent-tint: #e3f1e9; --accent-light: #6fcf9b; }

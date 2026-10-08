@@ -20,7 +20,8 @@ export function debriefText(session: Session, content: Content): string {
   const plan = ACTION_PLAN_FIELDS.filter(({ key }) => presentation.actionPlan[key].trim());
   return [
     COPY.brand, 'Engagement debrief — fictional learning simulation', '',
-    verdict.title, verdict.summary, `${state.history.length} decisions made`, '',
+    /* SV-02: an unfinished engagement has no verdict yet, and must not announce one. */
+    ...(state.phase === 'ending' ? [verdict.title, verdict.summary] : ['Engagement in progress', 'This record covers the decisions committed so far; the engagement has not ended.']), `${state.history.length} decisions made`, '',
     'YOUR DECISION RECORD',
     ...state.history.flatMap(h => [`Chapter ${h.chapter} · ${h.missionTitle}`, 'Your commitment: ' + h.chosenLabel, h.headline, h.lesson.principle, h.lesson.because, h.lesson.watchFor ?? '', '']),
     'HOW YOUR CHOICES CONNECTED',

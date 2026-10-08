@@ -11,3 +11,14 @@ docs/screenshots*/
 # Regenerable by `python tools/extract-art.py`. The crops in public/art/ ARE committed;
 # this is just the review sheet used to check them.
 docs/art-contact-sheet.png
+
+# Agent worktrees and local design scratch — never part of the game.
+.claude/worktrees/
+/.chipmeasure.mjs
+/.tablet-probe.mjs
+/*-preview.html
+/*-preview.png
+/*-preview.svg
+/desktop-game-mockups.*
+/tools/capture-*-preview.mjs
+/tools/capture-desktop-game-mockups.mjs

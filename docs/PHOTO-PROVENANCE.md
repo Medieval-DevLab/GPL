@@ -36,6 +36,10 @@ These are representative stock locations, not claims about the actual premises o
 
 Use a centred crop as the default; keep a readable gradient behind overlaid text. Scenery should be decorative (`alt=""`) when adjacent live text names the location. Give a standalone scene informative alt text from `SCENE_DESCRIPTIONS`. Portraits beside a visible name can be decorative; otherwise use the fictional character's name with the fiction notice available in About. If a photograph fails, retain the HTML character name/role, task and controls against the solid theme background; never hide the learning content.
 
+## D-081 update (8 October 2026)
+
+The seven cut-outs (`cut-<character>.webp`) are back in the repository and the runtime set, restored byte-identical from commit `cff5a2a`. Their provenance, method and face-frame measurements are described under "October 2026 additions" below. They are staged without rim light or colour grading: people stand in daylight rooms with a natural shadow. The runtime set is 22 files: 7 portraits, 7 cut-outs, 5 chapter scenes and 3 locations.
+
 ## D-080 update (8 October 2026)
 
 The daylight rebuild removed the six night photographs (`env-skyline-dusk`, `env-skyline-blue`, `env-tower-night`, `env-windows-night`, `env-storefront-night`, `env-desk-night`) and all seven cut-outs from the repository and the runtime set. Photographs are now shown framed, with the place named beneath, never behind text. Three locations remain: `env-warehouse`, `env-boardroom` and `env-glass-office`. The runtime set is 15 files (1.35 MB): 7 portraits, 5 chapter scenes and 3 locations. The table below is kept as the record of what was acquired.

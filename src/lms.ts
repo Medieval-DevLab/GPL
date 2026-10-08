@@ -72,8 +72,11 @@ export function nextLmsCall(
      That is a legitimate ending here and the PRD is explicit it must sometimes be the
      right one, so reporting it incomplete would tell the LMS the learner failed at the
      moment they may have been most right. No score, ever — see `scorm.ts`. */
+  /* "Once" means once per run, not once per tab (LMS-01): restoring a different completed
+     run in the same tab used to be swallowed here, leaving the LMS holding the first run's
+     code. The acknowledgement is tied to the code it acknowledged. */
   if (state.phase === "ending") {
-    return finished ? { kind: "none" } : { kind: "complete", code };
+    return finished && code === parked ? { kind: "none" } : { kind: "complete", code };
   }
 
   return code === parked ? { kind: "none" } : { kind: "suspend", code };

@@ -16,6 +16,17 @@ function completed(): Session {
   return { game, presentation: emptyPresentation() };
 }
 describe('portable learner debrief', () => {
+  it('records an unfinished engagement as in progress, without a verdict it has not reached (SV-02)', () => {
+    let game = pastSetup(story, 's-connector');
+    const node = getNode(story, game.nodeId);
+    if (isMission(node)) game = playMission(game, story, possibleSelections(node, game)[0]);
+    const finished = completed();
+    const text = debriefText({ game, presentation: emptyPresentation() }, story);
+    expect(text).toContain('Engagement in progress');
+    expect(text).toContain('1 decisions made');
+    const verdictLine = debriefText(finished, story).split(String.fromCharCode(10))[3];
+    expect(text).not.toContain(verdictLine);
+  });
   it('orders reflections by the learning journey, not source-file insertion order', () => {
     const session = completed();
     for (const node of Object.values(story.nodes)) {

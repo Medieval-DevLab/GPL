@@ -36,8 +36,8 @@ async function appSource(): Promise<string> {
   return raw.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/.*$/gm, " ");
 }
 
-/** Play the first legal selection at each beat until the run ends. */
-function playTo(stop: (s: GameState) => boolean): GameState {
+/** Play one legal selection at each beat (the first, unless told otherwise) until `stop`. */
+function playTo(stop: (s: GameState) => boolean, pick: (options: string[][]) => number = () => 0): GameState {
   let s = pastSetup(content);
   for (let i = 0; i < 40 && !stop(s); i++) {
     const node = getNode(content, s.nodeId);
@@ -47,7 +47,8 @@ function playTo(stop: (s: GameState) => boolean): GameState {
       s = next;
       continue;
     }
-    s = playMission(s, content, possibleSelections(node, s)[0] as string[]);
+    const options = possibleSelections(node, s);
+    s = playMission(s, content, options[pick(options)] as string[]);
   }
   return s;
 }
@@ -145,9 +146,27 @@ describe("what the LMS is told, and when", () => {
     expect(call.kind).toBe("complete");
   });
 
-  it("reports completion only once", () => {
+  it("reports completion only once per run", () => {
     const end = playTo((x) => x.phase === "ending");
-    expect(nextLmsCall(end, content, null, true).kind).toBe("none");
+    const code = codeFromState(end, content);
+    expect(nextLmsCall(end, content, code, true).kind).toBe("none");
+  });
+
+  /** LMS-01: completed run B restored over completed run A, in the same tab. */
+  it("reports a different completed run restored after a completion, and retries it if the write fails", () => {
+    const a = playTo((x) => x.phase === "ending");
+    const b = playTo((x) => x.phase === "ending", (options) => options.length - 1);
+    const codeA = codeFromState(a, content), codeB = codeFromState(b, content);
+    expect(codeB).not.toBe(codeA);
+    const ack: LmsAcknowledgement = { parked: null, finished: false };
+    const sent: string[] = [];
+    synchroniseLms(a, content, ack, (call) => { sent.push(call.kind + ':' + call.code); return true; });
+    synchroniseLms(b, content, ack, () => false);
+    expect(ack.parked).toBe(codeA);
+    synchroniseLms(b, content, ack, (call) => { sent.push(call.kind + ':' + call.code); return true; });
+    synchroniseLms(b, content, ack, (call) => { sent.push(call.kind + ':' + call.code); return true; });
+    expect(sent).toEqual(['complete:' + codeA, 'complete:' + codeB]);
+    expect(ack).toEqual({ parked: codeB, finished: true });
   });
 
   /**

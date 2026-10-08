@@ -1,32 +1,63 @@
-/* Desktop first; reflows to one column at 200% zoom (720×450). Reading order never changes:
-   place, decision, board. */
+/* Desktop first. The staged scene holds down to 1024px wide; below that (and at 200% zoom,
+   720×450) it reflows into reading order — question, people's words, choices, result — with
+   every word still on a solid surface. Frame screens carry their own rules in frames.css. */
+@media (max-height: 820px) {
+  .scene-title { padding: 10px 16px; }
+  .scene-q { font-size: clamp(24px, 2vw, 30px); }
+  .choose { top: 150px; }
+  .pick { padding: 12px 16px; gap: 6px; }
+  .pick-line { font-size: 16.5px; }
+  .pick-line.spoken { font-size: 18px; }
+  .slots li { min-height: 42px; }
+  .planwall, .corkboard { padding: 16px; }
+  .dialogue { padding: 26px 28px 14px; }
+  .dialogue-text { font-size: 21.5px; }
+  .call-frame { top: 140px; bottom: 270px; }
+  .outcome-card { padding: 26px 32px 20px; }
+}
+@media (max-width: 1440px) {
+  .hud-record { white-space: nowrap; }
+  .hud-act { max-width: 200px; }
+}
 @media (max-width: 1280px) {
-  .scene { grid-template-columns: 230px minmax(0, 1fr) 310px; gap: 26px; }
-  .act-break { grid-template-columns: minmax(0, 1fr) 310px; }
-  .hud-act strong { max-width: 260px; }
+  .hud { gap: 12px; }
+  .hud-act { max-width: 220px; }
+  .hud-gauge { grid-template-columns: auto 44px 22px; }
 }
 @media (max-width: 1100px) {
-  .scene { grid-template-columns: minmax(0, 1fr) 300px; }
-  .place { grid-column: 1 / -1; position: static; grid-template-columns: 220px minmax(0, 1fr); align-items: start; }
-  .title, .act, .turn, .ending-cover { grid-template-columns: 1fr; gap: 28px; }
-  .team-cards { grid-template-columns: 1fr; }
+  .hud-act { display: none; }
+  .picks-table { grid-template-columns: repeat(min(var(--n), 2), minmax(0, 1fr)); }
+  .fam-call .choose, .fam-chat .choose { width: min(560px, 50vw); }
+  .fam-case .choose { width: min(760px, 70vw); }
+  .case-grid { grid-template-columns: 240px minmax(0, 1fr); }
 }
-@media (max-width: 760px) {
-  :root { --hud-h: 54px; --gutter: 16px; --t-h1: 30px; }
-  .hud { gap: 10px; padding: 0 10px; }
-  .hud-act, .hud-track .ticks { display: none; }
+@media (max-width: 900px), (max-height: 560px) {
+  :root { --hud-h: 54px; --gutter: 14px; }
+  .hud { gap: 8px; padding: 0 10px; }
+  .hud-track .ticks, .hud-gauge .bar, .hud-record span:not(.n) { display: none; }
+  .hud-gauges { gap: 8px; padding: 4px 8px; }
+  .hud-gauge { grid-template-columns: auto auto; }
   .icon-button { width: 34px; height: 34px; }
-  .scene, .act-break { grid-template-columns: 1fr; padding-top: 18px; }
-  .place { grid-template-columns: 1fr; }
-  .place-photo img { aspect-ratio: 16 / 9; }
-  .board { position: static; max-height: none; }
-  .cmd-bar { position: static; flex-wrap: wrap; }
-  .cmd-bar .primary { width: 100%; justify-content: space-between; }
-  .acts-strip { grid-template-columns: 1fr; }
-  .act-row { grid-template-columns: 1fr; }
-  .act-row img { width: 100%; }
-  .thread-pair { grid-template-columns: 1fr; }
-  .thread-arrow { rotate: 90deg; }
-  .tradeoffs { grid-template-columns: 1fr; }
-  .frame { padding-top: 24px; }
+  .scene2 { height: auto; min-height: calc(100dvh - var(--hud-h)); display: flex; flex-direction: column; gap: 14px; padding: 14px var(--gutter) 18px; overflow: visible; }
+  .backdrop { position: fixed; top: var(--hud-h); }
+  .cast { display: none; }
+  .scene-title, .dialogue, .choose, .outcome-card, .call-frame, .chat-stage, .dialogue.as-caption, .dialogue.as-chat, .fam-call .choose, .fam-chat .choose, .fam-case .choose { position: static; inset: auto; translate: none; width: auto; max-width: none; max-height: none; }
+  .scene2 .dialogue, .scene2 .dialogue.as-caption, .scene2 .dialogue.as-chat { position: relative; margin-top: 16px; }
+  .scene-title { max-width: none; }
+  .call-frame { aspect-ratio: 16 / 10; }
+  .chat-stage { height: 340px; }
+  .st-brief .chat-stage { bottom: auto; }
+  .choose-body { overflow: visible; }
+  .picks-table, .picks-board, .picks-plan, .case-grid, .outcome-grid, .weigh-body { grid-template-columns: 1fr; }
+  .slots { grid-auto-flow: row; }
+  .ask { flex-wrap: wrap; }
+  .ask-bubble { position: static; width: auto; }
+  .choose-head { flex-wrap: wrap; }
+  .dialogue { padding: 26px 18px 14px; }
+  .dialogue-text { font-size: 20px; }
+  .dialogue-foot { flex-wrap: wrap; }
+  .outcome-card { padding: 24px 18px; }
+  .commit-bar { flex-wrap: wrap; }
+  .commit-bar .primary { width: 100%; justify-content: space-between; }
+  .toast { left: var(--gutter); right: var(--gutter); }
 }
