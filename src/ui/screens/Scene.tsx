@@ -7,8 +7,9 @@ import { EARNED } from '../../content/gates';
 import { COMPARE, RULES, placeOf } from '../../content/presentation';
 import { Action, Backdrop, Cutout, Glyph, Heading, Pips, Portrait, castId, firstName } from '../parts';
 import { briefLines, castOf, outcomeLines, type Line } from '../script';
-import { cardsFrom, sourceOf } from '../cards';
+import { cardsFrom } from '../cards';
 import { DialogueBox, Thread } from './Dialogue';
+import { LeverPanel, LockNote } from './Levers';
 
 export type Family = 'table' | 'board' | 'plan' | 'chat' | 'call' | 'case';
 /** Which medium a decision happens in. Presentation only — the engine never sees this. */
@@ -76,7 +77,7 @@ export function Scene(props: Props) {
       if ((stage.k === 'brief' || stage.k === 'card' || stage.k === 'after') && [' ', 'Enter', 'ArrowRight'].includes(e.key)) {
         const next = document.querySelector<HTMLButtonElement>('main [data-action="primary"]');
         if (next && !next.disabled) { e.preventDefault(); next.click(); }
-      } else if (stage.k === 'choose' && /^[1-9]$/.test(e.key)) {
+      } else if (stage.k === 'choose' && mission.kind !== 'levers' && /^[1-9]$/.test(e.key)) {
         const pick = document.querySelectorAll<HTMLButtonElement>('main [data-choice]')[+e.key - 1];
         if (pick && !pick.disabled) { e.preventDefault(); pick.click(); pick.focus(); }
       }
@@ -159,17 +160,6 @@ function CallFrame({ name, role, speaking }: { name: string; role: string; speak
 
 function needs(condition: Condition | undefined) { return { all: condition?.all ?? [], any: condition?.any ?? [] }; }
 
-function LockNote({ option, content }: { option: Option; content: Content }) {
-  const { all, any } = needs(option.requires);
-  const flags = [...all, ...any];
-  if (flags.length > 0 && flags.every(f => EARNED[f]?.liability)) return <p className="lock-note"><Glyph name="lock" /><span><b>{COPY.stage.lockedTitle}.</b> {COPY.stage.liabilityGate}</span></p>;
-  /* Name the card and the stop that could have given it: a locked option is the clearest lesson
-     in cause and effect the game has, as long as the player can see the cause. */
-  const card = (f: string) => { const from = sourceOf(content, f); return (EARNED[f]?.as ?? 'an earlier commitment') + (from ? ' (' + COPY.stage.from + ' ' + from + ')' : ''); };
-  const what = [...all.map(card), ...(any.length ? [COPY.say.oneOf + ' ' + any.map(card).join(' ' + COPY.say.or + ' ')] : [])];
-  return <p className="lock-note"><Glyph name="lock" /><span><b>{COPY.stage.lockedTitle}.</b> {COPY.stage.needs}: {what.join('; ')}.</span></p>;
-}
-
 function Weigh({ option }: { option: Option }) {
   if (!option.pros?.length && !option.cons?.length && !option.cost) return null;
   /* Gains and costs as tags you can scan, not sentences joined with dots: the logic of a choice
@@ -189,13 +179,13 @@ function itemsOf(mission: Mission, state: GameState): Item[] {
   const facts = COMPARE[mission.id];
   if (mission.kind === 'choice') return mission.options.map(o => ({ id: o.id, title: o.title, line: o.description, spoken: false, option: o, enabled: allowed.has(o.id), facts: facts?.map(r => ({ label: r.label, value: r.values[o.id] ?? '' })) }));
   if (mission.kind === 'investigate') return mission.evidence.map(e => ({ id: e.id, title: e.label, line: e.question, spoken: false, enabled: true }));
-  /* Interim, so the union typechecks until the lever panel exists (D-084): every setting as a pick, tagged with its lever. The engine keeps one per lever and refuses a locked setting. */
-  if (mission.kind === 'levers') return mission.levers.flatMap(l => l.options.map(o => ({ id: o.id, title: o.label, line: o.detail, spoken: false, enabled: true, tag: l.label })));
+  /* A lever decision has its own panel (Levers.tsx); it never reaches the list. */
+  if (mission.kind === 'levers') return [];
   return mission.components.map(c => ({ id: c.id, title: c.title, line: c.description, spoken: false, enabled: true, tag: c.tag }));
 }
 
 /** A choosable thing. The button carries the short name; the rest describes it. */
-function ChoiceItem({ it, n, on, multi, onToggle, content, className = '' }: { it: Item; n: number; on: boolean; multi: boolean; onToggle(): void; content: Content; className?: string }) {
+function ChoiceItem({ it, n, on, multi, onToggle, state, content, className = '' }: { it: Item; n: number; on: boolean; multi: boolean; onToggle(): void; state: GameState; content: Content; className?: string }) {
   return <li className={'pick ' + className + (on ? ' is-on' : '') + (!it.enabled ? ' is-locked' : '')} style={{ ['--i' as string]: n }}>
     <button className="pick-hit" data-choice={it.id} aria-pressed={on} disabled={!it.enabled} aria-describedby={'d-' + it.id} onClick={onToggle}>
       <span className={'pick-mark' + (multi ? ' multi' : '')} aria-hidden="true">{on ? '✓' : n + 1}</span>
@@ -206,7 +196,7 @@ function ChoiceItem({ it, n, on, multi, onToggle, content, className = '' }: { i
       {!it.facts && <p className={'pick-line' + (it.spoken ? ' spoken' : '')}>{it.spoken ? '“' + it.line + '”' : it.line}</p>}
       {it.facts && <dl className="facts">{it.facts.map(f => <div key={f.label}><dt>{f.label}</dt><dd>{f.value}</dd></div>)}</dl>}
       {it.tag && <p className="pick-tag">{it.tag}</p>}
-      {it.option && (it.enabled ? <Weigh option={it.option} /> : <LockNote option={it.option} content={content} />)}
+      {it.option && (it.enabled ? <Weigh option={it.option} /> : <LockNote requires={it.option.requires} state={state} content={content} />)}
     </div>
   </li>;
 }
@@ -236,12 +226,13 @@ function Ask({ mission, state }: { mission: Mission; state: GameState }) {
 
 function Choose(props: Props & { family: Family }) {
   const { mission, state, content, family, onToggle } = props;
+  if (mission.kind === 'levers') return <LeverPanel mission={mission} state={state} content={content} onToggle={onToggle} onCommit={props.onCommit} ask={<Ask mission={mission} state={state} />} />;
   const items = itemsOf(mission, state);
   const multi = mission.kind !== 'choice';
   const need = requiredSelectionCount(mission);
   const commitLabel = mission.kind === 'investigate' ? COPY.investigate : mission.kind === 'build' ? COPY.assemble : mission.presentation === 'dialogue' ? COPY.send : COPY.commit;
   const list = <ol className={'picks picks-' + family} aria-label={mission.question} style={{ ['--n' as string]: items.length }}>
-    {items.map((it, i) => <ChoiceItem key={it.id} it={it} n={i} on={state.selection.includes(it.id)} multi={multi} onToggle={() => onToggle(it.id)} content={content} className={family === 'board' ? 'pin' : family === 'plan' ? 'magnet' : ''} />)}
+    {items.map((it, i) => <ChoiceItem key={it.id} it={it} n={i} on={state.selection.includes(it.id)} multi={multi} onToggle={() => onToggle(it.id)} state={state} content={content} className={family === 'board' ? 'pin' : family === 'plan' ? 'magnet' : ''} />)}
   </ol>;
   const chosen = state.selection.map(id => items.find(it => it.id === id)?.title).filter(Boolean) as string[];
   const picked = mission.kind === 'choice' && state.selection.length === 1 ? mission.options.find(o => o.id === state.selection[0]) : undefined;

@@ -7,7 +7,6 @@
   .pick { padding: 12px 16px; gap: 6px; }
   .pick-line { font-size: 16.5px; }
   .pick-line.spoken { font-size: 18px; }
-  .slots li { min-height: 42px; }
   .planwall, .corkboard { padding: 16px; }
   .dialogue { padding: 26px 28px 14px; }
   .dialogue-text { font-size: 21.5px; }
@@ -38,7 +37,6 @@
   .picks-table { grid-template-columns: repeat(min(var(--n), 2), minmax(0, 1fr)); }
   .fam-call .choose, .fam-chat .choose { width: min(560px, 50vw); }
   .fam-case .choose { width: min(760px, 70vw); }
-  .case-grid { grid-template-columns: 240px minmax(0, 1fr); }
 }
 @media (max-width: 900px), (max-height: 560px) {
   /* Reading order has no stage: the nameplate says who is speaking, and a 1,000px cut-out
@@ -62,7 +60,6 @@
   .st-brief .chat-stage { bottom: auto; }
   .choose-body { overflow: visible; }
   .picks-table, .picks-board, .picks-plan, .case-grid, .outcome-grid { grid-template-columns: 1fr; }
-  .slots { grid-auto-flow: row; }
   .ask { flex-wrap: wrap; }
   .ask-bubble { position: static; width: auto; }
   .choose-head { flex-wrap: wrap; }

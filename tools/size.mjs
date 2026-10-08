@@ -50,6 +50,8 @@ import path from "node:path";
  *   interface  ours, and the one most likely to creep. Was ~46 kB across a dozen screen
  *              types with 58 allowed. The October rebuild (D-077) moved composition out of
  *              components and into the stylesheet: measured 21.0 kB, so 27 (~28% headroom).
+ *              D-091: 33 — the lever panel, the act-break map, three system views and the
+ *              deal chart are new screens the strategy requires (32.5 kB measured, ~1.5% headroom).
  *   stylesheet was 14 on a ~8 kB sheet that painted one page template. The rebuild ships
  *              fourteen distinct compositions; measured 16.1 kB, so 18 (~12% headroom).
  *              D-084: 22 — the journey map is a new screen type (19.0 kB measured), and
@@ -65,7 +67,7 @@ import path from "node:path";
  * classic script so `dist/` opens from `file://` inside an LMS, and `vite.config.ts`
  * throws if a dynamic import makes Rollup emit a second chunk.
  */
-const BUDGETS_KB = { framework: 70, interface: 27, engine: 12, stylesheet: 22 };
+const BUDGETS_KB = { framework: 70, interface: 33, engine: 12, stylesheet: 22 };
 /** Only feeds the coarse guard used when no sourcemap exists; the real gate is per group. */
 const BUDGET_KB = BUDGETS_KB.framework + BUDGETS_KB.interface + BUDGETS_KB.engine;
 

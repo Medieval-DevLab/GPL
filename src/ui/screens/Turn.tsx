@@ -6,6 +6,7 @@ import { CHARACTERS } from '../../content/characters';
 import { Backdrop, Heading, art } from '../parts';
 import { DialogueBox } from './Dialogue';
 import { Figure, useAdvanceKeys } from './FrameParts';
+import { SettledCalendar } from './Views';
 
 /**
  * A story turn: news from somewhere else, arriving as the thing it would arrive as — the trade
@@ -22,13 +23,11 @@ export function Turn({ node, settled, onNext }: { node: Interlude; settled?: rea
   useAdvanceKeys();
   const line = { who: guide.name, role: guide.role, text: node.prompt ?? node.title, voice: 'say' as const };
 
-  /* The promise calendar (D-086): on the beat that settles it, each card as it came due, in
-     the order the engine settled them. Interim, until the calendar view exists; every word
-     is the content's own line. */
+  /* The promise calendar (D-086, D-091): on the beat that settles it, each promise card by name,
+     pinned to its month and stamped as it came due, one at a time. Every line is the content's. */
   const calendar = node.settle ? <section className="f-turn-calendar" aria-labelledby="calendar-heading">
     <h2 id="calendar-heading" className="f-h2">{COPY.frames.calendar.title}</h2>
-    {settled?.length ? <ul>{settled.map(r => <li key={r.flag} className={'is-' + r.status}><small>{r.due}</small> {r.line}</li>)}</ul>
-      : <p>{COPY.frames.calendar.empty}</p>}
+    {settled?.length ? <SettledCalendar settled={settled} play /> : <p>{COPY.frames.calendar.empty}</p>}
   </section> : null;
 
   const narration = <>

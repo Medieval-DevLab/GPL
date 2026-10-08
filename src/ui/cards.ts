@@ -15,6 +15,7 @@
 import type { Condition, Content, GameNode, GameState, Interlude } from '../engine/types';
 import { EARNED } from '../content/gates';
 import { MILESTONE } from '../content/presentation';
+import { promiseRules, settledOf } from './ledger';
 
 export type Pile = 'strength' | 'promise';
 export interface Card { flag: string; title: string; where: string; pile: Pile; next?: { kind: 'opens' | 'pays' | 'due'; at: string } }
@@ -56,7 +57,10 @@ export function handOf(state: GameState, content: Content): Card[] {
        decides the next decision must not claim to matter only at the thirteenth (audit). */
     const hit = later.find(s => s.opens.has(flag) || s.steers.has(flag));
     const kind = pile === 'promise' ? 'due' : hit?.opens.has(flag) ? 'opens' : 'pays';
-    return { flag, title: EARNED[flag].as, where: EARNED[flag].where, pile, next: hit ? { kind, at: MILESTONE[hit.id] ?? hit.id } : undefined };
+    /* A promise no later decision reads still comes due: on the calendar, on its month (D-086). */
+    const due = !hit && !settledOf(state) ? promiseRules(content).find(r => r.flag === flag)?.due : undefined;
+    const next: Card['next'] = hit ? { kind, at: MILESTONE[hit.id] ?? hit.id } : due ? { kind: 'due', at: due } : undefined;
+    return { flag, title: EARNED[flag].as, where: EARNED[flag].where, pile, next };
   });
 }
 
@@ -110,6 +114,19 @@ function setByEntry(content: Content, missionId: string, outcomeId: string, chos
   const node = content.nodes[missionId];
   const picked: { id: string; flags?: string[] }[] = node.kind === 'investigate' ? node.evidence : node.kind === 'build' ? node.components : node.kind === 'levers' ? node.levers.flatMap(l => l.options) : [];
   return [...flagsSetBy(content, missionId, outcomeId), ...picked.filter(p => chosenIds.includes(p.id)).flatMap(p => p.flags ?? [])];
+}
+
+/** Where in the run a card was made: the index of the decision that put it in your hand, or -1. */
+export const madeAt = (state: GameState, content: Content, flag: string) =>
+  state.history.findIndex(h => setByEntry(content, h.missionId, h.outcomeId, h.chosenIds).includes(flag));
+
+/** The first decision after `after` that read the card, as an index into the history, or -1. */
+export function readAt(state: GameState, content: Content, flag: string, after: number): number {
+  for (let i = after + 1; i < state.history.length; i++) {
+    const { opens, steers } = reads(content.nodes[state.history[i].missionId]);
+    if (opens.has(flag) || steers.has(flag)) return i;
+  }
+  return -1;
 }
 
 /**

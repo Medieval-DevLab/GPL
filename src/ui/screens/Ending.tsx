@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import type { Content, GameState } from '../../engine/types';
-import { causalClaim, causalThreads, finalVerdict } from '../../engine/engine';
+import { causalClaim, causalThreads } from '../../engine/engine';
 import { COPY } from '../../content/interface';
 import { STORY, placeOf } from '../../content/presentation';
 import { ACTION_PLAN_FIELDS, ACTION_PLAN_LIMIT, type ActionPlan, type Session } from '../../session';
 import { debriefText, reflectionRecord } from '../../debrief';
 import { Action, Backdrop, Heading, pad2 } from '../parts';
+import { VIEWS } from '../../content/views';
+import { settledOf, verdictOf } from '../ledger';
 import { Figure, Measures } from './FrameParts';
+import { DealChart } from './DealChart';
+import { PromiseCalendar } from './Views';
 
 const E = COPY.frames.ending;
 
@@ -74,7 +78,7 @@ export function Ending({ session, content, onPlan, onCode, onHome, onAgain }: { 
   const asked = causalClaim(state, content) !== null;
   const speaker = (missionId: string) => { const n = content.nodes[missionId]; return n && 'advisor' in n ? n.advisor?.name : undefined; };
   /* The content's own ending, and every extra whose condition held (D-086). */
-  const verdict = finalVerdict(state.dims, state.flags, content); const threads = causalThreads(state, content);
+  const verdict = verdictOf(state, content); const threads = causalThreads(state, content);
   const start = state.history[0]?.dimsBefore;
   return <section className="page f-ending">
     <div className="fs f-cover">
@@ -101,11 +105,18 @@ export function Ending({ session, content, onPlan, onCode, onHome, onAgain }: { 
 
     <div className="f-report" id="report" tabIndex={-1}>
       <p className="f-report-title">{E.reportTitle}</p>
-      {/* The promise calendar, as it came due (D-086). Interim, until the calendar view exists. */}
-      {state.settled && <section className="f-end-section f-promises" aria-labelledby="promises-heading">
-        <h2 id="promises-heading" className="f-h2">{COPY.frames.calendar.title}</h2>
-        {state.settled.length ? <ul>{state.settled.map(r => <li key={r.flag} className={'is-' + r.status}><small>{r.due}</small> {r.line}</li>)}</ul>
-          : <p className="f-end-lead">{COPY.frames.calendar.empty}</p>}
+      {/* The whole deal on one chart, under the ending it produced (D-091). */}
+      <section className="f-end-section f-chart" aria-labelledby="chart-heading">
+        <p className="f-kicker">{VIEWS.chart.kicker}</p>
+        <h2 id="chart-heading" className="f-h2">{verdict.title}</h2>
+        <p className="f-end-lead">{[verdict.summary, ...verdict.extras].join(' ')}</p>
+        <p className="meta">{VIEWS.chart.lead}</p>
+        <DealChart state={state} content={content} />
+      </section>
+      {settledOf(state) && <section className="f-end-section" aria-labelledby="calendar-heading">
+        <p className="f-kicker">{VIEWS.calendar.title}</p>
+        <h2 id="calendar-heading" className="f-h2">{VIEWS.calendar.playTitle}</h2>
+        <PromiseCalendar state={state} content={content} />
       </section>}
       <Attribution state={state} content={content} answer={answer} onAnswer={setAnswer} />
       {asked && !answer && !skipped && <p className="f-reveal"><button className="secondary" onClick={() => setSkipped(true)}>{COPY.stage.revealThreads}</button></p>}

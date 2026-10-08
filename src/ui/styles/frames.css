@@ -508,14 +508,9 @@ button.f-step:hover .f-step-label { text-decoration: underline; text-underline-o
 .f-turn-text .f-h1 { margin-top: 4px; }
 .f-turn-body { margin-top: 12px; font-size: var(--t-read); line-height: 1.6; color: var(--ink); }
 .f-turn-body p + p { margin-top: 0.7em; }
-/* The promise calendar, as it came due (D-086). Interim, until the calendar view exists. */
-.f-turn-calendar, .f-promises { margin-top: 16px; }
+/* The promise calendar on the beat that settles it (D-086); the calendar itself is in views.css (D-091). */
+.f-turn-calendar { margin-top: 16px; }
 .f-turn-calendar .f-h2 { font-size: 19px; margin-bottom: 8px; }
-.f-turn-calendar ul, .f-promises ul { display: grid; gap: 8px; }
-.f-turn-calendar li, .f-promises li { padding: 8px 12px; border-left: 4px solid var(--line-strong); background: var(--card); border-radius: 6px; font-size: 16px; line-height: 1.45; }
-.f-turn-calendar li small, .f-promises li small { font-weight: 700; color: var(--ink-2); margin-right: 4px; }
-.f-turn-calendar li.is-kept, .f-promises li.is-kept { border-left-color: var(--rise); }
-.f-turn-calendar li.is-broken, .f-promises li.is-broken { border-left-color: var(--fall); }
 .f-reveal-lines .f-talk-line { margin-top: 12px; }
 .f-spine { margin-top: 12px; font-family: var(--font-serif); font-style: italic; font-size: 17px; line-height: 1.45; color: var(--ink-2); }
 .f-verdict-extra { margin-top: 8px; font-family: var(--font-serif); font-size: clamp(17px, 1.3vw, 19px); line-height: 1.45; }
@@ -549,10 +544,6 @@ button.f-step:hover .f-step-label { text-decoration: underline; text-underline-o
   .gpl-game:not(.reduce-motion) .f-notice { animation: f-drop 760ms cubic-bezier(0.3, 1.2, 0.5, 1) both 1000ms; }
   .gpl-game:not(.reduce-motion) .f-memo { animation: f-place-down 700ms var(--ease-out) both 500ms; }
   .gpl-game:not(.reduce-motion) .f-turn-say.dialogue { animation: rise 600ms var(--ease-out) both 1500ms; }
-}
-
-/* ══ Journey: five acts as a route ═════════════════════════════════════════ */
-@media (prefers-reduced-motion: no-preference) {
 }
 
 /* ══ Ending: a cover, then the report ═════════════════════════════════════ */
