@@ -133,6 +133,11 @@
 .lock-note svg { flex: none; width: 16px; height: 16px; margin-top: 3px; }
 .weigh summary { cursor: pointer; font-size: 14px; font-weight: 650; color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
 .weigh-body { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; margin-top: 8px; font-size: 15px; }
+.impact { display: grid; gap: 6px; margin: 4px 0 12px; font-size: 16px; line-height: 1.4; }
+.impact b { margin-right: 4px; font-variant-numeric: tabular-nums; }
+.impact .up b { color: var(--rise); }
+.impact .down b { color: var(--fall); }
+.weigh-head { margin-bottom: 2px; font-size: 14px; font-weight: 700; color: var(--ink-3); }
 .weigh-body li { position: relative; padding-left: 16px; }
 .weigh-body .pro li::before { content: "+"; position: absolute; left: 0; color: var(--rise); font-weight: 700; }
 .weigh-body .con li::before { content: "−"; position: absolute; left: 0; color: var(--fall); font-weight: 700; }

@@ -143,7 +143,7 @@ if (scoreKeys.length > 0) {
 let reachedEnding = false;
 let retriedFailure = false;
 await page.evaluate(() => { window.__lms.failNextCommit = true; });
-for (let step = 0; step < 160; step++) {
+for (let step = 0; step < 480; step++) { // performed lines (D-081) take several presses per decision
   const screen = page.locator('[data-phase]').first();
   if (await screen.getAttribute('data-phase') === 'ending') { reachedEnding = true; break; }
   const primary = page.locator('[data-action="primary"]:visible').first();

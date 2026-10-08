@@ -6,6 +6,46 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-082 · Written for someone who has never sold anything
+The user, a marketing professional, played D-081 and could not follow it: "the storyline makes
+zero sense", "decisions feel like they are made without any logic, there's no explanation
+anywhere, no impact", "too much gyaan before we reach anywhere".
+
+**Why the decisions felt meaningless.** Every one of the 18 tested knowledge the game never
+gave:
+- Our own firm was never described.
+- Sarah and Marcus appeared in decision 2 without an introduction.
+- Orion's real problem (the complaints after purchase) was never posed as the mystery.
+- Each option's trade-off was folded away behind "Trade-offs and effort".
+- The reason after a choice was a sentence assembled from flag labels ("because you already had
+  who owns the systems").
+- A compulsory aphorism from the colleague sat between the player and every choice.
+
+**Decided.**
+- The frame tells one concrete story in plain words:
+  - who you are and what our firm does;
+  - each act's guide introduces themselves and says what you decide;
+  - each act break says what was settled and what comes next.
+  
+  Aphorisms are cut from act openings, act breaks and turns.
+- Decisions m1–m9b were rewritten for a reader with no sales background. Jargon is explained
+  on first use, each situation links to what just happened, and options read as what we would
+  actually do. m10–m10c keep their D-081 wording; that pass ran out of time.
+- The brief is the situation and the client's own words, then the choice. The colleague's steer
+  moved under "Ask", as advice you asked for.
+- What an option gives and what it costs is always visible.
+- After a choice the order is what happened, then why (the authored `because`), then the
+  takeaway. The outcome card says in plain words what each moved bar means for the deal ("Orion
+  is more likely to choose us").
+- Review leaks fixed: the m5b, m6 and m10b tips, the m10b and m10c lines, and m9a-lost-value's
+  false detail. m6 and m10 have their own steer.
+
+**Cost.** m10–m10c are less plain than the rest. The robotic `whyLine` remains only as a
+fallback. The LMS harness's step cap went from 160 to 480, because spoken lines take more presses.
+
+**Reversible:** yes. Prose and presentation only. Rule fields, run codes and the engine are
+unchanged.
+
 ## D-081 · Information is performed by people, not handed over in boxes
 The user's verdict on D-080: readable, but "containers everywhere and there's no immersion or
 transitions or layering". "Whenever we have info coming up, I would rather have a character

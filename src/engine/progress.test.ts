@@ -113,7 +113,7 @@ describe("the chapters", () => {
   });
 
   it("takes each chapter's header from its interlude", () => {
-    expect(grouped[0]).toMatchObject({ number: 1, interludeTitle: "Find the client" });
+    expect(grouped[0]).toMatchObject({ number: 1, interludeTitle: "Find a client" });
     expect(grouped[1]?.milestone).toBe("Lead generated");
   });
 });

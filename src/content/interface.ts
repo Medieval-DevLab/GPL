@@ -22,9 +22,16 @@ export const COPY = {
   fiction: 'A fictional training scenario. Photographs feature models, not the named characters or Accenture employees.',
   /** Business position. Shown as the state of the deal, never as the player's score. */
   dimensions: {
-    win: { label: 'Winnability', short: 'Win', question: 'Can we win it?' },
-    profit: { label: 'Profitability', short: 'Worth', question: 'Is it worth winning?' },
-    deliver: { label: 'Deliverability', short: 'Deliver', question: 'Can we deliver it?' },
+    win: { label: 'Chance of winning', short: 'Win', question: 'Can we win it?' },
+    profit: { label: 'Worth winning', short: 'Worth', question: 'Is it worth winning?' },
+    deliver: { label: 'Able to deliver', short: 'Deliver', question: 'Can we deliver it?' },
+  },
+  /** What a move in each measure means, for someone who has never sold anything. */
+  impact: {
+    title: 'What it did to the deal',
+    win: { up: 'Orion is more likely to choose us.', down: 'Orion is less likely to choose us.' },
+    profit: { up: 'The deal will make our firm more money.', down: 'The deal will make our firm less money.' },
+    deliver: { up: 'Our team is better placed to do what we promised.', down: 'Our team will find it harder to do what we promised.' },
   },
   position: 'Business position',
   positionNote: 'The state of the deal, not a score. It shows after each decision, never over one.',
@@ -50,6 +57,8 @@ export const COPY = {
     noDifference: 'Nothing on your record changed how that landed. On another path, something could have.',
     alwaysSame: 'That approach lands the same way whatever came before it.',
     filed: 'Filed under',
+    takeaway: 'The takeaway',
+    whyNote: 'Why it went this way',
     next: 'Next',
     skip: 'Skip to the choice',
     skipAll: 'Show all',
@@ -67,7 +76,7 @@ export const COPY = {
     record: 'Your record',
     ask: 'Ask',
     askAgain: 'Ask something else',
-    hearWhy: 'Hear what it means',
+    hearWhy: 'Why did that happen?',
     noChange: 'No change',
   },
   stage: {

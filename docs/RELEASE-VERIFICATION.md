@@ -1,5 +1,24 @@
 # Release verification
 
+## Version 1.2.0 — 8 October 2026: performed scenes and a plain-language story (D-081, D-082)
+
+- **TypeScript and tests.** TypeScript clean. All 284 tests pass in 19 files. They include the new script contract: no decimal splits; the colleague opens every brief, with no compulsory steer before the choice; and every decision has an authored reason.
+- **Production build.** Passes. `file://` reaches the title with a clean console.
+- **Mock LMS.** Completion reported, resumable (`101D-3F6`), no score. The harness step cap was raised from 160 to 480 because spoken lines take more presses.
+- **Browser run.** `verify-game.mjs --policy=first` at 1440×900 passed: 18 decisions, ending "A workable deal". Axe audited 17 screen types. Reload/resume, restore and plan export also passed. Screenshots of every beat are in `docs/screenshots-release/`.
+- **Size.** Stylesheet 14.74 of 18 kB gz; code 169.09 kB; cold download 2.48 MB.
+
+| Version 1.2.0 archive | Bytes | SHA-256 |
+|---|---:|---|
+| gpl-1.2.0-offline.zip | 2,496,173 | e68fb5893588b56a8567d506cb0339e25cf5c61dec04c545d90abac21b91339e |
+| gpl-1.2.0-scorm12.zip | 2,496,857 | 57813011f9c0d80c07adf0487dc401627b6b059cc9fc4c402e1622c4bc06d58a |
+
+Not done in this release:
+- the full `--matrix` run (other viewports, keyboard and walk-away policies);
+- the plain-language pass on m10–m10c;
+- the employee pilot;
+- manual assistive-technology review.
+
 ## Local build, 8 October 2026: one story, one scene, daylight (D-080, unreleased)
 
 Not published. This replaces the D-077 presentation below.

@@ -11,10 +11,9 @@
  * authored content or interface copy.
  */
 import type { Content, GameState, Mission } from '../engine/types';
-import { outcomeBecause, resolveAdvisorLine, resolveSaidQuote, resolveSituation, type DimTest } from '../engine/engine';
+import { outcomeBecause, resolveSaidQuote, resolveSituation, type DimTest } from '../engine/engine';
 import { COPY } from '../content/interface';
 import { EARNED } from '../content/gates';
-import { MISSION_RULE, ruleOf } from '../content/presentation';
 
 export type Voice = 'say' | 'narrate' | 'why' | 'lesson';
 export interface Line { who?: string; role?: string; text: string; voice: Voice; note?: string }
@@ -43,16 +42,18 @@ export function castOf(mission: Mission, state: GameState) {
   return { advisor, counterpart, quote };
 }
 
-/** Before the choice: your colleague sets it up, the client speaks, your colleague steers. */
+/**
+ * Before the choice: your colleague says what is happening, and the client says what they want.
+ * Then straight to the choice. The colleague's steer used to follow as a compulsory third line,
+ * and players read it as a lecture between them and the decision; it is one press away under
+ * "Ask", where it is advice you asked for.
+ */
 export function briefLines(mission: Mission, state: GameState): Line[] {
   const { advisor, quote } = castOf(mission, state);
   const lines: Line[] = [];
   const situation = resolveSituation(mission, state).join(' ');
   for (const page of paginate(situation)) lines.push(advisor ? { who: advisor.name, role: advisor.role, text: page, voice: 'say' } : { text: page, voice: 'narrate' });
   if (quote) lines.push({ who: quote.speaker, role: quote.role, text: quote.text, voice: 'say' });
-  /* The same chain the old renderer used: a beat without its own line hears the colleague's standing one. */
-  const steer = resolveAdvisorLine(mission, state) ?? advisor?.quote;
-  if (advisor && steer) lines.push({ who: advisor.name, role: advisor.role, text: steer, voice: 'say' });
   return lines;
 }
 
@@ -88,7 +89,9 @@ export function outcomeLines(mission: Mission, state: GameState, content: Conten
   const advisor = mission.advisor;
   const voice = (text: string, v: Voice, note?: string): Line => advisor ? { who: advisor.name, role: advisor.role, text, voice: v, note } : { text, voice: v === 'say' ? 'narrate' : v, note };
   const lines = paginate(result.outcome.detail).map(page => voice(page, 'say'));
-  lines.push(voice(whyLine(state, content), 'why'));
-  lines.push(voice(result.lesson.principle, 'lesson', COPY.say.filed + ' ' + ruleOf(MISSION_RULE[mission.id] ?? 'win').question));
+  /* The authored reason, in the colleague's words. The sentence assembled from flag labels
+     (`whyLine`) was accurate and read like a machine; it stays for the record, not the scene. */
+  lines.push(voice(result.lesson.because || whyLine(state, content), 'why', COPY.say.whyNote));
+  lines.push(voice(result.lesson.principle, 'lesson', COPY.say.takeaway));
   return lines;
 }

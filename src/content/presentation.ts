@@ -16,11 +16,11 @@ export interface ChapterPresentation {
 
 /** Canonical authored route. Future milestones are previews, never navigation shortcuts. */
 export const CHAPTER_PRESENTATION: readonly ChapterPresentation[] = [
-  { chapter: 1, title: "Find the right client", goal: "Choose where to focus, investigate the account and earn a first conversation.", scene: "scene-chapter-1", advisor: "priya", route: ["int-1", "m1", "m2", "m3", "deb-1"], activities: ["Choose a client", "Investigate two questions", "Make the first approach"] },
-  { chapter: 2, title: "Make it an opportunity", goal: "Decide how much of your team this opportunity is worth.", scene: "scene-chapter-2", advisor: "riya", route: ["int-2", "m4", "turn-rival", "m5", "refl-rival", "m5b", "deb-2"], activities: ["Qualify the brief", "Respond to new competition", "Allocate the team"] },
-  { chapter: 3, title: "Build the response", goal: "Decide what you will propose, and what you will promise to deliver.", scene: "scene-chapter-3", advisor: "arjun", route: ["int-3", "m6", "m6b", "refl-shape", "m7", "m7b", "deb-3"], activities: ["Frame the real problem", "Explore delivery approaches", "Build and review the proposal"] },
-  { chapter: 4, title: "Make the deal work", goal: "Negotiate the commercial terms and decide whether this is a deal worth signing.", scene: "scene-chapter-4", advisor: "riya", route: ["int-4", "m8", "m9", "m9a", "turn-award", "refl-award", "m9b", "deb-4"], activities: ["Negotiate price and scope", "Make the procurement case", "Decide whether to sign"] },
-  { chapter: 5, title: "Deliver the promise", goal: "Handle the consequences of your commitments as the engagement changes.", scene: "scene-chapter-5", advisor: "aisha", route: ["int-5", "m10", "refl-month5", "m10b", "m10h", "turn-sarah", "m10c", "deb-5", "end"], activities: ["Respond to delivery pressure", "Own the handover", "Protect continuity"] },
+  { chapter: 1, title: "Find the right client", goal: "Pick one company to chase, find out what it needs, and get a first meeting.", scene: "scene-chapter-1", advisor: "priya", route: ["int-1", "m1", "m2", "m3", "deb-1"], activities: ["Pick a client", "Find out two things", "Ask for a first meeting"] },
+  { chapter: 2, title: "Make it an opportunity", goal: "Decide whether Orion is worth chasing, and how many of your people to put on it.", scene: "scene-chapter-2", advisor: "riya", route: ["int-2", "m4", "turn-rival", "m5", "refl-rival", "m5b", "deb-2"], activities: ["Decide how hard to chase", "Answer a rival firm", "Choose where your people go"] },
+  { chapter: 3, title: "Build the response", goal: "Write the proposal: what you will do for Orion, how, and what you promise.", scene: "scene-chapter-3", advisor: "arjun", route: ["int-3", "m6", "m6b", "refl-shape", "m7", "m7b", "deb-3"], activities: ["Name Orion’s real problem", "Choose how the work gets done", "Write and check the proposal"] },
+  { chapter: 4, title: "Make the deal work", goal: "Agree a price and terms, find out if Orion chooses you, and decide whether to sign.", scene: "scene-chapter-4", advisor: "riya", route: ["int-4", "m8", "m9", "m9a", "turn-award", "refl-award", "m9b", "deb-4"], activities: ["Agree the price and what is included", "Make the case to Orion’s buyer", "Decide whether to sign"] },
+  { chapter: 5, title: "Deliver the promise", goal: "Do the work you signed up for, as each promise comes due.", scene: "scene-chapter-5", advisor: "aisha", route: ["int-5", "m10", "refl-month5", "m10b", "m10h", "turn-sarah", "m10c", "deb-5", "end"], activities: ["Deal with trouble on the project", "Fill a gap in the team", "Keep the work going when people leave"] },
 ];
 
 export interface NodePresentation {
@@ -89,9 +89,9 @@ export const NODE_PRESENTATION: Readonly<Record<string, NodePresentation>> = {
  */
 export const STORY = {
   client: "Orion Retail",
-  ask: "Orion wants a partner to “improve the customer experience”. Nobody has said what that means.",
+  ask: "You lead a six-person team at a consultancy, a firm that companies pay to fix their problems. Orion Retail, a chain of 210 shops, wants help to “improve the customer experience”, and nobody there agrees what that means.",
   question: "Can you win Orion’s work, make it worth winning, and still deliver what you promised?",
-  stakes: "Every promise you make to win it, your team will have to keep.",
+  stakes: "Every promise you make to win the work, your own colleagues will have to keep.",
 } as const;
 
 export interface Rule { id: DimensionId; question: string; name: string; plain: string }
@@ -134,11 +134,11 @@ export const LEDGER_RULE: Readonly<Record<string, DimensionId>> = {
 
 /** One question per act, each a step towards `STORY.question`. Asks; never answers (G3b). */
 export const ACT_QUESTION: Readonly<Record<ChapterNumber, string>> = {
-  1: "Which client is worth your team’s quarter, and how do you get in the room?",
-  2: "Is this a real opportunity, and how much of your team should it get?",
-  3: "What will you propose, and what will you promise to deliver?",
-  4: "What terms can you sign and still keep your word?",
-  5: "Can your team keep the promises you made to win?",
+  1: "Which company should your team chase, and how do you get a first meeting?",
+  2: "Is Orion worth chasing, and how many of your people should work on it?",
+  3: "What will you offer Orion, and what exactly will you promise?",
+  4: "What price and terms will you agree to, and will you sign?",
+  5: "Can your team do everything you promised in order to win?",
 };
 
 /**
@@ -149,13 +149,14 @@ export const ACT_QUESTION: Readonly<Record<ChapterNumber, string>> = {
  */
 export const ACT_BRIEFING: Readonly<Record<ChapterNumber, readonly string[]>> = {
   1: [
-    "Every call you make moves three things: whether we can win it, whether it is worth winning, and whether we can actually deliver it.",
-    "They pull against each other. You will rarely get all three, so decide which one you are spending.",
+    "Watch the three bars. Win is how likely the client is to choose us. Worth is whether the deal makes our firm money. Deliver is whether our people can really do what we promise.",
+    "They pull against each other. Promise more and we win more easily, but the work gets harder. Charge less and we win more easily, but earn less.",
+    "You will not be on your own. Riya runs our team and its money, Arjun designs what we sell, and Aisha runs the project once it is signed.",
   ],
-  2: ["Interest is not an opportunity. Before we put people on this, I want to know it is real."],
-  3: ["This is where talk becomes a promise. Whatever goes in the proposal, someone on our side has to deliver."],
-  4: ["Price, risk and the award all land in this act. Each one is a trade."],
-  5: ["Everything we promised to win this is now somebody’s Monday morning. Let us see what holds."],
+  2: ["We have six people. Every week they spend chasing Orion is a week they are not on work that already pays."],
+  3: ["Anything you write into the proposal, Aisha’s team will have to do later."],
+  4: ["Orion will push the price down. Every pound we give away comes straight out of what this deal is worth to us."],
+  5: ["Every promise in the contract now has a date on it and one of my people doing it."],
 };
 
 /**

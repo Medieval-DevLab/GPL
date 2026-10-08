@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Chapter, Condition, Content, GameState, Mission, Option } from '../../engine/types';
+import type { Chapter, Condition, Content, DimensionId, GameState, Mission, Option } from '../../engine/types';
 import { BADGE_META } from '../../engine/types';
-import { availableOptions, canCommit, ledger, requiredSelectionCount } from '../../engine/engine';
+import { availableOptions, canCommit, ledger, requiredSelectionCount, resolveAdvisorLine } from '../../engine/engine';
 import { COPY } from '../../content/interface';
 import { EARNED } from '../../content/gates';
 import { RULES, placeOf } from '../../content/presentation';
-import { Action, Backdrop, Cutout, Glyph, Heading, Pips, Portrait, castId, firstName } from '../parts';
+import { Action, Backdrop, Cutout, Glyph, Heading, Portrait, castId, firstName } from '../parts';
 import { briefLines, castOf, outcomeLines, type Line } from '../script';
 import { DialogueBox, Thread } from './Dialogue';
 
@@ -144,13 +144,13 @@ function LockNote({ option }: { option: Option }) {
 
 function Weigh({ option }: { option: Option }) {
   if (!option.pros?.length && !option.cons?.length && !option.cost) return null;
-  return <details className="weigh"><summary>{COPY.stage.tradeoffs}</summary>
+  /* Always open: what an option gives and what it costs is the logic of the decision, not a footnote. */
+  return <div className="weigh">
     <div className="weigh-body">
-      {option.pros?.length ? <ul className="pro" aria-label={COPY.stage.offers}>{option.pros.map(p => <li key={p}>{p}</li>)}</ul> : null}
-      {option.cons?.length ? <ul className="con" aria-label={COPY.stage.givesUp}>{option.cons.map(c => <li key={c}>{c}</li>)}</ul> : null}
-      {option.cost && <p className="effort"><span>{COPY.stage.effort} <Pips value={option.cost.time} label={COPY.stage.effort} /></span><span>{COPY.stage.investment} <Pips value={option.cost.investment} label={COPY.stage.investment} /></span></p>}
+      {option.pros?.length ? <div><p className="weigh-head">{COPY.stage.offers}</p><ul className="pro">{option.pros.map(p => <li key={p}>{p}</li>)}</ul></div> : null}
+      {option.cons?.length ? <div><p className="weigh-head">{COPY.stage.givesUp}</p><ul className="con">{option.cons.map(c => <li key={c}>{c}</li>)}</ul></div> : null}
     </div>
-  </details>;
+  </div>;
 }
 
 interface Item { id: string; title: string; line: string; spoken: boolean; option?: Option; enabled: boolean; tag?: string }
@@ -179,8 +179,10 @@ function ChoiceItem({ it, n, on, multi, onToggle, className = '' }: { it: Item; 
 }
 
 /** Your colleague, asked: their questions first, then the story behind them. Optional, and in their voice. */
-function Ask({ mission }: { mission: Mission }) {
-  const asks = [...(mission.consider ?? []), ...(mission.tip ? [mission.tip] : [])];
+function Ask({ mission, state }: { mission: Mission; state: GameState }) {
+  /* Their steer first — it used to be a compulsory line before every choice, and read as a lecture. */
+  const steer = resolveAdvisorLine(mission, state);
+  const asks = [...(steer ? [steer] : []), ...(mission.consider ?? []), ...(mission.tip ? [mission.tip] : [])];
   const [n, setN] = useState(-1);
   if (!mission.advisor || !asks.length) return null;
   const who = firstName(mission.advisor.name);
@@ -203,7 +205,7 @@ function Choose(props: Props & { family: Family }) {
   return <div className={'choose choose-' + family}>
     <div className="choose-head">
       <p className="choose-kicker">{COPY.say.choose}{mission.prompt ? ' · ' + mission.prompt : ''}</p>
-      <Ask mission={mission} />
+      <Ask mission={mission} state={state} />
     </div>
     <div className="choose-body">
       {family === 'board' ? <div className="corkboard">{list}</div>
@@ -258,6 +260,14 @@ function Gauge({ label, from, to, i }: { label: string; from: number; to: number
   </li>;
 }
 
+/** Each measure that moved, said in plain words: what a rise or a fall means for the deal. */
+function impactOf(before: Record<DimensionId, number>, after: Record<DimensionId, number>) {
+  return RULES.filter(r => after[r.id] !== before[r.id]).map(r => {
+    const up = after[r.id] > before[r.id];
+    return { id: r.id, up, text: COPY.impact[r.id][up ? 'up' : 'down'] };
+  });
+}
+
 function OutcomeCard({ state, before, onNext }: { state: GameState; before?: readonly string[]; onNext(): void }) {
   const r = state.resolution!;
   const added = before ? ledger(state).filter(e => !before.includes(e.label)) : [];
@@ -267,6 +277,8 @@ function OutcomeCard({ state, before, onNext }: { state: GameState; before?: rea
     <div className="outcome-grid">
       <ul className="gauges" aria-label={COPY.position}>{RULES.map((rule, i) => <Gauge key={rule.id} i={i} label={rule.question} from={r.dimsBefore[rule.id]} to={r.dimsAfter[rule.id]} />)}</ul>
       <div className="outcome-side">
+        {impactOf(r.dimsBefore, r.dimsAfter).length > 0 && <><p className="mini-head">{COPY.impact.title}</p>
+          <ul className="impact">{impactOf(r.dimsBefore, r.dimsAfter).map((x, i) => <li key={x.id} className={x.up ? 'up' : 'down'} style={{ ['--i' as string]: i }}><b>{COPY.dimensions[x.id].short} {x.up ? '↑' : '↓'}</b> {x.text}</li>)}</ul></>}
         <p className="mini-head">{COPY.say.whatsDifferent}</p>
         <ul className="changed">{r.outcome.changed.map((x, i) => <li key={x} style={{ ['--i' as string]: i }}>{x}</li>)}</ul>
         {added.length > 0 && <><p className="mini-head">{COPY.say.addedToRecord}</p><ul className="added">{added.map((e, i) => <li key={e.label} style={{ ['--i' as string]: i }}>{e.label}</li>)}</ul></>}

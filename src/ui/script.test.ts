@@ -12,13 +12,21 @@ describe('the performed script (D-081)', () => {
     expect(paginate('One. Two. Three.')).toEqual(['One. Two. Three.']);
   });
 
-  it('gives every decision a colleague who has the last word before the choice', () => {
+  it('opens every decision with the colleague saying what is happening, and no lecture before the choice', () => {
     const state = createInitialState(story);
     for (const id of story.missionOrder) {
       const mission = story.nodes[id] as Mission;
       const lines = briefLines(mission, state);
       expect(lines.length, id).toBeGreaterThan(0);
-      if (mission.advisor) expect(lines.at(-1)?.who, id).toBe(mission.advisor.name);
+      if (mission.advisor) expect(lines[0].who, id).toBe(mission.advisor.name);
+      expect(lines.some(l => l.text === mission.advisorLine), id).toBe(false);
+    }
+  });
+
+  it('has an authored reason for every outcome, so “why” is never assembled from labels', () => {
+    for (const id of story.missionOrder) {
+      const mission = story.nodes[id] as Mission;
+      expect(mission.lesson?.because?.trim().length, id).toBeGreaterThan(0);
     }
   });
 });
