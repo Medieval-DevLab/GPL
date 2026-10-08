@@ -7,81 +7,95 @@ and why, is most of the value of a log like this.
 ---
 
 ## D-091 · The lever panel, the act-break map and the system views
-`STRATEGY.md` §4 and §5 call for the interface pieces of the redesign. This builds them against
-the contracts (`LEVERS.md`, including the D-086 ledger) rather than the current story, which has
-no lever decisions yet. A test-only fixture (`src/ui/__fixtures__/levers.ts`, six decisions
-from `STORY-V2.md` and the ledger) and a dev-only preview page render the real screens against
-it; neither is reachable from `index.html`.
+`STRATEGY.md` §4 and §5 call for the interface pieces of the redesign. They were built against
+the contracts (`LEVERS.md`, including the D-086 ledger) while the eight-decision script was
+written in parallel, then checked on that script once it was merged. A test-only fixture
+(`src/ui/__fixtures__/levers.ts`) and a dev-only preview page render the same screens against
+six decisions from `STORY-V2.md`; neither is reachable from `index.html`.
 
 **Built.**
-- **The lever panel** (`screens/Levers.tsx`) replaces the plain-pick stand-in in `Scene`.
-  - Each lever is a labelled row of options side by side; their rows line up (CSS subgrid).
-  - Each option shows its detail, a dot with ▲ or ▼ for each bar it moves (`leverTouches`), the
-    cards it adds as chips, and, if closed, the card it needs and where it comes from.
-  - A `none` lock names the card you hold.
+- **The lever panel** (`screens/Levers.tsx`) replaces the plain-pick stand-in in `Scene`. It
+  sits to the right of the cast column (D-090), with the inline, closable Ask in its header.
+  - Each lever is a labelled row of options side by side, and their rows line up (CSS subgrid).
+  - Each option shows:
+    - its detail;
+    - a dot with ▲ or ▼ for each bar it moves (`leverTouches`);
+    - the cards it adds, as chips;
+    - if it is closed, the card it needs and where that card comes from. A `none` lock names
+      the card you hold instead.
   - The commit bar reads the settings back in one line.
-  - Keyboard: Tab reaches each lever once, the arrows change its setting, a number key jumps to
-    a lever, and Enter commits.
+  - Keyboard: Tab reaches each lever once, the arrow keys change its setting, a number key jumps
+    to a lever, and Enter commits. The hint is read to screen readers with the commit line.
   - It takes its act's medium from `LEVER_MEDIUM` (`content/views.ts`), falling back by act:
-    research board, staffing board, draft contract, delivery calendar. Only the stylesheet and
-    two labels differ, so the accessible structure is the same in all four. The first two reuse
-    the cork board and the planning wall the older decisions already use.
-- **The cause-and-effect map** is the first step of every act break (`screens/SystemMap.tsx`):
-  - three columns drawn from `actLinks`: earlier cards that mattered, this act's decisions,
-    and where this act's cards matter next;
-  - SVG curves measured from the cards;
+    a research board, a staffing board, a draft contract, a delivery calendar. Only the
+    stylesheet and two labels differ, so the accessible structure is the same in all four. The
+    first two reuse the cork board and the planning wall. On the calendar, the promises you
+    already hold are pinned above the levers with their months.
+  - All eight decisions fit 1440×900 and 1918×814 without scrolling.
+- **The cause-and-effect map** is the first step of every act break (`screens/SystemMap.tsx`),
+  before master's guess-and-reveal:
+  - three columns from `actLinks`: earlier cards that mattered here, this act's decisions, and
+    where this act's cards matter next;
+  - SVG curves measured from the cards, fanned out where several meet one decision;
   - "Guess first" before the Later column, unscored, revealed on a guess or on Skip.
 
   Every link is also said in words on its card, because the curves are hidden when the columns
-  stack. Cards that nothing reads again are listed in one line, not drawn, so the map fits
-  1440×900.
-- **The act's view on the trail** (`screens/Views.tsx`), beside your hand:
+  stack. Cards that nothing reads again are listed in one line rather than drawn, so all four
+  act breaks fit 1440×900 and 1918×814.
+- **The act's view** (`screens/Views.tsx`), beside your hand on the trail and beside the map at
+  the act break:
   - **the people map** (acts 1–2): faces greyed until found, then green or red, each with the
     card that did it, from `PEOPLE`;
   - **the scales** (act 3): what we gave against what we got back, from `SCALES`;
-  - **the promise calendar** (act 4): every promise card pinned to its month from
-    `content.promises`, then stamped kept, late, broken or traded away with its line once
-    `state.settled` exists.
-
-  The same view sits beside the map at the act break.
-- **The calendar plays out.** When the ledger is settled, the act break gets a second step: the
-  calendar, card by card.
+  - **the promise calendar** (act 4): each promise card pinned to its month from
+    `content.promises`. Once `state.settled` exists, each is stamped kept, late, broken or traded
+    away, with its line.
+- **The calendar beat names each promise.** The settle beat (`Turn`) showed the result lines
+  without saying which promise each was. It now shows the calendar: each card by title, its
+  month, its stamp and its line, stamped one at a time. The act break no longer repeats the
+  calendar as a second step.
 - **The deal on one chart** (`screens/DealChart.tsx`), on the ending:
   - Win, Worth and Deliver after every decision, from the history;
   - each promise drawn from the decision that made it to where it came due;
-  - the ending's title, summary and extras.
+  - the content's ending, summary and extras above it.
 
   The lines differ by dash as well as colour, and a hidden table gives the figures to screen
   readers.
-- **The trail adapts to the content:** one row when there are ten stops or fewer, otherwise two
-  rows split between acts by stop count, and act counts are read from `content.chapters`.
-  The panels are in story order: what just happened, with the quick check (D-089); the next
-  stop, whose Go stays in view at 1440×900; then the act's view and your hand.
+- **The trail adapts to the content:**
+  - one row when there are ten stops or fewer, otherwise two rows split between acts by stop
+    count;
+  - act counts are read from `content.chapters`;
+  - the panels are in story order: what just happened and its quick check (D-089), the next
+    stop, then the act's view and your hand. The Go button stays in view at 1440×900.
 
 **Decided beyond the brief, and why.**
-- **The ledger and endings are read structurally** (`ui/ledger.ts`), because the engine half of
-  D-086 is being built in parallel. The readers cast to the contract's shape, so today's content
-  renders unchanged and the new content renders on merge. `verdictOf` is the single call to
-  change if `finalVerdict` gains the content as an argument.
+- **`ui/ledger.ts` is the one reader of the ledger and the ending.** The views ask it rather
+  than reading `state.settled` or calling `finalVerdict` themselves, so content without a
+  ledger renders as before.
 - **A promise no later decision reads still comes due.** `handOf` gives it its ledger month, so
   the hand and the map stop saying "not needed again" about a card that is about to be called in.
+- **On a closed setting, the lock note replaces the cards it would add.** The dashed, disabled
+  button already says it is closed. The note says why in one or two lines, which is what lets
+  a three-lever decision with a lock fit the screen.
 - **The disabled primary is pale act colour, not grey.** Grey read as broken.
-- **No face badges, no hover rings, no animated lines.** These were cut to keep the stylesheet
+- **No face badges, no hover rings, no animated lines.** They were cut to keep the stylesheet
   inside 22 kB. The only motion added is the calendar stamping one card at a time, which
-  answers the act break's Next.
+  answers the beat's own action.
 
 **Cost.**
-- **Stylesheet:** 22.00 kB of 22, with nothing to spare. Rules were trimmed and three dead base
-  rules removed to get there.
-- **Interface: about 32.3 kB against the 27 kB cap.** The new screens are about 5.3 kB, a fifth
-  of all interface code. They cannot be cut back to fit without dropping a view the strategy
-  requires, so `tools/size.mjs` now caps the interface at 33. The line in `CLAUDE.md` that says
-  27 is left for the user to change.
-- **Old plain-pick styles stay in `scene.css`** until the eight-decision content replaces the
-  old kinds. Then the plan wall, folder and comparison styles can go.
+- **Stylesheet: 21.8 kB of 22.** Rules were trimmed, and four sets of styles were deleted
+  because no content uses them since the eight-decision script: the plan wall's slots, the
+  evidence folder, the comparison facts and the magnet pins. The engine still supports those
+  kinds; content that uses them again needs those styles back from history.
+- **Interface: 32.5 kB against the old 27 kB cap.** The new screens add about 5.5 kB, a fifth of
+  all interface code. They cannot fit the old cap without dropping a view the strategy
+  requires, so `tools/size.mjs` now caps the interface at 33. `CLAUDE.md` still says 27; that
+  line is left for the user to change.
+- **The map's guess comes before master's guess.** The map can hint at which choice decided the
+  act before master's question asks it. Swapping the two steps is one condition in `ActBreak`.
 
-**Reversible:** yes. The lever panel renders only for `kind: "levers"`. The act-break map is one
-step in `ActBreak`, and the views are additions. Reverting this commit restores the stand-in.
+**Reversible:** yes. The lever panel renders only for `kind: "levers"`, the act-break map is
+one step in `ActBreak`, and the views are additions.
 
 ## D-090 · The person you are answering is never behind a panel
 The user, at a 1918×814 window, for the fourth time:

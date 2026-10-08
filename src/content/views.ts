@@ -7,8 +7,8 @@
  * Every flag named here is one the eight-decision script sets (`STORY-V2.md`); a flag nobody
  * sets simply never lights anything, which is the safe failure for a picture.
  *
- * It lives in its own file rather than in `presentation.ts` and `interface.ts` because the
- * content is being rewritten in parallel, and a new file merges cleanly into either version.
+ * It lives in its own file rather than in `presentation.ts` and `interface.ts` because it is one
+ * family of pictures, and keeping it together keeps those two files about the story and the frame.
  */
 import type { CharacterId } from "./characters";
 

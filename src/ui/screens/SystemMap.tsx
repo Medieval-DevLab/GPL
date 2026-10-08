@@ -63,8 +63,8 @@ export function SystemMap({ state, content, chapter }: { state: GameState; conte
       <h2 id="sm-earlier">{M.earlier}<small>{M.earlierNote}</small></h2>
       {links.incoming.length ? <ul>{links.incoming.map(l => <li key={l.card.flag} className={'sm-card is-' + l.card.pile} data-in={l.card.flag}>
         <strong>{l.card.title}</strong>
-        {l.from && <small>{M.from}: {l.from}</small>}
-        <small>{M.usedIn}: {name(l.to)}</small>
+        {/* One line where there is room; it wraps where there is not. */}
+        <small>{l.from && <>{M.from}: {l.from} · </>}{M.usedIn}: {name(l.to)}</small>
       </li>)}</ul> : <p className="sm-empty">{M.noneEarlier}</p>}
     </section>
     <section className="sysmap-col is-now" aria-labelledby="sm-now">
