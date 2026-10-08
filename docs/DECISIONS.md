@@ -23,8 +23,8 @@ One tap shows whether it was right and a one-line reason (`content/checks.ts`,
 question that costs nothing before the decision that does.
 
 **Rules that keep it honest.**
-- Never graded, never stored, and it never moves the deal. This keeps D-0xx's removal of
-  scoring intact.
+- Never graded, never stored, and it never moves the deal. D-069 warned that a marked quiz
+  would bring back the score this game deleted; these checks are unmarked for that reason.
 - Always skippable.
 - Each check is about the idea or the world, never about which setting would have won, so it
   cannot leak an outcome.
