@@ -149,6 +149,14 @@ function untakenOn(mission: Mission, chosenIds: readonly string[]): UntakenBranc
       .filter((e) => !chosenIds.includes(e.id))
       .map((e) => ({ id: e.id, label: e.question, outcome: null }));
   }
+  /* A lever decision's roads not taken are the settings left unset (D-084). Silent about
+     their result, as for evidence: the outcome is written over the combination. */
+  if (mission.kind === "levers") {
+    return mission.levers
+      .flatMap((l) => l.options)
+      .filter((o) => !chosenIds.includes(o.id))
+      .map((o) => ({ id: o.id, label: o.label, outcome: null }));
+  }
   return mission.components
     .filter((c) => !chosenIds.includes(c.id))
     .map((c) => ({ id: c.id, label: c.title, outcome: null }));

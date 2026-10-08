@@ -192,9 +192,38 @@ describe("every path is playable", () => {
       if (isMission(node) && node.kind === "choice") {
         for (const o of node.options) declared.push(`${node.id}/${o.id}`);
       }
+      /* A lever setting is an option too (D-084): one nobody can ever set is dead content
+         whether or not the outcomes written over it fire some other way. */
+      if (isMission(node) && node.kind === "levers") {
+        for (const l of node.levers) for (const o of l.options) declared.push(`${node.id}/${o.id}`);
+      }
     }
     const missed = declared.filter((id) => !result.exercisedOptions.has(id));
     expect(missed).toEqual([]);
+  });
+
+  /**
+   * Lever decisions are written over the combination, so coverage is stated over it too.
+   * Every combination of settings nothing can lock is open in every state that reaches the
+   * decision, so each one must have been played — exactly, not as a sample. Combinations
+   * with a locked setting depend on which cards can be held together, and are covered by
+   * "fires every authored outcome" instead.
+   */
+  it("plays every combination of lever settings that nothing can lock", () => {
+    const missing: string[] = [];
+    for (const node of Object.values(content.nodes)) {
+      if (!isMission(node) || node.kind !== "levers") continue;
+      let combos: string[][] = [[]];
+      for (const l of node.levers) {
+        const open = l.options.filter((o) => !o.requires).map((o) => o.id);
+        combos = combos.flatMap((c) => open.map((id) => [...c, id]));
+      }
+      for (const c of combos) {
+        const key = `${node.id}/${c.join(",")}`;
+        if (!result.exercisedSettings.has(key)) missing.push(key);
+      }
+    }
+    expect(missing).toEqual([]);
   });
 
   it("fires every authored outcome on some path", () => {
@@ -382,6 +411,7 @@ describe("outcomes do not claim credit for a purchase that may not have happened
       const own = new Set<string>();
       if (n.kind === "investigate") for (const e of n.evidence) for (const f of e.flags ?? []) own.add(f);
       if (n.kind === "build") for (const c of n.components) for (const f of c.flags ?? []) own.add(f);
+      if (n.kind === "levers") for (const l of n.levers) for (const o of l.options) for (const f of o.flags ?? []) own.add(f);
       const held = onEntry.get(n.id) ?? new Set<string>();
       for (const o of n.outcomes) {
         const w = o.when;

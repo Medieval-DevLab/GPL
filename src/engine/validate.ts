@@ -13,10 +13,14 @@
 
 import { ENGINE_READ_FLAGS, LEDGER_RULES } from "./engine";
 import {
+  DIMENSIONS,
   isMission,
   type Condition,
   type Content,
+  type DimensionId,
   type GameNode,
+  type LeverMission,
+  type LeverOption,
   type Mission,
   type Outcome,
 } from "./types";
@@ -77,7 +81,35 @@ const BUDGET = {
   say: 20,
   /** per `changed` bullet. Observed max 12. */
   changed: 18,
+  /**
+   * Lever decisions (D-084, `docs/LEVERS.md`). Not calibrated against authored content,
+   * because there is none yet: these are the contract's numbers, set from the layout the
+   * contract describes — a lever is a row of segmented options, each a short value with
+   * one line of detail under it, and three of them sit side by side.
+   */
+  leverLabel: 4,
+  settingLabel: 6,
+  settingDetail: 14,
 } as const;
+
+/** Two or three levers, each with two or three settings: at most 27 combinations. */
+const LEVERS_MIN = 2;
+const LEVERS_MAX = 3;
+const SETTINGS_MIN = 2;
+const SETTINGS_MAX = 3;
+
+/**
+ * What the caller knows that the content bundle does not carry.
+ *
+ * `cards` are the flags the interface names as cards in the player's hand — the keys of
+ * `EARNED` in `src/content/gates.ts`. The engine may not import content, so the caller
+ * hands them in. Only the lever dead-flag rule reads them: a setting's flag that nothing
+ * branches on is still not dead if the player can see it in their hand, because then it
+ * is the record of a promise rather than state nobody looks at.
+ */
+export interface ValidateOptions {
+  cards?: Iterable<string>;
+}
 
 /**
  * Known limit: this counts whitespace-separated tokens, so an em-dashed clause
@@ -212,6 +244,28 @@ function conditionFlags(c: Condition | undefined): string[] {
   return [...(c.all ?? []), ...(c.any ?? []), ...(c.none ?? [])];
 }
 
+/**
+ * Every condition a mission evaluates, wherever it sits — briefing, options, settings,
+ * outcomes. Used where the question is "does anything here read this flag?", so missing a
+ * surface would report a live flag as dead.
+ */
+function missionConditions(m: Mission): (Condition | undefined)[] {
+  const out: (Condition | undefined)[] = [];
+  for (const v of m.variants ?? []) out.push(v.when);
+  for (const q of m.quotes ?? []) out.push(q.when);
+  if (Array.isArray(m.advisorLine)) for (const l of m.advisorLine) out.push(l.when);
+  if (m.kind === "choice") {
+    for (const o of m.options) {
+      out.push(o.requires);
+      for (const oc of o.outcomes) out.push(oc.when);
+    }
+  } else {
+    if (m.kind === "levers") for (const l of m.levers) for (const o of l.options) out.push(o.requires);
+    for (const oc of m.outcomes) out.push(oc.when);
+  }
+  return out;
+}
+
 function missionOutcomes(m: Mission): { outcome: Outcome; where: string }[] {
   if (m.kind === "choice") {
     return m.options.flatMap((o) =>
@@ -239,7 +293,7 @@ function successors(node: GameNode): string[] {
   return out;
 }
 
-export function validateContent(content: Content): Issue[] {
+export function validateContent(content: Content, opts: ValidateOptions = {}): Issue[] {
   const issues: Issue[] = [];
   const err = (where: string, message: string) =>
     issues.push({ severity: "error", where, message });
@@ -353,6 +407,9 @@ export function validateContent(content: Content): Issue[] {
     if (node.kind === "build") {
       for (const c of node.components) for (const f of c.flags ?? []) written.add(f);
     }
+    if (node.kind === "levers") {
+      for (const l of node.levers) for (const o of l.options) for (const f of o.flags ?? []) written.add(f);
+    }
     for (const { outcome } of missionOutcomes(node)) {
       for (const f of outcome.effect.flags ?? []) written.add(f);
     }
@@ -372,6 +429,11 @@ export function validateContent(content: Content): Issue[] {
         for (const oc of o.outcomes) noteRead(oc.when, `${node.id}/${o.id}/${oc.id}`);
       }
     } else {
+      if (node.kind === "levers") {
+        for (const l of node.levers) {
+          for (const o of l.options) noteRead(o.requires, `${node.id}/${l.id}/${o.id}/requires`);
+        }
+      }
       for (const oc of node.outcomes) noteRead(oc.when, `${node.id}/${oc.id}`);
     }
   }
@@ -413,6 +475,13 @@ export function validateContent(content: Content): Issue[] {
         for (const oc of o.outcomes) noteGate(oc.when, `${node.id}/${o.id}/${oc.id}`);
       }
     } else {
+      /* A locked setting is a branch the player sees decided against them, so its card has
+         to be on the rail for the same reason a locked option's does. */
+      if (node.kind === "levers") {
+        for (const l of node.levers) {
+          for (const o of l.options) noteGate(o.requires, `${node.id}/${l.id}/${o.id}/requires`);
+        }
+      }
       for (const oc of node.outcomes) noteGate(oc.when, `${node.id}/${oc.id}`);
     }
   }
@@ -580,6 +649,11 @@ export function validateContent(content: Content): Issue[] {
         for (const oc of o.outcomes) checkDimGate(oc.when, `${node.id}/${o.id}/${oc.id}`);
       }
     } else {
+      if (node.kind === "levers") {
+        for (const l of node.levers) {
+          for (const o of l.options) checkDimGate(o.requires, `${node.id}/${l.id}/${o.id}/requires`);
+        }
+      }
       for (const oc of node.outcomes) checkDimGate(oc.when, `${node.id}/${oc.id}`);
     }
   }
@@ -594,6 +668,35 @@ export function validateContent(content: Content): Issue[] {
         "silently stops being reachable. The sweep throws if it does not.",
     );
   }
+
+  /* ── what a lever setting's flag can be read by ──────────────────
+   * The lever dead-flag rule (below) is stricter than the warning above in two ways, and
+   * both are deliberate. It is an ERROR, because a setting's flag is a card the player is
+   * handed on purpose — "your promise" — and one nothing ever reads is a promise the game
+   * silently forgets. And it asks whether the flag is read LATER: by this decision's own
+   * outcomes, which are chosen after the settings land, or by a mission after this one in
+   * `missionOrder`, or by the engine, or by a causal thread. A read on an earlier beat is
+   * no read at all. A flag the interface shows as a named card is exempt, because then it
+   * is on screen even when nothing branches on it — see `ValidateOptions.cards`. */
+  const cards = new Set(opts.cards ?? []);
+  const alwaysRead = new Set<string>([
+    ...ENGINE_READ_FLAGS,
+    ...content.threads.flatMap((t) => t.needsFlags ?? []),
+  ]);
+  const readsOf = new Map<string, Set<string>>();
+  for (const node of nodes) {
+    if (isMission(node)) readsOf.set(node.id, new Set(missionConditions(node).flatMap(conditionFlags)));
+  }
+  const readAfter = (m: LeverMission): Set<string> => {
+    const out = new Set(alwaysRead);
+    for (const oc of m.outcomes) for (const f of conditionFlags(oc.when)) out.add(f);
+    const at = content.missionOrder.indexOf(m.id);
+    /* Not in the order is its own error further down; read it as "anything else" here so
+       this rule does not pile a second, misleading message on top of the real one. */
+    const later = at < 0 ? [...readsOf.keys()].filter((id) => id !== m.id) : content.missionOrder.slice(at + 1);
+    for (const id of later) for (const f of readsOf.get(id) ?? []) out.add(f);
+    return out;
+  };
 
   /* ── mission rules ───────────────────────────────────────────── */
 
@@ -874,6 +977,102 @@ export function validateContent(content: Content): Issue[] {
         err(m.id, `pick (${m.pick}) must be fewer than components (${m.components.length})`);
       }
       if (m.pick < 1) err(m.id, "pick must be at least 1");
+      const last = m.outcomes[m.outcomes.length - 1];
+      if (!last || last.when !== undefined) err(m.id, "needs an unconditional fallback outcome");
+    }
+
+    /* Lever decisions — the rules in `docs/LEVERS.md` (D-084), made mechanical. */
+    if (m.kind === "levers") {
+      if (m.levers.length < LEVERS_MIN || m.levers.length > LEVERS_MAX) {
+        err(
+          m.id,
+          `a lever decision needs ${LEVERS_MIN} to ${LEVERS_MAX} levers, and this has ${m.levers.length}`,
+        );
+      }
+      const after = readAfter(m);
+      const leverIds = new Set<string>();
+      const settingIds = new Set<string>();
+      const touch = (o: LeverOption, d: DimensionId): number => o.dims?.[d] ?? 0;
+
+      for (const l of m.levers) {
+        const lWhere = `${m.id}/${l.id}`;
+        if (leverIds.has(l.id)) err(m.id, `duplicate lever id "${l.id}"`);
+        leverIds.add(l.id);
+        if (!l.label?.trim()) err(lWhere, "lever has no label — the row would have no name");
+        leakCheck(l.label, lWhere, "lever label");
+        budget(l.label, BUDGET.leverLabel, lWhere, "lever label");
+
+        if (l.options.length < SETTINGS_MIN || l.options.length > SETTINGS_MAX) {
+          err(
+            lWhere,
+            `a lever needs ${SETTINGS_MIN} to ${SETTINGS_MAX} settings, and this has ${l.options.length}`,
+          );
+        }
+        /* Not in the contract, and needed by it. A lever whose every setting is locked
+           leaves a player without the cards no combination at all: the decision cannot be
+           committed, `possibleSelections` returns nothing, and the sweep quietly drops the
+           state rather than failing — so the one run that hits it simply stops. */
+        if (l.options.length > 0 && l.options.every((o) => o.requires !== undefined)) {
+          err(
+            lWhere,
+            "every setting on this lever can be locked, so a player without the cards could not " +
+              "set it and the decision could not be committed — leave one setting unconditional",
+          );
+        }
+
+        for (const o of l.options) {
+          const oWhere = `${lWhere}/${o.id}`;
+          if (settingIds.has(o.id)) {
+            err(
+              m.id,
+              `duplicate setting id "${o.id}" — ids are unique across the whole decision, because ` +
+                `history records them without their lever`,
+            );
+          }
+          settingIds.add(o.id);
+          if (!o.label?.trim()) err(oWhere, "setting has no label");
+          if (!o.detail?.trim()) err(oWhere, "setting has no detail — say what we would actually do");
+          /* All three are read before the decision, so G3 applies to all three. */
+          leakCheck(o.label, oWhere, "label");
+          leakCheck(o.detail, oWhere, "detail");
+          leakCheck(o.say, oWhere, "say");
+          budget(o.label, BUDGET.settingLabel, oWhere, "label");
+          budget(o.detail, BUDGET.settingDetail, oWhere, "detail");
+          budget(o.say, BUDGET.say, oWhere, "say");
+
+          for (const f of o.flags ?? []) {
+            if (!after.has(f) && !cards.has(f)) {
+              err(
+                oWhere,
+                `setting "${o.id}" sets flag "${f}", which nothing reads later and which is not a ` +
+                  `named card — the player is handed something that does nothing and cannot be seen`,
+              );
+            }
+          }
+        }
+
+        /* No dominant setting: the lever-level fake choice, by `dims` alone because that is
+           all the panel shows — a dot per bar a setting moves. A setting that is at least
+           as good on every bar and better on one is visibly free, whatever its flags do
+           later. CLAUDE.md's fix applies: give the weaker setting a genuine upside rather
+           than weakening the stronger one. Equal settings are not a finding; they differ,
+           if at all, in the cards they hand over. */
+        for (const a of l.options) {
+          for (const b of l.options) {
+            if (a === b) continue;
+            const atLeast = DIMENSIONS.every((d) => touch(a, d) >= touch(b, d));
+            const better = DIMENSIONS.some((d) => touch(a, d) > touch(b, d));
+            if (atLeast && better) {
+              err(
+                lWhere,
+                `setting "${a.id}" beats "${b.id}" on every bar by its dims alone — "${b.label}" is ` +
+                  `a fake choice; give it a genuine upside rather than weakening "${a.label}"`,
+              );
+            }
+          }
+        }
+      }
+
       const last = m.outcomes[m.outcomes.length - 1];
       if (!last || last.when !== undefined) err(m.id, "needs an unconditional fallback outcome");
     }

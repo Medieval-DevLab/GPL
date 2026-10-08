@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { story } from "../content/story";
+import { EARNED } from "../content/gates";
 import {
   advance,
   causalClaim,
@@ -25,7 +26,9 @@ const content = story;
 
 
 describe("content validity", () => {
-  const issues = validateContent(content);
+  /* The named cards are passed because the engine may not import content: they are what
+     lets a lever setting's flag be a card in the player's hand rather than dead state. */
+  const issues = validateContent(content, { cards: Object.keys(EARNED) });
   const errors = issues.filter((i) => i.severity === "error");
 
   it("has no structural errors", () => {

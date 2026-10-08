@@ -35,6 +35,7 @@ import {
   type Content,
   type DimensionId,
   type GameState,
+  type LeverMission,
   type Mission,
 } from "./types";
 
@@ -73,6 +74,11 @@ function missionReadFlags(node: Mission): Set<string> {
       for (const oc of o.outcomes) note(oc.when);
     }
   } else {
+    /* A locked lever setting reads its card exactly as a locked choice option does, so
+       the flag decides which combinations are legal and has to be in the dedup key —
+       or two states either side of it collapse and the combinations only one of them
+       could play are never swept. */
+    if (node.kind === "levers") for (const l of node.levers) for (const o of l.options) note(o.requires);
     for (const oc of node.outcomes) note(oc.when);
   }
   return read;
@@ -218,6 +224,7 @@ function missionGates(node: Mission): { dim: DimensionId; boundary: number }[] {
       for (const oc of o.outcomes) note(oc.when);
     }
   } else {
+    if (node.kind === "levers") for (const l of node.levers) for (const o of l.options) note(o.requires);
     for (const oc of node.outcomes) note(oc.when);
   }
   return out;
@@ -337,7 +344,34 @@ export function possibleSelections(mission: Mission, state: GameState): string[]
         mission.components.map((c) => c.id),
         mission.pick,
       );
+    case "levers":
+      return leverCombinations(mission, state);
   }
+}
+
+/**
+ * Every combination of settings open in this state: one per lever, in lever order.
+ *
+ * The cartesian product of each lever's open settings, the first lever varying slowest.
+ * That order is load-bearing beyond tidiness — `runcode.ts` stores a decision as an index
+ * into this list, so it must be a pure function of the content and the state, which it
+ * is. At most 3 × 3 × 3 = 27 entries, which the validator holds it to.
+ *
+ * A lever with no open setting leaves no legal combination at all, and the decision could
+ * not be committed. `validate.ts` therefore requires one setting on every lever that
+ * nothing can lock.
+ */
+function leverCombinations(mission: LeverMission, state: GameState): string[][] {
+  let combos: string[][] = [[]];
+  for (const lever of mission.levers) {
+    const open = lever.options
+      .filter((o) => evaluateCondition(o.requires, state.flags, state.dims))
+      .map((o) => o.id);
+    const grown: string[][] = [];
+    for (const combo of combos) for (const id of open) grown.push([...combo, id]);
+    combos = grown;
+  }
+  return combos;
 }
 
 /** Commit a selection and fast-forward to the next mission (or the ending). */
@@ -399,8 +433,18 @@ export interface SweepResult {
   statesAtMission: Record<string, number>;
   /** ids of every outcome that fired at least once */
   firedOutcomes: Set<string>;
-  /** ids of every option exercised at least once */
+  /**
+   * `missionId/optionId` for every option exercised at least once — choice options and,
+   * on a lever decision, every lever setting that was part of a committed combination.
+   */
   exercisedOptions: Set<string>;
+  /**
+   * `missionId/a,b,c` for every lever combination committed at least once, the ids in
+   * lever order. A setting being exercised says nothing about whether it was ever played
+   * alongside each setting of the other levers, and the outcome list is written over the
+   * combination, so the combination is what coverage has to be stated over.
+   */
+  exercisedSettings: Set<string>;
   /** flags that were set on at least one path */
   reachableFlags: Set<string>;
   /**
@@ -468,6 +512,7 @@ export function* sweepWalk(
     statesAtMission: {},
     firedOutcomes: new Set(),
     exercisedOptions: new Set(),
+    exercisedSettings: new Set(),
     reachableFlags: new Set(),
     entryRanges: {},
     finalRange: emptyRange(),
@@ -549,6 +594,10 @@ export function* sweepWalk(
         for (const selection of possibleSelections(mission, state)) {
           if (mission.kind === "choice" && selection[0]) {
             result.exercisedOptions.add(`${mission.id}/${selection[0]}`);
+          }
+          if (mission.kind === "levers") {
+            for (const id of selection) result.exercisedOptions.add(`${mission.id}/${id}`);
+            result.exercisedSettings.add(`${mission.id}/${selection.join(",")}`);
           }
           const after = playMission(state, content, selection);
           const fired = after.history[after.history.length - 1];
@@ -843,7 +892,9 @@ export interface RealisedDominance extends DominanceFinding {
  * siblings on all three dimensions in over 90% of real states.
  *
  * This walks the same frontier the sweep walks, and at each choice mission prices every
- * option for real from each reachable entry state. `share` is the fraction of comparable
+ * option for real from each reachable entry state — and at each lever decision, every
+ * setting against its siblings on the same lever with the other levers held (D-084).
+ * `share` is the fraction of comparable
  * states in which A weakly dominated B and strictly beat it somewhere — so a finding says
  * "in 90% of the situations a player can actually be in, this option is free money".
  *
@@ -863,33 +914,64 @@ export function* findRealisedDominanceSteps(
     (mission, state, priced) => {
       const pairs = tally.get(mission.id) ?? new Map<string, [number, number]>();
       tally.set(mission.id, pairs);
-      /* Only the pairwise comparison is choice-only, because "this option dominates that
-         option" is not a question a multi-pick mission asks. The WALK still has to advance
-         for every mission kind — skipping `investigate` and `build` killed it at m2 and
-         made the whole detector report nothing in 13ms. */
+
+      const deltaOf = (after: GameState): Record<DimensionId, number> => ({
+        win: after.dims.win - state.dims.win,
+        profit: after.dims.profit - state.dims.profit,
+        deliver: after.dims.deliver - state.dims.deliver,
+      });
+      const compare = (aId: string, a: Record<DimensionId, number>, bId: string, b: Record<DimensionId, number>) => {
+        const k = `${aId}>${bId}`;
+        const cur = pairs.get(k) ?? [0, 0];
+        cur[1] += 1;
+        const weak = DIMENSIONS.every((d) => a[d] >= b[d]);
+        const strict = DIMENSIONS.some((d) => a[d] > b[d]);
+        if (weak && strict) cur[0] += 1;
+        pairs.set(k, cur);
+      };
+
+      /* The lever-level fake choice, in the states that occur. Two settings of ONE lever,
+         with every other lever held where it is, compared on what really happened — the
+         settings' own bars and the outcome they led to. The validator's rule is the static
+         half (a setting may not beat a sibling by its `dims` alone); this is the half only
+         the walk can see, where a setting is free money because of the outcomes it
+         unlocks. Each (state, other settings) pair is one comparison. */
+      if (mission.kind === "levers") {
+        const bySelection = new Map<string, Record<DimensionId, number>>();
+        for (const { selection, after } of priced) bySelection.set(selection.join(","), deltaOf(after));
+        for (const { selection } of priced) {
+          const a = bySelection.get(selection.join(",")) as Record<DimensionId, number>;
+          mission.levers.forEach((lever, i) => {
+            const aId = selection[i] as string;
+            for (const alt of lever.options) {
+              if (alt.id === aId) continue;
+              const swapped = [...selection];
+              swapped[i] = alt.id;
+              const b = bySelection.get(swapped.join(","));
+              if (b) compare(aId, a, alt.id, b); // absent: that setting is locked here
+            }
+          });
+        }
+        return;
+      }
+
+      /* Otherwise the pairwise comparison is choice-only, because "this option dominates
+         that option" is not a question a multi-pick mission asks. The WALK still has to
+         advance for every mission kind — skipping `investigate` and `build` killed it at m2
+         and made the whole detector report nothing in 13ms. */
       if (mission.kind !== "choice") return;
 
       const deltas = new Map<string, Record<DimensionId, number>>();
       for (const { selection, after } of priced) {
         const id = selection[0];
         if (!id) continue;
-        deltas.set(id, {
-          win: after.dims.win - state.dims.win,
-          profit: after.dims.profit - state.dims.profit,
-          deliver: after.dims.deliver - state.dims.deliver,
-        });
+        deltas.set(id, deltaOf(after));
       }
 
       for (const [aId, a] of deltas) {
         for (const [bId, b] of deltas) {
           if (aId === bId) continue;
-          const k = `${aId}>${bId}`;
-          const cur = pairs.get(k) ?? [0, 0];
-          cur[1] += 1;
-          const weak = DIMENSIONS.every((d) => a[d] >= b[d]);
-          const strict = DIMENSIONS.some((d) => a[d] > b[d]);
-          if (weak && strict) cur[0] += 1;
-          pairs.set(k, cur);
+          compare(aId, a, bId, b);
         }
       }
     },
@@ -899,8 +981,14 @@ export function* findRealisedDominanceSteps(
   const findings: RealisedDominance[] = [];
   for (const [missionId, pairs] of tally) {
     const node = content.nodes[missionId];
-    if (!node || !isMission(node) || node.kind !== "choice") continue;
-    const title = (id: string) => node.options.find((o) => o.id === id)?.title ?? id;
+    if (!node || !isMission(node) || (node.kind !== "choice" && node.kind !== "levers")) continue;
+    const levers = node.kind === "levers";
+    const title = (id: string) =>
+      node.kind === "choice"
+        ? (node.options.find((o) => o.id === id)?.title ?? id)
+        : node.kind === "levers"
+          ? (node.levers.flatMap((l) => l.options).find((o) => o.id === id)?.label ?? id)
+          : id;
     for (const [k, [dominated, compared]] of pairs) {
       if (compared === 0) continue;
       const share = dominated / compared;
@@ -913,10 +1001,13 @@ export function* findRealisedDominanceSteps(
         dominatedIn: dominated,
         comparedIn: compared,
         share: Math.round(share * 1000) / 1000,
-        note:
-          `"${title(aId)}" beats "${title(bId)}" on all three dimensions in ` +
-          `${Math.round(share * 100)}% of ${compared} reachable states — a fake choice in ` +
-          `the situations that actually occur`,
+        note: levers
+          ? `setting "${title(aId)}" beats "${title(bId)}" on all three dimensions in ` +
+            `${Math.round(share * 100)}% of ${compared} reachable comparisons with the other ` +
+            `levers held — a fake choice on that lever`
+          : `"${title(aId)}" beats "${title(bId)}" on all three dimensions in ` +
+            `${Math.round(share * 100)}% of ${compared} reachable states — a fake choice in ` +
+            `the situations that actually occur`,
       });
     }
   }

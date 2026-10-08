@@ -6,6 +6,74 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-085 · The lever decision in the engine
+`docs/LEVERS.md` (D-084) specified a new decision unit: two or three levers, one setting on
+each. This adds it to `src/engine` as a fourth mission kind, `kind: "levers"`, with no content
+using it yet. The story is unchanged and every existing gate still passes.
+
+**Built, as the contract says.**
+- `LeverOption`, `Lever` and `LeverMission` in `types.ts`, in the `Mission` union.
+- **Selecting.** `toggleSelection` replaces the setting on the same lever. Re-setting the current
+  setting does nothing, as with a radio button. The selection is kept in lever order.
+  `canCommit` needs exactly one setting per lever.
+- **Committing.** Each setting's `dims` and `flags` are applied in lever order, then the first
+  outcome whose `when` holds after them, then that outcome's effect. `chosenIds` are in lever
+  order and `chosenLabel` joins the labels with " · ". The deltas include the settings' own bars.
+- `leverTouches(option)` returns the sign of each bar a setting moves.
+- **The sweep.** `possibleSelections` enumerates every open combination, with the first lever
+  varying slowest. Run codes therefore carry lever decisions with no format change.
+- **The validator** checks these rules:
+  - 2–3 levers of 2–3 settings, with setting ids unique across the decision;
+  - an unconditional last outcome;
+  - no setting that beats a sibling on every bar by its `dims` alone;
+  - every setting's flag is read later or is a named card;
+  - the word budgets.
+
+**Decided beyond the contract, and why.**
+- **Each setting is applied as its own step, clamped as it lands.** "In lever order" only
+  makes a difference at the clamp. From 98, +6 then −3 ends at 97, but the same two summed
+  first would end at 100. Applying them in order keeps each lever's movement a separate write
+  that can be explained. `budget.ts` accounts for them the same way.
+- **`question` moved from each kind onto `MissionBase`.** The contract's `LeverMission`
+  has no `question`, but the validator requires one and every renderer heads a decision with
+  it. For the existing three kinds the type is unchanged.
+- **Every lever needs one setting nothing can lock.** Without one, a player without the cards
+  has no legal combination. The decision could not be committed, and the sweep would drop the
+  state silently instead of failing. This is a validator error.
+- **The dead-flag rule is an error, and "later" means later.** A flag counts as read if one of
+  these reads it:
+  - this decision's own outcomes;
+  - a mission after it in `missionOrder`;
+  - the engine;
+  - a causal thread.
+  
+  A read on an earlier beat does not count. The general dead-flag check stays a warning,
+  pinned in `engine.test.ts`.
+- **The named cards are passed in.** The engine may not import content, so
+  `validateContent(content, { cards })` takes them. `engine.test.ts` and `validate.test.ts`
+  pass `Object.keys(EARNED)`.
+- **Locked settings are in the sweep's dedup key**, as locked choice options already were.
+  Leave the lock out of the key, and two states either side of it collapse. The combinations
+  only one of them could play would never be swept. `levers.test.ts` orders its fixture so
+  that this omission fails the build.
+- **Realised dominance covers levers.** `findRealisedDominance` now also compares two settings
+  of one lever, with the other levers held, over every reachable state. This finds a setting
+  that is free money only once its outcomes are counted, which the static `dims` rule cannot see.
+- `missionList` gives a lever decision its own `levers` activity.
+
+**Old run codes still decode.** The canonical text of the existing kinds is unchanged, so
+`RUN_CODE_VERSION` stays at 1 and `SAVE_SCHEMA` at 5. `levers.test.ts` pins a fingerprint and a
+code minted by the engine before this change.
+
+**Cost.**
+- Two type-narrowing lines in `src/ui`, needed so the union typechecks:
+  - `Scene.tsx` lists the settings as plain picks, as a stand-in until the lever panel exists;
+  - `debrief.tsx` lists the unchosen settings as the roads not taken.
+- Content that adopts levers will meet three rules the contract did not state: the
+  unlockable setting, the "later" reading and realised dominance.
+
+**Reversible:** yes. No content uses the kind, so removing it changes no run, save or code.
+
 ## D-082 · Written for someone who has never sold anything
 The user, a marketing professional, played D-081 and could not follow it: "the storyline makes
 zero sense", "decisions feel like they are made without any logic, there's no explanation

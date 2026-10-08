@@ -9,6 +9,7 @@ import { isMission, type GameState, type Mission } from "./types";
 function selectionFlags(node: Mission, ids: readonly string[]): string[] {
   if (node.kind === "investigate") return node.evidence.filter((e) => ids.includes(e.id)).flatMap((e) => e.flags ?? []);
   if (node.kind === "build") return node.components.filter((c) => ids.includes(c.id)).flatMap((c) => c.flags ?? []);
+  if (node.kind === "levers") return node.levers.flatMap((l) => l.options).filter((o) => ids.includes(o.id)).flatMap((o) => o.flags ?? []);
   return [];
 }
 

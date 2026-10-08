@@ -533,6 +533,15 @@ interface MissionBase {
   tip?: string;
   /** fallback lesson — guarantees the objective lands on every branch */
   lesson: Lesson;
+  /**
+   * The single human question the decision asks — "How do we answer on price?".
+   *
+   * Lives here rather than on each kind. It used to be declared three times, once per
+   * kind, and a lever decision needs one as much as the others do: the validator requires
+   * it and every renderer heads the decision with it. Declaring it on the base means a
+   * new kind cannot be added without one, which is the point (D-084).
+   */
+  question: string;
   next: string;
 }
 
@@ -548,14 +557,11 @@ export interface Chapter {
 
 export interface ChoiceMission extends MissionBase {
   kind: "choice";
-  /** the single human question */
-  question: string;
   options: Option[];
 }
 
 export interface InvestigateMission extends MissionBase {
   kind: "investigate";
-  question: string;
   /** how many you may look at — fewer than the list, always */
   slots: number;
   evidence: Evidence[];
@@ -564,14 +570,63 @@ export interface InvestigateMission extends MissionBase {
 
 export interface BuildMission extends MissionBase {
   kind: "build";
-  question: string;
   /** exactly this many components */
   pick: number;
   components: Component[];
   outcomes: Outcome[];
 }
 
-export type Mission = ChoiceMission | InvestigateMission | BuildMission;
+/**
+ * One setting on one lever — the contract is `docs/LEVERS.md` (D-084).
+ *
+ * A setting is a small cause with an immediate, deterministic effect: its own `dims` and
+ * `flags` land the moment the decision is committed, before any outcome is chosen. That is
+ * what makes it legal to telegraph — `leverTouches` shows the direction of each bar it
+ * moves, which is a fact about the setting, not a preview of the outcome (G3 holds).
+ */
+export interface LeverOption {
+  /** unique across the whole mission, not merely within its lever */
+  id: string;
+  /** ≤ 6 words, a plain verb phrase or value */
+  label: string;
+  /** ≤ 14 words: what we would actually do */
+  detail: string;
+  /** the immediate effect of this setting */
+  dims?: Partial<Record<DimensionId, number>>;
+  /** cards this setting puts in your hand (promises included) */
+  flags?: string[];
+  /** locked unless held; the interface names the missing card */
+  requires?: Condition;
+  /** optional: what the player says to the client, ≤ 20 words */
+  say?: string;
+}
+
+/** One small choice with one cause: "Price", "What's included". */
+export interface Lever {
+  id: string;
+  /** ≤ 4 words */
+  label: string;
+  /** 2–3 options; exactly one is set before the decision can be committed */
+  options: LeverOption[];
+}
+
+/**
+ * A decision made as two or three levers, one setting on each.
+ *
+ * Resolution order is the contract and `commit` keeps it: every chosen setting's `dims`
+ * and `flags` in lever order, then the first outcome whose `when` holds against the record
+ * AFTER those settings, then that outcome's effect. So an outcome can read the cards the
+ * settings just put in the player's hand, which is how a lever's consequence is authored.
+ */
+export interface LeverMission extends MissionBase {
+  kind: "levers";
+  /** 2–3 levers */
+  levers: Lever[];
+  /** read the flags the settings set, plus earlier flags; the last is unconditional */
+  outcomes: Outcome[];
+}
+
+export type Mission = ChoiceMission | InvestigateMission | BuildMission | LeverMission;
 
 /**
  * Chapter 0 — the starting advantage.
@@ -678,7 +733,12 @@ export interface Ending {
 export type GameNode = Mission | Interlude | Ending | Setup;
 
 export function isMission(node: GameNode): node is Mission {
-  return node.kind === "choice" || node.kind === "investigate" || node.kind === "build";
+  return (
+    node.kind === "choice" ||
+    node.kind === "investigate" ||
+    node.kind === "build" ||
+    node.kind === "levers"
+  );
 }
 
 /* ─────────────────────────── runtime state ─────────────────────────── */
