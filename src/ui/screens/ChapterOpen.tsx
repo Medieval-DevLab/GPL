@@ -31,7 +31,7 @@ export function ChapterOpen({ node, chapter, onBegin }: { node: Interlude; chapt
     <p className="f-place">{place.name}</p>
 
     <div className="f-flood" data-n={n}>
-      <p className="f-open-act">{COPY.stage.act} {n} {COPY.stage.of} 5</p>
+      <p className="f-open-act">{COPY.stage.act} {n} {COPY.stage.of} {CHAPTER_PRESENTATION.length}</p>
       <Heading className="f-open-title"><VoicedTitle text={node.title} /></Heading>
       <p className="f-open-goal">{p.goal}</p>
       {/* The act's question stays on the card; when the guide asks it, it lights up. */}

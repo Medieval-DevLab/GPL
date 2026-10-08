@@ -59,7 +59,7 @@ Photographs depict stock models in fictional roles, not actual Accenture employe
 - src/content: authored story, interface language, gate explanations, cast, photo credits and presentation metadata.
 - src/session.ts: versioned presentation checkpoint and local/LMS resume arbitration.
 - src/App.tsx: persistence, lifecycle and action orchestration.
-- src/ui/game.tsx: the shell, HUD and screen routing. src/ui/screens/: the scene (all 18 decisions), the board, the act break, story turns and the frames around them. src/ui/parts.tsx: shared parts. src/ui/styles/: tokens, base, scene, frames and reflow. See [art direction](docs/ART-DIRECTION.md). Older UI files are retained as historical implementation, not imported by the production entry point.
+- src/ui/game.tsx: the shell, HUD and screen routing. src/ui/screens/: the scene (all 18 decisions), the board, the act break, story turns and the frames around them. src/ui/parts.tsx: shared parts. src/ui/styles/: tokens, base, scene, frames and reflow. See [art direction](docs/ART-DIRECTION.md). The pre-D-077 interface (16 files no entry point imported) was removed in 1.3; it is in git history.
 - src/lms.ts and scorm.ts: retry-safe completion and resume reporting.
 - tools/verify-game.mjs: current browser gate. tools/verify.mjs is the historical UI harness.
 - .openai/hosting.json: persistent Sites project identity and static output configuration; no credentials.

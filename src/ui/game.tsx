@@ -168,7 +168,7 @@ function Hud({ session, content, atHome, atMap, chapterNumber, chapterTitle, onM
     <a className="hud-brand" href="#game-heading" aria-label={COPY.brand}>gpl<i /></a>
     {/* The map: the five stages of a deal, a dot per decision, and where you are. Always on screen,
         so a player can see at a glance how far through the story they are and what comes next. */}
-    {playing ? <button className="hud-map" aria-pressed={atMap} onClick={onMap} aria-label={COPY.journey + ': ' + COPY.stage.act + ' ' + (chapterNumber ?? 1) + ' ' + COPY.stage.of + ' 5, ' + state.completed.length + ' ' + COPY.stage.of + ' ' + content.missionOrder.length + ' ' + COPY.frames.journey.decisions}>
+    {playing ? <button className="hud-map" aria-pressed={atMap} onClick={onMap} aria-label={COPY.journey + ': ' + COPY.stage.act + ' ' + (chapterNumber ?? 1) + ' ' + COPY.stage.of + ' ' + content.chapters.length + ', ' + state.completed.length + ' ' + COPY.stage.of + ' ' + content.missionOrder.length + ' ' + COPY.frames.journey.decisions}>
       {content.chapters.map(c => {
         const done = c.missionIds.every(id => state.completed.includes(id));
         const here = c.number === chapterNumber;
@@ -179,7 +179,7 @@ function Hud({ session, content, atHome, atMap, chapterNumber, chapterTitle, onM
           <span className="dots">{c.missionIds.map(id => <i key={id} className={id === nowId ? 'now' : state.completed.includes(id) ? 'done' : ''} />)}</span>
         </span>;
       })}
-    </button> : chapterNumber ? <div className="hud-act"><small>{COPY.stage.act} {chapterNumber} {COPY.stage.of} 5</small><strong>{chapterTitle}</strong></div> : null}
+    </button> : chapterNumber ? <div className="hud-act"><small>{COPY.stage.act} {chapterNumber} {COPY.stage.of} {content.chapters.length}</small><strong>{chapterTitle}</strong></div> : null}
     {playing && <div className="hud-gauges" role="group" aria-label={COPY.position}>
       {RULES.map(r => <span key={r.id} className={'hud-gauge' + (moving?.[r.id] ? ' is-moving' : '')} title={r.question}>
         <span>{COPY.dimensions[r.id].short}</span><span className="bar" aria-hidden="true"><i style={{ width: state.dims[r.id] + '%' }} /></span><b>{state.dims[r.id]}</b>
