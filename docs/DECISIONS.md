@@ -6,6 +6,32 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-089 · Quick checks between decisions
+The user asked for "quiz-type tests in between the game to simplify the stakes and make it
+easier". After each decision, the journey map offers one ten-second question in one of three
+formats:
+- true or false;
+- which bar moves;
+- pick one of two or three.
+
+One tap shows whether it was right and a one-line reason (`content/checks.ts`,
+`screens/QuickCheck.tsx`).
+
+**Why it works.** Low-stakes retrieval is one of the strongest learning effects measured
+(Roediger & Karpicke 2006; Adesope et al. 2017). Elaborated feedback beats right-or-wrong alone
+(Van der Kleij et al. 2015). The check also lowers the stakes: the idea is rehearsed in a
+question that costs nothing before the decision that does.
+
+**Rules that keep it honest.**
+- Never graded, never stored, and it never moves the deal. This keeps D-0xx's removal of
+  scoring intact.
+- Always skippable.
+- Each check is about the idea or the world, never about which setting would have won, so it
+  cannot leak an outcome.
+- A test holds the answer index, the word budgets and the formats.
+
+**Cost:** about 10 seconds per decision, optional. **Reversible:** yes.
+
 ## D-088 · Recall on return
 A player who comes back to a saved run is offered a short warm-up on the welcome screen: one
 question for each act they have finished, answered in their head and then revealed. It is

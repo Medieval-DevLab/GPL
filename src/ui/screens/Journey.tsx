@@ -5,6 +5,8 @@ import { ACT_QUESTION, CHAPTER_PRESENTATION, MILESTONE, MYSTERY, RULES, placeOf 
 import { CHARACTERS } from '../../content/characters';
 import { Action, Backdrop, Heading, Portrait } from '../parts';
 import { flagsSetBy, handOf, stageNameOf, type Card } from '../cards';
+import { CHECKS } from '../../content/checks';
+import { QuickCheck } from './QuickCheck';
 
 /**
  * The trail (D-083): home base between decisions.
@@ -98,6 +100,7 @@ export function Journey({ state, content, node, currentChapter, onPlay, onReview
           <p className="trail-just-head">{justHappened.headline}</p>
           <p className="trail-just-chose">{T.youChose}: {justHappened.chosenLabel}</p>
         </div>}
+        {justHappened && CHECKS[justHappened.missionId] && <QuickCheck key={justHappened.missionId} id={justHappened.missionId} check={CHECKS[justHappened.missionId]} />}
         {ended ? <>
           <h2 id="next-stop-title" className="trail-next-name">{T.finish}</h2>
           <Action onClick={onPlay}>{T.backToEnd}</Action>
