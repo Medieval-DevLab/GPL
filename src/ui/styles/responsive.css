@@ -4,7 +4,6 @@
 @media (max-height: 820px) {
   .scene-title { padding: 10px 16px; }
   .scene-q { font-size: clamp(24px, 2vw, 30px); }
-  .choose { top: 150px; }
   .pick { padding: 12px 16px; gap: 6px; }
   .pick-line { font-size: 16.5px; }
   .pick-line.spoken { font-size: 18px; }
@@ -12,17 +11,27 @@
   .planwall, .corkboard { padding: 16px; }
   .dialogue { padding: 26px 28px 14px; }
   .dialogue-text { font-size: 21.5px; }
-  .call-frame { top: 140px; bottom: 270px; }
+  .call-frame { bottom: 270px; }
   .outcome-card { padding: 26px 32px 20px; }
 }
+/* The top bar never runs off the edge: it gives up decoration in order — bars, then the
+   record label, then the dots — and always keeps the map, the three numbers and the tools. */
+@media (min-width: 1680px) { .hud-stage:not(.is-here) .name { display: inline; color: inherit; } }
 @media (max-width: 1440px) {
+  .hud { gap: 14px; }
   .hud-record { white-space: nowrap; }
   .hud-act { max-width: 200px; }
+  .hud-gauge { grid-template-columns: auto 24px; }
+  .hud-gauge .bar { display: none; }
+}
+@media (max-width: 1180px) {
+  .hud-record > span:not(.n) { display: none; }
+  .hud-stage:not(.is-here) .dots { display: none; }
+  .hud-stage.is-here .name { max-width: 150px; }
 }
 @media (max-width: 1280px) {
   .hud { gap: 12px; }
   .hud-act { max-width: 220px; }
-  .hud-gauge { grid-template-columns: auto 44px 22px; }
 }
 @media (max-width: 1100px) {
   .hud-act { display: none; }
@@ -32,9 +41,13 @@
   .case-grid { grid-template-columns: 240px minmax(0, 1fr); }
 }
 @media (max-width: 900px), (max-height: 560px) {
+  /* Reading order has no stage: the nameplate says who is speaking, and a 1,000px cut-out
+     placed for the wide stage would only widen the page (matrix, 720×450). */
+  .scene2 .cast { display: none; }
   :root { --hud-h: 54px; --gutter: 14px; }
   .hud { gap: 8px; padding: 0 10px; }
-  .hud-track .ticks, .hud-gauge .bar, .hud-record span:not(.n) { display: none; }
+  .hud-stage .dots, .hud-stage .name, .hud-stage + .hud-stage::before, .hud-gauge .bar, .hud-record span:not(.n) { display: none; }
+  .hud-stage { padding: 0 3px; height: 30px; }
   .hud-gauges { gap: 8px; padding: 4px 8px; }
   .hud-gauge { grid-template-columns: auto auto; }
   .icon-button { width: 34px; height: 34px; }
@@ -44,11 +57,11 @@
   .scene-title, .dialogue, .choose, .outcome-card, .call-frame, .chat-stage, .dialogue.as-caption, .dialogue.as-chat, .fam-call .choose, .fam-chat .choose, .fam-case .choose { position: static; inset: auto; translate: none; width: auto; max-width: none; max-height: none; }
   .scene2 .dialogue, .scene2 .dialogue.as-caption, .scene2 .dialogue.as-chat { position: relative; margin-top: 16px; }
   .scene-title { max-width: none; }
-  .call-frame { aspect-ratio: 16 / 10; }
+  .call-frame { aspect-ratio: 16 / 10; position: relative; }
   .chat-stage { height: 340px; }
   .st-brief .chat-stage { bottom: auto; }
   .choose-body { overflow: visible; }
-  .picks-table, .picks-board, .picks-plan, .case-grid, .outcome-grid, .weigh-body { grid-template-columns: 1fr; }
+  .picks-table, .picks-board, .picks-plan, .case-grid, .outcome-grid, .weigh > div { grid-template-columns: 1fr; gap: 0; }
   .slots { grid-auto-flow: row; }
   .ask { flex-wrap: wrap; }
   .ask-bubble { position: static; width: auto; }

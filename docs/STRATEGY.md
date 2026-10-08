@@ -1,180 +1,206 @@
-# GPL strategy
+# GPL from first principles
 
-Synthesis of three independent analyses:
-- `docs/DESIGN-LANGUAGE.md` — the visual system the mockups use
-- `docs/UI-AUDIT.md` — where the build fails it
-- `docs/ENGAGEMENT-MODEL.md` — how learning games engage without condescending
-- plus a page-cited reading of `Remember-MPL-Project.pdf` (237pp, the source PRD)
+8 October 2026. This document sets out what GPL should be if it were designed today from
+nothing, using what learning science and the best games know. It records the research, the
+principles, the design and the build plan. Decisions that follow from it are logged in
+`DECISIONS.md` (D-084 onwards). It replaces the mockup-era strategy, which is kept
+unchanged in `STRATEGY-MOCKUP-ERA.md`.
 
-Nothing here is built yet. This is the plan and the open decisions.
+**The brief.** The owner, a marketing professional, could not follow the game. The learning
+must become *simpler* to synthesise, learn and engage with, never more complex. The audience
+knows nothing about sales, marketing or consulting. The decisions must be small cause-and-effect
+choices a player can reason about. The game must show how everything works *as a system*, with
+different kinds of maps, and it must not look the same throughout.
 
 ---
 
-## 1. The convergent diagnosis
+## 1. What the research says
 
-Three sources, examined separately, point at the same thing from three directions:
+There were two research passes: one on learning science, one tearing down well-known games.
+The full reports and sources are in the session record. The findings that decide the design:
 
-| Source | Finding |
-|---|---|
-| The PRD | The loop lost its middle. Intended: Situation → **Explore** → **Think** → Decide → Consequence → Learn → **Progress**. Built: decide → resolving → consequence → lesson. |
-| The research | The highest-leverage mechanic available is **predict-before-reveal** — commit a hypothesis, *then* see the result. |
-| The mockups | It is a **console**, not a document. The layout exists so you can *work on* a situation before choosing. |
-
-> **The thesis: GPL has no "before". Everything happens at or after the decision.**
->
-> That single absence is simultaneously the cohesion problem, the condescension problem
-> and the feels-like-a-form problem.
-
-- **Cohesion** fails because a mission with no "before" is just a question, and ten questions in a row are siblings, not a journey.
-- **Condescension** happens because with no hypothesis from the player, the only thing the game can do at the consequence is *tell* them. The PRD already specified the fix — *"BEFORE YOU DECIDE: What evidence supports your choice? What assumption are you making?"* (p. 221) — and it was never built.
-- **Form-feel** follows because a screen whose only interaction is "pick one and press Confirm" is a form, regardless of its styling. The PRD's rule 1 of 7: **"Never ask a question when we can let the player act"** (p. 183).
-
-The PRD predicted our exact failure in advance:
-
-> *"If we make 21 missions and every mission requires: Read → investigate → decide → outcome → lesson we'll create fatigue."* (p. 182)
->
-> *"we will still end up with a polished e-learning quiz"* (p. 170)
-
-We hard-coded that loop for all ten missions.
-
-## 2. What we got right, and should not touch
-
-- **The single-client spine is correct.** The PRD: *"the first four missions one coherent mini-story… the player should finish Mission 4 feeling that they have actually started a client relationship"* (p. 194). Multiple simultaneous opportunities were explicitly removed (p. 185). Cohesion is failing at the **frame and rhythm**, not the spine.
-- **Flag-based compounding** is what the PRD specified (p. 176).
-- **No-right-answers, enforced mechanically.** PRD p. 169 makes this a hard rule; our `findDominantOptions()` enforces it. Better than specified.
-- **The reflection template.** Our `principle / because / watchFor` is exactly the PRD's `principle / takeaway / transferCue` (pp. 222, 226).
-- **Determinism, the exhaustive sweep, flag-reference integrity, word budgets.** None specified; all load-bearing.
-- **Derived causal threads.** Not in the PRD or the mockups. The best thing in the build.
-
-## 3. The five workstreams
-
-### W1 · Build the "before" — **the priority**
-Add a pre-decision beat to every mission. Three candidate mechanics, in order of value:
-
-1. **Predict-before-reveal.** After selecting, before committing: *which of the three will this cost you?* One tap. The consequence then confirms or corrects a claim the player made, which converts the lesson from a lecture into feedback on their own reasoning.
-2. **Name your assumption.** Pick from 3–4 assumptions implied by your choice (PRD p. 221). Cheap, and it makes the *reasoning* visible, which is what clinical debriefing (Rudolph et al.) actually works on.
-3. **Explore before deciding.** Let the player open parts of the situation — a stakeholder, a document, the history — at a cost. Currently only `m2` does this; the PRD intends it throughout.
-
-This also kills the worst thing in the current UI: a "Things to consider" rail that poses questions and a "Tip" bar that answers them before the player has thought.
-
-### W2 · Break the uniform rhythm
-The PRD specifies **twelve** interaction types (p. 219), **nine** mission-specific visual treatments, *"Do not force every mission into cards"* (p. 233), and deliberately uneven mission lengths — quick 2–3 min / standard 5–7 / major 8–12 (p. 182).
-
-We have three interaction kinds and one card layout. Target: 6–7 distinct interactions, each with its own visual treatment. Highest-value additions:
-- **Prioritise** (PRD M8) — rank or allocate under a cap
-- **Diagnose** — match symptoms to causes
-- **Negotiate** — a two-sided exchange, not a menu
-- **Sequence** — order the work
-- **Recover** — a staged second chance after a bad outcome (PRD pp. 174–175)
-
-### W3 · Restore the frame
-The PRD's four screen types (p. 34): **Journey Map / Mission / Outcome / Team-League.** We built one and a half. The Journey Map was called *"probably the most important UI decision"* (p. 27).
-
-- **Chapter 0 — Starting advantage.** Connector / Builder / Challenger (pp. 68, 80, 124). *"Starting with a 'beginning state' is much stronger than starting with a tutorial"* (p. 55).
-- **Journey Map** as the home surface, with a persistent journey bar.
-- **Milestones and unlocks** — FIRST LEAD … FIRST DELIVERY (p. 224), "NEW AREA UNLOCKED" (p. 101). Chapter interludes are not a progression system.
-- **The deal decision.** PRD M17: *"DO WE TAKE THE DEAL? Proceed / Modify / Walk away"* (p. 132) and *"Walking away must sometimes be a good decision. Otherwise the game teaches: Always accept the contract."* (p. 132). **We have no "did we win it?" beat at all** — the contract is signed inside m9's outcome prose.
-- **Scaffolding that is felt.** *"The UI evolves with the player"* (p. 34); Guided → Assisted → Trade-offs → Dynamic → Autonomy. Chapter 1 and Chapter 5 currently present identically.
-
-### W4 · Rebuild the visual system as a console
-From `UI-AUDIT.md`, in dependency order:
-1. **Console frame** — the app as one inset rounded panel (cheap, changes the register immediately)
-2. **Options as side-by-side columns** with full-width card buttons — the single biggest feel change
-3. **Fit a mission to one screen**, no scrolling
-4. **Polychrome icons** — colour assigned per meaning
-5. **Sentiment-tinted panels** — rose for concerns, lavender for voice
-6. **Drop the serif.** No mockup contains one; I introduced Fraunces and never checked.
-7. **Figure/ground** — white rails, tinted working area (we have it inverted)
-8. **Cut ambient motion** — keep motion that answers an action
-9. **Imagery** — see open decision D4
-
-### W5 · De-condescend the surface
-Re-skin the furniture as work artefacts, not lesson artefacts:
-
-| Now | Becomes |
-|---|---|
-| "Your objective" | cut — the headline already says it |
-| "Estimated time: 4 min" | cut, or a diegetic clock ("board meets in three weeks") |
-| "Tip: there is no single right answer" | **cut.** The narrator telling you how to feel. |
-| "Things to consider" | a named colleague's open questions |
-| "Learning in progress" | your file — facts you paid for |
-| "Advisor" | a partner with her own agenda, who can be wrong |
-| "The point" lesson screen | confirmation of a claim the player committed |
-| Badges | candidate for replacement by a diegetic ledger — see D3 |
-
-Also: make the cast **continuous**. The PRD specifies stakeholders with `priority / concern / influence / currentSentiment` moving Concerned → Advocating (p. 218). We have five advisors, one line each, who never reappear. Elena and Marcus — the two people who actually decide this deal — exist only as investigation text.
-
-## 4. Sequencing
-
-**Phase 1 — Prove the feel on one mission.** Rebuild `m4` alone as a console: columns, one screen, predict-before-reveal, polychrome icons, no tip, no objective rail. Screenshot it beside the mockup. **Do not touch the other nine until this is agreed.** Every previous attempt failed because I changed all ten at once and the direction was wrong.
-
-**Phase 2 — Frame.** Chapter 0, Journey Map, milestones, the deal decision, the recovery beat.
-
-**Phase 3 — Rhythm.** New interaction types, uneven mission lengths, per-mission visual treatments.
-
-**Phase 4 — Scaffolding and replay.** UI that evolves, end-of-run "how you played", replay through knowledge.
-
-## 5. Proposed agent roster
-
-Six project-local agents in `.claude/agents/` (plugin installs are blocked by org policy, so we build our own):
-
-| Agent | Job | Tools |
+| Finding | Evidence | What it means for GPL |
 |---|---|---|
-| `gpl-design` | Owns `DESIGN-LANGUAGE.md`. Implements UI against the mockups; refuses changes that drift. | read/write/edit, bash |
-| `gpl-visual-critic` | **Read-only.** Screenshots a screen, puts it beside the named mockup, reports the delta zone by zone. Never edits. | read, bash, glob |
-| `gpl-content` | Writes missions inside the word budgets and the no-leak rules. Owns `story.ts`. | read/write/edit |
-| `gpl-engine` | Engine, validator, analysis. Guards determinism and purity. | read/write/edit, bash |
-| `gpl-pedagogy` | **Read-only.** Audits against `ENGAGEMENT-MODEL.md` and the PRD quotes — flags condescension, lesson labels, praise inflation, fake choices. | read, grep, glob |
-| `gpl-verify` | Runs typecheck/tests/build and both browser passes; reports failures with evidence. | bash, read |
+| People keep one core idea plus a few sub-ideas | Heath & Heath 2007; Wiggins & McTighe 2005 | One spine sentence, four ideas, the same words every time |
+| Working memory holds about four new things | Cowan 2001; Sweller 1988 | Three meters plus one new idea at a time; at most one new term per decision |
+| Learn the parts before the interactions | Pollock, Chandler & Sweller 2002; Mayer 2021 | Meters arrive one at a time; trade-offs come later |
+| Extra story and decoration reduce learning | Clark et al. 2016; Adams et al. 2012; Sundararajan & Adesope 2020 | Every line is situation, choice or consequence; no texture text |
+| Novices need a worked example, then fading | Kirschner, Sweller & Clark 2006; Renkl & Atkinson 2003 | For each idea: modelled first, prompted second, unaided third |
+| Learning should *be* the mechanic | Habgood & Ainsworth 2011 (7× voluntary play) | The meters moving for a stated reason is the curriculum |
+| Feedback should be immediate, explanatory and about the task | Van der Kleij et al. 2015 (0.49 vs 0.05); Kluger & DeNisi 1996 | The first words of every consequence name its cause |
+| Stories help when they are chains of causes | Willingham 2004; Trabasso & van den Broek 1985 | Every beat links to an earlier one, or it is cut |
+| Debriefing is where play becomes knowledge | Tannenbaum & Cerasoli 2013 (d = 0.67); Kolb 1984 | A short structured debrief after every act |
+| Retrieval and generation beat re-reading | Roediger & Karpicke 2006; Slamecka & Graf 1978 | The player guesses the cause before it is revealed |
+| Transfer comes from comparing two different cases | Gentner, Loewenstein & Thompson 2003 | Each idea appears in two situations that look different, then they are compared |
+| Difficulty belongs in the decision, not in the reading | Bjork 1994; Chen et al. 2018; Hamari et al. 2016 | Reading effortless; the trade-off is the only hard part |
 
-The two read-only critics matter most. Every failure in this project so far was caught by *looking*, never by tests — and I am unreliable at judging my own output against a reference.
+From the games:
 
-## 6. Locked decisions
-
-Answered 2026-09-15. These govern everything downstream.
-
-**D1 · The player is a first-time pursuit lead.** You have just been handed your first
-client to win. This resolves the condescension problem structurally rather than
-cosmetically: a colleague briefing a new lead is **onboarding, not patronising**, so the
-advisory furniture can be *re-framed and attributed* instead of deleted. It also gives
-the run a growth arc, and it gives the advisors a reason to exist.
-
-Consequences: every piece of advice must come **from a named person with a stake**, never
-from the interface. "Tip:" becomes Priya saying something. The UI never speaks.
-
-**D2 · ~15 decisions plus the frame.** Roughly 70 minutes. Keep the ten built missions,
-restore the framing beats, and add back the decision missions the PRD names and we cut:
-
-| Add | PRD | Why |
+| Game | The mechanic that does the work | GPL use |
 |---|---|---|
-| Chapter 0 — starting advantage | pp. 68, 80, 124 | ownership before tutorial (p. 55) |
-| Prioritisation | M8 | "we can't do everything" |
-| Innovation / creative | M12 | "no single obvious button" |
-| Solution review | M13 | the three dimensions revealed together |
-| Capacity problem | M18 | delivery is currently one beat |
-| Unexpected situation | M19 | the event engine, felt once |
-| **The deal decision** | M17, p. 132 | proceed / modify / **walk away** |
-| A recovery beat | pp. 174–175 | failure currently has no second chance |
-| Milestones + unlocks | p. 224, p. 101 | progression the player can feel |
-| Journey map | p. 27, p. 34 | *"probably the most important UI decision"* |
+| *Reigns* | Dots show which meters a choice will touch, never by how much | Telegraph every lever |
+| *Into the Breach* | Every enemy intent shown before you act | Show what Orion will do next; choices become trade-offs, not guesses |
+| *Frostpunk* | A law shows its effect, is permanent, and returns as an event | Promises are signed clauses that come back with a due date |
+| *Game Dev Tycoon* | Sliders, then reviews that give reasons | Decisions as levers, scored by Orion's people in their own words |
+| *Papers, Please* / *Mini Metro* | One new rule at a time, the old ones stay in force | One idea per act; meters introduced one by one |
+| *80 Days* / *Slay the Spire* | The whole route visible, each fork with its price | The trail (built in D-083) |
+| *Plague Inc.* | Faces and a world that change colour as you act | Orion's people as a map that turns green or red |
+| *Disco Elysium* | Checks show their requirements before you try | A locked option names the card it needs (built in D-083) |
+| *Hades* / Telltale | Characters notice your history | Callbacks name the earlier choice |
+| The Beer Game | The debrief shows the system caused the swings | The cause-and-effect map at every act break |
 
-**D3 · Build all three read-outs.** Score, badges *and* a diegetic ledger. They are not
-actually in conflict once each is given a distinct job:
+**The diagnosis in one line.** GPL does not lack content; it lacks *telegraphing*. Players
+cannot see what a choice will touch, cannot see a promise travel forward to the day it falls
+due, and read before they act.
 
-| System | Job | Where |
+**What a cold audit of the current build measured.** A third agent played the game as a newcomer
+and counted:
+
+| Measure | Now | Target |
+|---|---:|---:|
+| Concepts a newcomer must hold | ≈ 90 (54 business terms, 36 mechanics) | ≤ 15 |
+| Words per decision | 272 average, 359 maximum | ≤ 150 |
+| Presses per decision | 9.2 | ≤ 5 |
+| Distinct takeaway sentences | 53 | 4 |
+| Outcomes whose "why" is a generic line, not the real cause | 68% | 0% |
+| Names for one act | 3 | 1 |
+
+It also found the story contradicting itself:
+- the proposal is "written" five times;
+- price is negotiated before Orion has chosen anyone;
+- two back-to-back "two people gone" crises;
+- a promise the player never made is asserted as history.
+
+Its verdict matches the research: far fewer decisions on one causal chain, each consuming
+something an earlier one produced, *and saying so by name at the moment it pays off*.
+
+---
+
+## 2. The principles we will hold the game to
+
+1. **One spine.** *Every promise that helps you win the work is a cost someone pays later — so
+   choose your promises on purpose.* It appears on the title, at every act break and at the
+   end, word for word.
+2. **Four ideas, one per act, always in the same words.**
+   1. **Understand before you offer.** Clients choose the team that understood their problem.
+      *(Win)*
+   2. **Not every deal is worth winning.** If it will not pay or cannot be delivered, walking
+      away is a good decision. *(Worth)*
+   3. **Trade, don't give.** A lower price, extra work or a faster date is a cost; get
+      something back or price it in. *(Worth against Win)*
+   4. **Promise only what your team can deliver.** Promises come due. *(Deliver)*
+   
+   Every lesson in the game is filed under one of these four. A lesson that fits none is cut.
+3. **Small levers, visible effects.** A decision is two or three small choices ("levers"), each
+   with one cause and one effect. Before you commit, each lever shows which meters it will
+   touch (direction, not amount) and which cards it adds or needs.
+4. **Cause first.** The first sentence of every consequence names its cause: "Because you
+   promised June…".
+5. **Show, then tell.** Every act has its own way of picturing the system (section 4), so the
+   screen changes because the idea changed.
+6. **Reading is effortless.** At most 40 words before the first thing you do in a scene, and
+   120 before any choice. One new term per decision, explained in 12 words or fewer.
+7. **Model, prompt, let go.** For each idea, the first decision has the colleague think aloud,
+   the second gives one hint, and the third is yours alone.
+8. **Guess, then see.** Before each act's debrief reveals the cause, the player taps their
+   guess. It is unscored and is never a grade.
+9. **Failure branches, it does not end.** Losing the award is a chapter, not a game over, and
+   the debrief shows what would have changed it.
+10. **Characters notice.** Sarah, Marcus and Aisha refer back to what you did.
+
+---
+
+## 3. The game, redesigned
+
+**Length and shape.** About 35 minutes, in four acts after the onboarding (built in D-083).
+Each act teaches one idea through **two decisions**: the first modelled (the colleague thinks
+aloud), the second yours alone. That is **8 decisions instead of 18**. Each decision is a
+panel of two or three small levers, so the player still makes about 20 choices, but every
+one has a single cause and a single visible effect.
+
+**The causal spine.** Every decision uses something an earlier one produced, and names it:
+
+| Act and idea | Decision | Its levers | It consumes | It produces |
+|---|---|---|---|---|
+| 1 · Understand before you offer | **Find what is really wrong** | who you talk to · what data you pull | – | clues: the complaints, who decides |
+| | **The first meeting** | what you lead with · who you bring | the clues | Sarah's trust, or her doubt |
+| 2 · Not every deal is worth winning | **How much do we bet?** | people · weeks · paid study or not | Sarah's trust | your team's time left |
+| | **The rival's demo** | answer it · ignore it · change the question | the clues, time left | the problem the bid is about |
+| 3 · Trade, don't give | **Build the offer** | what's in · how fast · how we're paid | the problem, time left | promises, with due dates |
+| | **The price push** | price · what's dropped · what we ask back | the promises | the fee, and what we keep |
+| 4 · Promise only what you can deliver | **Sign or walk** | which clauses we fix · sign or not | promises, fee | the contract |
+| | **Month five** | tell them · staff it · protect what we promised | every promise, team weeks | the ending |
+
+The four ideas are the only takeaways, in the same words every time. The ending shows the
+whole chain on one chart.
+
+**The decision unit: levers.** Each decision is a small control panel of two or three levers.
+Each lever is one cause:
+
+> *How do we answer on price?*
+> - **Price:** hold · meet them halfway · match the cheaper bid *(touches Win ▲ Worth ▼)*
+> - **What's included:** everything · drop the training · drop the pilot *(touches Worth ▲ Deliver ▼, and adds a promise card)*
+> - **In return we ask for:** nothing · a longer contract · a named Operations lead *(touches Worth ▲ Win ▼, and needs a card)*
+
+The player sets the levers, sees the dots, and commits. Orion's people then answer in their
+own words, each naming the lever that moved them, and the meters move with a one-line reason
+per lever.
+
+**The resources you can feel.**
+- **Three meters.** Win, Worth and Deliver, introduced one per act in the HUD.
+- **Your hand.** Strengths and promises as cards (built in D-083).
+- **Team weeks.** In the delivery act, Deliver becomes a row of team-week tokens. Every promise
+  card comes due as a cost in tokens; when the tokens run out, the next promise breaks in
+  front of the client.
+
+---
+
+## 4. Many maps, one system
+
+The owner asked for different kinds of maps and effects that show how everything works as a
+system. Each act gets its own signature view, chosen because it pictures that act's idea:
+
+| Where | The view | What it shows |
 |---|---|---|
-| **Ledger** | the primary in-world read-out — margin spent, hours owed, people committed, reputation | always visible, in the console |
-| **Score** | coarse progress, mockup fidelity | top bar |
-| **Badges** | an account of *how* you played | **the debrief only, never mid-run** |
+| Between decisions | **The trail** (built) | Where you are in the deal and what is next |
+| Act 1 · Understand | **The people map** | Orion's people (who pays, who decides, who has to live with it), turning green or red as your choices land. The unknown person (Marcus) is greyed until you find him |
+| Act 2 · Worth it? | **The fee waterfall** | How the fee splits into our people's time and what we keep. Each lever pours into or out of the margin |
+| Act 3 · Trade | **The scales** | What we give against what we get back, tipping as levers move |
+| Act 4 · Promise | **The promise calendar** | Each promise pinned to the week it falls due; team-week tokens below; the calendar plays out in delivery |
+| Every act break | **The cause-and-effect map** | Your actual chain, drawn as a flow: choice → card → what it changed later. This is the system made visible, as in the Beer Game debrief |
+| The end | **The deal on one chart** | Win, Worth and Deliver across the whole deal, with your promises marked where they were made and where they came due |
 
-Moving badges to the debrief is what defuses the praise-inflation objection: recognition
-delivered at the end reads as an account of your play, not a pat on the head between
-missions.
+---
 
-**D4 · Reuse the mockup photography.** Crop the hero shots, client storefronts and
-advisor portraits out of the mockup PNGs and commit them. Confirmed as licensed and
-appropriate for the product. This unblocks W4's imagery gap immediately and is the
-fastest route to mockup fidelity.
+## 5. Build plan
 
-Budget rule: the bundle is currently 101 kB gzipped. Images are separate assets, lazily
-loaded, and must not block first paint.
+**Variety is part of the design, not decoration.** No two acts look alike:
+- each has its own signature system view (section 4);
+- each lever panel takes the form of its act: a research board in act 1, a staffing board in
+  act 2, a contract with clauses in act 3, a delivery calendar in act 4;
+- the trail between decisions changes as the deal does, from an open road to a calendar of
+  due dates.
+
+The work is staged so that every stage ships, playable and verified:
+
+1. **The system views on the existing decisions** (first):
+   - the cause-and-effect map at act breaks, from the engine's existing causal threads and
+     the hand;
+   - lever-style telegraphing on current options (dots for the meters a choice touches,
+     cards added or needed);
+   - the cause-first line;
+   - the guess-then-see tap at act breaks.
+2. **The four views with their own look.** The people map in act 1, the fee waterfall and the
+   scales in the deal acts, and the promise calendar with team-week tokens in delivery.
+3. **The lever decisions.** A new engine kind (one choice per lever, outcomes over the
+   combination), then the content rebuilt to the 8 decisions of the causal spine under the
+   four ideas. The exhaustive sweep is extended to lever combinations. The current 18
+   decisions stay playable until the new set passes every gate, then are retired.
+4. **Spine and debriefs.** The four ideas, word for word, on every lesson; a three-question
+   retrieval opener for a second sitting.
+
+Each stage is checked against the principles above:
+- the word budgets;
+- one new term per decision;
+- every consequence opens with its cause;
+- a screenshot of every beat at three sizes.

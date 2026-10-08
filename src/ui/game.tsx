@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { isMission, type Content, type GameNode } from '../engine/types';
+import { stageNameOf } from './cards';
 import { ledger } from '../engine/engine';
 import { codeFromState } from '../engine/runcode';
 import { COPY } from '../content/interface';
@@ -165,11 +166,20 @@ function Hud({ session, content, atHome, atMap, chapterNumber, chapterTitle, onM
   const moving = state.phase === 'consequence' ? state.resolution?.deltas : undefined;
   return <header className="hud">
     <a className="hud-brand" href="#game-heading" aria-label={COPY.brand}>gpl<i /></a>
-    {chapterNumber && <div className="hud-act"><small>{COPY.stage.act} {chapterNumber} {COPY.stage.of} 5</small><strong>{chapterTitle}</strong></div>}
-    {playing && <button className="hud-track" aria-pressed={atMap} onClick={onMap} aria-label={COPY.journey + ', ' + state.completed.length + ' of ' + content.missionOrder.length + ' decisions'}>
-      <span className="ticks" aria-hidden="true">{content.chapters.map(c => <span className="act" key={c.number}>{c.missionIds.map(id => <i key={id} className={'tick' + (state.completed.includes(id) && id !== nowId ? ' done' : id === nowId ? ' now' : '')} />)}</span>)}</span>
-      <span className="count" aria-hidden="true">{state.completed.length}/{content.missionOrder.length}</span>
-    </button>}
+    {/* The map: the five stages of a deal, a dot per decision, and where you are. Always on screen,
+        so a player can see at a glance how far through the story they are and what comes next. */}
+    {playing ? <button className="hud-map" aria-pressed={atMap} onClick={onMap} aria-label={COPY.journey + ': ' + COPY.stage.act + ' ' + (chapterNumber ?? 1) + ' ' + COPY.stage.of + ' 5, ' + state.completed.length + ' ' + COPY.stage.of + ' ' + content.missionOrder.length + ' ' + COPY.frames.journey.decisions}>
+      {content.chapters.map(c => {
+        const done = c.missionIds.every(id => state.completed.includes(id));
+        const here = c.number === chapterNumber;
+        const name = stageNameOf(content, c.number);
+        return <span key={c.number} className={'hud-stage' + (here ? ' is-here' : done ? ' is-done' : ' is-ahead')} title={COPY.stage.act + ' ' + c.number + ' · ' + name} aria-hidden="true">
+          <span className="n">{done && !here ? '✓' : c.number}</span>
+          <span className="name">{name}</span>
+          <span className="dots">{c.missionIds.map(id => <i key={id} className={id === nowId ? 'now' : state.completed.includes(id) ? 'done' : ''} />)}</span>
+        </span>;
+      })}
+    </button> : chapterNumber ? <div className="hud-act"><small>{COPY.stage.act} {chapterNumber} {COPY.stage.of} 5</small><strong>{chapterTitle}</strong></div> : null}
     {playing && <div className="hud-gauges" role="group" aria-label={COPY.position}>
       {RULES.map(r => <span key={r.id} className={'hud-gauge' + (moving?.[r.id] ? ' is-moving' : '')} title={r.question}>
         <span>{COPY.dimensions[r.id].short}</span><span className="bar" aria-hidden="true"><i style={{ width: state.dims[r.id] + '%' }} /></span><b>{state.dims[r.id]}</b>

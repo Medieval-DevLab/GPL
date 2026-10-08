@@ -58,12 +58,13 @@ export function briefLines(mission: Mission, state: GameState): Line[] {
 }
 
 const list = (items: string[]) => items.length <= 1 ? items.join('') : items.slice(0, -1).join(', ') + ' ' + COPY.say.and + ' ' + items.at(-1);
-const dimText = (t: DimTest) => COPY.dimensions[t.dim].label.toLowerCase() + ' ' + (t.at === 'min' ? COPY.say.atLeast : COPY.say.atMost) + ' ' + t.value;
+const dimText = (t: DimTest) => COPY.dimensions[t.dim].short + ' ' + (t.at === 'min' ? COPY.say.atLeast : COPY.say.atMost) + ' ' + t.value;
 
 /** One sentence, in your colleague's voice, saying why it landed the way it did. */
 export function whyLine(state: GameState, content: Content): string {
   const b = outcomeBecause(state, content);
-  const name = (f: string) => EARNED[f]?.as.toLowerCase();
+  /* Lower-case the first letter only, so “Operations on side” keeps its department. */
+  const name = (f: string) => { const as = EARNED[f]?.as; return as && (/^[A-Z][a-z]/.test(as) && !/^Operations/.test(as) ? as[0].toLowerCase() + as.slice(1) : as); };
   const held = b.held.map(name).filter(Boolean) as string[];
   const lacked = b.lacked.map(name).filter(Boolean) as string[];
   const parts: string[] = [];
@@ -89,9 +90,14 @@ export function outcomeLines(mission: Mission, state: GameState, content: Conten
   const advisor = mission.advisor;
   const voice = (text: string, v: Voice, note?: string): Line => advisor ? { who: advisor.name, role: advisor.role, text, voice: v, note } : { text, voice: v === 'say' ? 'narrate' : v, note };
   const lines = paginate(result.outcome.detail).map(page => voice(page, 'say'));
-  /* The authored reason, in the colleague's words. The sentence assembled from flag labels
-     (`whyLine`) was accurate and read like a machine; it stays for the record, not the scene. */
-  lines.push(voice(result.lesson.because || whyLine(state, content), 'why', COPY.say.whyNote));
+  /* The real cause. An outcome with its own lesson says why in the colleague's words. One that
+     shares the mission's general lesson (68% of them) gets the engine's own reason instead:
+     what you held and lacked when it landed. A sentence written for the whole decision is not
+     a reason for this branch (audit, D-084). An unconditional outcome is explained by the
+     choice itself, so it keeps the mission's account. */
+  const own = result.outcome.lesson?.because;
+  const reason = own || (result.outcome.when ? whyLine(state, content) : result.lesson.because);
+  lines.push(voice(reason, 'why', COPY.say.whyNote));
   lines.push(voice(result.lesson.principle, 'lesson', COPY.say.takeaway));
   return lines;
 }

@@ -1,0 +1,101 @@
+/* The trail (D-083): the journey map between decisions, and your hand of cards.
+   A board-game track: two rows snaking through the five stages, each stage in its act's colour,
+   every stop named. Solid paper surfaces only; nothing below 14px. */
+.trail { position: relative; isolation: isolate; min-height: calc(100dvh - var(--hud-h)); display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 16px; padding: 20px var(--gutter) 28px; }
+.trail-head { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 14px 22px; border-radius: 16px; background: rgba(255, 253, 249, 0.97); box-shadow: var(--shadow-2); border-left: 5px solid var(--accent); }
+.trail-kicker { font-size: 14px; font-weight: 650; color: var(--accent); }
+.trail-title { margin-top: 2px; font-family: var(--font-serif); font-size: clamp(26px, 2.3vw, 36px); font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; }
+.trail-case { flex: 1; max-width: 520px; display: grid; gap: 4px; padding: 10px 14px; border-radius: 12px; background: #fff6df; border: 1.5px dashed #c9a24b; }
+.trail-case.is-solved { background: #eef7f1; border: 1.5px solid #6fb38c; }
+.trail-case-q { display: flex; align-items: center; gap: 8px; font-family: var(--font-serif); font-size: 18px; font-weight: 650; line-height: 1.25; }
+.trail-case-q span { flex: none; padding: 2px 8px; border-radius: 999px; background: #8a5a00; color: #fff; font-family: var(--font-ui); font-size: 14px; font-weight: 700; }
+.trail-case.is-solved .trail-case-q span { background: var(--rise); }
+.trail-case-a { font-size: 15px; line-height: 1.4; color: var(--ink-2); }
+.trail-standing { display: grid; gap: 6px; min-width: 300px; }
+.trail-standing li { display: grid; grid-template-columns: 1fr 110px 28px; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.trail-standing .bar { height: 7px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.trail-standing .bar i { display: block; height: 100%; border-radius: 4px; background: var(--ink); }
+.trail-standing b { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* The board. Row geometry is fixed so the path and the U-turn line up with the dots. */
+.trail-board { --pad: 20px; --row: 176px; --gap: 30px; --line-y: 78px; position: relative; display: grid; gap: var(--gap); padding: var(--pad) 46px var(--pad) 22px; border-radius: 18px; background: #fbf8f1 radial-gradient(rgba(60, 50, 30, 0.07) 1px, transparent 1.4px) 0 0 / 14px 14px; box-shadow: var(--shadow-2); }
+.trail-board::after { content: ""; position: absolute; right: 14px; top: calc(var(--pad) + var(--line-y)); height: calc(var(--row) + var(--gap)); width: 34px; border: 4px solid #d6cdbc; border-left: 0; border-radius: 0 44px 44px 0; }
+.trail-board-row { display: flex; gap: 12px; min-height: var(--row); }
+.trail-board-row.is-back { flex-direction: row-reverse; }
+.trail-region { position: relative; display: flex; flex-direction: column; flex-basis: 0; min-width: 0; padding: 10px 8px 12px; border-radius: 14px; background: color-mix(in srgb, var(--accent-tint) 75%, #fff); border: 1.5px solid color-mix(in srgb, var(--accent) 22%, transparent); }
+.trail-region.is-here { background: var(--accent-tint); border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent); }
+.trail-region-name { display: flex; align-items: center; gap: 8px; height: 24px; font-size: 14px; font-weight: 700; color: var(--accent); white-space: nowrap; overflow: hidden; }
+.trail-region-name > span, .trail-region-link > span { flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: var(--accent); color: #fff; font-size: 14px; }
+.trail-region-link { display: inline-flex; align-items: center; gap: 8px; font: inherit; color: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent); text-underline-offset: 3px; }
+.trail-stops { position: relative; flex: 1; display: flex; justify-content: space-around; gap: 4px; padding-top: 30px; }
+.is-back .trail-stops { flex-direction: row-reverse; }
+/* The path runs through every dot and bridges the gap to the next stage. */
+.trail-stops::before { content: ""; position: absolute; z-index: 0; left: -16px; right: -16px; top: 44px; height: 4px; border-radius: 2px; background: repeating-linear-gradient(90deg, #d6cdbc 0 10px, transparent 10px 16px); }
+.trail-region.is-done .trail-stops::before, .trail-region.is-here .trail-stops::before { background: color-mix(in srgb, var(--accent) 55%, #d6cdbc); }
+.trail-stop { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1 1 0; min-width: 0; max-width: 124px; text-align: center; }
+.trail-dot { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: #fff; border: 2.5px solid #c9bfae; font-size: 14px; font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.trail-stop.is-event .trail-dot { border-radius: 8px; background: #2a2d33; border-color: #2a2d33; color: #fff; }
+.trail-stop.is-done .trail-dot { background: var(--accent); border-color: var(--accent); color: #fff; }
+.trail-stop.is-here .trail-dot { width: 38px; height: 38px; margin-top: -4px; border: 4px solid var(--accent); background: #fff; color: var(--accent); box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 20%, transparent); }
+.trail-stop-name { font-size: 14px; line-height: 1.25; font-weight: 600; color: var(--ink-2); text-wrap: balance; }
+.trail-stop.is-here .trail-stop-name { color: var(--ink); font-weight: 750; }
+.trail-stop.is-ahead .trail-stop-name { color: var(--ink-3); }
+.trail-stop.is-missed { opacity: 0.5; }
+.trail-pin { position: absolute; top: -30px; left: 50%; translate: -50% 0; padding: 3px 10px; border-radius: 999px; background: #15171b; color: #fff; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.trail-pin::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -5px; border: 5px solid transparent; border-top-color: #15171b; }
+
+/* Below the board: the next stop, and your hand. */
+.trail-panels { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.trail-next-stop, .trail-hand { display: grid; gap: 12px; padding: 20px 24px; border-radius: 18px; background: #fffdf9; box-shadow: var(--shadow-2); }
+.trail-next-stop { border-top: 5px solid var(--accent); }
+.trail-just { display: grid; gap: 4px; padding: 12px 16px; border-radius: 12px; background: var(--paper); border-left: 4px solid var(--accent); }
+.trail-just-head { font-family: var(--font-serif); font-size: 21px; font-weight: 600; line-height: 1.25; }
+.trail-just-chose { font-size: 15px; color: var(--ink-2); }
+.trail-next-name { font-family: var(--font-serif); font-size: clamp(28px, 2.4vw, 36px); font-weight: 650; line-height: 1.08; letter-spacing: -0.01em; }
+.trail-next-question { font-size: 17px; font-weight: 600; color: var(--accent); }
+.trail-next-guide { display: flex; align-items: flex-start; gap: 14px; }
+.trail-next-guide p { display: grid; gap: 2px; }
+.trail-next-guide b { font-size: 16px; }
+.trail-next-guide span { font-size: 14px; color: var(--ink-3); }
+.trail-next-guide q { margin-top: 6px; font-family: var(--font-serif); font-size: 19px; line-height: 1.4; color: var(--ink); }
+.trail-next-stop .primary { justify-self: start; }
+.trail-pile { display: grid; gap: 8px; }
+.trail-pile h3 { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; }
+.trail-pile h3 span { min-width: 24px; padding: 1px 8px; border-radius: 999px; background: var(--paper-2); font-size: 14px; text-align: center; }
+.trail-pile ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.trail-pile-empty { font-size: 15px; line-height: 1.45; color: var(--ink-3); }
+.trail-card { display: grid; gap: 3px; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--line); background: #fff; }
+.trail-card strong { font-size: 15px; font-weight: 650; line-height: 1.3; }
+.trail-card small { font-size: 14px; line-height: 1.35; color: var(--ink-2); }
+.trail-card.is-strength { border-color: #a9d3bb; background: #f2f9f5; }
+.trail-card.is-promise { border-color: #e9b9b4; background: #fdf3f1; }
+.trail-card.is-new { box-shadow: 0 0 0 3px var(--accent-light); }
+
+@keyframes here { 50% { box-shadow: 0 0 0 11px color-mix(in srgb, var(--accent) 8%, transparent); } }
+@media (prefers-reduced-motion: no-preference) {
+  .gpl-game:not(.reduce-motion) .trail-stop.is-here .trail-dot { animation: here 1.8s ease-in-out infinite; }
+  .gpl-game:not(.reduce-motion) .trail-pin { animation: rise 600ms var(--ease-out) both 250ms; }
+  .gpl-game:not(.reduce-motion) .trail-stop { animation: fade 500ms var(--ease-out) both; }
+  .gpl-game:not(.reduce-motion) .trail-card.is-new { animation: pop 600ms var(--ease-out) both 400ms; }
+  .gpl-game:not(.reduce-motion) .trail-next-stop, .gpl-game:not(.reduce-motion) .trail-hand { animation: rise 500ms var(--ease-out) both 150ms; }
+}
+
+@media (max-width: 1280px) {
+  .trail-standing { min-width: 250px; }
+}
+@media (max-width: 1100px) {
+  .trail-panels { grid-template-columns: 1fr; }
+  .trail-head { flex-wrap: wrap; }
+}
+/* Small screens and 200% zoom: the stages stack, each a short row of stops. */
+@media (max-width: 900px), (max-height: 560px) {
+  .trail { padding: 14px var(--gutter) 20px; }
+  .trail-board { padding: 14px; }
+  .trail-board::after { display: none; }
+  .trail-board-row, .trail-board-row.is-back { flex-direction: column; min-height: 0; gap: 10px; }
+  .is-back .trail-stops { flex-direction: row; }
+  .trail-stops { flex-wrap: wrap; justify-content: flex-start; gap: 12px 6px; }
+  .trail-stops::before { display: none; }
+  .trail-stop { flex: 0 0 92px; }
+  .trail-standing { min-width: 0; width: 100%; }
+}

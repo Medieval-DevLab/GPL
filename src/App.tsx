@@ -69,7 +69,13 @@ export default function App() {
     setSession(s => {
       const current = story.nodes[s.game.nodeId];
       const fromDebrief = current.kind === 'interlude' && current.role === 'chapter-debrief';
-      return { game: settle(advance(s.game, story), fromDebrief), presentation: { ...s.presentation, view: 'play' } };
+      const game = settle(advance(s.game, story), fromDebrief);
+      /* The trail (D-083): after every decision and every act, you come back to the map and see
+         the step you took before taking the next. Not before an act break, which is its own
+         look back, and not at the end. Presentation only; the engine never knows. */
+      const landed = story.nodes[game.nodeId];
+      const toMap = (s.game.phase === 'consequence' || fromDebrief) && game.phase !== 'ending' && !(landed.kind === 'interlude' && landed.role === 'chapter-debrief');
+      return { game, presentation: { ...s.presentation, view: toMap ? 'map' : 'play' } };
     });
   };
   const reset = () => {
@@ -83,7 +89,7 @@ export default function App() {
     onView={view => setSession(s => ({ ...s, presentation: { ...s.presentation, view } }))}
     onToggle={id => setSession(s => ({ ...s, game: toggleSelection(s.game, story, id) }))}
     onAdvantage={advantage => setSession(s => ({ ...s, presentation: { ...s.presentation, advantage } }))}
-    onSetup={() => setSession(s => s.presentation.advantage ? { game: chooseSetup(s.game, story, s.presentation.advantage), presentation: { ...s.presentation, view: 'play' } } : s)}
+    onSetup={() => setSession(s => s.presentation.advantage ? { game: chooseSetup(s.game, story, s.presentation.advantage), presentation: { ...s.presentation, view: 'map' } } : s)}
     onCommit={() => setSession(s => ({ ...s, game: commit(s.game, story) }))}
     onReflect={(nodeId, answer) => setSession(s => ({ ...s, presentation: { ...s.presentation, reflections: { ...s.presentation.reflections, [nodeId]: answer } } }))}
     onPlan={(key, value) => setSession(s => ({ ...s, presentation: { ...s.presentation, actionPlan: normaliseActionPlan({ ...s.presentation.actionPlan, [key]: value }) } }))}

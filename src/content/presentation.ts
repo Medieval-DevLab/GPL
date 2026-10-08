@@ -221,3 +221,61 @@ export function presentationForNode(nodeId: string): NodePresentation | undefine
 export function chapterPresentation(chapter: number): ChapterPresentation | undefined {
   return CHAPTER_PRESENTATION.find((item) => item.chapter === chapter);
 }
+
+/**
+ * The trail (D-083). Every decision and every turn is a named stop on the journey map, in the
+ * player's words: a verb and a thing, short enough to sit under a dot. The map, the top bar and
+ * the "next stop" card all read these, so a stop is called the same thing everywhere.
+ */
+export const MILESTONE: Readonly<Record<string, string>> = {
+  setup: "Your team’s strength",
+  m1: "Choose the client",
+  m2: "Research Orion",
+  m3: "Get the first meeting",
+  m4: "Decide how hard to chase",
+  "turn-rival": "A rival strikes",
+  m5: "Answer the rival",
+  m5b: "Spend the team’s fortnight",
+  m6: "Pick the problem to solve",
+  m6b: "Shape the offer",
+  m7: "Fill the proposal",
+  m7b: "Pass our own review",
+  m8: "Hold the price",
+  m9: "Fix the gap before signing",
+  m9a: "Win Orion’s scoring",
+  "turn-award": "Orion decides",
+  m9b: "Sign or walk away",
+  m10: "Month five slips",
+  m10b: "Fill two empty seats",
+  m10h: "Hand over the promises",
+  "turn-sarah": "Sarah resigns",
+  m10c: "Keep the work alive",
+};
+
+/**
+ * Side-by-side facts for a choice that is a comparison (D-083). The first decision is
+ * picking a client, and a newcomer can only pick well if the three are described on the same
+ * rows. Facts only: no row says which client is right; each one has a real upside.
+ */
+export const COMPARE: Readonly<Record<string, readonly { label: string; values: Readonly<Record<string, string>> }[]>> = {
+  m1: [
+    { label: "What they want", values: { "o-northwind": "A better experience for shoppers across 210 shops", "o-apex": "New systems for its factories", "o-meridian": "Better contact with patients at a small hospital group" } },
+    { label: "Size of the prize", values: { "o-northwind": "Large, and the budget is already set", "o-apex": "The largest of the three", "o-meridian": "The smallest today, and it could grow" } },
+    { label: "Have we done this before?", values: { "o-northwind": "Yes: similar work for other retailers", "o-apex": "No: it needs factory engineering", "o-meridian": "Not in healthcare" } },
+    { label: "Who we are up against", values: { "o-northwind": "Two firms already talking to them", "o-apex": "Specialists with factory clients", "o-meridian": "Few rivals" } },
+    { label: "How fast they decide", values: { "o-northwind": "This quarter", "o-apex": "A six-week bid", "o-meridian": "Months of approvals" } },
+  ],
+};
+
+/**
+ * The question under the whole story (D-083). Orion's brief is one vague line; what is really
+ * wrong (customers angry about what happens after they buy) is there to be found, and finding
+ * it is what makes the later choices make sense. The map keeps it open as a case file until
+ * the player holds one of the clues.
+ */
+export const MYSTERY = {
+  question: "What is really wrong at Orion?",
+  unknown: "Nobody knows yet. Orion’s brief says “improve the customer experience”. That could mean the shops, the website, or something nobody has looked at.",
+  solved: "Customers are not unhappy with the shops. They are angry about what happens after they buy: late deliveries, slow refunds and a helpline nobody answers.",
+  clues: ["knows:real_pain", "evidenced"],
+} as const;

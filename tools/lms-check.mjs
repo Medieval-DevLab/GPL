@@ -107,7 +107,13 @@ const click = async (name) => {
 
 await click("Begin your engagement");
 await page.waitForTimeout(200);
-/* Chapter 0: pick a starting advantage, then start. */
+/* Chapter 0: read the two introduction panels, pick a starting advantage, then start. */
+for (let i = 0; i < 6; i++) {
+  const next = page.locator('main [data-line-next]').first();
+  if (!(await next.count())) break;
+  await next.click();
+  await page.waitForTimeout(150);
+}
 const teams = page.locator('[data-phase="setup"] button[aria-pressed]');
 if ((await teams.count()) > 0) await teams.first().click();
 await page.waitForTimeout(120);

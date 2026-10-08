@@ -58,8 +58,6 @@
 .f-measure.down .f-measure-d { color: var(--fall); }
 
 /* A bar across the foot of a frame, for the screen's one decisive action */
-.f-bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 12px 14px 12px 22px; }
-.f-bar > p { font-size: 16px; color: var(--ink-2); }
 
 /* ── Motion: entrances only ── */
 @keyframes f-walk-l { 0% { opacity: 0; transform: translate(-110px, 0); } 35% { opacity: 1; transform: translate(-60px, -5px); } 65% { transform: translate(-20px, 0); } 85% { transform: translate(-5px, -2px); } 100% { transform: none; } }
@@ -116,39 +114,288 @@
   .gpl-game:not(.reduce-motion) .f-acts li { border-top-color: transparent; background: linear-gradient(var(--accent), var(--accent)) top left / 100% 4px no-repeat; }
 }
 
-/* ══ Team: the office, your team, three ways to be good ══════════════════ */
-.f-setup { --cards-top: 47%; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto; gap: 16px; }
-.f-setup-team { bottom: calc(100% - var(--cards-top) - 40px); }
-.f-setup-head { justify-self: start; max-width: min(560px, 44vw); padding: 22px 28px 20px; border-top: 5px solid var(--signal); }
-.f-setup-head .f-h1 { margin-top: 6px; }
-.f-setup-head .f-read { margin-top: 8px; font-size: 17px; }
-.f-setup-choice { grid-row: 3; display: grid; gap: 12px; }
-.f-setup-q { justify-self: start; padding: 6px 16px; border-radius: 999px; background: var(--sheet); font-size: 17px; font-weight: 700; box-shadow: var(--shadow-1); }
-.f-team-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: stretch; }
-.f-team-card { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 20px 22px 18px; border-radius: 16px; background: var(--sheet); border: 2px solid transparent; box-shadow: var(--sheet-shadow); text-align: left; transition: transform 260ms var(--ease-out), border-color 200ms, box-shadow 260ms; }
-.f-team-card:hover { transform: translateY(-4px); }
-.f-team-card:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
-.f-team-top { display: flex; align-items: center; gap: 12px; }
-.f-team-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; flex: none; }
-.f-team-icon svg { width: 24px; height: 24px; }
-.f-team-icon.icon-0 { color: var(--q-win); background: var(--q-win-tint); }
-.f-team-icon.icon-1 { color: var(--q-deliver); background: var(--q-deliver-tint); }
-.f-team-icon.icon-2 { color: var(--q-profit); background: var(--q-profit-tint); }
-.f-team-name { font-family: var(--font-serif); font-size: 28px; font-weight: 650; line-height: 1.1; }
-.f-team-desc { font-size: 17px; line-height: 1.45; }
-.f-team-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-.f-team-tags span { padding: 3px 10px; border-radius: 999px; background: var(--paper-2); font-size: 14px; font-weight: 650; }
-.f-team-trade { padding-top: 10px; border-top: 1px solid var(--line); font-size: 15px; line-height: 1.45; color: var(--ink-2); }
-.f-team-trade b { color: var(--ink); }
-.f-team-mark { margin-top: auto; display: grid; place-items: center; min-height: 42px; border-radius: 8px; border: 1.5px solid var(--line-strong); font-size: 15px; font-weight: 700; color: var(--ink); }
-.f-team-card.is-on { border-color: var(--accent); transform: translateY(-6px); }
-.f-team-card.is-on .f-team-mark { background: var(--accent); border-color: var(--accent); color: #fff; }
-.f-setup .f-bar { grid-row: 4; }
+/* ══ Before you start: the firm, how a deal works, your team's strength ════════
+   A console on paper, not a stage: a white step bar, a tinted desk, one bordered sheet
+   per panel divided by 1px rules, and an action bar that never moves. Colour means one of
+   two things here — an act (each colleague and stage wears the colour their act opens in)
+   or a bar (Win, Worth and Deliver keep their own colours everywhere). One sans family.
+   Motion answers an action only: the panel arrives from the side you moved to, the people
+   rise into their frames once, the see-saws tip. */
+.f-setup { --pad-x: clamp(20px, 2.3vw, 34px); --pad-y: clamp(12px, 2.4vh, 26px); flex: none; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: calc(100dvh - var(--hud-h)); min-height: 540px; background: var(--paper); }
+.f-setup-h1 { font-family: var(--font-ui); font-size: clamp(32px, 2.9vw, 46px); font-weight: 800; line-height: 1.04; letter-spacing: -0.03em; text-wrap: balance; }
+.f-setup-lede { margin-top: 8px; max-width: 54ch; font-size: clamp(17px, 1.25vw, 19px); line-height: 1.5; color: var(--ink-2); }
+
+/* The step bar: the firm on the left, three steps joined by a track that fills behind you */
+.f-setup-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 56px; padding: 6px var(--gutter); background: var(--card); border-bottom: 1px solid var(--line); }
+.f-firm { display: flex; align-items: center; gap: 12px; }
+.f-firm-logo { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; background: var(--ink); color: #fff; font-size: 19px; font-weight: 800; }
+.f-firm b { display: block; font-size: 17px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.15; }
+.f-firm small { display: block; font-size: 14px; color: var(--ink-3); line-height: 1.25; }
+.f-steps { display: flex; align-items: center; }
+.f-steps li { display: flex; align-items: center; }
+.f-steps li + li::before { content: ""; width: clamp(20px, 3.4vw, 56px); height: 3px; margin: 0 10px; border-radius: 2px; background: var(--line); }
+.f-steps li.is-done + li::before { background: var(--rise); }
+.f-step { display: inline-flex; align-items: center; gap: 9px; min-height: 38px; padding: 0 6px; border-radius: 8px; font-size: 15px; font-weight: 650; color: var(--ink-3); }
+.f-step .n { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line-strong); background: var(--card); font-size: 14px; font-weight: 800; }
+.f-step .n svg { width: 16px; height: 16px; stroke-width: 2.6; }
+.is-here .f-step { color: var(--ink); }
+.is-here .f-step .n { background: var(--accent); border-color: var(--accent); color: #fff; }
+.is-done .f-step { color: var(--ink); }
+.is-done .f-step .n { background: var(--rise); border-color: var(--rise); color: #fff; }
+button.f-step:hover .f-step-label { text-decoration: underline; text-underline-offset: 3px; }
+
+/* The desk and the sheet on it */
+.f-setup-desk { display: flex; flex-direction: column; min-height: 0; padding: clamp(10px, 2.2vh, 24px) var(--gutter); overflow: auto; }
+.f-sheet { flex: 1 0 auto; min-height: 0; background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-1); }
+.f-panel-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 6px 36px; padding: var(--pad-y) var(--pad-x) clamp(10px, 1.8vh, 18px); border-bottom: 1px solid var(--line); }
+.f-panel-top .f-setup-lede { max-width: 60ch; margin-top: 0; }
+.f-medal { display: inline-grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; }
+.f-medal svg { width: 19px; height: 19px; }
+.f-medal.is-profit, .f-medal.q-profit { color: var(--q-profit); background: var(--q-profit-tint); }
+.f-medal.is-deliver, .f-medal.q-deliver { color: var(--q-deliver); background: var(--q-deliver-tint); }
+.f-medal.q-win { color: var(--q-win); background: var(--q-win-tint); }
+.f-panel-h { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.25; }
+
+/* ── Panel 1: meet your firm ── */
+.f-meet { display: grid; grid-template-columns: minmax(380px, 1fr) minmax(0, 1.42fr); }
+.f-meet-intro { display: flex; flex-direction: column; padding: var(--pad-y) var(--pad-x); border-right: 1px solid var(--line); }
+.f-fact { margin-top: clamp(12px, 2.2vh, 22px); padding-top: clamp(12px, 2.2vh, 22px); border-top: 1px solid var(--line); }
+.f-fact-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.f-fact-h { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 800; letter-spacing: -0.01em; }
+.f-fact-p { margin-top: 8px; font-size: 16px; line-height: 1.5; color: var(--ink-2); }
+/* Win, work, keep: a chevron strip, read left to right, ending on the money we keep */
+.f-flow { display: flex; margin-top: 12px; }
+.f-flow li { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; min-height: 40px; padding: 6px 20px 6px 22px; background: var(--paper-2); font-size: 15px; font-weight: 700; line-height: 1.2; text-align: center; clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 50%, calc(100% - 13px) 100%, 0 100%, 13px 50%); }
+.f-flow li + li { margin-left: -7px; }
+.f-flow li:first-child { padding-left: 14px; border-radius: 8px 0 0 8px; clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 50%, calc(100% - 13px) 100%, 0 100%); }
+.f-flow li:last-child { padding-right: 14px; border-radius: 0 8px 8px 0; background: var(--rise); color: #fff; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 13px 50%); }
+.f-fee { margin-top: 12px; }
+.f-fee-label { font-size: 14px; font-weight: 650; color: var(--ink-3); }
+.f-fee-bar { display: grid; grid-template-columns: 64fr 36fr; margin-top: 4px; height: 34px; border-radius: 8px; overflow: hidden; font-size: 14px; font-weight: 700; }
+.f-fee-bar span { display: flex; align-items: center; padding: 0 12px; white-space: nowrap; overflow: hidden; }
+.f-fee-bar .is-people { background: var(--paper-2); color: var(--ink); }
+.f-fee-bar .is-keep { background: var(--rise); color: #fff; }
+.f-six { display: flex; gap: 4px; }
+.f-six li { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--q-deliver-tint); color: var(--q-deliver); }
+.f-six svg { width: 17px; height: 17px; }
+/* The stakes, said once, where the firm is introduced */
+.f-catch { display: flex; align-items: flex-start; gap: 12px; margin-top: auto; padding: 12px 14px; border-radius: 10px; background: color-mix(in srgb, var(--fall) 7%, #fff); border: 1px solid color-mix(in srgb, var(--fall) 22%, #fff); }
+.f-meet-intro > section:last-of-type { margin-bottom: 14px; }
+.f-catch-mark { display: grid; place-items: center; flex: none; width: 26px; height: 26px; margin-top: 1px; border-radius: 50%; background: var(--fall); color: #fff; font-size: 15px; font-weight: 800; }
+.f-catch p { font-size: 16px; line-height: 1.45; color: var(--ink); }
+.f-catch b { font-weight: 800; color: var(--fall); }
+
+.f-meet-people { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.f-people-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; padding: clamp(12px, 2vh, 20px) var(--pad-x) clamp(10px, 1.6vh, 14px); border-bottom: 1px solid var(--line); }
+.f-people-head h2 { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
+.f-people-head p { font-size: 15px; color: var(--ink-3); }
+/* One row for the photographs and one for the words, shared, so every name sits on one line */
+.f-people { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: minmax(150px, 1fr) auto; min-height: 0; }
+.f-person { grid-row: span 2; display: grid; grid-template-rows: subgrid; min-height: 0; }
+.f-person + .f-person { border-left: 1px solid var(--line); }
+.f-person-photo { position: relative; isolation: isolate; overflow: hidden; background: radial-gradient(130% 85% at 50% 105%, color-mix(in srgb, var(--accent) 22%, var(--accent-tint)) 0%, var(--accent-tint) 55%, color-mix(in srgb, var(--accent-tint) 45%, #fff) 100%); }
+.f-person-photo .cutout { filter: drop-shadow(0 12px 18px rgba(22, 24, 28, 0.2)); }
+.f-person-act { position: absolute; z-index: 1; top: 12px; left: 12px; padding: 3px 10px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.f-person-text { padding: 12px 16px clamp(12px, 2vh, 18px); border-top: 4px solid var(--accent); }
+.f-person h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; }
+.f-person-role { margin-top: 2px; font-size: 14px; font-weight: 650; color: var(--accent); }
+.f-person-line { margin-top: 6px; font-size: 16px; line-height: 1.45; color: var(--ink); }
+
+/* ── Panel 2: how a deal works ── */
+.f-deal { display: grid; grid-template-rows: auto auto minmax(0, 1fr); }
+.f-stages { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0 20px; padding: clamp(12px, 2.2vh, 22px) var(--pad-x) clamp(12px, 2.4vh, 24px); }
+.f-stages li { position: relative; display: flex; flex-direction: column; gap: 3px; }
+.f-stages li:not(:last-child)::after { content: ""; position: absolute; top: 16px; left: 46px; right: -14px; height: 4px; border-radius: 2px; background: var(--accent); }
+.f-stage-n { display: grid; place-items: center; width: 36px; height: 36px; margin-bottom: 6px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 17px; font-weight: 800; }
+.f-stage-act { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 14px; font-weight: 700; color: var(--accent); }
+.f-stage-act .portrait { width: 26px; height: 26px; }
+.f-stage-name { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; }
+.f-stage-line { font-size: 15px; line-height: 1.45; color: var(--ink-2); }
+.f-deal-low { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); min-height: 0; border-top: 1px solid var(--line); }
+.f-bars, .f-trade { min-height: 0; padding: clamp(12px, 2.2vh, 22px) var(--pad-x); }
+.f-trade { border-left: 1px solid var(--line); }
+.f-panel-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; }
+.f-panel-head p { font-size: 15px; color: var(--ink-3); }
+.f-bars ul { display: grid; gap: clamp(8px, 1.6vh, 14px); margin-top: clamp(10px, 1.8vh, 16px); }
+.f-bar-row { display: grid; grid-template-columns: 34px 66px minmax(0, 1fr); align-items: center; gap: 0 12px; }
+.f-bar-row .f-mark, .f-bar-row .f-bar-name { grid-row: 1 / 3; }
+.f-bar-name { font-size: 17px; font-weight: 800; }
+.f-bar-row.q-win .f-bar-name { color: var(--q-win); }
+.f-bar-row.q-profit .f-bar-name { color: var(--q-profit); }
+.f-bar-row.q-deliver .f-bar-name { color: var(--q-deliver); }
+.f-bar-row p { grid-column: 3; font-size: 16px; line-height: 1.45; }
+.f-bar-row .f-bar-eg { font-size: 15px; color: var(--ink-2); }
+.f-seesaws { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: clamp(10px, 1.8vh, 16px); }
+.f-seesaw { display: flex; flex-direction: column; padding: 12px 14px 14px; border-radius: 10px; background: var(--paper); border: 1px solid var(--line); }
+.f-seesaw figcaption { margin-bottom: 4px; font-size: 17px; font-weight: 800; letter-spacing: -0.01em; }
+/* The see-saw: the rising bar's weight on the high end, the falling one on the low end. The
+   beam tilts; the words on it stay level. */
+.f-rig { --tilt: 9deg; position: relative; align-self: center; width: min(100%, 330px); height: 100px; }
+.f-rig::after { content: ""; position: absolute; left: 30%; right: 30%; bottom: 0; height: 3px; border-radius: 2px; background: var(--line-strong); }
+.f-beam { position: absolute; left: 0; right: 0; top: 62px; height: 6px; border-radius: 3px; background: var(--ink); rotate: var(--tilt); }
+.f-pivot { position: absolute; left: 50%; top: 65px; translate: -50% 0; width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-bottom: 32px solid var(--ink-2); }
+.f-weight { position: absolute; bottom: 18px; display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 5px; border-radius: 999px; background: var(--card); border: 2px solid currentColor; font-size: 15px; font-weight: 800; white-space: nowrap; rotate: calc(-1 * var(--tilt)); transform-origin: 50% 100%; }
+.f-weight::after { content: ""; position: absolute; left: 50%; top: 100%; width: 2px; height: 14px; translate: -50% 0; background: currentColor; }
+.f-weight svg { width: 18px; height: 18px; }
+.f-weight i { font-style: normal; font-size: 14px; }
+.f-weight.is-up { left: 6px; }
+.f-weight.is-down { right: 6px; }
+.f-weight.q-win { color: var(--q-win); }
+.f-weight.q-profit { color: var(--q-profit); }
+.f-weight.q-deliver { color: var(--q-deliver); }
+.f-seesaw-line { margin-top: 8px; font-size: 15px; line-height: 1.45; color: var(--ink-2); }
+.f-trade-close { margin-top: clamp(10px, 1.8vh, 16px); padding: 10px 14px; border-left: 4px solid var(--accent); background: var(--accent-tint); border-radius: 0 8px 8px 0; font-size: 16px; font-weight: 650; line-height: 1.45; }
+
+/* ── Panel 3: your team's strength. Three columns, rows aligned across them ── */
+.f-strength { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.f-teams { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto auto auto auto minmax(0, 1fr); }
+.f-team { position: relative; grid-row: 1 / -1; display: grid; grid-template-rows: subgrid; row-gap: clamp(8px, 1.4vh, 14px); padding: clamp(12px, 2vh, 20px) var(--pad-x); cursor: pointer; transition: background-color 200ms; }
+.f-team + .f-team { border-left: 1px solid var(--line); }
+.f-team:hover { background: color-mix(in srgb, var(--accent-tint) 30%, #fff); }
+.f-team.is-on { background: color-mix(in srgb, var(--accent-tint) 55%, #fff); box-shadow: inset 0 0 0 2px var(--accent); }
+.f-team-head { display: flex; align-items: center; gap: 12px; }
+.f-team-head .f-medal { width: 46px; height: 46px; border-radius: 12px; }
+.f-team-head .f-medal svg { width: 26px; height: 26px; }
+.f-team-head h2 { font-size: clamp(22px, 1.8vw, 27px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+.f-key { margin-left: auto; display: grid; place-items: center; min-width: 28px; height: 28px; padding: 0 7px; border-radius: 6px; border: 1px solid var(--line-strong); border-bottom-width: 3px; background: var(--card); font: 700 14px var(--font-ui); color: var(--ink-3); }
+.f-row-label { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 14px; font-weight: 700; color: var(--ink-2); }
+.f-row-label svg { width: 17px; height: 17px; flex: none; }
+.f-row-label.is-good svg { color: var(--accent); }
+.f-row-label.is-raises svg { color: var(--q-deliver); }
+.f-row-label.is-later svg { color: var(--rise); stroke-width: 2.4; }
+.f-row-label.is-short svg { color: var(--fall); stroke-width: 2.2; }
+.f-team-row.is-inline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; padding: 7px 12px; border-radius: 10px; background: var(--paper); }
+.f-team-row.is-inline .f-row-label { margin: 0; }
+.f-team-desc { font-size: 16px; line-height: 1.45; }
+.f-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.f-tags span { padding: 2px 10px; border-radius: 999px; background: var(--paper-2); font-size: 14px; font-weight: 650; }
+.f-raise { display: flex; gap: 14px; }
+.f-raise > span { display: inline-flex; align-items: center; gap: 8px; }
+.f-raise .f-mark { width: 30px; height: 30px; }
+.f-raise .f-mark svg { width: 17px; height: 17px; }
+.f-raise b { font-size: 16px; font-weight: 750; }
+.f-raise strong { font-size: 26px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.f-raise .q-win strong { color: var(--q-win); }
+.f-raise .q-profit strong { color: var(--q-profit); }
+.f-raise .q-deliver strong { color: var(--q-deliver); }
+.f-later { display: grid; gap: 8px; }
+.f-later li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 10px; font-size: 15px; line-height: 1.45; }
+.f-act-pill { padding: 1px 8px; border-radius: 6px; background: var(--accent-tint); color: var(--accent); font-size: 14px; font-weight: 800; white-space: nowrap; }
+.f-team-short { font-size: 15px; line-height: 1.45; color: var(--ink-2); }
+.f-team-pick { align-self: end; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; padding: 0 14px; border-radius: 8px; border: 1.5px solid var(--accent); background: var(--card); color: var(--accent); font-size: 16px; font-weight: 750; transition: background-color 160ms, color 160ms; }
+.f-team-pick:hover { background: var(--accent-tint); }
+.f-team-pick svg { width: 19px; height: 19px; stroke-width: 2.6; }
+.f-team.is-on .f-team-pick { background: var(--accent); color: #fff; }
+
+/* The action bar: never moves, always says what the next press does */
+.f-setup-bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 72px; padding: 10px var(--gutter); background: var(--card); border-top: 1px solid var(--line); }
+.f-setup-bar > p { max-width: 62ch; font-size: 16px; line-height: 1.45; color: var(--ink-2); }
+.f-setup-actions { display: flex; align-items: center; gap: 12px; flex: none; }
+.f-setup .primary { min-height: 50px; padding: 0 26px; }
+/* Not yet available reads as the same button waiting, never as a broken grey one. */
+.f-setup .primary:disabled { background: var(--accent-tint); border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--accent-tint)); color: color-mix(in srgb, var(--accent) 70%, var(--accent-tint)); }
+.f-setup .secondary { min-height: 50px; padding: 0 18px; }
+
+@keyframes f-panel-in { from { opacity: 0; transform: translateX(28px); } }
+@keyframes f-panel-back { from { opacity: 0; transform: translateX(-28px); } }
+@keyframes f-tip { from { rotate: 0deg; } 70% { rotate: calc(var(--tilt) * 1.25); } }
+@keyframes f-tip-level { from { rotate: 0deg; } 70% { rotate: calc(-1.25 * var(--tilt)); } }
 @media (prefers-reduced-motion: no-preference) {
-  .gpl-game:not(.reduce-motion) .f-setup-head { animation: f-arrive 700ms var(--ease-out) both 100ms; }
-  .gpl-game:not(.reduce-motion) .f-setup-q { animation: pop 420ms var(--ease-out) both 650ms; }
-  .gpl-game:not(.reduce-motion) .f-team-card { animation: deal 640ms var(--ease-out) both; animation-delay: calc(760ms + var(--i, 0) * 110ms); }
-  .gpl-game:not(.reduce-motion) .f-team-card.is-on .f-team-mark { animation: pop 380ms var(--ease-out); }
+  .gpl-game:not(.reduce-motion) .f-setup-desk > .f-sheet { animation: f-panel-in 420ms var(--ease-out) both; }
+  .gpl-game:not(.reduce-motion) .f-setup-desk.is-back > .f-sheet { animation-name: f-panel-back; }
+  .gpl-game:not(.reduce-motion) .f-beam { animation: f-tip 1100ms cubic-bezier(0.3, 1.2, 0.4, 1) both; animation-delay: calc(450ms + var(--i, 0) * 260ms); }
+  .gpl-game:not(.reduce-motion) .f-weight { animation: f-tip-level 1100ms cubic-bezier(0.3, 1.2, 0.4, 1) both; animation-delay: calc(450ms + var(--i, 0) * 260ms); }
+  .gpl-game:not(.reduce-motion) .f-team.is-on .f-team-pick { animation: pop 360ms var(--ease-out); }
+}
+
+/* Laptops: the same console, tighter. Nothing drops below 14px. */
+@media (max-height: 820px) and (min-width: 761px) {
+  .f-setup { --pad-y: 12px; }
+  .f-setup-top { min-height: 46px; padding-top: 4px; padding-bottom: 4px; }
+  .f-firm-logo { width: 32px; height: 32px; font-size: 17px; }
+  .f-setup-desk { padding-top: 10px; padding-bottom: 10px; }
+  .f-setup-h1 { font-size: clamp(28px, 2.5vw, 36px); }
+  .f-setup-lede { font-size: 16px; margin-top: 4px; }
+  .f-panel-top { padding-bottom: 10px; }
+  .f-panel-top .f-setup-lede { margin-top: 0; }
+  .f-fact { margin-top: 12px; padding-top: 12px; }
+  .f-fact-p, .f-person-line, .f-team-desc, .f-bar-row p, .f-catch p { font-size: 15px; }
+  .f-catch { padding: 8px 12px; }
+  .f-flow { margin-top: 10px; }
+  .f-flow li { min-height: 36px; font-size: 14px; }
+  .f-fee { margin-top: 10px; }
+  .f-fee-bar { height: 30px; }
+  .f-person-text { padding: 10px 14px 12px; }
+  .f-person h3 { font-size: 17px; }
+  .f-stages { padding-top: 10px; padding-bottom: 12px; }
+  .f-stage-n { width: 32px; height: 32px; margin-bottom: 4px; font-size: 15px; }
+  .f-stages li:not(:last-child)::after { top: 14px; left: 42px; }
+  .f-stage-name { font-size: 17px; }
+  .f-stage-line, .f-seesaw-line, .f-later li, .f-team-short, .f-bar-row .f-bar-eg { font-size: 14.5px; }
+  .f-bars, .f-trade { padding-top: 10px; padding-bottom: 12px; }
+  .f-bars ul, .f-seesaws { margin-top: 8px; }
+  .f-panel-h, .f-people-head h2 { font-size: 17px; }
+  .f-rig { height: 86px; --tilt: 8deg; }
+  .f-beam { top: 52px; }
+  .f-pivot { top: 55px; border-bottom-width: 28px; }
+  .f-seesaw { padding: 8px 12px 10px; }
+  .f-seesaw-line { margin-top: 4px; }
+  .f-trade-close { margin-top: 10px; font-size: 15px; padding: 7px 12px; }
+  .f-team { row-gap: 8px; }
+  .f-team-head .f-medal { width: 38px; height: 38px; }
+  .f-team-head .f-medal svg { width: 21px; height: 21px; }
+  .f-row-label { margin-bottom: 2px; }
+  .f-tags { display: none; }
+  .f-team-row.is-inline { padding: 4px 10px; }
+  .f-raise .f-mark { width: 26px; height: 26px; }
+  .f-raise strong { font-size: 22px; }
+  .f-later { gap: 6px; }
+  .f-team-pick { min-height: 42px; }
+  .f-setup-bar { min-height: 60px; padding-top: 6px; padding-bottom: 6px; }
+  .f-setup .primary, .f-setup .secondary { min-height: 46px; }
+}
+@media (max-width: 1180px) and (min-width: 761px) {
+  .f-meet { grid-template-columns: minmax(340px, 1fr) minmax(0, 1.2fr); }
+  .f-people { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: minmax(120px, 1fr) auto minmax(120px, 1fr) auto; }
+  .f-person:nth-child(3) { border-left: 0; }
+  .f-person:nth-child(n + 3) { border-top: 1px solid var(--line); }
+  .f-steps .is-ahead .f-step-label, .f-steps .is-done .f-step-label { display: none; }
+}
+
+/* One column: phones, and 200% zoom (720×450). Reading order never changes; the page scrolls
+   and the action bar stays in reach at the foot of the screen. */
+@media (max-width: 760px) {
+  .f-setup { display: flex; flex-direction: column; height: auto; min-height: calc(100dvh - var(--hud-h)); }
+  .f-setup-top { gap: 12px; padding: 6px 14px; }
+  .f-firm small { display: none; }
+  .f-steps .is-ahead .f-step-label, .f-steps .is-done .f-step-label { display: none; }
+  .f-steps li + li::before { width: 14px; margin: 0 4px; }
+  .f-setup-desk { flex: 1; padding: 12px 14px; overflow: visible; }
+  .f-sheet { flex: none; }
+  .f-meet, .f-deal-low, .f-seesaws { display: flex; flex-direction: column; }
+  .f-meet-intro { border-right: 0; border-bottom: 1px solid var(--line); }
+  .f-people { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: 230px auto 230px auto; }
+  .f-person:nth-child(3) { border-left: 0; }
+  .f-person:nth-child(n + 3) { border-top: 1px solid var(--line); }
+  .f-person .f-fig { position: absolute; inset: 0; display: block; }
+  .f-stages { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .f-stages li { display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 12px; row-gap: 2px; }
+  .f-stage-n { grid-row: 1 / 4; margin: 0; }
+  .f-stages li:not(:last-child)::after { top: 40px; bottom: -14px; left: 16px; right: auto; width: 4px; height: auto; }
+  .f-trade { border-left: 0; border-top: 1px solid var(--line); }
+  .f-teams { display: flex; flex-direction: column; }
+  .f-team { display: flex; flex-direction: column; gap: 12px; }
+  .f-team + .f-team { border-left: 0; border-top: 1px solid var(--line); }
+  .f-setup-bar { position: sticky; bottom: 0; z-index: 5; min-height: 0; padding: 8px 14px; gap: 12px; box-shadow: 0 -10px 24px -18px rgba(22, 24, 28, 0.4); }
+  .f-setup-bar > p { font-size: 15px; }
+  .f-setup .primary { padding: 0 16px; }
+}
+@media (max-width: 520px) {
+  .f-setup-bar { flex-direction: column; align-items: stretch; }
+  .f-setup-actions .primary { flex: 1; justify-content: center; }
+  .f-people { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .f-person { grid-row: auto; grid-template-rows: 260px auto; }
+  .f-person + .f-person { border-left: 0; border-top: 1px solid var(--line); }
 }
 
 /* ══ An act opens: the colour floods in, the guide walks in and speaks ══════ */
@@ -294,39 +541,7 @@
 }
 
 /* ══ Journey: five acts as a route ═════════════════════════════════════════ */
-.f-journey { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 20px; }
-.f-journey-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 28px; padding: 22px 28px; border-top: 5px solid var(--signal); }
-.f-journey-head .f-h1 { margin-top: 4px; }
-.f-journey-q { margin-top: 8px; font-family: var(--font-serif); font-size: clamp(19px, 1.5vw, 22px); line-height: 1.4; max-width: 44em; }
-.f-journey-count { display: grid; justify-items: end; font-size: 15px; color: var(--ink-2); white-space: nowrap; }
-.f-journey-count b { font-family: var(--font-serif); font-size: 52px; line-height: 1; color: var(--ink); }
-.f-route { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; align-content: start; padding-top: 34px; }
-.f-route::before { content: ""; position: absolute; top: 15px; left: 10%; right: 10%; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.35); }
-.f-route::after { content: ""; position: absolute; top: 15px; left: 10%; width: calc((var(--reached, 1) - 1) * 20%); height: 4px; border-radius: 2px; background: #fff; }
-.f-stop { position: relative; display: flex; flex-direction: column; }
-.f-stop-dot { position: absolute; top: -34px; left: 50%; translate: -50% 0; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 15px; font-weight: 700; border: 3px solid #fff; z-index: 1; }
-.f-stop.is-ahead .f-stop-dot { background: #6a6e76; }
-.f-stop-card { flex: 1; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; background: var(--sheet); box-shadow: var(--sheet-shadow); border-top: 5px solid var(--accent); }
-.f-stop-card img { width: 100%; aspect-ratio: 16 / 8; object-fit: cover; }
-.f-stop.is-ahead .f-stop-card img { filter: grayscale(1) brightness(1.05); }
-.f-stop.is-ahead .f-stop-card { border-top-color: #8a8e96; }
-.f-stop-body { flex: 1; display: flex; flex-direction: column; gap: 6px; padding: 14px 16px 16px; }
-.f-stop-status { font-size: 14px; font-weight: 700; color: var(--accent); }
-.f-stop.is-ahead .f-stop-status { color: var(--ink-3); }
-.f-stop h2 { font-family: var(--font-serif); font-size: 22px; font-weight: 600; line-height: 1.15; }
-.f-stop-q { font-size: 15px; line-height: 1.45; color: var(--ink-2); }
-.f-stop-guide { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 6px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
-.f-stop-guide .portrait.sm { width: 30px; height: 30px; }
-.f-stop-ticks { display: flex; gap: 4px; }
-.f-stop-ticks i { flex: 1; max-width: 26px; height: 6px; border-radius: 3px; background: var(--paper-2); }
-.f-stop-ticks i.on { background: var(--accent); }
-.f-stop .secondary { margin-top: 4px; justify-content: center; }
-.f-stop.is-current .f-stop-card { outline: 3px solid #fff; outline-offset: 0; box-shadow: 0 0 0 7px var(--accent), var(--sheet-shadow); }
 @media (prefers-reduced-motion: no-preference) {
-  .gpl-game:not(.reduce-motion) .f-journey-head { animation: f-arrive 600ms var(--ease-out) both 80ms; }
-  .gpl-game:not(.reduce-motion) .f-route::after { animation: f-grow-x 1100ms var(--ease-out) both 500ms; transform-origin: left; }
-  .gpl-game:not(.reduce-motion) .f-stop { animation: deal 640ms var(--ease-out) both; animation-delay: calc(200ms + var(--i, 0) * 110ms); }
-  .gpl-game:not(.reduce-motion) .f-stop.is-current .f-stop-dot { animation: f-ring 1200ms ease-out 1100ms 2; }
 }
 
 /* ══ Ending: a cover, then the report ═════════════════════════════════════ */
@@ -416,8 +631,6 @@
   .f-chain { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .is-mail, .is-memo { grid-template-columns: minmax(0, 1fr) minmax(240px, 0.7fr); }
   .f-turn { grid-template-columns: minmax(0, 1fr); padding-bottom: 260px; }
-  .f-route { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 50px; }
-  .f-route::before, .f-route::after { display: none; }
 }
 
 /* ══ One column: phones, and 200% zoom (720×450). Reading order never changes. ══ */
@@ -426,13 +639,13 @@
   .f-cast, .f-fig { position: relative; inset: auto; }
   .f-cast { display: block; height: 240px; margin: -16px -16px 0; overflow: hidden; }
   .f-cast .f-fig, .fs > .f-fig { display: none; }
-  .f-title, .f-setup, .f-break, .f-turn, .is-mail, .is-memo, .f-journey { display: flex; flex-direction: column; gap: 14px; padding-bottom: 16px; }
-  .f-title-card, .f-setup-head, .f-verdict { max-width: none; margin-bottom: 0; }
+  .f-title, .f-break, .f-turn, .is-mail, .is-memo { display: flex; flex-direction: column; gap: 14px; padding-bottom: 16px; }
+  .f-title-card, .f-verdict { max-width: none; margin-bottom: 0; }
   .f-counter { margin: 0; grid-template-columns: 1fr; border-radius: 16px; padding: 18px; }
-  .f-three ul, .f-acts ol, .f-team-cards, .f-chain, .f-answers, .f-route, .f-paper-body, .f-thread { grid-template-columns: minmax(0, 1fr); }
+  .f-three ul, .f-acts ol, .f-chain, .f-answers, .f-paper-body, .f-thread { grid-template-columns: minmax(0, 1fr); }
   .f-acts ol { gap: 8px; }
   .f-acts li { grid-template-columns: auto 1fr; padding-top: 6px; }
-  .f-filed + .f-filed::before, .f-filed + .f-filed::after, .f-talk::before, .f-route::before, .f-route::after, .f-thread-link { display: none; }
+  .f-filed + .f-filed::before, .f-filed + .f-filed::after, .f-talk::before, .f-thread-link { display: none; }
   .f-break-head { padding-right: 26px; }
   .f-stamp { position: static; translate: none; width: auto; height: auto; justify-self: start; margin-top: 10px; padding: 6px 14px; border-radius: 999px; box-shadow: none; display: inline-flex; gap: 8px; font-size: 18px; }
   .f-stamp small { margin: 0; }
@@ -452,12 +665,6 @@
   .f-phone { width: min(280px, 100%); aspect-ratio: auto; }
   .f-phone-screen { padding-top: 24px; }
   .f-memo { width: 100%; }
-  .f-journey-head { flex-direction: column; align-items: flex-start; }
-  .f-journey-count { justify-items: start; }
-  .f-stop-dot { display: none; }
-  .f-route { padding-top: 0; }
-  .f-bar { flex-direction: column; align-items: stretch; }
-  .f-bar .primary, .f-next .primary, .f-endbar .primary { justify-content: space-between; }
   .f-cover { display: flex; flex-direction: column; min-height: 0; }
   .f-endbar { position: static; flex-direction: column-reverse; align-items: stretch; }
   .f-plan-field { grid-template-columns: minmax(0, 1fr); }

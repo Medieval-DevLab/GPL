@@ -41,8 +41,11 @@ const key = s => [s.screen, s.node, s.phase].join(':');
 async function drain(page, keyboard) {
   for (let i = 0; i < 60; i++) {
     const next = page.locator('main [data-line-next]').first();
-    if (!(await next.count())) return;
+    /* A view transition swaps the card for the first line a frame later; an empty frame is
+       not the end of the lines. Look again before deciding they are over. */
+    if (!(await next.count())) { await page.waitForTimeout(350); if (!(await next.count())) return; }
     if (keyboard) { await next.focus(); await page.keyboard.press('Enter'); } else await next.click();
+    await page.waitForTimeout(40);
   }
   throw new Error('Lines never ended');
 }
@@ -85,6 +88,7 @@ async function run(viewport, policy) {
   for (let step = 0; step < 150; step++) {
     const current = await read(page); const currentKey = key(current);
     seen.push(currentKey);
+    if (process.env.GPL_TRACE) console.log('step', step, currentKey);
     await verify(page, current, prefix + '-' + String(step).padStart(2, '0') + '-' + current.node + '-' + current.screen, viewport.width === 1440 && viewport.height === 900 && policy === 'first');
     if (current.phase === 'ending' && current.screen !== 'journey') {
       const count = await page.locator('.ending-hero').innerText();
@@ -129,7 +133,8 @@ async function run(viewport, policy) {
       const options = page.locator('main [data-choice]');
       const option = options.nth(policy === 'last' ? (await options.count()) - 1 : policy === 'middle' ? 1 : 0);
       if (keyboard) { await option.focus(); await page.keyboard.press('Space'); } else await option.click();
-    } else if (current.phase === 'decide') {
+    } else if (current.phase === 'decide' && current.screen !== 'journey') {
+      /* The trail (D-083) sits on the next decision's node; it is a stop, not the decision. */
       const choices = page.locator('main [data-choice]:not(:disabled)');
       const count = await choices.count();
       const indexes = Array.from({ length: count }, (_, i) => i);
@@ -183,7 +188,12 @@ async function run(viewport, policy) {
       await page.screenshot({ path: path.join(output, prefix + '-failure.png'), fullPage: true });
       throw error;
     });
-    await page.waitForFunction(previous => { const el = document.querySelector('.gpl-game'); return [el.dataset.screen, el.dataset.node, el.dataset.phase].join(':') !== previous; }, currentKey);
+    await page.waitForFunction(previous => { const el = document.querySelector('.gpl-game'); return [el.dataset.screen, el.dataset.node, el.dataset.phase].join(':') !== previous; }, currentKey).catch(async error => {
+      /* Say where it stuck, with a picture: a bare timeout cost an hour once. */
+      console.error('No progress from', currentKey, 'at', prefix, 'step', step);
+      await page.screenshot({ path: path.join(output, prefix + '-stuck.png'), fullPage: true });
+      throw error;
+    });
     if (step === 149) throw new Error('No ending after 150 actions: ' + prefix);
   }
   assert.deepEqual(errors, [], prefix + ' browser errors');
@@ -229,12 +239,15 @@ async function utilities() {
   const offline = await denied.newPage(); await offline.goto(url); await waitForState(offline);
   await offline.getByRole('button', { name: /^Begin your engagement/ }).click();
   assert(await offline.locator('.save-warning').count(), 'Storage denial was hidden');
+  /* The team choice is the setup's last panel; the two before it advance like spoken lines. */
+  await drain(offline);
   await offline.locator('[data-choice]').first().click();
   await offline.locator('main [data-action=primary]').click();
   /* Without reduced motion the change runs through a view transition, which applies the new
      screen a frame later. Wait for it rather than reading the DOM in the same tick. */
-  await offline.waitForFunction(() => document.querySelector('.gpl-game')?.dataset.screen === 'chapter-open', null, { timeout: 5000 }).catch(() => {});
-  assert.equal((await read(offline)).screen, 'chapter-open', 'Storage denial blocked play');
+  /* Setup lands on the journey map first (D-083). */
+  await offline.waitForFunction(() => document.querySelector('.gpl-game')?.dataset.screen === 'journey', null, { timeout: 5000 }).catch(() => {});
+  assert.equal((await read(offline)).screen, 'journey', 'Storage denial blocked play');
   report.utilities.push('Unavailable storage visibly warned; game remains playable');
   await denied.close();
   const noImages = await browser.newContext({ viewport: { width: 1440, height: 900 } });
@@ -242,10 +255,11 @@ async function utilities() {
   const fallback = await noImages.newPage(); await fallback.goto(url); await waitForState(fallback);
   assert(await fallback.getByRole('heading', { name: 'Every promise has a future.' }).isVisible());
   await fallback.getByRole('button', { name: /^Begin your engagement/ }).click();
+  await drain(fallback);
   await fallback.locator('[data-choice]').first().click();
   await fallback.locator('main [data-action=primary]').click();
-  await fallback.waitForFunction(() => document.querySelector('.gpl-game')?.dataset.screen === 'chapter-open', null, { timeout: 5000 }).catch(() => {});
-  assert.equal((await read(fallback)).screen, 'chapter-open');
+  await fallback.waitForFunction(() => document.querySelector('.gpl-game')?.dataset.screen === 'journey', null, { timeout: 5000 }).catch(() => {});
+  assert.equal((await read(fallback)).screen, 'journey');
   report.utilities.push('Image-failure fallback keeps live text and controls usable');
   await noImages.close();
 }

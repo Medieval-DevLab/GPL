@@ -67,7 +67,7 @@ const PRIYA: Advisor = {
   name: "Priya Sharma",
   role: "Client Growth Lead",
   photo: "portrait-priya",
-  quote: "Three names on the table, one team. We don't get to chase all of them.",
+  quote: "Three names on the table, one team. We don’t get to chase all of them.",
 };
 
 const RIYA: Advisor = {
@@ -81,7 +81,7 @@ const ARJUN: Advisor = {
   name: "Arjun Mehta",
   role: "Solutions Director",
   photo: "portrait-arjun",
-  quote: "Whatever we write down, somebody has to build. I'd rather promise less and mean it.",
+  quote: "Whatever we write down, somebody has to build. I’drather promise less and mean it.",
 };
 
 const RIYA_DEAL: Advisor = {
@@ -98,7 +98,7 @@ const AISHA: Advisor = {
   quote: "My team inherits every sentence in that proposal. Which ones did you mean?",
 };
 
-/* The client-side speakers, written once. Four hand-copied copies of Sarah's had already
+/* The client-side speakers, written once. Four hand-copied copies of Sarah’s had already
    accumulated in the file; none had drifted yet, which is luck rather than a system. */
 /* Roles without ", Orion Retail". There is exactly one client in this game and it is
    named on the same screen; the suffix cost a whole extra line in a 186px column. */
@@ -141,7 +141,7 @@ const nodes: GameNode[] = [
       "You lead six people at a consultancy, a firm that companies pay to fix their problems. Your job is to win a client and make sure your team can do what you promised.",
       "Every team is strong at one thing and short of another. Pick what yours is good at. It stays true until the last month.",
     ],
-    question: "What is your team's strength?",
+    question: "What is your team’s strength?",
     options: [
       {
         id: "s-connector",
@@ -227,24 +227,24 @@ const nodes: GameNode[] = [
     advisorLine: [
       {
         when: { all: ["start:challenger"] },
-        text: "You read markets. Read these three and tell me which one we could actually take.",
+        text: "You know this market. For each of the three, tell me what it costs us if we chase it and lose.",
       },
       {
         when: { all: ["start:connector"] },
-        text: "People take your call, which gets us a meeting. It does not tell us whose.",
+        text: "People take your call, so we can get a meeting almost anywhere. Which of these meetings is worth having?",
       },
       /* A question, like the other two. This one read "Find the one where that is the
          whole argument", so of the three starting strengths the Builders were the one
          being told what to pick. */
-      { text: "You have delivered work like this. Which of the three would let that be the whole argument?" },
+      { text: "Your team can show past results. For each company, ask what they would need to see before trusting us." },
     ],
     advisor: PRIYA,
     consider: [
-      "Which needs something we can already prove?",
-      "What would Apex need to see to shortlist us?",
-      "What does being wrong cost us?",
+      "How long might each company take to say yes or no?",
+      "What would Apex need to see before taking us seriously?",
+      "If we chase the wrong one, what does that cost us?",
     ],
-    tip: "I put Meridian forward last year and it never closed. I would still take it.",
+    tip: "I put Meridian forward last year and they never signed anything. I would still put them forward.",
     prompt: "One team, one company to chase. Three very different bets.",
     question: "Which company do you try to win?",
     options: [
@@ -255,7 +255,7 @@ const nodes: GameNode[] = [
         facsimile: "complaints",
         description: "A chain of 210 shops with a real budget. We have done similar work before.",
         commits: "We join late — two other firms are already talking to them.",
-        pros: ["Like work we've done", "The money looks real"],
+        pros: ["Like work we’ve done", "The money looks real"],
         cons: ["Two rival firms got there first"],
         cost: { time: 2, investment: 2 },
         outcomes: [
@@ -264,7 +264,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "Orion takes the meeting despite the rivals.",
             detail:
-              "Orion took the meeting. Two other firms were already talking to them, but your past work is close enough to what they're asking for that nobody wondered why you were in the room.",
+              "Orion took the meeting. Two other firms were already talking to them, but your past work is close enough to what they’re asking for that nobody wondered why you were in the room.",
             changed: ["Orion is now the client you are chasing", "You start level with the rivals, not behind"],
             effect: { dims: { win: 4, profit: 2 }, flags: ["client:northwind"] },
           },
@@ -279,16 +279,16 @@ const nodes: GameNode[] = [
           "The biggest contract of the three. It needs factory engineering skills our team does not have.",
         commits: "Six weeks of the whole team on work we have never done.",
         pros: ["Biggest contract on offer", "Team learns a new skill"],
-        cons: ["No past clients to vouch", "Six weeks of everyone's time"],
+        cons: ["No past clients to vouch", "Six weeks of everyone’s time"],
         cost: { time: 3, investment: 3 },
         outcomes: [
           {
             id: "m1-apex-read",
             when: { any: ["start:challenger", "knows:rivals"] },
             tone: "mixed",
-            headline: "Apex said no, but they'll take your call next time.",
+            headline: "Apex said no, but they’ll take your call next time.",
             detail:
-              "Apex still picked its shortlist on factory experience, and we still don't have it. But you went in knowing that, led with the specialist partner we'd bring, and came away with a name to call next time — and Orion is the client we're chasing now, six weeks late.",
+              "Apex still picked its shortlist on factory experience, and we still don’t have it. But you went in knowing that, led with the specialist partner we’dbring, and came away with a name to call next time — and Orion is the client we’re chasing now, six weeks late.",
             changed: [
               "Six weeks spent, deliberately",
               "Orion is your pursuit, six weeks late",
@@ -315,9 +315,9 @@ const nodes: GameNode[] = [
               flags: ["client:northwind", "late_start", "knows:rivals"],
             },
             lesson: {
-              principle: "The biggest number on the table only counts if we can credibly win it.",
+              principle: "The biggest contract is only worth chasing if we have a real chance of winning it.",
               because:
-                "Apex was worth more than Orion on paper. But value you cannot credibly go after is not value available to you.",
+                "Apex was worth more than Orion on paper, but with no past factory clients that money was never really on offer to us.",
               watchFor:
                 "Before size, ask: is there a real overlap between what they need and what we can actually prove?",
             },
@@ -340,7 +340,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "Meridian stuck in approvals, so you walked away.",
             detail:
-              "Their team liked us; their approvals didn't move. After a month you walked away before more time was wasted, and picked up Orion, which was still open.",
+              "Their team liked us; their approvals didn’t move. After a month you walked away before more time was wasted, and picked up Orion, which was still open.",
             changed: [
               "A month spent, nothing to show",
               "Stopped before more time was wasted",
@@ -387,21 +387,21 @@ const nodes: GameNode[] = [
     advisorLine: [
       {
         when: { any: ["late_start"] },
-        text: "We have already lost six weeks at Apex. Two questions is what that leaves us.",
+        text: "We lost six weeks on Apex. That is why we only have time for two questions.",
       },
       {
         when: { any: ["spent_effort"] },
-        text: "A month in Meridian's procurement taught us nothing about Orion. Start where we are blind.",
+        text: "A month waiting on Meridian’s approvals taught us nothing about Orion. Which of these do we know least about?",
       },
-      { text: "I would rather go in knowing one awkward thing than five comfortable ones." },
+      { text: "Sarah’s one line tells us what she wants. Pick the two answers that could change what we say to her." },
     ],
     advisor: PRIYA,
     consider: [
-      "What could change our mind?",
-      "Who has not been in the room, and why?",
-      "Is the ask the same as the problem?",
+      "Which answer would change what we offer Orion?",
+      "Which could we find out later, once we are inside?",
+      "Which would we regret not knowing in the first meeting?",
     ],
-    tip: "I would spend one on the money. My last three deals died in procurement, not the pitch.",
+    tip: "My last three deals fell apart over the budget, not the pitch. I would spend one question on money.",
     prompt: "You have time for two of the five.",
     question: "Which two things do you find out?",
     slots: 2,
@@ -471,7 +471,7 @@ const nodes: GameNode[] = [
         tone: "strong",
         headline: "You found the person who can stop this.",
         detail:
-          "Sarah Lim controls the money, but Marcus Reed runs the shops, warehouses and deliveries that would have to change. Most rival firms won't find that out until they've already promised a solution.",
+          "Sarah Lim controls the money, but Marcus Reed runs the shops, warehouses and deliveries that would have to change. Most rival firms won’t find that out until they’ve already promised a solution.",
         changed: ["You know where the real constraint sits"],
         effect: { dims: { deliver: 5, win: 2 }, badge: "good_question" },
       },
@@ -481,7 +481,7 @@ const nodes: GameNode[] = [
         tone: "strong",
         headline: "You found the real problem.",
         detail:
-          "They asked about the stores, but their complaints are about what happens after the sale. The gap between what they asked for and what's actually hurting them is where our work is.",
+          "They asked about the stores, but their complaints are about what happens after the sale. The gap between what they asked for and what’s actually hurting them is where our work is.",
         changed: ["You know what is actually hurting them"],
         effect: { dims: { win: 5, profit: 2 }, badge: "good_question" },
       },
@@ -490,16 +490,16 @@ const nodes: GameNode[] = [
         tone: "mixed",
         headline: "Useful, but still their version of the problem.",
         detail:
-          "What you found was worth knowing; it just isn't what decides this deal. You'll walk into the first meeting describing the problem the way they do, not the way it really is.",
+          "What you found was worth knowing; it just isn’t what decides this deal. You’ll walk into the first meeting describing the problem the way they do, not the way it really is.",
         changed: [
           "You know more than you did",
           "You still describe it their way",
         ],
         effect: { dims: { win: 1 } },
         lesson: {
-          principle: "The question that wins a client is usually the one nobody in the room has asked yet.",
+          principle: "Knowing about rivals and budgets tells us about the race, not about what is wrong at Orion.",
           because:
-            "Competitive and budget information tells you about the race. It does not tell you what is actually wrong, or who has to agree before anything can change.",
+            "You spent both questions on the rivals and the money, so you still do not know what is hurting Orion or who has to agree to change it.",
           watchFor: "Ask yourself who has not been in the room — and why.",
         },
       },
@@ -533,38 +533,38 @@ const nodes: GameNode[] = [
        multi-person and cannot be taken back, a `chat` is quick, internal and
        low-ceremony. Client-facing beats are calls — m5, m6, m8, m9a, m10c. The
        internal ones are chats — this beat, m7b, m9, m9b and month five, where the
-       sponsor's line arrives relayed rather than in the room. `thread` is authored
+       sponsor’s line arrives relayed rather than in the room. `thread` is authored
        nowhere and rendered nowhere; see src/ui/dialogue.tsx. */
     surface: "chat",
     client: ORION,
     /* What the two questions bought, named by the person who told you to spend them. The
-       first branch is the only place in chapter one where Marcus Reed's name is said out
+       first branch is the only place in chapter one where Marcus Reed’s name is said out
        loud by our own side, and it is said only to the player who found him. */
     advisorLine: [
       {
         when: { all: ["knows:real_pain", "knows:ops_constraint"] },
-        text: "You know the pain and who owns the systems. Now choose who hears it first.",
+        text: "You know what their customers complain about, and who runs the shops. Which way in can we afford to get wrong?",
       },
       {
         when: { all: ["knows:ops_constraint"] },
-        text: "You found Marcus. Nobody else pitching this has. First contact decides who hears it.",
+        text: "You have learned about Marcus Reed. Now weigh what each way in costs us, in time and in favours.",
       },
       {
         when: { all: ["knows:real_pain"] },
         /* Was "It is the one thing here they have not read in a pitch", which ranks the
            option set — and only one option can use that flag, so "the one thing here"
            was a star beside it. The fact about the client stays; the ranking goes. */
-        text: "You have their complaint data. Nobody else pitching this account has read it.",
+        text: "You know what their customers complain about. Now weigh how long each way in takes, and who it reaches.",
       },
-      { text: "First contact sets what they think we are. It is very hard to move afterwards." },
+      { text: "What do we need most from Orion right now: their attention, a meeting, or their trust?" },
     ],
     advisor: PRIYA,
     consider: [
-      "Do we need attention, access, or credibility?",
-      "Who exactly are we trying to move?",
-      "Would this work if we knew nothing about them?",
+      "Who at Orion do we most need to reach?",
+      "What does each way in cost if nobody replies?",
+      "Would this approach work if we knew nothing about Orion?",
     ],
-    tip: "Sarah will not read a white paper. Her deputy will, and he writes her briefings.",
+    tip: "Sarah won’t read a long article herself. Her deputy will, and he writes the notes she reads.",
     prompt: "Three ways to get the first meeting.",
     question: "How do you make first contact?",
     options: [
@@ -586,9 +586,9 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "Sarah forwards it internally with one line: “this is us”.",
             detail:
-              "Because you wrote about what happens after the sale, not the shops, it read as if we'd already been inside the business. Sarah invited us in, and asked us to take it to Marcus Reed in Operations too.",
+              "Because you wrote about what happens after the sale, not the shops, it read as if we’dalready been inside the business. Sarah invited us in, and asked us to take it to Marcus Reed in Operations too.",
             changed: [
-              "You're in, describing the problem your way",
+              "You’re in, describing the problem your way",
               "Operations is now in the room",
             ],
             effect: {
@@ -621,7 +621,7 @@ const nodes: GameNode[] = [
           "Then I use our one introduction now and make the case to Sarah myself. Thirty minutes, one shot.",
         commits: "Uses up a favour we can only ask once.",
         pros: ["Straight to who holds the money", "A real two-way conversation"],
-        cons: ["Uses our only introduction", "Hears only Sarah's view"],
+        cons: ["Uses our only introduction", "Hears only Sarah’s view"],
         cost: { time: 1, investment: 2 },
         outcomes: [
           {
@@ -639,9 +639,9 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "Sarah was keen, then added a condition.",
             detail:
-              "It went well until the last minute, when Sarah said, “You'll need Operations comfortable with this before we can move.” You hadn't planned for a second decision-maker, and now you're meeting them late.",
+              "It went well until the last minute, when Sarah said, “You’ll need Operations comfortable with this before we can move.” You hadn’t planned for a second decision-maker, and now you’re meeting them late.",
             changed: [
-              "You have Sarah's interest",
+              "You have Sarah’s interest",
               "A second decision-maker, found late",
             ],
             effect: {
@@ -668,7 +668,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "Plenty of replies. Very few from Orion.",
             detail:
-              "The adverts looked great by every number you'd put in a report. It reached people who were interested but couldn't buy, and got one lukewarm reply from an Orion manager two levels below Sarah.",
+              "The adverts looked great by every number you’dput in a report. It reached people who were interested but couldn’t buy, and got one lukewarm reply from an Orion manager two levels below Sarah.",
             changed: [
               "A lot of activity",
               "Little progress with Orion itself",
@@ -676,9 +676,9 @@ const nodes: GameNode[] = [
             ],
             effect: { dims: { win: 1, profit: 3 } },
             lesson: {
-              principle: "Reach is easy to count, so we keep mistaking it for reaching the one person who decides.",
+              principle: "Our adverts were easy to count, but they only mattered if someone reading them could hire us.",
               because:
-                "You reached more people than either alternative would have. None of them was the person who decides.",
+                "The adverts reached more people than an article or a meeting would have, and none of them could hire us.",
               watchFor:
                 "Before choosing a channel, name the single person you need to move — then ask whether this reaches them.",
             },
@@ -698,7 +698,7 @@ const nodes: GameNode[] = [
   /**
    * The chapter debriefs.
    *
-   * One line each, and one line only. The rest of the screen is the player's own history
+   * One line each, and one line only. The rest of the screen is the player’s own history
    * for the chapter — what they chose, what tone it landed on, which sibling branch never
    * fired — which the renderer derives from state. What cannot be derived is a sentence
    * naming what the chapter was FOR, so that is what is authored here.
@@ -789,21 +789,21 @@ const nodes: GameNode[] = [
     advisorLine: [
       {
         when: { any: ["ops_engaged"] },
-        text: "Operations is already in the room. That is the part that usually costs us three months.",
+        text: "Marcus, who runs their shops and deliveries, already knows us. Getting that far usually takes us three months.",
       },
       {
         when: { none: ["knows:real_pain", "knows:ops_constraint"] },
-        text: "Nobody has tested that one-line brief yet, and you are about to put a price on it.",
+        text: "We still don’t know what Orion’s customers complain about, or who could block this. Whatever you choose starts from there.",
       },
       { text: "I have six people. Tell me how many of them this is worth, and for how long." },
     ],
     advisor: RIYA,
     consider: [
-      "What does being wrong cost us?",
-      "Do we know enough to price it?",
-      "Is there a smaller version to commit to?",
+      "If Orion picks a rival, what have we lost?",
+      "Do we know enough to put a price on it?",
+      "How long can my people be away from paid work?",
     ],
-    tip: "I have said yes to two of these off a one-line request. One paid for the year.",
+    tip: "I have said yes to two jobs like this from a one-line request. One of them paid for our year.",
     prompt: "Three ways to answer a one-line request.",
     question: "How much do you put into Orion now?",
     options: [
@@ -813,15 +813,15 @@ const nodes: GameNode[] = [
         icon: "rocket",
         description: "Put our best people on it and write the full offer, with a price, straight away.",
         commits: "Our strongest people, unavailable to anyone else for weeks.",
-        pros: ["First offer on their desk", "Shows we're serious"],
-        cons: ["Best people tied up", "Pricing work nobody's defined"],
+        pros: ["First offer on their desk", "Shows we’re serious"],
+        cons: ["Best people tied up", "Pricing work nobody’s defined"],
         cost: { time: 3, investment: 3 },
         outcomes: [
           {
             id: "m4-pursue-good",
             when: { any: ["knows:real_pain", "credibility"] },
             tone: "strong",
-            headline: "You're first in front of them with a real proposal.",
+            headline: "You’re first in front of them with a real proposal.",
             detail:
               "You already understood the problem, so committing early was a bet on something you could see, not a hope. We were the first firm with a serious proposal on their desk — and my best people are tied up until it lands.",
             changed: [
@@ -847,7 +847,7 @@ const nodes: GameNode[] = [
         icon: "search",
         description: "They pay us for two weeks to find the real problem, before we price the big job.",
         commits: "Two weeks slower, and a rival may send an offer meanwhile.",
-        pros: ["Gets us inside Orion", "We're paid while learning"],
+        pros: ["Gets us inside Orion", "We’re paid while learning"],
         cons: ["Much smaller first contract", "Rivals can move first"],
         cost: { time: 2, investment: 1 },
         outcomes: [
@@ -857,7 +857,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "They agreed, and week one went on catching up.",
             detail:
-              "The paid discovery got us in, but we pointed it at a business we hadn't looked into at all. Week one went on questions we could have answered from outside; week two on the ones that mattered.",
+              "The paid discovery got us in, but we pointed it at a business we hadn’t looked into at all. Week one went on questions we could have answered from outside; week two on the ones that mattered.",
             changed: ["A smaller, safer first commitment", "Half the discovery spent catching up"],
             effect: {
               dims: { profit: 3, deliver: 3, win: -2 },
@@ -867,9 +867,9 @@ const nodes: GameNode[] = [
           {
             id: "m4-workshop",
             tone: "strong",
-            headline: "They said yes, and they're paying you to learn.",
+            headline: "They said yes, and they’re paying you to learn.",
             detail:
-              "It's a smaller first contract than anyone hoped for. But we're now paid, and allowed, to see the parts of the business nobody shows you in a sales meeting.",
+              "It’s a smaller first contract than anyone hoped for. But we’re now paid, and allowed, to see the parts of the business nobody shows you in a sales meeting.",
             changed: [
               "A smaller, safer first commitment",
               "Real access to the business",
@@ -906,9 +906,9 @@ const nodes: GameNode[] = [
             ],
             effect: { dims: { profit: 7, deliver: 3, win: -7 }, flags: ["landed_small"] },
             lesson: {
-              principle: "Saying no to work nobody can price yet protects our margin, and I'd defend that trade again.",
+              principle: "Turning down work nobody can price yet protects our profit, at the cost of falling behind.",
               because:
-                "Declining cost you momentum and bought you a better-defined problem. Whether that trade was right depends on how badly you needed the win.",
+                "Saying no lost you ground to the rival and got you a clearer request, and whether that was worth it depends on how much you needed the work.",
               watchFor: "Notice when you are bidding on something nobody has actually defined yet.",
             },
           },
@@ -932,7 +932,7 @@ const nodes: GameNode[] = [
    * of them is staged as though it could be — no options, no gate, nothing to commit.
    *
    * They are written as reports of things that have already happened somewhere else. A
-   * turn that describes a choice is a decision wearing a cut scene's clothes.
+   * turn that describes a choice is a decision wearing a cut scene’s clothes.
    */
   {
     kind: "interlude",
@@ -981,21 +981,21 @@ const nodes: GameNode[] = [
     advisorLine: [
       {
         when: { any: ["knows:rivals"] },
-        text: "You already know who that vendor is. Most people reacting to this today do not.",
+        text: "You found out earlier that this rival sells screens and apps for shops. Sarah wants an answer today, not next week.",
       },
       {
         when: { any: ["has_access"] },
-        text: "We are inside on a paid discovery. A press release does not change what we can see.",
+        text: "We are already working inside Orion on the paid study. Sarah’s board, though, has only seen the rival’s demo.",
       },
-      { text: "Something changed in the market. Whether it changed anything real is your call." },
+      { text: "Sarah has to say something to her board this week. What do you want her to be able to say?" },
     ],
     advisor: RIYA,
     consider: [
-      "What changed — the facts, or the noise?",
-      "Can we name what their offer misses?",
-      "What does silence cost us?",
+      "What does Sarah need to tell her board this week?",
+      "What does the rival’s demo leave out?",
+      "What does it cost us to say nothing for now?",
     ],
-    tip: "I have seen three of these announcements. Two of them never shipped anything.",
+    tip: "I have seen three announcements like this one. Two of them never delivered anything.",
     prompt: "Four ways to answer the rival’s announcement.",
     question: "How do you answer Sarah?",
     options: [
@@ -1007,7 +1007,7 @@ const nodes: GameNode[] = [
         say: "I would rather not answer that today. Let me find out what they have actually offered you.",
         commits: "Several days while Sarah waits for an answer.",
         pros: ["Answer with facts", "Finds what they miss"],
-        cons: ["Sarah is left waiting", "Days we can't get back"],
+        cons: ["Sarah is left waiting", "Days we can’t get back"],
         cost: { time: 2, investment: 1 },
         outcomes: [
           {
@@ -1016,7 +1016,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "You already knew their angle. Now you know its limit.",
             detail:
-              "Their offer is in-shop technology — genuinely good at what it does, and silent on deliveries, refunds and the helpline. You could say so precisely, because you'd done the reading earlier.",
+              "Their offer is in-shop technology — genuinely good at what it does, and silent on deliveries, refunds and the helpline. You could say so precisely, because you’ddone the reading earlier.",
             changed: ["You can name what their offer misses"],
             effect: { dims: { win: 5 }, flags: ["knows:rival_gap"], badge: "connected_dots" },
           },
@@ -1025,9 +1025,9 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "You found out what it is, a little late.",
             detail:
-              "It's in-shop technology that never touches deliveries, refunds or the helpline — useful to know. But the days it took cost you some of Sarah's confidence; she wanted a view, not a research project.",
+              "It’s in-shop technology that never touches deliveries, refunds or the helpline — useful to know. But the days it took cost you some of Sarah’s confidence; she wanted a view, not a research project.",
             changed: [
-              "You understand the rival's offer",
+              "You understand the rival’s offer",
               "You looked slow when it mattered",
             ],
             effect: { dims: { win: 1 }, flags: ["knows:rival_gap"] },
@@ -1042,7 +1042,7 @@ const nodes: GameNode[] = [
         say: "Give me thirty minutes this week and I will answer that in person, not in a document.",
         commits: "Presenting before our answer is fully worked out.",
         pros: ["Speed looks confident", "Keeps us in the race"],
-        cons: ["We haven't studied their offer"],
+        cons: ["We haven’t studied their offer"],
         cost: { time: 1, investment: 2 },
         outcomes: [
           {
@@ -1050,7 +1050,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "In the room in two days, with half an argument.",
             detail:
-              "Speed read as confidence, and Sarah appreciated it. But you were arguing against something you hadn't examined, and twice you had to promise to come back with detail.",
+              "Speed read as confidence, and Sarah appreciated it. But you were arguing against something you hadn’t examined, and twice you had to promise to come back with detail.",
             changed: ["You held the relationship", "You spent credibility to do it"],
             effect: { dims: { win: 3, deliver: -2 } },
           },
@@ -1074,17 +1074,17 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "You changed the question, and Sarah followed.",
             detail:
-              "You pointed out that a beautiful shop doesn't fix a three-week refund. With their complaint data behind you it landed as analysis, not a sales line — and now the rival is answering your question.",
+              "You pointed out that a beautiful shop doesn’t fix a three-week refund. With their complaint data behind you it landed as analysis, not a sales line — and now the rival is answering your question.",
             changed: [
               "The race is on ground you chose",
-              "The rival's best asset matters less",
+              "The rival’s best asset matters less",
             ],
             effect: { dims: { win: 8, profit: 3 }, flags: ["reframed"], badge: "adapt" },
           },
           {
             id: "m5-reframe-weak",
             tone: "mixed",
-            headline: "It sounded like a deflection, because you couldn't prove it.",
+            headline: "It sounded like a deflection, because you couldn’t prove it.",
             detail:
               "The argument was right, but you had no evidence behind it, so it sounded like a firm losing a comparison and changing the subject. Sarah is unconvinced, though not unfriendly.",
             changed: ["You raised the right issue", "You could not back it up"],
@@ -1100,7 +1100,7 @@ const nodes: GameNode[] = [
         say: "Nothing has actually been built yet. I am not going to redraw our plan around an announcement.",
         commits: "Sarah hears nothing from us while her board talks about it.",
         pros: ["Costs nothing", "Calm can reassure"],
-        cons: ["Needs Sarah's existing trust", "Their story goes unanswered"],
+        cons: ["Needs Sarah’s existing trust", "Their story goes unanswered"],
         cost: { time: 1, investment: 1 },
         outcomes: [
           {
@@ -1109,7 +1109,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "Nothing broke, because Sarah already trusted you.",
             detail:
-              "Sarah already trusted you enough that a rival's announcement didn't move her. Your steadiness read as confidence, not absence.",
+              "Sarah already trusted you enough that a rival’s announcement didn’t move her. Your steadiness read as confidence, not absence.",
             changed: ["You spent nothing and lost nothing"],
             effect: { dims: { win: 1, profit: 3 }, badge: "held_nerve" },
           },
@@ -1118,13 +1118,13 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "Three weeks of silence, and the rival filled it.",
             detail:
-              "For three weeks the only firm with a story about Orion's future was the other one. By the time you got back in touch, “in-shop technology” was how Orion's own staff described the project.",
-            changed: ["The rival's framing is now Orion's", "You're arguing uphill"],
+              "For three weeks the only firm with a story about Orion’s future was the other one. By the time you got back in touch, “in-shop technology” was how Orion’s own staff described the project.",
+            changed: ["The rival’s framing is now Orion’s", "You’re arguing uphill"],
             effect: { dims: { win: -9 } },
             lesson: {
-              principle: "Staying quiet is a decision too, and in a race it hands the other side the story.",
+              principle: "While we said nothing, the rival got to describe Orion’s problem for us.",
               because:
-                "Holding your plan is right when you have the standing to absorb the hit. Without that, silence hands your competitor the definition of the problem.",
+                "Holding steady works when the client already trusts you, and without that trust three weeks of silence let the rival’s idea become Orion’s.",
               watchFor: "Ask whether you are holding your nerve or simply hoping.",
             },
           },
@@ -1143,14 +1143,14 @@ const nodes: GameNode[] = [
   /**
    * The four reflection nodes.
    *
-   * Each sits after its chapter's hardest beat, because recovery belongs after the blow
+   * Each sits after its chapter’s hardest beat, because recovery belongs after the blow
    * rather than before it. Neither response changes a flag, a dimension or a badge — this
    * is a breath, and the absent meters on the screen are what say so.
    *
-   * The questions are Thiagi's debrief phases four and five, "how does this relate to the
+   * The questions are Thiagi’s debrief phases four and five, "how does this relate to the
    * real world?" and "what if?", which are the two where transfer actually happens and the
    * two a vendor course leaves out. So each prompt pulls OUT of Orion and into the
-   * player's own working life, and both answers are honest — one of them is not the
+   * player’s own working life, and both answers are honest — one of them is not the
    * grown-up one.
    */
   {
@@ -1218,13 +1218,13 @@ const nodes: GameNode[] = [
       },
     ],
     advisor: ARJUN,
-    advisorLine: "One sentence, three readings. Whichever you pick, I'm the one scoping it on Monday.",
+    advisorLine: "Their request is one sentence that can mean three things. Whichever you pick, my team plans that work on Monday.",
     consider: [
-      "Is what they asked for where they lose money?",
-      "What would let us disagree with them?",
-      "Would the rival's offer look the same?",
+      "What evidence do we have for each reading?",
+      "Could we prove it if we told Orion they were wrong?",
+      "Would our offer look the same as the rival’s?",
     ],
-    tip: "I've read three briefs this year that said ‘customer experience’. Each meant something different.",
+    tip: "I’ve read three client requests this year that said ‘customer experience’. Each one meant something different.",
     prompt: "Three readings of the same one-line request.",
     question: "Which problem do you offer to fix?",
     options: [
@@ -1235,7 +1235,7 @@ const nodes: GameNode[] = [
         facsimile: "proposal",
         description: "Redesign the shops and the app, exactly as their request says.",
         say: "We answer the request as written — shops and app. I am not going to tell Sarah she is wrong.",
-        commits: "Goes head to head with the rival's demo.",
+        commits: "Goes head to head with the rival’s demo.",
         pros: ["Nobody can say we missed", "Easy for them to approve"],
         cons: ["Looks just like the rival", "Cheapest offer may win"],
         cost: { time: 1, investment: 2 },
@@ -1249,11 +1249,11 @@ const nodes: GameNode[] = [
             changed: ["Orion can compare you line by line with the rival", "Price becomes the deciding factor"],
             effect: { dims: { win: 1, profit: -4 }, flags: ["scope:storefront"] },
             lesson: {
-              principle: "If we deliver exactly what was asked and the damage is somewhere else, we've delivered nothing they needed.",
+              principle: "If we offer exactly what Orion asked for and their real problem is elsewhere, we fix nothing they need.",
               because:
-                "Proposing what everyone else is proposing moves the decision onto the one dimension where you have least control: price.",
+                "Offering the same thing as the rival left Orion only one way to choose between us, which was price.",
               watchFor:
-                "If your proposal could have your competitor's logo on it, it is not a proposal, it is a quote.",
+                "If your proposal could have your competitor’s logo on it, it is not a proposal, it is a quote.",
             },
           },
         ],
@@ -1277,7 +1277,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "You showed them their own data, and the room changed.",
             detail:
-              "You opened with their own complaint numbers instead of our track record, and nobody argues with their own evidence. Sarah said quietly she'd suspected this for a year and couldn't get it funded.",
+              "You opened with their own complaint numbers instead of our track record, and nobody argues with their own evidence. Sarah said quietly she’dsuspected this for a year and couldn’t get it funded.",
             changed: [
               "No longer compared to the in-shop offer",
               "Sarah has the argument she needed",
@@ -1291,17 +1291,17 @@ const nodes: GameNode[] = [
           {
             id: "m6-real-hunch",
             tone: "mixed",
-            headline: "You're right, and you can't prove it.",
+            headline: "You’re right, and you can’t prove it.",
             detail:
-              "It's the right read, but you asked them to drop their own request on your instinct — and instinct is what they're paying to avoid. They asked for evidence we don't have.",
+              "It’s the right read, but you asked them to drop their own request on your instinct — and instinct is what they’re paying to avoid. They asked for evidence we don’t have.",
             changed: ["The right idea, poorly supported", "Asked to come back with proof"],
             effect: { dims: { win: 2, deliver: -2 }, flags: ["scope:postpurchase"] },
             lesson: {
-              principle: "Being right about the problem isn't enough to build on; I need evidence the client will sign up to.",
+              principle: "Telling a client their request is wrong only works if we can show them proof.",
               because:
-                "You reached the correct conclusion without the evidence to defend it, so it landed as an opinion competing with theirs rather than as a finding.",
+                "You had the right idea but no evidence, so Orion heard your opinion against theirs rather than a fact about their business.",
               watchFor:
-                "Before challenging a client's framing, ask what you would need in your hand to make it stick.",
+                "Before challenging a client’s framing, ask what you would need in your hand to make it stick.",
             },
           },
         ],
@@ -1324,7 +1324,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "Professional, cautious, and slightly disappointing.",
             detail:
-              "They accepted, because it's sensible. But they brought us in as people who'd seen this before, and asking six weeks to form a view says we haven't. The bigger work gets pushed out.",
+              "They accepted, because it’s sensible. But they brought us in as people who’dseen this before, and asking six weeks to form a view says we haven’t. The bigger work gets pushed out.",
             changed: ["A safe, easy-to-defend path", "Six weeks before anything real happens"],
             effect: { dims: { deliver: 4, win: -3, profit: -2 }, flags: ["scope:diagnostic"] },
           },
@@ -1362,37 +1362,37 @@ const nodes: GameNode[] = [
      * the document is being written against, and that is an observation a person makes.
      *
      * WHAT THESE DELIBERATELY DO NOT READ. `knows:ops_constraint` is half of
-     * `m7-anchored`'s gate and there is a card on this screen called "Operations
+     * `m7-anchored`’s gate and there is a card on this screen called "Operations
      * integration workstream", so a colleague who mentions Marcus here is not reacting,
      * he is pointing — the same defect as the m10b line whose condition was character for
-     * character its outcome's. `has:data` is in `m7-fast-thin`'s `none` for the same
+     * character its outcome’s. `has:data` is in `m7-fast-thin`’s `none` for the same
      * reason. So Arjun reacts to commitments already made elsewhere — the outcome deal,
      * the partner, the fortnight inside the business — and says nothing about which three.
      */
     advisorLine: [
       {
         when: { any: ["outcome_based"] },
-        text: "A third of the fee moves with the result now. I am reading this list as a plan, not a menu.",
+        text: "A third of our fee now depends on complaints falling, so every piece we promise must be one we can actually do.",
       },
       {
         when: { any: ["has:partner"] },
-        text: "The partner is in this now. Whatever goes in, somebody tells them on Monday which parts are theirs.",
+        text: "The specialist firm is working with us now. Whatever goes in, I tell them on Monday which parts they do.",
       },
       {
         when: { any: ["has_access", "landed_small"] },
-        text: "We have had a fortnight inside their business, so nothing on this list has to be guesswork.",
+        text: "We have spent two weeks inside their business. Use what we saw there, not guesses.",
       },
       {
-        text: "The three you leave out do not come back later. I would rather that was a decision than an accident.",
+        text: "The three pieces we leave out will not be added later. Be sure you know what each one was for.",
       },
     ],
     advisor: ARJUN,
     consider: [
-      "For each item, who actually delivers it?",
-      "Which wins the deal, and which survives it?",
-      "What happens if Operations says no?",
+      "For each piece, who actually does the work?",
+      "Which pieces win Orion over, and which make the work possible?",
+      "What does each piece cost us in people and time?",
     ],
-    tip: "Aisha will inherit this document. She reads every line and she remembers.",
+    tip: "Aisha’s team must deliver whatever this document promises. She reads every line, and she remembers.",
     prompt: "Three of six.",
     question: "Which three pieces of work do we offer?",
     pick: 3,
@@ -1453,7 +1453,7 @@ const nodes: GameNode[] = [
         tone: "strong",
         headline: "Marcus Reed read it and stopped objecting.",
         detail:
-          "You put a workstream in the proposal with his people's names against it, before he had to ask. That turned the person best placed to block this into someone with a stake in it working.",
+          "You put a workstream in the proposal with his people’s names against it, before he had to ask. That turned the person best placed to block this into someone with a stake in it working.",
         changed: [
           "Operations is invested, not resistant",
           "The old failure point has an owner",
@@ -1466,13 +1466,13 @@ const nodes: GameNode[] = [
         tone: "hard",
         headline: "A big promise with nobody to make it happen.",
         detail:
-          "You've promised to replace the systems at the centre of their business, and nothing in the document says how those changes reach the shops, warehouses and helpline that use them. Everyone nods; nobody has checked.",
+          "You’ve promised to replace the systems at the centre of their business, and nothing in the document says how those changes reach the shops, warehouses and helpline that use them. Everyone nods; nobody has checked.",
         changed: ["A large, attractive promise", "No route through Operations"],
         effect: { dims: { deliver: -6 }, flags: ["unanchored"] },
         lesson: {
-          principle: "Every promise in a proposal is work somebody else has to deliver, and usually it's Aisha's team.",
+          principle: "We promised something big that only Marcus’s team can carry out, and our proposal never says how.",
           because:
-            "The most impressive element you included is also the one that has to pass through the team you have not involved.",
+            "Rebuilding Orion’s systems was the most impressive piece you chose, and it cannot reach the shops without Marcus’s team, whom the proposal leaves out.",
           watchFor: "For each thing you propose, name who delivers it and check they know.",
         },
       },
@@ -1494,7 +1494,7 @@ const nodes: GameNode[] = [
         tone: "strong",
         headline: "A proposal that could actually be delivered.",
         detail:
-          "It isn't the flashiest document in the pile. It includes the parts of the work that let the rest survive contact with a real organisation, which is rarer than it should be.",
+          "It isn’t the flashiest document in the pile. It includes the parts of the work that let the rest survive contact with a real organisation, which is rarer than it should be.",
         changed: ["Attractive and deliverable at once"],
         effect: { dims: { deliver: 2, profit: 2 } },
       },
@@ -1584,29 +1584,29 @@ const nodes: GameNode[] = [
     advisorLine: [
       {
         when: { any: ["knows:budget"] },
-        text: "You asked what the board had actually approved. There is nothing behind that number, whichever way we answer them.",
+        text: "You found out their budget is fixed, with no more money behind it. That stays true whichever way we answer.",
       },
       {
         when: { any: ["outcome_based"] },
-        text: "A third of this fee already moves with the result. Some of our price is conditional before we start.",
+        text: "A third of our fee already depends on complaints falling. Part of our price is at risk before we start.",
       },
       {
         when: { any: ["scope:heavy"] },
-        text: "The platform rebuild is the biggest cost line I have signed off this year. Nothing said today makes it smaller.",
+        text: "Rebuilding their refunds and helpline systems is the biggest cost I have approved this year. Nothing said today makes it smaller.",
       },
       {
         when: { any: ["credibility"] },
-        text: "They like us. I have watched that be worth a great deal in a room and nothing at all in a procurement file.",
+        text: "Sarah likes us. Declan, who compares the bids on paper, has never met us.",
       },
-      { text: "Thirty percent is a number somebody has to explain upwards. The question is which of us ends up doing it." },
+      { text: "£600,000 is a gap somebody has to explain to Sarah’s board. Ask yourself who ends up doing it." },
     ],
     advisor: RIYA_DEAL,
     consider: [
-      "What exactly are they comparing us to?",
-      "If we discount, what becomes impossible later?",
-      "Can we lower commitment without lowering rate?",
+      "What exactly is Orion comparing us with?",
+      "If we cut the price, what can we not afford later?",
+      "What does Sarah need to show her board?",
     ],
-    tip: "I gave eight percent away on Meridian. We spent the next year explaining it.",
+    tip: "I once cut our price by eight percent for Meridian. We spent the next year explaining it.",
     prompt: "Four ways to answer on price.",
     question: "How do we answer on price?",
     options: [
@@ -1640,7 +1640,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "The difference is defensible, so the price holds.",
             detail:
-              "The other bid never touches deliveries, returns or support, where Orion spends two and a half million a year handling complaints. Halving that would save twice our £600,000 difference, every year, so the premium stops being one. Procurement didn't enjoy it; Sarah has a straight answer for her board.",
+              "The other bid never touches deliveries, returns or support, where Orion spends two and a half million a year handling complaints. Halving that would save twice our £600,000 difference, every year, so the premium stops being one. Procurement didn’t enjoy it; Sarah has a straight answer for her board.",
             changed: ["Full margin protected", "The comparison is neutralised"],
             effect: { dims: { profit: 10, win: 1 }, badge: "held_nerve" },
           },
@@ -1671,13 +1671,13 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "The gap closes. So does your room to manoeuvre.",
             detail:
-              "Procurement is satisfied and the deal moves. But you funded the discount from the contingency we'd need if anything went wrong in delivery — and something usually does.",
+              "Procurement is satisfied and the deal moves. But you funded the discount from the contingency we’dneed if anything went wrong in delivery — and something usually does.",
             changed: ["Price objection removed", "No financial slack left"],
             effect: { dims: { win: 6, profit: -14 }, flags: ["discounted"] },
             lesson: {
-              principle: "We spend a discount twice — once to win the work, and again when delivery comes asking where the money went.",
+              principle: "A price cut wins the deal now and leaves us short of money when the work runs into trouble.",
               because:
-                "The money you gave away was the same money that would have absorbed a problem later. Nothing about the work got cheaper.",
+                "The £600,000 you gave away was the spare money that would have paid for problems later, and the work itself got no cheaper.",
               watchFor: "Before discounting, ask what that contingency was for.",
             },
           },
@@ -1700,7 +1700,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "You hit the number by promising less.",
             detail:
-              "It's the honest version of a discount: the price falls because the work does. But what left was the least visible piece, and that's usually the piece that made the rest work.",
+              "It’s the honest version of a discount: the price falls because the work does. But what left was the least visible piece, and that’s usually the piece that made the rest work.",
             changed: [
               "Price matched, margin kept",
               "Less in it than it needs",
@@ -1733,7 +1733,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "The board approved it because the first cheque was small.",
             detail:
-              "You didn't move the rate or cut the work — you changed what they had to commit to today. Sarah got a number her board could approve, and we're well placed to win phase two.",
+              "You didn’t move the rate or cut the work — you changed what they had to commit to today. Sarah got a number her board could approve, and we’re well placed to win phase two.",
             changed: [
               "Margin protected",
               "A smaller decision for Orion",
@@ -1773,7 +1773,7 @@ const nodes: GameNode[] = [
     minutes: 4,
     hero: "hero-boardroom",
     situation: [
-      "I'll run the project if we win, so I've read our risk review — our own experts checking the plan before we sign.",
+      "I’ll run the project if we win, so I’ve read our risk review — our own experts checking the plan before we sign.",
       "They found a gap: we change systems other Orion teams rely on, and never say how those changes get installed.",
     ],
     presentation: "dialogue",
@@ -1784,9 +1784,9 @@ const nodes: GameNode[] = [
        *
        * All four findings below are FEASIBILITY findings — can we do this. A real
        * pre-signature review has two halves, and the second is the one that ends careers:
-       * what happens to us if we don't. The content had zero occurrences of liability,
+       * what happens to us if we don’t. The content had zero occurrences of liability,
        * indemnity, cap, service credit, penalty, warranty or IP, so the game taught that
-       * half does not exist — and `m9b`'s own `o-modify` offers to reopen "the two clauses
+       * half does not exist — and `m9b`’s own `o-modify` offers to reopen "the two clauses
        * you are least comfortable with" without ever naming either, which is the content
        * conceding the gap.
        *
@@ -1797,36 +1797,36 @@ const nodes: GameNode[] = [
       {
         when: { all: ["outcome_based"] },
         situation: [
-          "I'll run the project if we win, so I've read our risk review — our own experts checking the plan before we sign.",
-          "Our lawyers say a third of our fee depends on hitting the promised result — miss it for any reason, and we're paid less.",
+          "I’ll run the project if we win, so I’ve read our risk review — our own experts checking the plan before we sign.",
+          "Our lawyers say a third of our fee depends on hitting the promised result — miss it for any reason, and we’re paid less.",
         ],
       },
       {
         when: { all: ["scope:heavy"], none: ["has:ops_workstream"] },
         situation: [
-          "I'll run the project if we win, so I've read our risk review — our own experts checking the plan before we sign.",
-          "We promise to rebuild Orion's main systems with no plan for Marcus's people to install them — which is what sank Orion's last project.",
+          "I’ll run the project if we win, so I’ve read our risk review — our own experts checking the plan before we sign.",
+          "We promise to rebuild Orion’s main systems with no plan for Marcus’s people to install them — which is what sank Orion’s last project.",
         ],
       },
       {
         when: { all: ["promised:fast"], none: ["has:data"] },
         situation: [
-          "I'll run the project if we win, so I've read our risk review — our own experts checking the plan before we sign.",
-          "The eight-week trial needs Orion's order records, and nobody has checked they're usable — four weeks fixing them and we're late from day one.",
+          "I’ll run the project if we win, so I’ve read our risk review — our own experts checking the plan before we sign.",
+          "The eight-week trial needs Orion’s order records, and nobody has checked they’re usable — four weeks fixing them and we’re late from day one.",
         ],
       },
       {
         when: { all: ["descoped"] },
         situation: [
-          "I'll run the project if we win, so I've read our risk review — our own experts checking the plan before we sign.",
+          "I’ll run the project if we win, so I’ve read our risk review — our own experts checking the plan before we sign.",
           "The work we cut to reach their price was holding other parts up, and they want to know how we still deliver what the contract promises.",
         ],
       },
       {
         when: { all: ["has:ops_workstream"] },
         situation: [
-          "I'll run the project if we win, so I've read our risk review — our own experts checking the plan before we sign.",
-          "It's a small finding: our team working with Marcus covers the hard part, but nobody has booked the time of two Orion specialists we need.",
+          "I’ll run the project if we win, so I’ve read our risk review — our own experts checking the plan before we sign.",
+          "It’s a small finding: our team working with Marcus covers the hard part, but nobody has booked the time of two Orion specialists we need.",
         ],
       },
     ],
@@ -1841,21 +1841,21 @@ const nodes: GameNode[] = [
     advisorLine: [
       {
         when: { all: ["discounted"] },
-        text: "Before you promise me a fix, tell me what is left in the commercial case. I looked.",
+        text: "We came down £600,000 to match the rival’s price. Keep that in mind when you weigh what each answer costs us.",
       },
       {
         when: { any: ["ops_onside", "has:ops_workstream"] },
-        text: "Marcus's stream absorbs most of that list. It is the two names nobody booked that worry me.",
+        text: "Our work with Marcus’s team covers most of what they found. Two Orion specialists we need still aren’t booked.",
       },
-      { text: "Every line on that finding lands in my month. Tell me which ones you intend to fix." },
+      { text: "If we win, every gap in that review lands on my team. Tell me which ones you will actually fix." },
     ],
     advisor: AISHA,
     consider: [
-      "Are we solving this, or recording it?",
-      "What does this cost now versus month five?",
+      "Are we fixing this gap, or just writing it down?",
+      "What does this cost to fix now, and once work starts?",
       "Do we still have the money to fix it?",
     ],
-    tip: "The reviewers have no stake in this closing. That is exactly why I read them twice.",
+    tip: "The reviewers gain nothing if we win this. That is exactly why I read their notes twice.",
     prompt: "Four ways to answer a review finding.",
     question: "What do we do about the gap?",
     options: [
@@ -1865,7 +1865,7 @@ const nodes: GameNode[] = [
         icon: "warning",
         description: "Record the gap officially, sign as planned, and deal with it if it happens.",
         say:
-          "We record it and move on. If it arrives, it arrives in your month, and I won't pretend otherwise.",
+          "We record it and move on. If it arrives, it arrives in your month, and I won’t pretend otherwise.",
         commits: "If it happens, Aisha meets it with no plan.",
         pros: ["Signing stays on schedule", "Costs nothing today"],
         cons: ["Problem may grow later", "On record that we knew"],
@@ -1877,7 +1877,7 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "Written down in full, and nobody fixing it.",
             detail:
-              "The review flagged exactly where your proposal is thinnest, and writing it down doesn't make it smaller. It will arrive in delivery, on my watch, with a paper trail showing we knew.",
+              "The review flagged exactly where your proposal is thinnest, and writing it down doesn’t make it smaller. It will arrive in delivery, on my watch, with a paper trail showing we knew.",
             changed: ["The risk is on record, unfunded", "A known problem heading for delivery"],
             effect: { dims: { win: 3, deliver: -12 }, flags: ["risk_accepted"] },
           },
@@ -1886,7 +1886,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "Recorded. The risk is real but survivable.",
             detail:
-              "Your proposal is solid enough that this is a risk we can carry. Accepting it keeps momentum, and there's slack elsewhere to absorb it.",
+              "Your proposal is solid enough that this is a risk we can carry. Accepting it keeps momentum, and there’s slack elsewhere to absorb it.",
             changed: ["The risk is accepted on record", "A risk you can probably carry"],
             effect: { dims: { win: 3, deliver: -4 }, flags: ["risk_accepted"] },
           },
@@ -1907,9 +1907,9 @@ const nodes: GameNode[] = [
             id: "m9-mitigate-broke",
             when: { all: ["discounted"] },
             tone: "hard",
-            headline: "You can't afford the fix you just agreed to.",
+            headline: "You can’t afford the fix you just agreed to.",
             detail:
-              "Mitigation costs money, and the money's gone — you gave it to procurement to close the price gap. So we add a thinner fix than the review asked for and hope the difference doesn't matter.",
+              "Mitigation costs money, and the money’s gone — you gave it to procurement to close the price gap. So we add a thinner fix than the review asked for and hope the difference doesn’t matter.",
             changed: [
               "Partial mitigation",
               "No margin left for error",
@@ -1917,9 +1917,9 @@ const nodes: GameNode[] = [
             effect: { dims: { deliver: 3, profit: -9 }, flags: ["thin_mitigation"] },
             lesson: {
               principle:
-                "What you settle commercially, my team lives with operationally — same decision, different month.",
+                "What we agree on price decides what my team can afford to fix later.",
               because:
-                "The discount that won the deal is the reason you cannot properly fix the risk that threatens it.",
+                "The money you gave away to win the deal is the money you now need to fix the risk the review found.",
               watchFor: "When you concede on price, note what you are giving up the ability to do later.",
             },
           },
@@ -1928,7 +1928,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "It costs you, and it holds.",
             detail:
-              "You put real money and real work behind the risk while it's still cheap. It's the least satisfying line in the commercial case, and it gives my team a plan for the month it bites.",
+              "You put real money and real work behind the risk while it’s still cheap. It’s the least satisfying line in the commercial case, and it gives my team a plan for the month it bites.",
             changed: ["Risk properly covered", "Lower margin, by choice"],
             effect: { dims: { deliver: 7, profit: -6 }, badge: "smart_tradeoff" },
           },
@@ -1952,7 +1952,7 @@ const nodes: GameNode[] = [
             detail:
               "Taking it out removes the exposure. It also removes the most exciting thing you promised, so you had to go back and explain why — and they accepted it, and will remember.",
             changed: ["Exposure removed", "A visible promise withdrawn early"],
-            /* Deliverability above re-pricing's +9, deliberately: re-pricing FUNDS the
+            /* Deliverability above re-pricing’s +9, deliberately: re-pricing FUNDS the
                exposure and removing it ELIMINATES it, so the safer programme has to read
                as safer. It did not, and `o-repriceRisk` therefore beat this option on all
                three dimensions in 93% of reachable states — a fake choice the authored
@@ -1977,7 +1977,7 @@ const nodes: GameNode[] = [
             id: "m9-reprice-strong",
             when: { any: ["evidenced", "ops_onside", "credibility", "ops_engaged"] },
             tone: "strong",
-            headline: "They took it seriously, because you'd been straight before.",
+            headline: "They took it seriously, because you’dbeen straight before.",
             detail:
               "Reopening price after agreeing terms only works if the client believes you, and they did. The number went up slightly, the risk is covered, and your honesty became part of why Sarah trusts us.",
             changed: ["Risk funded properly", "Trust strengthened rather than spent"],
@@ -2032,12 +2032,12 @@ const nodes: GameNode[] = [
        third person, so opening on Marcus or Sarah would have the player discussing them
        while they are on screen. Their line becomes context from outside the room. */
     room: "internal",
-    objective: "Decide what we tell Orion now the plan has slipped.",
+    objective: "Decide what to tell Orion about the late plan and the board’s new request.",
     minutes: 4,
     hero: "solution-in-store-tech",
     situation: [
-      "We signed, and it's now month five: two Orion specialists our plan needs were moved to other work, so we're three weeks late.",
-      "Sarah's board has also asked for one more thing, and we must decide what we tell Orion.",
+      "We signed, and it’s now month five: two Orion specialists our plan needs were moved to other work, so we’re three weeks late.",
+      "Sarah’s board has also asked for one more thing, and we must decide what we tell Orion.",
     ],
     presentation: "dialogue",
     surface: "chat",
@@ -2045,29 +2045,29 @@ const nodes: GameNode[] = [
       {
         when: { any: ["unanchored", "risk_accepted"], all: ["scope:heavy"] },
         situation: [
-          "We signed, and it's now month five: the new refunds and helpline systems are built, but Marcus won't switch them on without six weeks of testing.",
-          "Nobody planned that time — it's the gap our review flagged — and Sarah's board now wants one more thing too.",
+          "We signed, and it’s now month five: the new refunds and helpline systems are built, but Marcus won’t switch them on without six weeks of testing.",
+          "Our review warned us, nobody planned those six weeks, and Sarah’s board now wants one more thing; we must decide what to tell Orion.",
         ],
       },
       {
         when: { any: ["fragile_timeline", "promised:fast"] },
         situation: [
-          "We signed, and it's now month five: the eight-week trial still can't start, because Orion's order records are taking months to clean up.",
-          "We're late on our quickest promise, and Sarah's board now wants one more thing too.",
+          "We signed, and it’s now month five: the eight-week trial still can’t start, because Orion’s order records are taking months to clean up.",
+          "We’re late on our quickest promise, Sarah’s board now wants one more thing too, and we must decide what to tell Orion.",
         ],
       },
       {
         when: { all: ["descoped"] },
         situation: [
-          "We signed, and it's now month five: Orion's staff keep asking for the work we cut to reach their price.",
-          "Every “no” makes the project feel smaller than what was sold, and Sarah's board now wants one more thing too.",
+          "We signed, and it’s now month five: Orion’s staff keep asking for the work we cut before signing.",
+          "Every “no” makes the project feel smaller than what we sold, Sarah’s board now wants one more thing, and we must decide what to tell Orion.",
         ],
       },
       {
         when: { all: ["ops_onside", "has:training"] },
         situation: [
-          "We signed, and it's now month five: staff in the trial shops are using the new ways faster than planned.",
-          "Three regions want to start early, which needs people we don't have, and Sarah's board now wants one more thing too.",
+          "We signed, and it’s now month five: staff in the first shops are taking up the new ways of working faster than planned.",
+          "Three regions want to start early, which needs people we don’t have, Sarah’s board wants one more thing, and we must decide what to tell Orion.",
         ],
       },
     ],
@@ -2086,15 +2086,15 @@ const nodes: GameNode[] = [
       text: "The board has asked for one more thing and I said I would put it to you. I am aware of what I am asking.",
       ...SARAH,
     },
-    advisorLine: "I have thirty minutes and a team waiting on Monday. Tell me what I'm telling them.",
+    advisorLine: "I have thirty minutes and a team waiting on Monday. Tell me what I’m telling them.",
     advisor: AISHA,
     consider: [
-      "Which decision created this?",
-      "What can we still afford to do?",
-      "What if they hear it from someone else?",
+      "Which of our earlier decisions led to this?",
+      "What can we still afford, in money and in goodwill?",
+      "What happens if Orion hears it from someone else first?",
     ],
-    tip: "Whatever you decide, I have to tell the team on Monday. Tell me what to say.",
-    prompt: "Aisha has thirty minutes and needs a decision to take back to the team.",
+    tip: "Sarah has already shown her board our dates. Whatever we decide, she has to explain it to them.",
+    prompt: "Aisha has thirty minutes, and her team needs an answer by Monday.",
     question: "What do we tell Orion?",
     options: [
       {
@@ -2105,8 +2105,8 @@ const nodes: GameNode[] = [
         say:
           "I want the real dates in front of Sarah this week, with a re-plan already drafted. No surprises.",
         commits: "Saying out loud that a promise will not hold.",
-        pros: ["Client inside the problem", "Cheapest if trust exists"],
-        cons: ["You have to admit it", "Invites scrutiny"],
+        pros: ["Sarah hears it from us", "Costs little money"],
+        cons: ["You have to admit it", "Invites closer checking"],
         cost: { time: 1, investment: 1 },
         outcomes: [
           {
@@ -2121,7 +2121,7 @@ const nodes: GameNode[] = [
              * mechanical root of "it feels like a form".
              *
              * 60 because a gate threshold has to sit on a ten-point bucket boundary or the
-             * sweep's dedup silently stops being able to tell the two sides apart —
+             * sweep’s dedup silently stops being able to tell the two sides apart —
              * `analysis.ts` now throws rather than let that pass quietly. And exactly one
              * gate, because two consume a third of `MAX_FRONTIER` and three breach it.
              */
@@ -2133,17 +2133,17 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "A difficult meeting, and it worked.",
             detail:
-              "You went early, with a clear account of what changed and a re-plan already drafted. Because you've been accurate with Orion since the first conversation, they treated it as management, not failure.",
-            changed: ["Plan reset with Orion's agreement", "The relationship survives intact"],
+              "You went early, with a clear account of what changed and a new plan already drafted. Because you’ve been accurate with Orion since the first conversation, they treated it as a project being run properly, not as a failure.",
+            changed: ["Plan reset with Orion’s agreement", "The relationship survives intact"],
             effect: { dims: { deliver: 6, win: 2, profit: -2 }, badge: "recovered" },
           },
           {
             id: "m10-reset-cold",
             tone: "mixed",
-            headline: "They accepted it, and started checking everything.",
+            headline: "Orion accepted it, and started checking everything.",
             detail:
-              "Saying it out loud still cost you. Without much track record to draw on, Orion responded with governance — weekly reviews, escalation paths, a steering committee.",
-            changed: ["Plan reset", "You're now managed closely"],
+              "Saying it out loud still cost you. With little reason yet to trust us, Orion answered with weekly check-in meetings, a named person to complain to, and a committee of its managers watching the project.",
+            changed: ["Plan reset", "You’re now managed closely"],
             effect: { dims: { deliver: 4, profit: -5, win: -3 } },
           },
         ],
@@ -2166,7 +2166,7 @@ const nodes: GameNode[] = [
          * `evidenced` — rather than on whether you were brave.
          */
         id: "o-change",
-        title: "Raise it as a change",
+        title: "Charge for the extra work",
         icon: "scale",
         /**
          * Gated, and for two reasons that happen to agree.
@@ -2184,42 +2184,42 @@ const nodes: GameNode[] = [
          * can, which is backlog 1.2 rather than a workaround.
          */
         requires: { any: ["evidenced", "reviewed"] },
-        description: "What they are asking for is not in the contract. Price it and let them decide.",
-        say: "What they are asking for was never in the contract. I will price it and let them decide.",
-        commits: "A commercial conversation with a client who is already unhappy.",
-        pros: ["Paid for the work", "Scope stays honest"],
-        cons: ["Reads as opportunism", "Needs the original scope in writing"],
+        description: "The board’s request was never in the contract. Put a price on it and let Orion decide.",
+        say: "What the board wants was never in the contract. I’ll put a price on it and let them choose.",
+        commits: "Asking a client who is already unhappy to pay more.",
+        pros: ["We are paid for extra work", "The contract stays honest"],
+        cons: ["Can look like cashing in", "Needs proof it was never included"],
         cost: { time: 2, investment: 1 },
         outcomes: [
           {
             id: "m10-change-clean",
             when: { all: ["evidenced"], any: ["ops_onside", "reviewed", "knows:criteria"] },
             tone: "strong",
-            headline: "They paid, because it was provably out of scope.",
+            headline: "Orion paid, because the contract proved it was extra.",
             detail:
-              "You brought the original scope, the dated note where the extra ask first appeared, and a price. Sarah didn't enjoy it and approved it anyway, because the alternative was asking us to work for nothing. The programme grew and the margin held.",
-            changed: ["Extra work funded", "The scope boundary is in writing"],
+              "You brought the contract, the dated email where the board’s request first appeared, and a price. Sarah didn’t enjoy it and approved it anyway, because the alternative was asking us to work for nothing. The project grew, and our profit on it held.",
+            changed: ["Extra work paid for", "What the contract covers is in writing"],
             effect: { dims: { profit: 9, deliver: 3, win: -2 }, flags: ["changed_scope"], badge: "smart_tradeoff" },
             lesson: {
-              principle: "Extra work is a transaction, not a favour, and we could only say so because the boundary was written down.",
+              principle: "We could charge Orion for the extra work only because the contract showed it was never included.",
               because:
-                "The work was always going to be done. Raising it as a change decided whether your margin paid or their budget did — and you could only raise it because the original boundary was written down.",
+                "The work was going to be done either way, and the written contract decided whether Orion paid for it or we did.",
               watchFor: "When delivery is asked for something extra, ask first whether it was ever in the contract.",
             },
           },
           {
             id: "m10-change-thin",
             tone: "mixed",
-            headline: "The conversation was harder than the arithmetic.",
+            headline: "Orion paid for part of it, after an argument.",
             detail:
-              "You were right that it's out of scope, but you couldn't point to where we said so. It became a negotiation about memory, not money — they part-funded it, and the relationship cooled a degree.",
-            changed: ["Extra work part-funded", "An argument you shouldn't have needed"],
+              "You were right that it was extra, but you couldn’t point to where the contract said so. It became an argument about who remembered what, not about money. Orion paid for part of it, and Sarah was a little cooler afterwards.",
+            changed: ["Extra work partly paid for", "An argument you shouldn’t have needed"],
             effect: { dims: { profit: 4, win: -5, deliver: 1 }, flags: ["changed_scope"] },
             lesson: {
-              principle: "A change request is only as strong as the scope somebody wrote down, and ours was thin.",
+              principle: "Our request for payment was only as strong as what we had written down, and we had written little.",
               because:
-                "Nobody disputes a boundary that was written down at the time. Without it you were asking them to accept your account of a conversation from four months ago, which is a weaker position than being wrong would have been.",
-              watchFor: "Write the boundary down when it is uncontroversial, not when it is contested.",
+                "Without a written limit on the work, you were asking Orion to trust your memory of a conversation from four months ago.",
+              watchFor: "Write down what the work includes while everyone agrees, not once they are arguing.",
             },
           },
         ],
@@ -2228,26 +2228,26 @@ const nodes: GameNode[] = [
         id: "o-absorb",
         title: "Put more people on it",
         icon: "people",
-        description: "Hold the promise by adding capacity and absorbing the cost.",
-        say: "We add people and carry the cost ourselves. They get the date, and our margin pays for it.",
-        commits: "Straight out of the margin on this contract.",
-        pros: ["Client sees delivery", "Buys a reference"],
-        cons: ["Straight out of margin", "Needs margin to exist"],
+        description: "Keep the date by adding people to the team, and pay for them ourselves.",
+        say: "We add people and pay for them ourselves. Orion gets its date; our profit takes the hit.",
+        commits: "The extra people come out of our profit on this contract.",
+        pros: ["Orion sees us deliver", "Orion may recommend us"],
+        cons: ["Our profit pays for it", "Needs money left to spend"],
         cost: { time: 1, investment: 3 },
         outcomes: [
           {
             id: "m10-absorb-broke",
             when: { any: ["discounted", "thin_mitigation"] },
             tone: "hard",
-            headline: "There is no margin left to spend.",
+            headline: "There is no money left to pay for people.",
             detail:
-              "Adding people is the obvious fix, and you can't fund it. The commercial calls made before signing removed the option, so we add two people instead of five and the date slips anyway.",
-            changed: ["Partial cover", "Date missed regardless", "The contract is now loss-making"],
+              "Adding people is the obvious fix, and we can’t pay for it. The money we gave away on price before signing was the money for exactly this, so we add two people instead of five and the date slips anyway.",
+            changed: ["Two people added, not five", "Date missed regardless", "The contract now loses money"],
             effect: { dims: { profit: -13, deliver: 2 } },
             lesson: {
-              principle: "Delivery inherits every commercial decision made before it starts, and this one arrived with no room in it.",
+              principle: "The money we gave away to win the contract is the money this project now needs.",
               because:
-                "The flexibility you needed in month five was sold in the pricing conversation, months earlier, to close a gap.",
+                "The spare money you needed in month five was spent months earlier to match the rival’s price.",
               watchFor: "When you give something up to win, write down what you have made impossible.",
             },
           },
@@ -2256,53 +2256,53 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "You held the date by paying for it.",
             detail:
-              "Orion sees a programme delivering what it said it would, and our margin takes the hit quietly. That's a legitimate trade — it buys a reference and a relationship — but it isn't free.",
-            changed: ["Promise kept", "Margin materially reduced"],
+              "Orion sees a project doing what we said it would, and our profit quietly takes the hit. That’s a fair trade, because Orion will now vouch for us to other clients, but it isn’t free.",
+            changed: ["Promise kept", "Much less profit on the contract"],
             effect: { dims: { deliver: 5, profit: -10, win: 3 } },
           },
         ],
       },
       {
         id: "o-push",
-        title: "Push the team to hit it",
+        title: "Hold the team to the date",
         icon: "clock",
-        description: "The commitment was made. Hold everyone to it.",
+        description: "We promised the date. Ask the team to win back the three weeks with longer hours.",
         say: "The date stands. Tell the team I am asking them to find three weeks that are not there.",
-        commits: "Whatever it costs the people doing the work.",
-        pros: ["Date is met", "No concession"],
-        cons: ["Paid by the team", "Quality goes first"],
+        commits: "Long hours from the people doing the work.",
+        pros: ["Keeps the promised date", "Nothing to explain to Orion"],
+        cons: ["The team pays in hours", "Rushed work has mistakes"],
         cost: { time: 1, investment: 1 },
         outcomes: [
           {
             id: "m10-push-fragile",
             when: { any: ["scope:heavy", "promised:fast", "risk_accepted", "unanchored"] },
             tone: "hard",
-            headline: "You hit the date and missed the point.",
+            headline: "You hit the date, but what went live barely works.",
             detail:
-              "Something went live on the promised day — thin, and not connected to the systems that matter. Within three weeks the support queue was worse than before, and two of my team have asked to roll off.",
+              "Something went live on the promised day, but it was thin and not connected to the systems that matter. Within three weeks the queue of customers waiting on the helpline was longer than before, and two of my team have asked to move to other projects.",
             changed: [
               "The date was met",
-              "The outcome was not",
-              "Orion's real problem is unsolved",
+              "What went live barely works",
+              "Orion’s real problem is unsolved",
             ],
             effect: { dims: { deliver: -14, win: -6, profit: 2 } },
           },
           {
             id: "m10-push-ok",
             tone: "mixed",
-            headline: "Tight, and it landed.",
+            headline: "The date held, and my team paid for it.",
             detail:
-              "The programme was built well enough that pressure alone got it over the line. Orion got what it was promised; my team paid in goodwill, and you'll spend time repairing that.",
-            changed: ["Date met", "The delivery team is worn down", "Two people ask to roll off"],
+              "The plan was sound enough that longer hours alone got it done. Orion got what it was promised; my team paid in evenings and weekends, and you’ll spend time repairing that.",
+            changed: ["Date met", "The delivery team is worn down", "Two people ask to leave the project"],
             /* Was `deliver +2, profit +3, win +1` -- net +6 for a choice whose own cons say
                "Paid by the team", with nothing anywhere charging for it. Attrition is the
                cost, and it lands on Deliverability, because the people who know the
                programme are the ones who leave. */
             effect: { dims: { deliver: -4, profit: 3, win: 1 }, flags: ["crunched"] },
             lesson: {
-              principle: "We held that date on borrowed goodwill, and the people who lent it decide when it's repaid.",
+              principle: "We saved the date with my team’s long hours, and they are the ones paying for it.",
               because:
-                "The programme was sound enough that pressure worked. What it cost is two people who know how it was built, and you will feel that at the next gate rather than this one.",
+                "The plan was sound, so extra hours were enough, but two people who know how it was built now want to leave.",
               watchFor: "Before holding a date by effort, ask who is paying and whether they agreed to.",
             },
           },
@@ -2310,40 +2310,40 @@ const nodes: GameNode[] = [
       },
       {
         id: "o-quiet",
-        title: "Quietly reduce what ships",
+        title: "Cut some work without telling Orion",
         icon: "block",
-        description: "Trim the scope without making it a formal conversation.",
-        say: "Trim what the team can from the release and do not make an agenda item of it.",
-        commits: "The client finds out on their own terms.",
-        pros: ["Pressure disappears", "No hard meeting"],
-        cons: ["They will find out", "Becomes a trust problem"],
+        description: "Quietly drop a few smaller pieces from what we deliver, and don’t raise it with Orion.",
+        say: "Drop what the team can from this release. We don’t need to put it on Sarah’s agenda.",
+        commits: "Orion may find out without us telling them.",
+        pros: ["Takes the pressure off now", "No awkward meeting"],
+        cons: ["Orion may notice", "Hard to explain later"],
         cost: { time: 1, investment: 1 },
         outcomes: [
           {
             id: "m10-quiet-covered",
             when: { any: ["ops_onside", "broad_base"] },
             tone: "mixed",
-            headline: "Nobody noticed, because Operations was in on it.",
+            headline: "Nobody complained, because Marcus’s team knew why.",
             detail:
-              "Operations knows what was trimmed and why, and they're who the business asks. It held — but you're now relying on other people to explain a decision you chose not to announce.",
+              "Marcus’s operations team knew what was dropped and why, and they’re who Orion’s staff ask. It held, but you’re now relying on Marcus’s people to explain a decision you chose not to announce.",
             changed: [
               "Short-term pressure relieved",
-              "Operations carries an explanation you didn't give",
+              "Marcus’s team gives an explanation you didn’t",
             ],
             effect: { dims: { deliver: 2, win: -4, profit: 4 }, flags: ["undisclosed"] },
             lesson: {
-              principle: "Someone covering for us isn't the same as us being straight, and the people covering know the difference.",
+              principle: "When someone else explains our decision for us, we are spending their goodwill.",
               because:
-                "It held because Operations absorbed the question you chose not to answer. That works exactly as long as their goodwill lasts, and you have spent some of it without asking.",
+                "It held only because Marcus’s team answered the question you chose not to raise, and you never asked them to.",
               watchFor: "If a decision needs somebody else to explain it, ask why you are not explaining it.",
             },
           },
           {
             id: "m10-quiet",
             tone: "hard",
-            headline: "It worked until somebody opened the original proposal.",
+            headline: "It worked until someone compared it with the proposal.",
             detail:
-              "The pressure vanished. Four weeks later an Orion manager compared what shipped with what was proposed and asked a question in writing — and the issue stopped being scope and became that you hadn't said.",
+              "The pressure vanished. Four weeks later an Orion manager compared what we delivered with what we’dpromised and asked about it in writing, and the problem stopped being the missing work and became that we hadn’t told them.",
             changed: [
               "Short-term pressure relieved",
               "Trust damaged, and hard to repair",
@@ -2351,9 +2351,9 @@ const nodes: GameNode[] = [
             effect: { dims: { deliver: 1, win: -14, profit: 4 } },
             lesson: {
               principle:
-                "A delivery problem turns into a relationship problem the moment we stop talking about it.",
+                "Delivering less is often fine, but hiding it makes the client doubt everything else we say.",
               because:
-                "Reducing scope is often correct. Reducing it quietly turns a manageable delivery decision into a question about whether you can be trusted.",
+                "Cutting the work was a reasonable call, and doing it quietly made Orion ask what else we hadn’t told them.",
               watchFor: "If you would not want the client to read the decision log, reconsider the decision.",
             },
           },
@@ -2361,9 +2361,9 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "Month five's problems are decided before signature; delivery is just where they arrive.",
+      principle: "Most of our problems in month five were set up by choices we made before signing.",
       because:
-        "What went wrong in month five was not a delivery mistake. It was the arithmetic of choices made during qualification, solutioning and pricing, arriving on schedule.",
+        "Each problem in month five came from something chosen earlier: what we promised, the price we agreed, or the risk we accepted.",
       watchFor: "When you make a commitment, ask who has to keep it and whether they know yet.",
     },
     next: "refl-month5",
@@ -2421,19 +2421,19 @@ const nodes: GameNode[] = [
     advisorLine: [
       {
         when: { any: ["reframed"] },
-        text: "You moved them onto the post-purchase ground. Two weeks is what you have to stand it up.",
+        text: "You got Sarah talking about deliveries and refunds instead of the shops. Now we have two weeks to back that up.",
       },
       {
         when: { any: ["has_access"] },
-        text: "We are already inside. I would not spend a day of this getting in again.",
+        text: "We are already inside Orion on the paid study. Think about what that already tells us, and what it doesn’t.",
       },
-      { text: "Two weeks of my team's time. Tell me what it is buying." },
+      { text: "Two weeks of my team’s time. Tell me what each job buys us." },
     ],
     advisor: RIYA,
     consider: [
-      "Which of these changes what we propose?",
+      "Which of these would change what we offer Orion?",
       "What do we still not know?",
-      "Which would we regret skipping in month five?",
+      "Which would we regret skipping once the work starts?",
     ],
     tip: "Whatever you fund, my people start Monday. Give me a reason for each, not a feeling.",
     prompt: "Two of six. The other four do not happen.",
@@ -2507,21 +2507,21 @@ const nodes: GameNode[] = [
            riding along with a copy change. `m5b-persuasion` has the same defect. */
         headline: "You have the two things nobody else will have.",
         detail:
-          "Operations has sat in a room with us, and we know what their data can really support. Neither impresses in a pitch; together they're the difference between a proposal and a promise.",
+          "Operations has sat in a room with us, and we know what their data can really support. Neither impresses in a pitch; together they’re the difference between a proposal and a promise.",
         changed: [
           "Operations has met you before proposing",
           "You know what the data can do",
         ],
         effect: { dims: { deliver: 3 }, badge: "smart_tradeoff" },
-        /* This beat printed the mission's fallback lesson on all three of its outcomes,
+        /* This beat printed the mission’s fallback lesson on all three of its outcomes,
            including the two that are nearly opposite. Winning the room with nothing
            tested and grounding the work in what Operations can actually take are not the
            same experience, and they were being given the same sentence. */
         lesson: {
           principle:
-            "A fortnight on the dull foundations is cheap next to pricing work we haven't checked.",
+            "Two weeks on dull groundwork cost us less than putting a price on work nobody had checked.",
           because:
-            "You now have Operations involved and checked data to work from. Whether established earlier or through this investment, that foundation gives the proposal something real to describe.",
+            "Marcus’s team has now met us and we know what Orion’s records can show, so the offer can describe work that is real.",
           watchFor:
             "The unglamorous option is usually the one that removes an assumption instead of adding a claim.",
         },
@@ -2530,16 +2530,16 @@ const nodes: GameNode[] = [
         id: "m5b-persuasion",
         when: { all: ["credibility", "knows:rival_gap"] },
         tone: "strong",
-        headline: "You've built the argument, not the plan.",
+        headline: "You’ve built the argument, not the plan.",
         detail:
-          "You have proof of past work and the gap in the rival's offer, so Sarah's case for us is stronger. What we still lack is Operations involved and checked data — the ground a delivery plan stands on.",
+          "You have proof of past work and the gap in the rival’s offer, so Sarah’s case for us is stronger. What we still lack is Operations involved and checked data — the ground a delivery plan stands on.",
         changed: ["A stronger case with Sarah", "The delivery foundation is incomplete"],
         effect: { dims: { win: 3, deliver: -3 } },
         lesson: {
           principle:
-            "An argument for choosing us isn't a plan for doing the work, and only the plan tells us what it costs.",
+            "A good reason for Orion to choose us is not the same as a plan for doing the work.",
           because:
-            "Credibility and competitor insight support the buying conversation. They do not replace the combination of operational involvement and checked data needed for delivery.",
+            "A past client and the rival’s gaps help Sarah choose us, but without Marcus’s team involved and checked records we still cannot say how the work gets done.",
           watchFor:
             "Check which delivery assumptions still need evidence, even when the case for choosing you is strong.",
         },
@@ -2592,27 +2592,27 @@ const nodes: GameNode[] = [
       "We’ve picked the problem, and the rival firm is offering something similar.",
       "Now choose who does the work, what we reuse and how we get paid, because each changes what Orion gets and what we earn.",
     ],
-    /* Arjun's opening depends on what the last beat settled. With their own evidence on
+    /* Arjun’s opening depends on what the last beat settled. With their own evidence on
        the table there is room to move the shape; having answered the brief as written,
        the shape is the only thing left to move. */
     advisorLine: [
       {
         when: { all: ["evidenced"] },
-        text: "You have their own numbers on the table. That lets us move the shape, not just the words.",
+        text: "You showed Orion their own complaint numbers. That gives us room to change who does the work and how we are paid.",
       },
       {
         when: { all: ["scope:storefront"] },
-        text: "We answered the brief as written. So did everybody else. The shape is what is left.",
+        text: "We offered to fix the shops, like the rivals. Who does the work and how we are paid is what’s left.",
       },
-      { text: "Everyone is answering the question as asked. That is usually an opening." },
+      { text: "The rival is offering much the same work as us. What else about our offer could be different?" },
     ],
     advisor: ARJUN,
     consider: [
-      "What would we do if we could not staff it?",
-      "Who else already solved part of this?",
-      "What would make us the only credible answer?",
+      "What if we lacked the people to do it ourselves?",
+      "Has anyone, us included, already built part of this?",
+      "What would make Orion feel only we could do this?",
     ],
-    tip: "Our returns platform is sitting there. I am not saying use it. I am saying it exists.",
+    tip: "We built a refunds system for another retailer last year. I’m not saying reuse it; I’m saying it exists.",
     prompt: "Four shapes of answer. Two firms are already writing the fifth.",
     question: "How do you build the offer?",
     options: [
@@ -2621,7 +2621,7 @@ const nodes: GameNode[] = [
         title: "Team up with a delivery specialist",
         icon: "talk",
         description: "Work with a specialist firm that already handles deliveries and refunds at this size.",
-        commits: "We share our profit, and rely on a firm we don't run.",
+        commits: "We share our profit, and rely on a firm we don’t run.",
         pros: ["Experts who do this daily", "Believable from day one"],
         cons: ["Profit shared with them", "We rely on another firm"],
         cost: { time: 2, investment: 2 },
@@ -2641,7 +2641,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "A capable partner, attached to a fuzzy problem.",
             detail:
-              "They're good, and they're expensive. Without a clear read on what's broken, we're paying a specialist to solve a problem we've only described in general terms.",
+              "They’re good, and they’re expensive. Without a clear read on what’s broken, we’re paying a specialist to solve a problem we’ve only described in general terms.",
             changed: ["Capability bought", "Margin shared before the problem is clear"],
             effect: { dims: { win: 3, deliver: 3, profit: -7 }, flags: ["has:partner"] },
           },
@@ -2652,7 +2652,7 @@ const nodes: GameNode[] = [
         title: "Reuse something we already built",
         icon: "layers",
         description: "Adapt the refunds system our team built for another retailer.",
-        commits: "A system designed around somebody else's business.",
+        commits: "A system designed around somebody else’s business.",
         pros: ["Fast and cheap", "Already worked once"],
         cons: ["Built for another client", "Looks second-hand"],
         cost: { time: 1, investment: 1 },
@@ -2662,13 +2662,13 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "Cheap, fast, and visibly second-hand.",
             detail:
-              "It works, at a fraction of the cost of building new. But it solves the last client's problem, not this one, and Sarah noticed the gap between what it does and what she asked for.",
+              "It works, at a fraction of the cost of building new. But it solves the last client’s problem, not this one, and Sarah noticed the gap between what it does and what she asked for.",
             changed: ["Strong margin", "A solution that fits imperfectly"],
             effect: { dims: { profit: 10, deliver: 3, win: -5 }, flags: ["reused_asset"] },
             lesson: {
-              principle: "Reuse is cheap margin right up until it replaces thinking, and I've shipped that mistake.",
+              principle: "Reusing something we built saves money, but only if it fits this client’s problem.",
               because:
-                "The asset was real and the saving was real. It answered a question this client had not asked.",
+                "The old refunds system was real and cheap to reuse, but it was built for another retailer’s problem, not Orion’s.",
               watchFor: "Check whether you are reusing the solution or reusing the diagnosis.",
             },
           },
@@ -2690,7 +2690,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "You can offer it because you can measure it.",
             detail:
-              "An outcome deal is only honest if both sides trust the number, and you'd audited their data: half a million contacts a year, counted the same way by both of us. A third of the fee moves against that, and Sarah's board found it very hard to refuse.",
+              "An outcome deal is only honest if both sides trust the number, and you’daudited their data: half a million contacts a year, counted the same way by both of us. A third of the fee moves against that, and Sarah’s board found it very hard to refuse.",
             changed: ["A proposal nobody can compare", "Your fee partly rides on results"],
             effect: {
               dims: { win: 8, profit: -3, deliver: 1 },
@@ -2703,7 +2703,7 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "A third of the fee, bet on an uncounted number.",
             detail:
-              "The idea is strong, but nobody has counted the contacts, so there's no baseline either side can point at. The first argument of delivery will be about what a support contact even is — with a third of our fee on the table.",
+              "The idea is strong, but nobody has counted the contacts, so there’s no baseline either side can point at. The first argument of delivery will be about what a support contact even is — with a third of our fee on the table.",
             changed: ["A distinctive offer", "Fee tied to an undefined number"],
             effect: { dims: { win: 4, profit: -10, deliver: -4 }, flags: ["outcome_based"] },
           },
@@ -2724,7 +2724,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "Solid, and entirely expected.",
             detail:
-              "Nothing's wrong with it, which is the problem. Three firms now offer the same shape of answer, so the only variables left are price and who the client likes.",
+              "Nothing’s wrong with it, which is the problem. Three firms now offer the same shape of answer, so the only variables left are price and who the client likes.",
             changed: ["A defensible proposal", "Nothing that distinguishes it"],
             effect: { dims: { deliver: 3, profit: 3, win: -4 }, flags: ["conventional"] },
           },
@@ -2806,12 +2806,12 @@ const nodes: GameNode[] = [
         ],
       },
     ],
-    advisorLine: "I would rather they argue with me now than agree now and blame me later.",
+    advisorLine: "I would rather the reviewers argue with me now than blame me later. Which of their points worries you most?",
     advisor: ARJUN,
     consider: [
-      "Which of the three is actually weakest?",
-      "What would fixing it cost the other two?",
-      "Is the review right, or just cautious?",
+      "Is our weakest point winning, delivering, or making money?",
+      "What does fixing one weak point cost the others?",
+      "Are the reviewers right, or just being careful?",
     ],
     tip: "I have overruled a review twice. Once I was right, and I still think about the other one.",
     prompt: "One week, one fix — or none.",
@@ -2825,7 +2825,7 @@ const nodes: GameNode[] = [
         requires: { any: ["knows:ops_constraint", "ops_onside", "has:ops_workstream"] },
         icon: "shield",
         description: "Add who does each task, when, and how we’ll test each change before customers see it.",
-        say: "You're right to push. Give me the week and it comes back with names, dates and a testing plan.",
+        say: "You’re right to push. Give me the week and it comes back with names, dates and a testing plan.",
         commits: "A longer, duller document and a week not spent persuading.",
         pros: ["Answers the reviewers", "Aisha gets a real plan"],
         cons: ["Reads as cautious", "A week not spent persuading"],
@@ -2836,7 +2836,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "Duller to read, but the plan holds up.",
             detail:
-              "Nobody wins a pitch on a testing plan. But the reviewers stopped objecting, and Aisha's team can now see how the work is meant to happen.",
+              "Nobody wins a pitch on a testing plan. But the reviewers stopped objecting, and Aisha’s team can now see how the work is meant to happen.",
             changed: ["Delivery risk much reduced", "A week not spent on Orion"],
             effect: { dims: { deliver: 6, win: -3 }, flags: ["reviewed"] },
           },
@@ -2848,7 +2848,7 @@ const nodes: GameNode[] = [
         icon: "spark",
         description: "Spend the week rewriting the proposal so it convinces Sarah’s board.",
         say:
-          "Then argue with me about the pitch, because that is where the week goes. Sarah's board decides this.",
+          "Then argue with me about the pitch, because that is where the week goes. Sarah’s board decides this.",
         commits: "The weak points the reviewers found stay in.",
         pros: ["Stronger case to Orion", "Sarah gets arguments to use"],
         cons: ["Weak points stay unfixed", "Reviewers stay unhappy"],
@@ -2869,7 +2869,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "The case is tighter. The gaps are the same size.",
             detail:
-              "It reads better, and the proposal underneath hasn't changed. It was reasonably solid to begin with, so that's a defensible use of a week.",
+              "It reads better, and the proposal underneath hasn’t changed. It was reasonably solid to begin with, so that’s a defensible use of a week.",
             changed: ["A more persuasive proposal", "The same underlying gaps"],
             effect: { dims: { win: 5, deliver: -2 } },
           },
@@ -2891,7 +2891,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "The numbers work. The proposal is smaller.",
             detail:
-              "You put spare money back into the price, so one bad month won't sink us — the most useful thing you can do for a project that hasn't started. It also means offering less than the rival firm.",
+              "You put spare money back into the price, so one bad month won’t sink us — the most useful thing you can do for a project that hasn’t started. It also means offering less than the rival firm.",
             changed: ["Spare money for surprises is back", "A less ambitious offer"],
             effect: { dims: { profit: 10, win: -5, deliver: 2 }, flags: ["reviewed"] },
           },
@@ -2914,7 +2914,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "You had good reason to say no, and did.",
             detail:
-              "The reviewers were being careful, which is their job. But Marcus's operations team was already inside the proposal and the price had room in it, so there was nothing to fix and a week to save.",
+              "The reviewers were being careful, which is their job. But Marcus’s operations team was already inside the proposal and the price had room in it, so there was nothing to fix and a week to save.",
             changed: ["A week saved", "You backed your own judgement"],
             effect: { dims: { win: 3, profit: 4 }, badge: "held_nerve" },
           },
@@ -2927,9 +2927,9 @@ const nodes: GameNode[] = [
             changed: ["A week saved", "Every flagged gap is now yours"],
             effect: { dims: { deliver: -9, win: 1 }, flags: ["overrode_review"] },
             lesson: {
-              principle: "Reviewers with nothing to sell us are the best early warning on delivery we'll ever get.",
+              principle: "Our reviewers gained nothing from the deal, which is why they saw problems we missed.",
               because:
-                "The deal team wanted to win it and the reviewers did not care whether you did. That is precisely what made them worth listening to.",
+                "The bid team wanted to win and the reviewers did not care either way, which is exactly why their warnings were worth acting on.",
               watchFor: "When you overrule a review, write down what you are betting will not happen.",
             },
           },
@@ -2963,7 +2963,7 @@ const nodes: GameNode[] = [
    * The beat the game did not have: the client decides.
    *
    * `docs/STRATEGY.md` already said it — "we have no 'did we win it?' beat at all; the
-   * contract is signed inside m9's outcome prose". m9b is the SELLER's gate, do we take
+   * contract is signed inside m9’s outcome prose". m9b is the SELLER’s gate, do we take
    * it. Nothing anywhere adjudicated whether they wanted us, which is why Winability was
    * a one-way ratchet: it entered m9 at 83–100 and m10c at 97–100, and "You did not win
    * the work" fired on 0.15% of runs. A game in which a competently run pursuit always
@@ -2972,13 +2972,13 @@ const nodes: GameNode[] = [
    *
    * So this is the award decision, and it can be lost. The loss is CAUSED, never rolled:
    * `m9a-lost` fires when the player never built a reason to be preferred — no evidence
-   * of their own, Operations not brought inside, the problem never reframed, the rival's
+   * of their own, Operations not brought inside, the problem never reframed, the rival’s
    * gap never found — and their Winability is not high enough to carry them anyway. It
    * carries `next: "end"`, so the run stops here, as walking away does.
    *
    * The gate is on flags alone, deliberately. A first draft added `max: { win: 92 }` to
    * tune the rate down, which would have made this the first condition in the game to
-   * read a meter — and `validate.ts` immediately warned that the sweep's dedup drops
+   * read a meter — and `validate.ts` immediately warned that the sweep’s dedup drops
    * dimensions, so coverage would have silently stopped being exhaustive. `analysis.ts`
    * can now bucket a gated dimension into the key, so the option is there; it is not
    * taken, because the flag clause alone fires on 18.6% of random runs and the target was
@@ -2992,7 +2992,7 @@ const nodes: GameNode[] = [
    * It also pays two domain debts. Procurement existed only as weather — six mentions,
    * always acting from off-stage, never a person you could engage — so Declan Foyle has
    * a name and a mandate. And the price defence was always qualitative; `o-value` is the
-   * first time the game lets the player argue from the client's own arithmetic, which is
+   * first time the game lets the player argue from the client’s own arithmetic, which is
    * how a premium is actually defended.
    */
   {
@@ -3039,14 +3039,14 @@ const nodes: GameNode[] = [
       text: "I have three proposals, a scorecard and a savings target. Give me something to write in the box that explains why I did not take the cheapest.",
       ...FOYLE,
     },
-    advisorLine: "Foyle is not the obstacle. He has a number to hit and nobody has helped him hit it.",
+    advisorLine: "Declan isn’t against us. He has to save Orion money, and nobody has helped him explain paying more.",
     advisor: RIYA_DEAL,
     consider: [
-      "What is he actually comparing us against?",
-      "Whose numbers is our case built from?",
-      "Who loses if he picks us?",
+      "What is Declan actually comparing us against?",
+      "What will he write to explain picking us?",
+      "Who at Orion has to defend that choice?",
     ],
-    tip: "I have lost two of these to firms with a worse answer and a better-scored submission.",
+    tip: "I have lost two bids like this to firms with worse ideas that scored better on the buyer’s form.",
     prompt: "Four things you could hand Foyle.",
     question: "What do you give Foyle to justify choosing us?",
     options: [
@@ -3089,13 +3089,13 @@ const nodes: GameNode[] = [
             headline: "Foyle marked your saving as unevidenced.",
             detail:
               "You had the complaint volumes, but nothing else in our submission stood on them. Foyle read a payback sum bolted onto a generic proposal, marked it unevidenced, and the award went elsewhere.",
-            changed: ["Not selected", "A quarter's pursuit cost written off"],
+            changed: ["Not selected", "A quarter’s pursuit cost written off"],
             effect: { dims: { win: -30, profit: -8 }, flags: ["lost"] },
             next: "end",
             lesson: {
-              principle: "A saving only persuades when the whole proposal is built on the client’s numbers, not added at the end.",
+              principle: "Our saving only persuades if the whole proposal is built on Orion’s numbers, not added at the end.",
               because:
-                "You had their numbers but never built the proposal on them, so the payback read as a late claim.",
+                "You had their numbers but never built the proposal on them, so the saving looked like a claim added at the end.",
               watchFor: "Before promising a payback, ask whose number the baseline is.",
             },
           },
@@ -3105,7 +3105,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "Ours was the only bid with a saving attached.",
             detail:
-              "From Orion's own complaint data: half a million contacts a year at about five pounds each, so two and a half million pounds a year. Halve that and Orion keeps one and a quarter million a year against our £600,000 premium, which pays back inside six months. You wrote Foyle's justification for him.",
+              "From Orion’s own complaint data: half a million contacts a year at about five pounds each, so two and a half million pounds a year. Halve that and Orion keeps one and a quarter million a year against our £600,000 premium, which pays back inside six months. You wrote Foyle’s justification for him.",
             changed: ["Selected", "A payback number now in the contract"],
             effect: { dims: { win: 8, profit: 4 }, flags: ["won", "outcome_based"], badge: "connected_dots" },
           },
@@ -3146,14 +3146,14 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "You learned exactly how you lost.",
             detail:
-              "Foyle sent the weightings, and they were unkind: forty percent on proven delivery of comparable systems. You can't manufacture that in a week, and the firm that could was already ahead.",
+              "Foyle sent the weightings, and they were unkind: forty percent on proven delivery of comparable systems. You can’t manufacture that in a week, and the firm that could was already ahead.",
             changed: ["Not selected", "You know precisely why"],
             effect: { dims: { win: -28, profit: -4 }, flags: ["lost", "knows:criteria"] },
             next: "end",
             lesson: {
-              principle: "The scoring criteria decide the award whether we ask for them or not, so I ask in week one.",
+              principle: "The buyer scores every bid against a marking sheet, so we ask to see it at the start.",
               because:
-                "Asking in the last week told you what asking in the first week would have changed. Nothing about the weightings was secret; you simply bid against an imagined test.",
+                "The marking sheet was never secret, and asking for it in the last week only showed you what asking in the first week could have changed.",
               watchFor: "Ask how it will be scored before you decide what to write.",
             },
           },
@@ -3172,8 +3172,8 @@ const nodes: GameNode[] = [
         id: "o-deliverer",
         title: "Send Aisha, who would run the project",
         icon: "people",
-        /* Aisha can only answer Foyle's questions about how the changes reach production
-           if somebody has planned it: her own integration workstream, Marcus's people
+        /* Aisha can only answer Foyle’s questions about how the changes reach production
+           if somebody has planned it: her own integration workstream, Marcus’s people
            inside the proposal, or a partner who runs returns for a living. With none of
            the three there is nobody to send — the card would be an invitation to walk
            your most truthful person into a room with nothing to be truthful about, which
@@ -3198,9 +3198,9 @@ const nodes: GameNode[] = [
             effect: { dims: { win: -26, deliver: 3 }, flags: ["lost"] },
             next: "end",
             lesson: {
-              principle: "Honesty in the room only wins when the homework behind it is done, and this time it wasn't.",
+              principle: "Sending Aisha only helps if she can describe a settled plan, and ours still depended on teams nobody had asked.",
               because:
-                "Aisha could only describe the position you had actually built. Putting your most truthful person in front of the client is a strength when there is something to be truthful about, and an admission when there is not.",
+                "Aisha could only describe the plan you had actually built, and since nobody had spoken to the teams involved, her honesty sounded like doubt.",
               watchFor: "Before bringing delivery in, ask what they will have to admit.",
             },
           },
@@ -3210,7 +3210,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "Aisha named the three teams, and Foyle relaxed.",
             detail:
-              "Aisha walked through how the changes reach production, who signs them off, and what she'd already agreed with Marcus. Foyle stopped asking about risk; it was the shortest scoring session of the three.",
+              "Aisha walked through how the changes reach production, who signs them off, and what she’dalready agreed with Marcus. Foyle stopped asking about risk; it was the shortest scoring session of the three.",
             changed: ["Selected", "Delivery credibility before signature"],
             effect: { dims: { win: 6, deliver: 4 }, flags: ["won"], badge: "held_nerve" },
           },
@@ -3219,7 +3219,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "Foyle believed Aisha, but price still counted against us.",
             detail:
-              "She was straight about what's agreed and what isn't, and Foyle believed her — worth more than it looks. He still scored the cheaper bid higher on price.",
+              "She was straight about what’s agreed and what isn’t, and Foyle believed her — worth more than it looks. He still scored the cheaper bid higher on price.",
             changed: ["Selected", "Credible, but not preferred on price"],
             effect: { dims: { win: 3, deliver: 2 }, flags: ["won"] },
           },
@@ -3242,14 +3242,14 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "Three similar bids, and ours cost the most.",
             detail:
-              "With nothing to separate the bids on substance, Foyle separated them on price — that's what a scorecard does when every column is level. We were told on a Thursday, by email.",
+              "With nothing to separate the bids on substance, Foyle separated them on price — that’s what a scorecard does when every column is level. We were told on a Thursday, by email.",
             changed: ["Not selected", "Nothing said why it must be you"],
             effect: { dims: { win: -32, profit: -6 }, flags: ["lost"] },
             next: "end",
             lesson: {
-              principle: "Price decides whenever we give the scorecard nothing else to work with.",
+              principle: "When we give the buyer nothing else to separate the bids, he picks the cheapest.",
               because:
-                "Every week of this pursuit was a chance to build a reason to be preferred, and the submission records how many of them you took. Respecting the process is not a substitute for giving it something to score.",
+                "Every week of chasing Orion was a chance to give them a reason to prefer us, and the proposal showed how few of those chances you took.",
               watchFor: "Ask what is in the proposal that a competitor could not write.",
             },
           },
@@ -3259,7 +3259,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "The proposal won without us in the room.",
             detail:
-              "The proposal argues from their data and names the people who have to change, so it persuades without us there. That's the test of a document, and ours passed.",
+              "The proposal argues from their data and names the people who have to change, so it persuades without us there. That’s the test of a document, and ours passed.",
             changed: ["Selected", "Won on the document alone", "Nothing promised beyond the proposal"],
             /* Deliverability, because submitting creates no obligation the other three do:
                `o-value` commits to a payback figure, `o-criteria` to a re-cut, `o-deliverer`
@@ -3273,8 +3273,8 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "You won narrowly, because Sarah backed us.",
             detail:
-              "Foyle scored the bids close to level and Sarah's recommendation carried it. We have the work and we've learned nothing about why, which is a poor place to start next time.",
-            changed: ["Selected", "Won on Sarah's preference, not the scorecard"],
+              "Foyle scored the bids close to level and Sarah’s recommendation carried it. We have the work and we’ve learned nothing about why, which is a poor place to start next time.",
+            changed: ["Selected", "Won on Sarah’s preference, not the scorecard"],
             effect: { dims: { win: 2, deliver: 3 }, flags: ["won"] },
           },
         ],
@@ -3292,7 +3292,7 @@ const nodes: GameNode[] = [
   /**
    * The award, written so it reads whichever way it went.
    *
-   * Four of m9a's outcomes carry their own `next: "end"` — a pursuit lost at the award
+   * Four of m9a’s outcomes carry their own `next: "end"` — a pursuit lost at the award
    * stops there, as walking away does — so in practice this node is reached by the
    * branches that won. It is still written without a verdict in it, because the point of
    * the beat is that the verdict was reached in a room the player was not in, and a scene
@@ -3383,12 +3383,12 @@ const nodes: GameNode[] = [
       "Delivery inherits every sentence",
       "Procurement has already scheduled the kickoff",
     ],
-    advisorLine: "I have signed things I should not have. Nobody ever remembers the deals you declined.",
+    advisorLine: "I have signed contracts I should not have. Before you answer Sarah, read what this one now says, line by line.",
     advisor: RIYA_DEAL,
     consider: [
-      "Would we staff this ourselves?",
-      "What has the deal become since we started?",
-      "Is saying no still available?",
+      "Would you put your own people on this contract?",
+      "What have we given away since the first meeting?",
+      "What happens to us if we say no now?",
     ],
     tip: "I have walked away from one deal in nine years. I think about it more than the ones I signed.",
     prompt: "Three answers for Sarah, and one ends our work with Orion.",
@@ -3411,7 +3411,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "Signed, on work we understand.",
             detail:
-              "You're taking on work you understand, with the people who must deliver it already involved. That's a better position than most teams have on the day they sign.",
+              "You’re taking on work you understand, with the people who must deliver it already involved. That’s a better position than most teams have on the day they sign.",
             changed: ["Contract signed", "Delivery starts from ground you built"],
             effect: { dims: { win: 4, profit: 2 }, flags: ["signed"] },
           },
@@ -3444,7 +3444,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "Sarah agreed to both changes, because she trusted you.",
             detail:
-              "Reopening an agreed deal only works if the client believes you're doing it for the programme, not the margin. Sarah didn't argue, and both clauses moved.",
+              "Reopening an agreed deal only works if the client believes you’re doing it for the programme, not the margin. Sarah didn’t argue, and both clauses moved.",
             changed: ["Two real risks removed before signing", "Two weeks lost"],
             effect: {
               dims: { deliver: 6, profit: 4, win: -2 },
@@ -3480,7 +3480,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "You refused a deal that would have hurt.",
             detail:
-              "This deal had grown into a shape nobody would have chosen on purpose. Saying so cost a quarter and saved a year, and Sarah didn't argue with a word of it.",
+              "This deal had grown into a shape nobody would have chosen on purpose. Saying so cost a quarter and saved a year, and Sarah didn’t argue with a word of it.",
             changed: [
               "No contract, and no loss-making delivery",
               "Your people are free for better work",
@@ -3492,9 +3492,9 @@ const nodes: GameNode[] = [
               badge: "held_nerve",
             },
             lesson: {
-              principle: "Walking away from a deal that isn't worth having is a decision, and I want it recorded as one.",
+              principle: "We turned down a deal that wasn’t worth having, and that was a decision, not a failure.",
               because:
-                "An unresolved delivery risk or an unsupported commitment had survived into the final deal. Walking away stopped that exposure becoming a signed obligation.",
+                "A known risk that nobody had paid to fix was still in the deal, and walking away stopped it becoming a signed promise.",
               watchFor:
                 "Before signing, ask whether you would staff this yourself. If the answer is no, say so while saying no is still cheap.",
             },
@@ -3505,17 +3505,17 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "You turned down a deal that was sound.",
             detail:
-              "Caution isn't judgement. Nothing in this engagement had established the kind of risk that justifies refusing, so you walked without a specific commitment you couldn't carry.",
+              "Caution isn’t judgement. Nothing in this engagement had established the kind of risk that justifies refusing, so you walked without a specific commitment you couldn’t carry.",
             changed: [
               "No contract",
-              "A quarter's pursuit cost written off",
+              "A quarter’s pursuit cost written off",
               "Orion will be slower to call",
             ],
             effect: { dims: { win: -22, profit: -6, deliver: 5 }, flags: ["walked_away"] },
             lesson: {
-              principle: "Walking away is discipline only when we can name the exposure we're refusing; otherwise it's nerves.",
+              principle: "Turning down a deal only makes sense if we can name the risk we are refusing.",
               because:
-                "Walking away is justified by a concrete exposure you cannot responsibly accept. In this run, the engagement had not established the unresolved risks that would make refusal the stronger choice.",
+                "Nothing in this deal was a risk we could not carry, so walking away gave up sound work for no reason you could name.",
               watchFor: "Before you decline, name the specific thing you are unwilling to carry.",
             },
             next: "end",
@@ -3558,8 +3558,8 @@ const nodes: GameNode[] = [
     minutes: 3,
     hero: "solution-workshop",
     situation: [
-      "On top of the slip, two of our best are moving to a bigger account, and their replacements can't start for six weeks.",
-      "We must decide who fills those two seats now, because they'll be doing the work we promised.",
+      "That same month, two of my best people are being moved to a bigger client, and their replacements can’t start for six weeks.",
+      "Decide who fills those two places now, because whoever it is will be doing the work we promised Orion.",
     ],
     /* Staffing is the beat where the pricing conversation finally arrives in a room with
        the delivery lead in it, so she names it. The second branch is the reason graduates
@@ -3575,94 +3575,94 @@ const nodes: GameNode[] = [
     advisorLine: [
       {
         when: { any: ["discounted", "thin_mitigation"] },
-        text: "I have been through the commercial case twice. Whatever we do here comes out of what is left of it.",
+        text: "I have been through our budget for this contract twice. Whatever we do here comes out of what is left.",
       },
       {
         when: { any: ["ops_onside", "has:training"] },
-        text: "Training's in the plan and Operations knows us. Neither tells me who sits in those two seats on Monday.",
+        text: "My team knows two places are empty. They want names by Friday, and so will Orion.",
       },
-      { text: "I can staff this with the people who exist, or the people in the plan. Not both." },
+      { text: "I can fill these places with people who are free now, or wait for the ones the plan named. Not both." },
     ],
     advisor: AISHA,
     consider: [
-      "Who actually has to be senior here?",
-      "What happens to the rest of the firm?",
-      "Does the client need to know?",
+      "Which parts of this work need someone experienced?",
+      "What does each choice take from you personally?",
+      "Does Orion need to know, and who tells Sarah?",
     ],
-    tip: "Every way of filling those seats costs us money, time or the date. Which one can you spare?",
-    prompt: "Somebody is going to be disappointed.",
-    question: "Who fills the two seats?",
+    tip: "Every way of filling those places costs us money, time or the date. Which one can you spare?",
+    prompt: "Two empty places on the team, and three ways to fill them.",
+    question: "Who fills the two empty places?",
     options: [
       {
         id: "o-juniors",
-        title: "Staff it with juniors and supervise",
+        title: "Use two graduates and check their work",
         icon: "people",
-        description: "Two graduates plus more of your own time reviewing their work.",
-        commits: "Your attention, for the whole programme.",
-        pros: ["Available now", "Cheap"],
-        cons: ["Slower and more rework", "Costs your attention"],
+        description: "Two recent graduates start now, and you spend extra hours checking everything they do.",
+        commits: "Hours of your own time, every week, until the end.",
+        pros: ["Can start on Monday", "Costs us little"],
+        cons: ["Slower, with mistakes to fix", "Takes your own time"],
         cost: { time: 3, investment: 1 },
         outcomes: [
           {
             id: "m10b-juniors-held",
             when: { any: ["has:training", "ops_onside"] },
             tone: "strong",
-            headline: "It works, because the scaffolding was already there.",
+            headline: "It works, because they had support around them.",
             detail:
-              "Putting graduates on a programme with training built in, or an engaged client team, is a development opportunity; without either, it's a risk. You had at least one.",
-            changed: ["Fully staffed", "Your time goes on reviewing"],
+              "Graduates learn fast on a project that has staff training built in, or a client team that is already helping; without either, they’re a risk. You had at least one.",
+            changed: ["Both places filled", "Your time goes on checking work"],
             effect: { dims: { deliver: 3, profit: 6, win: -1 } },
           },
           {
             id: "m10b-juniors-thin",
             tone: "mixed",
-            headline: "Staffed, slower, and leaning on you.",
+            headline: "Both places filled, slower, and leaning on you.",
             detail:
-              "The work gets done, with the rework you'd expect. Every review runs through you, so the programme now has a single point of failure: your calendar.",
-            changed: ["Fully staffed", "Everything routes through you"],
+              "The work gets done, with the mistakes you’dexpect to fix. Everything they do is checked by you, so if you are ill or busy, the whole project stalls.",
+            changed: ["Both places filled", "Everything waits for your checks"],
             effect: { dims: { deliver: -2, profit: 7 } },
           },
         ],
       },
       {
         id: "o-contractors",
-        title: "Bring in contractors",
+        title: "Hire two contractors",
         icon: "coins",
-        description: "Two experienced people, available next week, at twice the rate.",
-        commits: "Margin, and knowledge that leaves when they do.",
-        pros: ["Experienced and immediate", "No ramp-up"],
-        cons: ["Twice the rate", "The knowledge leaves with them"],
+        description: "Two experienced freelancers who start next week, at twice what our own people cost.",
+        commits: "Twice the daily cost, and they leave when their contract ends.",
+        pros: ["Experienced, and start next week", "Need no training"],
+        cons: ["Twice the daily cost", "What they learn leaves with them"],
         cost: { time: 1, investment: 3 },
         outcomes: [
           {
             id: "m10b-contractors-broke",
             when: { any: ["discounted", "thin_mitigation"] },
             tone: "hard",
-            headline: "You can't fund the obvious answer. Again.",
+            headline: "There is only money for one contractor.",
             detail:
-              "Contractors at twice the rate need a contract with room in it, and ours has none. So it's one contractor instead of two, and the plan quietly absorbs the difference.",
-            changed: ["Half-staffed", "The contract is close to loss-making"],
+              "Contractors at twice the cost need spare money in the contract, and ours has none left after the price cut. So it’s one contractor instead of two, and my team quietly covers the gap.",
+            changed: ["Only one place filled", "The contract is close to losing money"],
             effect: { dims: { profit: -11, deliver: 1 } },
           },
           {
             id: "m10b-contractors",
             tone: "mixed",
-            headline: "Staffed properly, and it shows in the numbers.",
+            headline: "Both places filled, at a cost we never planned.",
             detail:
-              "We have the people we need from next week, at a cost the commercial case never planned for. And in nine months, nothing they learned will still be in the building.",
-            changed: ["Properly staffed", "Margin reduced", "Knowledge will leave with them"],
+              "We have the people we need from next week, at a cost our budget never planned for. And in nine months, everything they learned will have left with them.",
+            changed: ["Both places filled", "Less profit on the contract", "What they learn will leave with them"],
             effect: { dims: { deliver: 5, profit: -8 } },
           },
         ],
       },
       {
         id: "o-slip",
-        title: "Move the date",
+        title: "Wait for our own people",
         icon: "clock",
-        description: "Wait six weeks for the right people and re-plan around it.",
-        commits: "A date the client has already told their board.",
-        pros: ["Right team, no compromise", "Nothing rushed"],
-        cons: ["A date already announced", "Six weeks of nothing"],
+        description: "Wait six weeks for our own experienced people, and ask Orion to move the date.",
+        commits: "Moving a date Sarah has already given her board.",
+        pros: ["The right people do it", "Nothing rushed"],
+        cons: ["Sarah’s board knows the date", "Six weeks of waiting"],
         cost: { time: 2, investment: 1 },
         outcomes: [
           {
@@ -3671,26 +3671,26 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "Orion moved the date, because you asked early.",
             detail:
-              "Six weeks is a manageable conversation the day you know, and an impossible one the week it bites. You raised it straight away, with the standing to be believed, so the plan moved and nothing else did.",
-            changed: ["The right team", "Date moved with Orion's agreement"],
+              "Asking for six more weeks is an easy conversation the day you find out, and a hard one the week the date arrives. You asked straight away, and Orion already trusted what we told them, so the date moved and nothing else did.",
+            changed: ["The right team", "Date moved with Orion’s agreement"],
             effect: { dims: { deliver: 6, profit: 3, win: -3 }, badge: "recovered" },
           },
           {
             id: "m10b-slip-cold",
             when: { any: ["promised:fast", "overrode_review"] },
             tone: "hard",
-            headline: "That date was the reason they picked you.",
+            headline: "That date was why Orion picked us.",
             detail:
-              "Speed was the most attractive thing in your proposal, and now we're asking for six more weeks. Sarah has to go back to a board that approved this on the timeline.",
-            changed: ["The right team eventually", "The thing you sold on is gone"],
+              "Speed was the most attractive thing in your proposal, and now we’re asking for six more weeks. Sarah has to go back to a board that approved this because of the dates.",
+            changed: ["The right team, eventually", "The speed you sold them is gone"],
             effect: { dims: { win: -12, deliver: 4 } },
           },
           {
             id: "m10b-slip",
             tone: "mixed",
-            headline: "Accepted, and noted.",
+            headline: "Orion agreed to the new date, and noted why.",
             detail:
-              "The date moved without much drama. But it's now on record, halfway through, that the plan was written for a team we didn't have.",
+              "The date moved without much drama. But it’s now on record, halfway through, that the plan was written for a team we didn’t have.",
             changed: ["The right team", "Six weeks later than planned"],
             effect: { dims: { deliver: 3, win: -6 } },
           },
@@ -3698,9 +3698,9 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "A plan is a promise about people, so I want names against it, not headcount.",
+      principle: "Our plan only holds if named people are free to do each part of it.",
       because:
-        "The programme was scoped as though the right people would be free. Whether that was optimism or an oversight, the delivery team is the one that finds out.",
+        "The plan assumed the right people would stay free, and when two were moved away, the team doing the work had to cover the gap.",
       watchFor: "When you commit to a date, ask who specifically is going to be sitting there.",
     },
     next: "m10h",
@@ -3710,9 +3710,9 @@ const nodes: GameNode[] = [
    * Backlog 5.7 — the handover. The one beat whose currency is what the player already
    * has rather than what they would prefer.
    *
-   * Aisha's standing line has been in this file since the cast was written: "My team
+   * Aisha’s standing line has been in this file since the cast was written: "My team
    * inherits every sentence in that proposal. Which ones did you mean?" It was rhetorical
-   * for seventeen beats. Here it is the question, and the answers are the player's OWN
+   * for seventeen beats. Here it is the question, and the answers are the player’s OWN
    * commitments read back at them — so every option carries a `requires`, and which
    * sentences you are entitled to stand behind is a consequence of the run rather than a
    * menu. An option nobody earned renders locked and named (`ui/apply.tsx`); seeing the
@@ -3720,7 +3720,7 @@ const nodes: GameNode[] = [
    *
    * WHY THE FALLBACK IS GATED TOO. `o-meant-all-of-it` requires `won`, which every path
    * reaching this node carries: every m9a branch that does not divert to the ending
-   * writes it, and m9b's two walk-away branches divert as well. So the beat is always
+   * writes it, and m9b’s two walk-away branches divert as well. So the beat is always
    * playable AND nothing on it is ungated, which is the rule it exists to make visible —
    * and the one commitment nobody here can disown is the document that won the work.
    *
@@ -3737,7 +3737,7 @@ const nodes: GameNode[] = [
    *
    * WHEN IT HAPPENS (CNT-01). Not at the start of delivery: m10 and m10b have already put
    * the team five months in. It is the month-six re-plan, where Aisha takes the second half
-   * off the pursuit lead's hands for good and first asks which of the promises still stand.
+   * off the pursuit lead’s hands for good and first asks which of the promises still stand.
    * So nothing here may say her team "starts on Monday" — what starts on Monday is month
    * six, which is also the Monday `turn-sarah` opens on.
    */
@@ -3748,11 +3748,11 @@ const nodes: GameNode[] = [
     stage: "delivery",
     title: "The sentences you wrote",
     eyebrow: "The handover",
-    objective: "Answer for the promises in your own proposal.",
+    objective: "Tell Aisha which promises in your proposal you meant.",
     minutes: 4,
     hero: "solution-workshop",
     situation: [
-      "Month six starts on Monday and I'm re-planning the second half — after this, your promises are mine to keep. I've highlighted the lines I still can't plan around.",
+      "Now the two empty places are dealt with, I take over planning on Monday, and every promise in our proposal becomes mine to keep. I’ve marked the lines I can’t plan around yet, so tell me which ones you meant, because my team builds exactly those.",
     ],
     /* Backlog 5.7. Aisha asks which of your promises you meant, and the honest answer is
        constrained by which ones you actually funded — so every line she cannot plan
@@ -3768,78 +3768,78 @@ const nodes: GameNode[] = [
       {
         when: { all: ["scope:heavy"], none: ["has:ops_workstream"] },
         situation: [
-          "Month six starts on Monday and I'm re-planning the second half, so your promises become mine.",
-          "We still promise the platform rebuild, and five months in nobody in Operations has agreed to take it.",
+          "Now the two empty places are dealt with, I take over planning on Monday, and your promises become mine to keep.",
+          "We promised to rebuild Orion’s refunds and helpline systems, yet Marcus’s team never agreed to install them, so tell me what you meant; I plan to your answer.",
         ],
       },
       {
         when: { all: ["promised:fast"], none: ["has:data"] },
         situation: [
-          "Month six starts on Monday and I'm re-planning the second half, so your promises become mine.",
-          "Two lines are highlighted: the eight-week pilot, and the claim the order data was available — it still isn't.",
+          "Now the two empty places are dealt with, I take over planning on Monday, and your promises become mine to keep.",
+          "I’ve marked the eight-week trial, which assumed Orion’s order records were usable, and they still aren’t; tell me whether you meant it, because I plan to your answer.",
         ],
       },
       {
         when: { all: ["outcome_based"] },
         situation: [
-          "Month six starts on Monday and I'm re-planning the second half, so your promises become mine.",
-          "The contract ties a third of our fee to the support-contact figure, and I'd like to know who chose it.",
+          "Now the two empty places are dealt with, I take over planning on Monday, and your promises become mine to keep.",
+          "A third of our fee depends on complaints falling, a target we wrote into the contract; tell me whether you meant it, because my plan depends on it.",
         ],
       },
       {
         when: { all: ["ops_onside", "evidenced"] },
         situation: [
-          "Month six starts on Monday and I'm re-planning the second half, so your promises become mine.",
-          "Almost nothing is highlighted, and my question is narrower than I expected: which lines are fixed, and which may I re-plan?",
+          "Now the two empty places are dealt with, I take over planning on Monday, and your promises become mine to keep.",
+          "I’ve marked almost nothing, so my question is smaller: which lines are fixed, and which may I change when the plan needs room?",
         ],
       },
     ],
     advisorLine: [
       {
         when: { any: ["unanchored", "risk_accepted", "fragile_timeline"] },
-        text: "Three lines in here still have no owner. I'm not starting month six pretending otherwise.",
+        text: "I’ve read the review notes on this proposal. Before you answer, tell me which of these lines you would still sign today.",
       },
       {
         when: { all: ["ops_onside", "evidenced"] },
-        text: "Most of this I can plan to. I'd still rather hear it from you than assume it.",
+        text: "Most of this I can plan to already. I’dstill rather hear it from you than guess.",
       },
-      { text: "Tell me which of your promises you actually meant, and I'll plan the second half around the answer." },
+      { text: "Tell me which of your promises you actually meant, and I’ll plan the rest of the project around your answer." },
     ],
     advisor: AISHA,
     consider: [
-      "Which of these did you write to win, not to do?",
+      "Which lines did you write to win, rather than to deliver?",
       "Who has to be told if you take one back?",
       /* First person: `consider` renders inside the colleague block, under her own name
          and photograph, and the advisor on this beat is Aisha. Asking the player what
-         Aisha would stop planning for, in Aisha's voice, was the one place in fourteen
+         Aisha would stop planning for, in Aisha’s voice, was the one place in fourteen
          of these lists where the speaker talked about herself in the third person. */
-      "What do I stop planning for if you qualify it?",
+      "What do I stop planning for if you add conditions?",
     ],
-    tip: "I am not trying to catch you out. I am trying to write a plan I can hold.",
-    prompt: "She needs one answer to take away. The rest stay exactly as written.",
-    question: "Which ones did you mean?",
+    tip: "I am not trying to catch you out. I need a plan my team can actually keep to.",
+    prompt: "Aisha needs one answer. Every other line stays exactly as written.",
+    question: "Which of your promises did you mean?",
     options: [
       {
         id: "o-meant-the-date",
-        title: "Stand behind the date",
+        title: "Keep the eight-week trial date",
         icon: "clock",
         /* The pilot, and only the pilot — a date you never promised is not a sentence
            anybody can read back at you. */
         requires: { any: ["promised:fast", "fragile_timeline"] },
-        description: "The pilot date is in the contract and on Sarah's board slide. It holds.",
-        say: "The eight weeks was a commitment, not a flourish. Plan to it and tell me what it needs.",
-        commits: "Aisha plans against a date nobody has tested.",
-        pros: ["The client keeps what they bought", "No promise reopened"],
-        cons: ["The team absorbs the difference", "You have not checked it holds"],
+        description: "The trial date is in the contract, and Sarah has shown it to her board. Keep it.",
+        say: "I meant the eight weeks. Plan to that date and tell me what it needs.",
+        commits: "Aisha’s team must hit the date, whatever it takes.",
+        pros: ["Orion keeps what it bought", "No promise taken back"],
+        cons: ["The team covers any shortfall", "No fresh check that it holds"],
         cost: { time: 1, investment: 2 },
         outcomes: [
           {
             id: "m10h-date-founded",
             when: { any: ["has:data", "ops_onside"] },
             tone: "strong",
-            headline: "She takes the date, because somebody had checked it.",
+            headline: "Aisha plans to the date, because someone had checked it.",
             detail:
-              "The date rests on something real — the data audit, or Operations already inside the programme. I don't have to take your word for it; I can see what it depends on, so I'll plan the second half to it and stop asking.",
+              "The date rests on something real: the check of Orion’s records, or Marcus’s team already working with us. I don’t have to take your word for it; I can see what it depends on, so I’ll plan the rest of the project to it and stop asking.",
             changed: [
               "The date is now a plan",
               "The firm is committed to resourcing it",
@@ -3848,16 +3848,16 @@ const nodes: GameNode[] = [
             lesson: {
               principle: "I can plan to a date somebody checked, but not to one somebody hoped for.",
               because:
-                "The eight weeks held because months earlier you funded the dull thing that made it true — the audit, or the Operations stream. Standing behind it therefore cost you money and nothing else.",
+                "The eight weeks held because, months earlier, you paid for the dull work that made it possible, so standing behind it cost only money.",
               watchFor: "Before repeating a date out loud, ask what it is resting on.",
             },
           },
           {
             id: "m10h-date-hollow",
             tone: "hard",
-            headline: "She writes the date down, then what it costs.",
+            headline: "Aisha keeps the date, and her team pays for it.",
             detail:
-              "Nothing under the eight weeks has changed since you wrote it, so the only variable left is how hard my team works. My plan now has my two most experienced people working weekends until the pilot ships, and nobody who has to hit that date was there when it was agreed.",
+              "Nothing behind the eight weeks has changed since you wrote it, so the only thing left to adjust is how hard my team works. My plan now has my two most experienced people working weekends until the trial starts, and none of them was there when the date was agreed.",
             changed: [
               "The date survives",
               "The plan depends on weekend working",
@@ -3865,9 +3865,9 @@ const nodes: GameNode[] = [
             ],
             effect: { dims: { win: 3, deliver: -10, profit: -2 } },
             lesson: {
-              principle: "Confirming a promise you haven't checked is free for you and expensive for whoever keeps it.",
+              principle: "Confirming a promise you haven’t checked is free for you and expensive for whoever keeps it.",
               because:
-                "You repeated a date you had never tested, so nothing about the work got easier and nothing about the plan got firmer. That is not a commitment, it is a transfer.",
+                "You repeated a date nobody had re-checked, so the work got no easier and the extra effort now falls on Aisha’s team.",
               watchFor:
                 "When you confirm a commitment, ask what has changed since you made it. If the answer is nothing, nothing is fixed.",
             },
@@ -3876,53 +3876,53 @@ const nodes: GameNode[] = [
       },
       {
         id: "o-meant-with-conditions",
-        title: "Name what it depends on",
+        title: "Keep the promise, but add conditions",
         icon: "scale",
         /* You can only attach conditions to a promise large enough to have them. All
            three of these record a proposal that reached further than its plan. */
         requires: { any: ["scope:heavy", "unanchored", "risk_accepted"] },
-        description: "Keep the promise and write down the things that have to be true first.",
-        say: "I meant the rebuild. I did not mean it without Operations. Put the conditions in writing.",
-        commits: "Sarah reads a caveat that was not there at signature.",
-        pros: ["The promise survives with limits", "Delivery inherits a boundary"],
-        cons: ["A condition appears after signature", "Reads as a retreat"],
+        description: "Keep the big promise, and write down what Orion must do first, such as Marcus’s team helping.",
+        say: "I meant the rebuild, but not without Marcus’s team helping. Write down what we need from them.",
+        commits: "Sarah reads conditions that weren’t in the signed contract.",
+        pros: ["The promise stays, with limits", "Aisha knows what it needs"],
+        cons: ["New conditions after signing", "Can look like backing off"],
         cost: { time: 2, investment: 1 },
         outcomes: [
           {
             id: "m10h-qualify-heard",
             when: { any: ["ops_onside", "evidenced", "credibility", "reviewed"] },
             tone: "strong",
-            headline: "The conditions go in, and nobody calls them an excuse.",
+            headline: "The conditions go in, and nobody calls them excuses.",
             detail:
-              "You've been accurate with Orion all along, so a list of dependencies reads as a delivery plan, not a firm reaching for the exit. Sarah signed them off inside a week, and now I know what has to be true — and I can move the date if it isn't.",
+              "You’ve been accurate with Orion all along, so a list of what the rebuild needs reads as a plan, not as a firm looking for a way out. Sarah agreed them within a week, and now I know what has to be true, and I can move the date if it isn’t.",
             changed: [
               "The promise carries written conditions",
-              "Sarah has seen a new caveat",
+              "Sarah has seen the new conditions",
               "Aisha can re-plan without negotiating",
             ],
             effect: { dims: { deliver: 9, win: -3 }, badge: "smart_tradeoff" },
             lesson: {
               principle: "A promise with its conditions written beside it is the only kind I can actually manage.",
               because:
-                "You did not take the rebuild back. You said out loud what it needs, and because this client had reason to read you generously that cost a conversation rather than a renegotiation.",
+                "You kept the rebuild and said what it needs, and because Orion trusted you, that took one conversation rather than a new contract.",
               watchFor: "The cheapest moment to attach a condition is before anybody has planned around its absence.",
             },
           },
           {
             id: "m10h-qualify-late",
             tone: "mixed",
-            headline: "They accept the conditions and read them as a warning.",
+            headline: "Orion accepts the conditions, then starts checking our work.",
             detail:
-              "You're right that the rebuild depends on things nobody agreed to. But you've raised it five months after signing, to a client with little reason to give us the benefit of the doubt — so the conditions went in, along with a fortnightly review we didn't ask for.",
+              "You’re right that the rebuild depends on things nobody agreed to. But you’ve raised it five months after signing, to a client with little reason to give us the benefit of the doubt, so the conditions went in along with a review meeting every two weeks that we didn’t ask for.",
             changed: [
               "The conditions are written down",
-              "Orion now checks the programme closely",
+              "Orion now checks the project closely",
             ],
             effect: { dims: { deliver: 6, win: -6, profit: -1 } },
             lesson: {
-              principle: "Qualifying a promise spends whatever standing we have, and this time we were spending on credit.",
+              principle: "Adding conditions to a promise uses up the client’s trust, and we had little to use.",
               because:
-                "The conditions were the same conditions either way. What decided how they landed was whether this client had any reason to read you generously, and that was settled months ago.",
+                "The conditions were the same either way, and how Orion took them depended on how much it already trusted us, which was settled months ago.",
               watchFor: "Notice which conversations you are able to have because of how the earlier ones went.",
             },
           },
@@ -3930,16 +3930,16 @@ const nodes: GameNode[] = [
       },
       {
         id: "o-meant-the-dull-lines",
-        title: "Stand behind the dull lines",
+        title: "Protect the unglamorous work",
         icon: "layers",
         /* You cannot ring-fence a workstream you never bought. These are the three
            unglamorous things m5b and m7 let the player pay for. */
         requires: { any: ["has:training", "has:ops_workstream", "has:data"] },
-        description: "The training, the integration stream, the measurement work. None of it gets trimmed.",
-        say: "The unglamorous lines were not padding. Nobody trims them to make a date, including me.",
-        commits: "You give up the easiest thing to cut later.",
-        pros: ["Delivery keeps its scaffolding", "Nothing reopened"],
-        cons: ["The cost lines all stay", "Nothing new for the client"],
+        description: "Staff training, working with Marcus’s team, measuring results: none of it gets cut to save time.",
+        say: "Those dull lines weren’t padding. Nobody cuts them to save a date, me included.",
+        commits: "Gives up the easiest savings if money gets tight.",
+        pros: ["The groundwork stays in place", "Nothing reopened with Orion"],
+        cons: ["Their costs all stay", "Nothing new for Orion"],
         cost: { time: 1, investment: 2 },
         outcomes: [
           {
@@ -3948,27 +3948,27 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "You protected the first thing anybody cuts.",
             detail:
-              "Training and integration are always what goes when a programme needs to find a fortnight, because nobody outside delivery notices they've gone. You've said in advance that they don't move, so when someone asks me to find that fortnight, I have your answer ready.",
+              "Training and the work with Marcus’s team are always what goes when a project needs to save two weeks, because nobody outside my team notices they’ve gone. You’ve said in advance that they don’t move, so when someone asks me to find those two weeks, I have your answer ready.",
             changed: [
-              "Adoption and integration work ring-fenced",
+              "Training and operations work protected",
               "Their cost stays on our side",
             ],
             effect: { dims: { deliver: 7, profit: -6, win: 1 }, badge: "connected_dots" },
             lesson: {
-              principle: "The lines nobody outside delivery would miss are the first to go, unless someone protects them out loud.",
+              principle: "The work nobody outside my team would miss is the first to be cut, unless someone protects it out loud.",
               because:
-                "You bought those lines months ago and have now said they are not available as savings. That is worth nothing in a pitch and it is the reason month nine will be quiet.",
+                "You paid for that work months ago and have now ruled it out as a saving, which is why month nine will be calm.",
               watchFor: "Notice which parts of a plan nobody outside your own team would miss. Those are the ones that vanish.",
             },
           },
           {
             id: "m10h-dull-thin",
             tone: "mixed",
-            headline: "You protected measurement, and there was little else to protect.",
+            headline: "You protected the measuring, and little else was there.",
             detail:
-              "The measurement work stays, so someone will be able to prove whether this worked. But it's the only unglamorous line we have — adoption and integration were never bought — so there's little scaffolding under the promise you're standing behind.",
+              "The measuring stays, so someone can prove whether this worked. But it’s the only dull line we have, since training and the work with Marcus’s team were never bought, so there’s little holding up the rest of the plan.",
             changed: [
-              "Measurement work ring-fenced",
+              "Measuring work protected",
               "Less underneath than Aisha hoped",
             ],
             effect: { dims: { deliver: 4, profit: -5, win: -2 } },
@@ -3977,16 +3977,16 @@ const nodes: GameNode[] = [
       },
       {
         id: "o-did-not-mean-the-number",
-        title: "Take the number back",
+        title: "Withdraw the complaints target",
         icon: "cross",
         /* Only available to a player who put a figure in a contract — at m6b by pricing
            on the outcome, or at m9a by writing Foyle his justification. */
         requires: { all: ["outcome_based"] },
-        description: "Go to Sarah and remove the figure a third of the fee hangs on.",
-        say: "The payback figure was mine, not theirs. I would rather unsay it now than miss it in month nine.",
-        commits: "Withdrawing something the client agreed to in writing.",
-        pros: ["The exposure disappears", "Aisha stops planning around it"],
-        cons: ["Withdrawing a written commitment", "Sarah defended that number internally"],
+        description: "Ask Sarah to remove the complaints target that a third of our fee depends on.",
+        say: "That figure was my number, not theirs. I’d rather withdraw it now than miss it in month nine.",
+        commits: "Withdrawing something Orion agreed to in writing.",
+        pros: ["Our fee no longer at risk", "Aisha stops planning around it"],
+        cons: ["Takes back a written promise", "Sarah sold it to her board"],
         cost: { time: 2, investment: 1 },
         outcomes: [
           {
@@ -3995,35 +3995,35 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "You take back the one number they trusted.",
             detail:
-              "That figure rested on a baseline you'd actually audited, which is exactly why Sarah could put it in front of her board. Withdrawing it now doesn't read as prudence; it reads as a firm losing confidence in its own commitment.",
+              "That figure rested on complaint numbers you’dactually checked, which is exactly why Sarah could show it to her board. Withdrawing it now doesn’t look careful; it looks like a firm that no longer believes its own promise.",
             changed: [
               "The fee no longer moves with results",
               "Sarah must go back to her board",
-              "The bid's one distinctive feature is gone",
+              "The one thing only we offered is gone",
             ],
             effect: { dims: { win: -12, profit: 5, deliver: 3 } },
             lesson: {
-              principle: "We withdrew the only commitment nobody else in that race would have made.",
+              principle: "We took back the one promise no rival firm had been willing to make.",
               because:
-                "The number was defensible, because you had the baseline underneath it. Unsaying a promise you could have kept buys back an exposure you were not really carrying and costs you the reason they chose you.",
+                "The figure was sound because you had checked the numbers under it, so withdrawing it removed little risk and cost us the reason Orion chose us.",
               watchFor: "Before withdrawing a promise, check whether it was the promise that was weak or your nerve.",
             },
           },
           {
             id: "m10h-payback-right",
             tone: "strong",
-            headline: "Sarah isn't pleased. Aisha is relieved.",
+            headline: "Sarah isn’t pleased. Aisha is relieved.",
             detail:
-              "Nobody ever agreed what a support contact was, or counted them before we started, so the better part of a million pounds turned on halving a number nobody wrote down. Taking it out cost you a hard half hour with Sarah; leaving it in would have cost me the whole of month nine.",
+              "Nobody ever agreed what counts as a complaint, or counted them before we started, so nearly a million pounds of our fee turned on halving a number nobody had written down. Taking it out cost you a hard half hour with Sarah; leaving it in would have cost me the whole of month nine.",
             changed: [
               "The fee no longer rides on guesswork",
               "Sarah is cooler, and clear why",
             ],
             effect: { dims: { profit: 8, deliver: 4, win: -7 }, badge: "smart_tradeoff" },
             lesson: {
-              principle: "I would rather have a hard half hour now than an argument about measurement in month nine.",
+              principle: "An awkward half hour now is cheaper for us than an argument about the numbers in month nine.",
               because:
-                "There was never a baseline both sides believed, so the clause was an argument with a date on it. Withdrawing it spent goodwill and removed the argument, which is a trade worth making in that order.",
+                "Nobody had counted complaints before we started, so the target could never be proved either way, and removing it cost goodwill but ended the argument.",
               watchFor: "A number in a contract is only as good as the thing everybody has agreed to count.",
             },
           },
@@ -4031,20 +4031,20 @@ const nodes: GameNode[] = [
       },
       {
         id: "o-meant-all-of-it",
-        title: "All of it stands",
+        title: "Stand behind every line",
         icon: "flag",
         /* The unconditional answer, and still gated — on the one thing every run that
            reaches this beat has done. `won` rather than `signed`, though both are
            guaranteed here, because `won` is on the rail: the ledger has been telling the
            player "everything after this is about keeping what you said" since the award,
-           so the card's provenance points at something they have already read rather than
+           so the card’s provenance points at something they have already read rather than
            at invisible state. See the note above the mission. */
         requires: { all: ["won"] },
         description: "You wrote it and you meant it, and you are not going through it line by line.",
         say: "All of it. I wrote every line and I meant it. I am not unpicking it now.",
-        commits: "Aisha gets no help narrowing what she has to keep.",
-        pros: ["Nothing reopened with the client", "The document stays whole"],
-        cons: ["Aisha plans around all of it", "You have checked none of it"],
+        commits: "Aisha must plan for every promise in the document.",
+        pros: ["Nothing reopened with Orion", "The proposal stays as written"],
+        cons: ["Aisha plans around all of it", "You re-check none of it"],
         cost: { time: 1, investment: 1 },
         outcomes: [
           {
@@ -4055,25 +4055,25 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "There was nothing in there you needed to take back.",
             detail:
-              "I went through it line by line and found a proposal that promises what the programme is resourced to do: nothing oversold, nothing cut to hit a price, no review finding left unfunded. Saying every sentence stands took four minutes, because it's true.",
+              "I went through it line by line and found a proposal that promises only what we have the people and money to do: nothing oversold, nothing cut to hit a price, no review warning left unpaid for. Saying every line stands took four minutes, because it’s true.",
             changed: [
               "The whole document stands, and holds",
               "Aisha plans from it, not around it",
             ],
             effect: { dims: { win: 4, deliver: 3, profit: 2 }, badge: "held_nerve" },
             lesson: {
-              principle: "The short version of this meeting is earned months earlier, in the scoping and the pricing.",
+              principle: "This meeting was short because, months earlier, we promised only what we could afford to do.",
               because:
-                "Nothing had to be qualified because nothing had been oversold. That was settled in the scoping and the pricing, not by anything you said to Aisha this morning.",
+                "Nothing needed conditions because nothing had been oversold, and that was settled when we chose the work and the price.",
               watchFor: "Whether this conversation is short is decided months before anybody has it.",
             },
           },
           {
             id: "m10h-all-loaded",
             tone: "hard",
-            headline: "You confirmed all of it, unread parts included.",
+            headline: "You confirmed every line, including the shaky ones.",
             detail:
-              "I asked which sentences you meant and you said all of them — the one answer that gives me nothing to work with. So I plan to the whole document, and every call about which promises were real is mine to make alone, in the week we're two people short.",
+              "I asked which lines you meant and you said all of them, the one answer that gives me nothing to work with. So I plan to the whole document, and every call about which promises were real is mine to make alone, in the same month we were two people short.",
             changed: [
               "Every sentence is now a commitment",
               "Aisha decides alone which were real",
@@ -4088,9 +4088,9 @@ const nodes: GameNode[] = [
                being dominated: every other answer here costs the client something visible. */
             effect: { dims: { win: 2, deliver: -12, profit: 1 } },
             lesson: {
-              principle: "Confirming everything is the same as deciding nothing, and I am the one who finds that out.",
+              principle: "Saying every promise stands hands the hard choices to me, because I have to deliver them.",
               because:
-                "You had the whole pursuit in front of you and treated every line as equally meant. The sentences written to win and the sentences written to do are now indistinguishable to the person delivering them.",
+                "You treated every line as equally meant, so Aisha can no longer tell the promises written to win from the ones written to deliver.",
               watchFor: "If you cannot name which of your own promises was the weakest, somebody else will have to.",
             },
           },
@@ -4098,9 +4098,9 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "Every sentence we write to win is one somebody has to deliver, so say which ones you meant.",
+      principle: "Aisha delivers what we promised, so she needs to know which of our promises were real.",
       because:
-        "Nothing in the proposal changed today. What changed is that somebody who has to deliver it now knows which lines you would defend and which you were hoping nobody would read closely.",
+        "The proposal did not change today, but Aisha now knows which lines you will defend and which you hoped nobody would read closely.",
       watchFor:
         "The person who inherits a promise is rarely the person who made it. Say which ones were real while saying it is still cheap.",
     },
@@ -4131,12 +4131,12 @@ const nodes: GameNode[] = [
     stage: "delivery",
     title: "Nobody planned for this",
     eyebrow: "The unexpected",
-    objective: "Respond to something outside the plan.",
+    objective: "Decide how to use Sarah’s last three weeks at Orion.",
     minutes: 3,
     hero: "solution-in-store-tech",
     situation: [
-      "Sarah finishes in three weeks, and she was our sponsor, budget holder and advocate in one.",
-      "Whoever replaces her, we'll have to win this programme all over again.",
+      "Sarah has resigned and leaves in three weeks, and she is the one person at Orion who chose us, holds our budget and argues for us.",
+      "Decide what we do with those three weeks, because her replacement can keep or cancel the project.",
     ],
     presentation: "dialogue",
     surface: "call",
@@ -4144,40 +4144,40 @@ const nodes: GameNode[] = [
       /* How month five was handled now reaches the sponsor-succession beat. These three
          also make `crunched`, `undisclosed` and `changed_scope` genuinely READ, rather
          than being declared narrative-only — which was the cheap option and the wrong
-         one, since each records a real position the player's successor inherits. */
+         one, since each records a real position the player’s successor inherits. */
       {
         when: { all: ["crunched"] },
         situation: [
-          "Sarah finishes in three weeks, and she was our sponsor, budget holder and advocate in one.",
-          "And the two who held the date in month five just asked to roll off — sponsor and memory, gone together.",
+          "Sarah leaves in three weeks, and she is the one person at Orion who chose us, holds our budget and argues for us.",
+          "The two of my team who worked weekends in month five have also asked to leave, so decide how we use those three weeks.",
         ],
       },
       {
         when: { all: ["undisclosed"] },
         situation: [
-          "Sarah finishes in three weeks, and she was our sponsor, budget holder and advocate in one.",
-          "Her successor will read the original proposal, not what shipped, and nobody has written down why they differ.",
+          "Sarah leaves in three weeks, and she is the one person at Orion who chose us, holds our budget and argues for us.",
+          "Her replacement will read our original proposal, not what we delivered, and nobody has written down why they differ; decide how we use those three weeks.",
         ],
       },
       {
         when: { all: ["changed_scope"] },
         situation: [
-          "Sarah finishes in three weeks, and she was our sponsor, budget holder and advocate in one.",
-          "One thing helps: the change you priced in month five is signed and dated — a boundary, not an argument.",
+          "Sarah leaves in three weeks, and she is the one person at Orion who chose us, holds our budget and argues for us.",
+          "One thing helps: the extra work we charged for in month five is signed and dated, so decide how we use those three weeks.",
         ],
       },
       {
         when: { all: ["ops_onside"] },
         situation: [
-          "Sarah finishes in three weeks, and she was our sponsor, budget holder and advocate in one.",
-          "One thing helps: Marcus Reed's team is already inside this programme, and Marcus isn't going anywhere.",
+          "Sarah leaves in three weeks, and she is the one person at Orion who chose us, holds our budget and argues for us.",
+          "One thing helps: Marcus Reed’s team already works with us and Marcus is staying, so decide how we use those three weeks.",
         ],
       },
       {
         when: { all: ["outcome_based"] },
         situation: [
-          "Sarah finishes in three weeks.",
-          "She agreed that a third of our fee depends on support contacts falling, and her successor inherits that clause without ever having agreed to it.",
+          "Sarah leaves in three weeks, and she is the one person at Orion who chose us, holds our budget and argues for us.",
+          "She agreed a third of our fee depends on complaints falling, and her replacement inherits that without agreeing to it; decide how we use those weeks.",
         ],
       },
     ],
@@ -4186,43 +4186,43 @@ const nodes: GameNode[] = [
       ...SARAH,
     },
     concerns: [
-      "The budget holder is leaving",
+      "The person holding the budget is leaving",
       "Nobody else has publicly backed this",
-      "A new sponsor will want their own priorities",
+      "Her replacement will have their own priorities",
     ],
-    advisorLine: "I have had two sponsors leave mid-programme. Both times, the last three weeks decided what survived.",
+    advisorLine: "I have lost the person backing a project twice before. Both times, their last three weeks decided what survived.",
     advisor: AISHA,
     consider: [
-      "Who else already has a stake in this?",
-      "What would a new sponsor cancel first?",
+      "Who else at Orion already cares whether this succeeds?",
+      "What would Sarah’s replacement be likeliest to cancel?",
       "What can we prove in three weeks?",
     ],
-    tip: "Marcus is staying. Whether that is a rope or a wall depends on whether he has people on this.",
-    prompt: "Three weeks before the room changes.",
+    tip: "Sarah leaves, Marcus stays, and the budget waits for whoever replaces her. Which of those can you change?",
+    prompt: "Sarah has three weeks left, and nobody has replaced her yet.",
     question: "What do you do with the three weeks?",
     options: [
       {
         id: "o-broaden",
-        title: "Broaden the base",
+        title: "Get more of Orion’s leaders backing it",
         icon: "people",
-        description: "Get the programme owned by three people instead of one.",
+        description: "Spend the three weeks getting two more senior people at Orion to back the project.",
         say:
-          "Then I need more than one person who cares. Three weeks getting Marcus and his peers to own this.",
-        commits: "Three weeks of politics instead of delivery.",
-        pros: ["Survives any one departure", "Builds real advocates"],
-        cons: ["Three weeks not delivering", "Slower decisions afterwards"],
+          "Then I need more than one person backing this. I’ll spend three weeks with Marcus and the other directors.",
+        commits: "Three weeks of meetings instead of delivering work.",
+        pros: ["Survives one person leaving", "More people argue for us"],
+        cons: ["Three weeks not delivering", "More people must agree decisions"],
         cost: { time: 2, investment: 1 },
         outcomes: [
           {
             id: "m10c-broaden-ops",
             when: { any: ["ops_onside", "has:ops_workstream"] },
             tone: "strong",
-            headline: "Marcus becomes the sponsor, and he isn't leaving.",
+            headline: "Marcus takes over backing the project, and he’s staying.",
             detail:
-              "The person best placed to own this was the one you brought into the proposal months ago. What was a courtesy then is now why the programme survives a change of leadership.",
+              "The person best placed to back this was the one you brought into the proposal months ago. Involving his team then is why the project survives Sarah leaving now.",
             changed: [
-              "Ownership spread across three people",
-              "Operations sponsors the work it runs",
+              "Three people now back the project",
+              "Marcus backs the work his team runs",
             ],
             effect: {
               dims: { win: 6, deliver: 5 },
@@ -4233,9 +4233,9 @@ const nodes: GameNode[] = [
           {
             id: "m10c-broaden-cold",
             tone: "mixed",
-            headline: "You found two names. Neither is invested.",
+            headline: "You found two new backers, but neither cares much.",
             detail:
-              "Three weeks of introductions produced two people who won't block the programme — not two who'll defend it. And you started those relationships from nothing, at the worst possible moment.",
+              "Three weeks of introductions produced two people who won’t block the project, not two who’ll defend it. And you started those relationships from nothing, at the worst possible moment.",
             changed: ["Two more names attached", "Neither of them owns it", "Three weeks spent on introductions"],
             /* Was `win +3, deliver +1`, which does not match its own prose: three weeks
                spent producing two people who will not block the programme, relationships
@@ -4252,26 +4252,26 @@ const nodes: GameNode[] = [
         id: "o-prove-fast",
         title: "Get something live before she goes",
         icon: "rocket",
-        description: "Ship whatever is demonstrable while the sponsor is still there.",
+        description: "Put something working in front of Orion’s staff while Sarah is still there to see it.",
         say: "Then I want something live before you go. Three weeks, one region, a thing that actually runs.",
-        commits: "Three weeks of pressure on the delivery team.",
-        pros: ["A result on the record", "Hard to cancel a working thing"],
-        cons: ["Rushed and partial", "Costs the team"],
+        commits: "Three weeks of long hours for Aisha’s team.",
+        pros: ["Something real to point at", "Working things are harder to cancel"],
+        cons: ["Rushed and unfinished", "Tires the team out"],
         cost: { time: 1, investment: 2 },
         outcomes: [
           {
             id: "m10c-prove-ready",
             when: { any: ["has:data", "promised:fast", "ops_onside", "changed_scope"] },
             tone: "strong",
-            headline: "Something real went live, and it outlives her.",
+            headline: "Something real went live, and it stays after she goes.",
             detail:
-              "You had the foundations to move fast, so three weeks was enough to put a working thing in front of the business. A new sponsor can cancel a plan easily; cancelling something that already works is a much harder meeting.",
+              "You had the groundwork to move fast, so three weeks was enough to put a working thing in front of Orion’s staff. A new boss can cancel a plan easily; cancelling something that already works is a much harder meeting.",
             changed: ["A live result on the record", "The team is tired"],
-            /* Winability well above the handover memo's +6, because this is the only
+            /* Winability well above the handover memo’s +6, because this is the only
                option that converts belief into evidence while the believer is still in
                post — her successor arrives to a thing that works rather than a document
                arguing that it will. Deliverability pays for the rush, which is honest,
-               and the cost stays in profit. It was +10/+2/-3 against the memo's
+               and the cost stays in profit. It was +10/+2/-3 against the memo’s
                +6/+3/+2, i.e. beaten on two dimensions of three and dominated in 91% of
                reachable states. */
             effect: { dims: { win: 10, deliver: -2, profit: -3 } },
@@ -4281,13 +4281,13 @@ const nodes: GameNode[] = [
             tone: "hard",
             headline: "You shipped a demo, and it convinced nobody.",
             detail:
-              "Three weeks wasn't enough to stand anything up properly, so Sarah saw a prototype with the hard parts stubbed out. Her successor read it as a programme with nothing to show after six months.",
+              "Three weeks wasn’t enough to build anything properly, so Sarah saw an early version with the hard parts missing. Her replacement read it as a project with nothing to show after six months.",
             changed: ["Something shipped", "It made the programme look weaker"],
             /* Deliverability POSITIVE even on the thin branch, which is the point of
                the option: something exists and runs. It is unimpressive and it is real,
                and a successor arriving to a working increment is in a better delivery
                position than one arriving to a plan — whatever they think of the increment.
-               At -4/-5/-1 this branch was beaten on all three by `o-broaden`'s cold
+               At -4/-5/-1 this branch was beaten on all three by `o-broaden`’s cold
                branch (+3/0/+1) in 94% of reachable states, which made the whole option a
                trap rather than a choice. */
             effect: { dims: { win: -4, deliver: 2, profit: -1 } },
@@ -4296,16 +4296,16 @@ const nodes: GameNode[] = [
       },
       {
         id: "o-handover",
-        title: "Write the handover she needs",
+        title: "Put the case in writing for her successor",
         /* A document that makes the case without Sarah in the room needs a case that
            stands on its own. Without evidence there is nothing to write down. */
         requires: { any: ["evidenced", "outcome_based", "knows:criteria"] },
         icon: "layers",
-        description: "Give Sarah the document that makes the case without her in the room.",
-        say: "Then I write the case down properly, in your own data, so the argument does not depend on you.",
-        commits: "It works only if somebody reads it.",
-        pros: ["Cheap and honest", "Survives on its own terms"],
-        cons: ["Only as good as its reader", "No advocate behind it"],
+        description: "A short document, built on Orion’s own figures, that argues for the project after Sarah goes.",
+        say: "Then I write it all down properly, in your own figures, so the argument does not depend on you.",
+        commits: "Depends on her replacement reading it.",
+        pros: ["Cheap and honest", "Works without anyone selling it"],
+        cons: ["Only as good as its reader", "Nobody argues for it"],
         cost: { time: 1, investment: 1 },
         outcomes: [
           {
@@ -4314,7 +4314,7 @@ const nodes: GameNode[] = [
             tone: "strong",
             headline: "The case stands up without anybody selling it.",
             detail:
-              "The programme was argued from Orion's own evidence from the start, so the handover is a page of their data and what's changed since. A new sponsor reading that cold has very little to disagree with.",
+              "We argued for this project from Orion’s own figures from the start, so the handover is one page of their numbers and what has improved since. A new boss reading it cold has very little to disagree with.",
             changed: ["A case that survives on paper", "No advocate, but no argument either"],
             effect: { dims: { win: 4, deliver: 2, profit: 2 } },
           },
@@ -4323,7 +4323,7 @@ const nodes: GameNode[] = [
             tone: "mixed",
             headline: "A good document, waiting for a reader who cares.",
             detail:
-              "It's honest, clear and almost free. It also depends entirely on someone new choosing to back a programme they didn't start, on the strength of a handover note.",
+              "It’s honest, clear and almost free. It also depends entirely on someone new choosing to back a project they didn’t start, on the strength of a handover note.",
             changed: ["The case is written down", "Nobody is carrying it"],
             effect: { dims: { win: -2, profit: 3 } },
           },
@@ -4331,10 +4331,10 @@ const nodes: GameNode[] = [
       },
     ],
     lesson: {
-      principle: "We keep a client by being backed by more than one person, because sponsors leave and programmes don't.",
+      principle: "Our project was backed by only one person at Orion, so it was in danger the day she left.",
       because:
-        "Nothing about the work changed. One person left, and the programme's future changed with them — because its future was attached to that one person.",
-      watchFor: "Sponsors move roughly every eighteen months. Programmes rarely finish faster than that.",
+        "Nothing about the work changed, but the project’s future was tied to Sarah alone, so her leaving put it at risk.",
+      watchFor: "The person backing a project at a client often moves on within eighteen months. Projects rarely finish faster than that.",
     },
     next: "deb-5",
   },
@@ -4397,9 +4397,9 @@ export const story: Content = {
    *
    * A rule needs at least two outcomes. Four once fired on a single outcome, so a
    * section introduced as "the chains your own decisions created" presented one decision
-   * restated as a chain, and one simply paraphrased its own outcome's detail text.
+   * restated as a chain, and one simply paraphrased its own outcome’s detail text.
    *
-   * ON `insteadOf` — the wrong answers for the debrief's one causal-claim item.
+   * ON `insteadOf` — the wrong answers for the debrief’s one causal-claim item.
    *
    * The item shows `soLater` and asks which earlier decision led to it, so each entry has
    * to be a decision the player could believe caused this and did not. Two failure modes
@@ -4413,7 +4413,7 @@ export const story: Content = {
    *    and two of six make any given component a coin toss rather than a long shot.
    *  · ACCIDENTALLY TRUE. If the wrong answer also fed the consequence, the attentive
    *    learner is right and the game tells them they are wrong. Each entry was checked
-   *    against the flags the outcome's own `when` reads, and against the ones every
+   *    against the flags the outcome’s own `when` reads, and against the ones every
    *    outcome on the path between reads. That check removed more candidates than it
    *    kept: the workshop with Marcus is out of the Operations threads because it does
    *    make Operations invested; `o-conventional` is out of the level-scorecard thread
@@ -4426,7 +4426,7 @@ export const story: Content = {
    * on `discounted`, which only `m8-discount` sets, so rule two cannot fire unless rule
    * one has already fired and taken the item — writing distractors for it would author
    * copy no player can reach. The other three are threads whose `soLater` is an
-   * observation rather than an event, or whose only honest cause is the thread's own
+   * observation rather than an event, or whose only honest cause is the thread’s own
    * other half. Eleven of fifteen carry them, which puts the item on about three runs in
    * five; the rest end with the threads and no question, as they did before.
    */
@@ -4466,10 +4466,10 @@ export const story: Content = {
       /* Two, not three: `m10-reset-trust` also opens on `evidenced` and on `credibility`,
          which rules out every distractor about their own data, the reference visit, the
          point of view and the warm introduction — all of them would have been true. What
-         is left is the proposal's showier half and the shape of the deal. */
+         is left is the proposal’s showier half and the shape of the deal. */
       insteadOf: [
         "You put an eight-week pilot in the proposal so the board could see something.",
-        "You restructured the deal into phases so the board's first cheque was small.",
+        "You restructured the deal into phases so the board’s first cheque was small.",
       ],
     },
     {
@@ -4507,7 +4507,7 @@ export const story: Content = {
       insteadOf: [
         "You used your warm introduction on thirty minutes with Sarah.",
         "You spent a fortnight taking Sarah to a retailer where you had already delivered.",
-        "You put a fortnight into working out exactly where the rival's platform stops.",
+        "You put a fortnight into working out exactly where the rival’s platform stops.",
       ],
     },
 
@@ -4524,7 +4524,7 @@ export const story: Content = {
          candidate naming anybody findable without reading it. */
       insteadOf: [
         "You told Sarah the damage happened after the sale, not on the shop floor.",
-        "You put an eight-week pilot in, so Sarah's board would see something inside two months.",
+        "You put an eight-week pilot in, so Sarah’s board would see something inside two months.",
         "You brought in a logistics partner who already runs returns at this scale.",
       ],
     },
@@ -4565,7 +4565,7 @@ export const story: Content = {
       because: "Operations had people named in the proposal before signature.",
       /* The reason clause used to be "because the part most likely to fail already had
          an owner", which is the answer with the nouns changed. This one is the other
-         half of the same outcome's detail — "work you understand" — and it points at
+         half of the same outcome’s detail — "work you understand" — and it points at
          the paid discovery rather than at the answer, which is what a reason clause in
          a stem should do. */
       soLater:
@@ -4600,14 +4600,14 @@ export const story: Content = {
       soLater:
         "Three capable proposals arrived and nothing separated them but price. A scorecard with every column level is decided on cost.",
       /* Three efforts aimed at people, against a decision made on a form. Keeping the
-         conventional shape is not here, because that outcome's own prose already says
+         conventional shape is not here, because that outcome’s own prose already says
          three firms ended up offering the same answer — it would have been true. The
          third says "document" so that the answer is not the only candidate about the
          thing being scored. */
       insteadOf: [
         "You put a campaign into the market, and kept your senior people free for other work.",
         "You took Sarah to see the work you had already done for another retailer.",
-        "You spent the internal review week making the document argue harder for Sarah's board.",
+        "You spent the internal review week making the document argue harder for Sarah’s board.",
       ],
     },
 
@@ -4624,7 +4624,7 @@ export const story: Content = {
         "The judgement about which promises were real ended up being made by the person who had to keep them, on her own, in the week she was two people short.",
       /* Three decisions about the document she inherited, one of them true. The
          discount, the pilot, the part taken out to reach their number, the accepted
-         risk and the overruled review are all excluded — `m10h-all-sound`'s `none` list
+         risk and the overruled review are all excluded — `m10h-all-sound`’s `none` list
          names every one of them, so each is a reason this branch fired rather than its
          sibling. */
       insteadOf: [

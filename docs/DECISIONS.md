@@ -6,6 +6,106 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-084 · From first principles: one spine, four ideas, eight lever decisions
+The user asked for a from-scratch rethink, researched first, with these goals:
+- learning that is simpler to synthesise, not more complex;
+- decisions split into smaller cause-and-effect variables;
+- different kinds of maps showing how everything works as a system;
+- an experience that does not stay the same throughout.
+
+Three research agents worked in parallel: learning science, a teardown of the best games, and a
+cold newcomer audit of the build. They converged, and the result is `docs/STRATEGY.md`, with
+the decision unit specified in `docs/LEVERS.md`.
+
+**Decided.**
+- **One spine sentence and four ideas,** one per act and in the same words every time:
+  - understand before you offer;
+  - not every deal is worth winning;
+  - trade, don't give;
+  - promise only what your team can deliver.
+  
+  The current 53 takeaway sentences collapse onto these four.
+- **8 decisions instead of 18,** on one causal spine. Each decision is 2–3 *levers*, small
+  choices with one cause and one visible effect, so the player still makes about 20 choices.
+  Every decision consumes something an earlier one produced and names it.
+- **A system view per act:** the people map, the fee waterfall, the scales, the promise
+  calendar, a cause-and-effect map at every act break, and one chart at the end.
+- **Telegraphing.** A lever setting shows which bars it moves and in which direction. This is
+  its own immediate effect, not the outcome, so G3 still holds for outcomes.
+
+**Shipped now, ahead of the rebuild,** because the audit showed the existing game hiding its
+causes:
+- The "why" line gives the real cause. An outcome with its own lesson keeps its authored
+  reason. One that only shares its mission's general lesson (68% of them) now shows the
+  engine's account: "It went this way because of what you had: their complaint data."
+- A card names the *nearest* later stop that reads it. Before, it named the farthest stop
+  where it unlocks an option, so the complaint data claimed to matter at decision 13 when it
+  decides decisions 3, 5 and 7.
+- The release harness drains spoken lines across view-transition gaps, so it no longer
+  mistakes an empty frame for the end of a scene. It also reports where a run stuck, with a
+  screenshot.
+
+**Budget.** The stylesheet budget is raised from 18 to 22 kB gzipped. The journey map is a new
+screen type: 19.0 kB measured after the dead Journey styles were removed. The per-act system
+views will each add one more. The interface and engine budgets are unchanged.
+
+**Cost.** The rebuild retires most of today's content. It stays playable until the new set
+passes every gate. The earlier strategy is kept in `STRATEGY-MOCKUP-ERA.md`.
+
+**Reversible:** yes, until the old content is deleted.
+
+## D-083 · The trail and the hand: make the journey and cause-and-effect visible
+The user, after D-082:
+- "Even now we don't have a map that tells me where we stand through the entire gameplay."
+- "Decisions feel like they are made without any logic."
+- "Rework this from scratch… rely on your research and analysis of the best games out there."
+
+**Diagnosis.** The engine always had cause and effect. About 50 earned flags record what the
+player knows ("their complaint data"), has built ("Operations on side") and has promised ("an
+eight-week pilot", "a discount given"). Those flags open and close later options and decide how
+outcomes land. None of it was visible, so a player saw choices whose consequences arrived from
+nowhere. The structure was also invisible: 18 decisions with no sense of a road.
+
+**What the best games do, and what we took:**
+- **The road is the home screen.** *80 Days*, *Oregon Trail* and the *Slay the Spire* map show
+  where you are, what you have passed and what lies ahead, and you return to the map between
+  events.
+- **Resources you can hold.** Card games turn abstract state into objects in your hand, and
+  every card says what it is for.
+- **Checks that name their requirement.** *Disco Elysium* and *Slay the Spire* show what an
+  option needs, so a locked option teaches as much as an open one.
+- **Plain, immediate feedback.** *Reigns* moves its meters the moment you choose, and the
+  meaning is obvious.
+- **Callbacks.** Telltale's "they will remember that": the game says out loud that an earlier
+  choice mattered.
+- **A question that pulls you on.** Every good story has a mystery.
+
+**Built.**
+- **The trail** (`screens/Journey.tsx`, `styles/map.css`). After every decision and every act
+  you return to a journey map:
+  - two rows snaking through the five stages in their colours, with every stop named
+    (`MILESTONE`) and the three news events as landmarks;
+  - ticks for what is done, "You are here", and what is ahead;
+  - below it, what just happened, and the next stop with its guide and a one-line reason;
+  - the HUD's progress strip became the same map in miniature.
+- **The hand** (`ui/cards.ts`). Every earned flag the content names becomes a card. Strengths
+  are what you know or have built; promises are what you owe or risk. Each card says, worked
+  out from the content itself, where it next opens an option, pays off or comes due. A result
+  card shows the cards a decision added. A locked option names the card it needs and the stop
+  that could have given it.
+- **The case file** (`MYSTERY`). "What is really wrong at Orion?" stays open on the map until
+  the player holds a clue, then shows the answer.
+- **Choices you can compare** (`COMPARE`). The first decision lays the three clients out on
+  the same rows: what they want, the prize, our experience, the competition and the pace.
+- **The company first.** Setup became an introduction: the firm, how a deal works and its
+  trade-offs, then your team's strength, with what each choice makes easier later (`firm.ts`).
+
+**Cost.** One more screen per decision: the map, one press away. Map classes are prefixed
+`trail-` after a `.pin` collision with the cork board broke decision 2. This is presentation
+only; the engine, saves and run codes are unchanged.
+
+**Reversible:** yes. Routing to the map is one condition in `App.tsx`.
+
 ## D-082 · Written for someone who has never sold anything
 The user, a marketing professional, played D-081 and could not follow it: "the storyline makes
 zero sense", "decisions feel like they are made without any logic, there's no explanation
@@ -1908,7 +2008,7 @@ the console still reads as an instrument rather than a page.
 ## D-023 · The mockup photography is reused, extracted by a committed script
 `tools/extract-art.py` crops 22 images out of the mockup PNGs into `public/art/` — hero
 shots, client premises, option-card scenes, advisor portraits. 139 kB total as WebP.
-Confirmed licensed and appropriate for the product (STRATEGY.md D4). This closes
+Confirmed licensed and appropriate for the product (STRATEGY-MOCKUP-ERA.md D4). This closes
 `UI-AUDIT.md` finding F3: a quarter of the pixels above the fold in every mockup are
 photographic and we had none.
 

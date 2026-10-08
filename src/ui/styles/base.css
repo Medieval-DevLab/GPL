@@ -57,18 +57,25 @@ img { display: block; max-width: 100%; }
 .hud-brand { display: flex; align-items: baseline; gap: 1px; text-decoration: none; font-family: var(--font-serif); font-weight: 700; font-size: 25px; letter-spacing: -0.02em; color: #fff; }
 .hud-brand i { width: 7px; height: 7px; border-radius: 50%; background: var(--signal); display: inline-block; }
 .hud-act { display: flex; flex-direction: column; line-height: 1.25; padding-left: 18px; border-left: 1px solid #33363d; min-width: 0; max-width: 360px; }
-.hud-act small { font-size: 13.5px; font-weight: 650; color: var(--accent-light); }
+.hud-act small { font-size: 14px; font-weight: 650; color: var(--accent-light); }
 .hud-act strong { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hud-track { display: flex; align-items: center; gap: 10px; margin-left: auto; padding: 8px 10px; border-radius: 8px; color: #f3f1ec; }
-.hud-track:hover, .hud-track[aria-pressed="true"] { background: #23262c; }
-.hud-track .ticks { display: flex; gap: 7px; }
-.hud-track .act { display: flex; gap: 2px; }
-.hud-track .tick { width: 9px; height: 9px; border-radius: 2px; background: #33363d; }
-.hud-track .tick.done { background: #c9c4ba; }
-.hud-track .tick.now { background: var(--accent-light); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15); }
-.hud-track .count { font-size: 14px; color: #c9c4ba; font-weight: 600; }
+.hud-map { display: flex; align-items: center; gap: 4px; min-width: 0; margin-left: auto; padding: 5px; border-radius: 12px; background: #1e2126; color: #a9a49a; }
+.hud-map:hover, .hud-map[aria-pressed="true"] { background: #262a30; }
+.hud-stage { display: inline-flex; align-items: center; gap: 7px; min-width: 0; height: 34px; padding: 0 9px 0 6px; border-radius: 999px; }
+.hud-stage + .hud-stage::before { content: ""; flex: none; width: 10px; height: 2px; margin: 0 4px 0 -4px; border-radius: 1px; background: #3a3d44; }
+.hud-stage .n { flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid #4a4d55; font-size: 14px; font-weight: 700; line-height: 1; }
+.hud-stage .name { display: none; font-size: 14px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud-stage .dots { display: inline-flex; gap: 3px; }
+.hud-stage .dots i { width: 7px; height: 7px; border-radius: 50%; background: #3f434b; }
+.hud-stage .dots i.done { background: #cfc9bd; }
+.hud-stage .dots i.now { background: var(--accent-light); box-shadow: 0 0 0 3px rgba(255, 159, 135, 0.28); }
+.hud-stage.is-done { color: #cfc9bd; }
+.hud-stage.is-done .n { border-color: #5a5e66; background: #33363d; }
+.hud-stage.is-here { background: #2f333a; color: #fff; }
+.hud-stage.is-here .n { border-color: var(--accent-light); background: var(--accent-light); color: #15171b; }
+.hud-stage.is-here .name { display: inline; }
 .hud-gauges { display: flex; gap: 14px; padding: 6px 12px; border-radius: 10px; background: #1e2126; }
-.hud-gauge { display: grid; grid-template-columns: auto 64px 24px; align-items: center; gap: 6px; font-size: 13.5px; color: #d9d4ca; }
+.hud-gauge { display: grid; grid-template-columns: auto 64px 24px; align-items: center; gap: 6px; font-size: 14px; color: #d9d4ca; }
 .hud-gauge b { color: #fff; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
 .hud-gauge .bar { height: 6px; border-radius: 3px; background: #33363d; overflow: hidden; }
 .hud-gauge .bar i { display: block; height: 100%; background: #e8e3d8; border-radius: 3px; transition: width 1100ms var(--ease-out); }
@@ -76,7 +83,7 @@ img { display: block; max-width: 100%; }
 .hud-record { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid #3a3d44; font-size: 14px; font-weight: 600; color: #f3f1ec; }
 .hud-record:hover { background: #23262c; }
 .hud-record svg { width: 18px; height: 18px; }
-.hud-record .n { min-width: 22px; padding: 1px 6px; border-radius: 999px; background: #33363d; font-size: 13px; text-align: center; }
+.hud-record .n { min-width: 22px; padding: 1px 6px; border-radius: 999px; background: #33363d; font-size: 14px; text-align: center; }
 .hud-record.is-new .n { background: var(--accent-light); color: #15171b; }
 .hud-tools { display: flex; gap: 2px; }
 .icon-button { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 8px; color: #c9c4ba; }

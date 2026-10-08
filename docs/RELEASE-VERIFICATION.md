@@ -1,5 +1,35 @@
 # Release verification
 
+## Version 1.3.0 — 8 October 2026: the trail, the hand, the company first (D-083, D-084)
+
+- **TypeScript and tests.** TypeScript clean. All 288 tests pass in 20 files. They include the new trail contract (`ui/cards.test.ts`):
+  - every decision and turn is named on the map;
+  - comparison rows cover every option;
+  - every strength card has a source;
+  - the mystery is solvable.
+- **Browser matrix** (`verify-game.mjs --matrix`). All 8 runs passed:
+  - 1440×900 first (A workable deal);
+  - 1440×900 last (They chose someone else);
+  - 1440×900 middle with keyboard (You won it, but not well);
+  - 1440×900 walk with keyboard (You walked away);
+  - 1366×768, 1440×1024, 1920×1080 and 720×450 (A workable deal).
+  
+  Three fixes were needed first:
+  - At 720×450, the cast cut-outs overflowed the reading-order layout; this bug had been present since D-081, before the matrix last ran.
+  - Axe flagged the trail board's list semantics.
+  - The harness raced view-transition gaps, so it now drains lines across them.
+  
+  After the fixes, the audited run passed with zero violations across 18 screen types.
+- **`file://` and mock LMS.** Clean console. Completion reported, resumable, no score.
+- **Size.** Stylesheet 18.98 of 22 kB (budget raised in D-084); code 179.70 kB; cold download 2.49 MB.
+
+| Version 1.3.0 archive | Bytes | SHA-256 |
+|---|---:|---|
+| gpl-1.3.0-offline.zip | 2,506,789 | 6efc4f557f280fea3d09c82b3c02102890bec6a6f1f994ba5af43e15dbbde722 |
+| gpl-1.3.0-scorm12.zip | 2,507,474 | 6f181db0cda4a18ebecc1ff241c8e314b2ef20d014e8534511105350ccd1b974 |
+
+Next: the strategy rebuild in `docs/STRATEGY.md`. The lever engine is ready on its branch, and the eight-decision script is in `docs/STORY-V2.md`.
+
 ## Version 1.2.0 — 8 October 2026: performed scenes and a plain-language story (D-081, D-082)
 
 - **TypeScript and tests.** TypeScript clean. All 284 tests pass in 19 files. They include the new script contract: no decimal splits; the colleague opens every brief, with no compulsory steer before the choice; and every decision has an authored reason.
