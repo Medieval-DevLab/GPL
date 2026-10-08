@@ -14,7 +14,7 @@ import { ActView, PromiseCalendar } from './Views';
 /**
  * The act break: one screen where three used to be (debrief → map → next opener, D-080).
  *
- * It opens on the act as a system (D-087): the cause-and-effect map, with a guess before the
+ * It opens on the act as a system (D-090): the cause-and-effect map, with a guess before the
  * reveal. When the engine has settled the promise ledger, the calendar then plays out, one
  * promise at a time. Each of those steps moves on like a spoken line (`data-line-next`), so
  * keyboard, pointer and the release harness move through it the same way.

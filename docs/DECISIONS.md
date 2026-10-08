@@ -6,6 +6,57 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-089 · Quick checks between decisions
+The user asked for "quiz-type tests in between the game to simplify the stakes and make it
+easier". After each decision, the journey map offers one ten-second question in one of three
+formats:
+- true or false;
+- which bar moves;
+- pick one of two or three.
+
+One tap shows whether it was right and a one-line reason (`content/checks.ts`,
+`screens/QuickCheck.tsx`).
+
+**Why it works.** Low-stakes retrieval is one of the strongest learning effects measured
+(Roediger & Karpicke 2006; Adesope et al. 2017). Elaborated feedback beats right-or-wrong alone
+(Van der Kleij et al. 2015). The check also lowers the stakes: the idea is rehearsed in a
+question that costs nothing before the decision that does.
+
+**Rules that keep it honest.**
+- Never graded, never stored, and it never moves the deal. D-069 warned that a marked quiz
+  would bring back the score this game deleted; these checks are unmarked for that reason.
+- Always skippable.
+- Each check is about the idea or the world, never about which setting would have won, so it
+  cannot leak an outcome.
+- A test holds the answer index, the word budgets and the formats.
+
+**Cost:** about 10 seconds per decision, optional. **Reversible:** yes.
+
+## D-088 · Recall on return
+A player who comes back to a saved run is offered a short warm-up on the welcome screen: one
+question for each act they have finished, answered in their head and then revealed. It is
+optional, unscored and stored nowhere.
+
+Retrieval strengthens learning more than re-reading (Roediger & Karpicke 2006), and serious
+games teach far better over more than one sitting (Clark et al. 2016). The facilitator guide
+plans two sittings, and this is the in-game half of that.
+
+**Cost:** one button on the welcome screen when a run is saved. **Reversible:** yes.
+
+## D-087 · Comprehension is measured, not promised
+`tools/comprehension.mjs` measures from the content what the newcomer audit counted by hand:
+- words read per decision;
+- distinct takeaways;
+- decisions in total and per act;
+- whether every decision is a lever decision.
+
+It checks them against STRATEGY.md's targets: at most 150 words per decision, 4 takeaways, and
+8 decisions, two per act. The 1.3.0 content measures 259 words, 53 takeaways and 18 decisions,
+which is the baseline the rebuild must beat. `--strict` exits non-zero on a miss, so the meter
+joins the release gate once the eight-decision content lands.
+
+**Cost:** none to the player. **Reversible:** yes.
+
 ## D-085 · The lever decision in the engine
 `docs/LEVERS.md` (D-084) specified a new decision unit: two or three levers, one setting on
 each. This adds it to `src/engine` as a fourth mission kind, `kind: "levers"`, with no content

@@ -104,6 +104,9 @@ something an earlier one produced, *and saying so by name at the moment it pays 
    the second gives one hint, and the third is yours alone.
 8. **Guess, then see.** Before each act's debrief reveals the cause, the player taps their
    guess. It is unscored and is never a grade.
+8b. **Quick checks between decisions.** One ten-second, ungraded question after each
+   decision (true or false, which bar, pick one), answered with a one-line reason. It rehearses
+   the idea before the next decision depends on it (D-089).
 9. **Failure branches, it does not end.** Losing the award is a chapter, not a game over, and
    the debrief shows what would have changed it.
 10. **Characters notice.** Sarah, Marcus and Aisha refer back to what you did.

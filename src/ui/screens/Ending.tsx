@@ -103,7 +103,7 @@ export function Ending({ session, content, onPlan, onCode, onHome, onAgain }: { 
 
     <div className="f-report" id="report" tabIndex={-1}>
       <p className="f-report-title">{E.reportTitle}</p>
-      {/* The whole deal on one chart, under the ending it produced (D-087). */}
+      {/* The whole deal on one chart, under the ending it produced (D-090). */}
       <section className="f-end-section f-chart" aria-labelledby="chart-heading">
         <p className="f-kicker">{VIEWS.chart.kicker}</p>
         <h2 id="chart-heading" className="f-h2">{verdict.title}</h2>
