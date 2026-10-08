@@ -1,0 +1,46 @@
+# Builds the game and publishes dist/ to GitHub Pages on every push to master.
+# The build is static with relative paths (vite `base: "./"`), so it runs under the
+# repository's sub-path (https://<owner>.github.io/<repo>/) with no extra configuration.
+# Tests are not run here: the suite and the browser gate are run locally before a push
+# (see CLAUDE.md), and a slow CI sweep should not stand between a verified build and the site.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
