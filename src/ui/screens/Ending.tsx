@@ -92,8 +92,7 @@ export function Ending({ session, content, onPlan, onCode, onHome, onAgain }: { 
       <div className="f-verdict sheet ending-hero">
         <p className="f-kicker">{COPY.stage.endKicker}</p>
         <Heading className="f-verdict-h">{verdict.title}</Heading>
-        <p className="f-verdict-summary">{verdict.summary}</p>
-        {verdict.extras.map(x => <p key={x} className="f-verdict-extra">{x}</p>)}
+        <p className="f-verdict-summary">{[verdict.summary, ...verdict.extras].join(' ')}</p>
         <p className="f-verdict-count"><b>{state.completed.length}</b> {E.made}</p>
         <p className="f-verdict-question"><span>{COPY.stage.setOut}</span> {STORY.question}</p>
         <Measures to={state.dims} from={start} label={COPY.position} className="f-final" />
@@ -103,12 +102,12 @@ export function Ending({ session, content, onPlan, onCode, onHome, onAgain }: { 
 
     <div className="f-report" id="report" tabIndex={-1}>
       <p className="f-report-title">{E.reportTitle}</p>
-      {/* The whole deal on one chart, under the ending it produced (D-090). */}
+      {/* The whole deal on one chart, under the ending it produced (D-091). */}
       <section className="f-end-section f-chart" aria-labelledby="chart-heading">
         <p className="f-kicker">{VIEWS.chart.kicker}</p>
         <h2 id="chart-heading" className="f-h2">{verdict.title}</h2>
         <p className="f-end-lead">{[verdict.summary, ...verdict.extras].join(' ')}</p>
-        <p className="f-chart-how">{VIEWS.chart.lead}</p>
+        <p className="meta">{VIEWS.chart.lead}</p>
         <DealChart state={state} content={content} />
       </section>
       {settledOf(state) && <section className="f-end-section" aria-labelledby="calendar-heading">

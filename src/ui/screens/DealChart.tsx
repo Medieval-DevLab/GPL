@@ -40,7 +40,7 @@ export function DealChart({ state, content }: { state: GameState; content: Conte
   const num = (id: string) => content.missionOrder.indexOf(id) + 1;
   return <figure className="deal-chart">
     <div className="dc-grid">
-      <ol className="dc-y" aria-hidden="true"><li>100</li><li>50</li><li>0</li></ol>
+      <span />
       <div className="dc-plot">
         {acts.map(a => <span key={a.chapter} className="dc-act" data-chapter={a.chapter} style={{ left: at(a.from) + '%', width: at(a.to - a.from) + '%' }}>{COPY.stage.act} {a.chapter}</span>)}
         {settled && <span className="dc-act is-due" style={{ left: at(n) + '%', width: at(1) + '%' }}>{C.dueZone}</span>}
@@ -55,7 +55,7 @@ export function DealChart({ state, content }: { state: GameState; content: Conte
     </div>
     <ul className="dc-legend">{DIMENSION_ORDER.map(d => {
       const a = points[0][d], b = points[n][d];
-      return <li key={d} className={'q-' + d}><svg viewBox="0 0 28 8" aria-hidden="true"><line x1="0" x2="28" y1="4" y2="4" className={'dc-line q-' + d} /></svg>{COPY.dimensions[d].short} <b>{a} → {b}</b> {b !== a && <em>{b > a ? '+' : '−'}{Math.abs(b - a)}</em>}</li>;
+      return <li key={d} className={'q-' + d}><i aria-hidden="true" />{COPY.dimensions[d].short} <b>{a} → {b}</b> {b !== a && <em>{b > a ? '+' : '−'}{Math.abs(b - a)}</em>}</li>;
     })}</ul>
     {lanes.length > 0 && <div className="dc-promises">
       <p className="mini-head">{C.promises}</p>

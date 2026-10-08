@@ -142,8 +142,7 @@
 .weigh dd { color: var(--ink); }
 .gained { display: grid; gap: 8px; }
 .gained li { display: grid; gap: 2px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid; font-size: 15px; }
-.gained li.is-strength { border-color: #a9d3bb; background: #f2f9f5; }
-.gained li.is-promise { border-color: #e9b9b4; background: #fdf3f1; }
+.gained li.is-strength, .gained li.is-promise { border-color: var(--c-line); background: var(--c-bg); }
 .gained small { font-size: 14px; color: var(--ink-2); }
 .impact { display: grid; gap: 6px; margin: 4px 0 12px; font-size: 16px; line-height: 1.4; }
 .impact b { margin-right: 4px; font-variant-numeric: tabular-nums; }
@@ -163,8 +162,8 @@
 .corkboard { padding: 28px 26px 26px; border-radius: 12px; background: #a77f55 radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1.6px) 0 0 / 7px 7px; box-shadow: inset 0 0 0 10px #6e4f31, inset 0 0 40px rgba(0, 0, 0, 0.3), 0 30px 60px -20px rgba(0, 0, 0, 0.6); }
 .picks-board { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px 18px; }
 .pick.pin { border-radius: 4px; }
-.pick.pin::before { content: ""; position: absolute; z-index: 3; top: -8px; left: 50%; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #e5e5e5, #8a8a8a); box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4); }
-.pick.pin.is-on::before { background: radial-gradient(circle at 35% 30%, #ff9a8f, #b0302a); }
+.pick.pin::before, .m-research .lever-opt::before { content: ""; position: absolute; z-index: 3; top: -8px; left: 50%; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #e5e5e5, #8a8a8a); box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4); }
+.pick.pin.is-on::before, .m-research .is-on::before { background: radial-gradient(circle at 35% 30%, #ff9a8f, #b0302a); }
 .pick.pin .pick-line { font-family: var(--font-serif); font-size: 18px; color: var(--ink); }
 
 /* The planning wall: a fixed number of slots to fund */

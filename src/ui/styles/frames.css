@@ -540,10 +540,6 @@ button.f-step:hover .f-step-label { text-decoration: underline; text-underline-o
   .gpl-game:not(.reduce-motion) .f-turn-say.dialogue { animation: rise 600ms var(--ease-out) both 1500ms; }
 }
 
-/* ══ Journey: five acts as a route ═════════════════════════════════════════ */
-@media (prefers-reduced-motion: no-preference) {
-}
-
 /* ══ Ending: a cover, then the report ═════════════════════════════════════ */
 .f-ending { background: var(--paper); }
 .f-cover { --endbar-h: 76px; display: grid; grid-template-columns: minmax(420px, 640px) minmax(0, 1fr); align-items: center; min-height: calc(100dvh - var(--hud-h) - var(--endbar-h)); }

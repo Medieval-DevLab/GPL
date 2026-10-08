@@ -15,7 +15,7 @@ import { ActView } from './Views';
  * Every stop on the journey has a name, and the map shows them all at once: the five stages of
  * a deal in their own colours, the stops you have passed (ticked), where you are, and what lies
  * ahead. Below it, the next stop: who is with you there and what you decide. Beside that, the
- * act's own picture of the system (D-090), and your hand: what you have earned and what you owe,
+ * act's own picture of the system (D-091), and your hand: what you have earned and what you owe,
  * each card saying where it next matters.
  *
  * Laid out like a board-game track, two rows snaking through the stages, because a player
@@ -114,7 +114,7 @@ export function Journey({ state, content, node, currentChapter, onPlay, onReview
     </div>
 
     {/* Three columns in story order: what just happened (and its quick check, D-089), the next
-        stop with its Go, then the act's picture of the system beside your hand (D-090). The Go
+        stop with its Go, then the act's picture of the system beside your hand (D-091). The Go
         stays in view at 1440×900 however long the other two columns run. */}
     <div className="trail-panels">
       {justHappened && <div className="trail-recent">

@@ -3,12 +3,14 @@ import type { Condition, Content, GameState, LeverMission, LeverOption } from '.
 import { canCommit, leverOptionOpen, leverSettings, leverTouches } from '../../engine/engine';
 import { COPY } from '../../content/interface';
 import { EARNED } from '../../content/gates';
-import { VIEWS, leverMediumOf } from '../../content/views';
+import { VIEWS, leverMediumOf, type LeverMedium } from '../../content/views';
 import { isCard, pileOf, sourceOf } from '../cards';
 import { promiseRules } from '../ledger';
 import { Action, DIMENSION_ORDER, Glyph } from '../parts';
 
 const L = VIEWS.levers;
+/* Act 1 and 2 reuse the cork board and the planning wall the older decisions are pinned to. */
+const MEDIUM_FRAME: Partial<Record<LeverMedium, string>> = { research: ' corkboard', staffing: ' planwall' };
 
 /**
  * Why an option is closed, naming the card and the stop that gives it. A locked option is the
@@ -94,7 +96,7 @@ export function LeverPanel({ mission, state, content, onToggle, onCommit, ask }:
      levers get the height (a three-lever decision must fit 1440×900 without scrolling). */
   return <div className="choose choose-levers">
     <div className="choose-body">
-      <div ref={panel} className={'levers m-' + medium}>
+      <div ref={panel} className={'levers m-' + medium + (MEDIUM_FRAME[medium] ?? '')}>
         <div className="levers-head">
           <p className="levers-medium">{L.medium[medium]}</p>
           <p className="levers-kicker">{COPY.say.choose} · {mission.prompt ?? L.kicker}</p>
@@ -127,7 +129,7 @@ export function LeverPanel({ mission, state, content, onToggle, onCommit, ask }:
       </div>
     </div>
     <div className="commit-bar">
-      <div className="commit-read">
+      <div>
         <p role="status">{mission.levers.map((lever, i) => {
           const s = settings.find(o => lever.options.includes(o));
           return <span key={lever.id}>{i > 0 && ' · '}{s ? <b>{s.label}</b> : <span className="is-unset">{lever.label}: {L.notSet}</span>}</span>;
