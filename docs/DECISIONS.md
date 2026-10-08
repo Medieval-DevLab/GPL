@@ -6,6 +6,20 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-087 · Comprehension is measured, not promised
+`tools/comprehension.mjs` measures from the content what the newcomer audit counted by hand:
+- words read per decision;
+- distinct takeaways;
+- decisions in total and per act;
+- whether every decision is a lever decision.
+
+It checks them against STRATEGY.md's targets: at most 150 words per decision, 4 takeaways, and
+8 decisions, two per act. The 1.3.0 content measures 259 words, 53 takeaways and 18 decisions,
+which is the baseline the rebuild must beat. `--strict` exits non-zero on a miss, so the meter
+joins the release gate once the eight-decision content lands.
+
+**Cost:** none to the player. **Reversible:** yes.
+
 ## D-085 · The lever decision in the engine
 `docs/LEVERS.md` (D-084) specified a new decision unit: two or three levers, one setting on
 each. This adds it to `src/engine` as a fourth mission kind, `kind: "levers"`, with no content

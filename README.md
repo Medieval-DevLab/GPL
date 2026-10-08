@@ -4,6 +4,10 @@
 
 A desktop-first business learning simulation for adult employees. Lead a fictional client engagement through five chapters and 18 connected decisions: find a client, qualify the opportunity, shape the response, negotiate the deal and deliver the promise.
 
+**Play it:** https://medieval-devlab.github.io/GPL/ (published from `master` by `.github/workflows/pages.yml` on every push).
+
+**Being rebuilt.** [docs/STRATEGY.md](docs/STRATEGY.md) sets out a redesign from first principles. It has four ideas, one per act, and eight decisions made of small levers, each with one visible effect, on a single causal spine. The redesign is specified in [docs/LEVERS.md](docs/LEVERS.md) and scripted in [docs/STORY-V2.md](docs/STORY-V2.md). This README describes the game as released (1.3.0) until the rebuild ships.
+
 Allow around 70–90 minutes for the full delivery path, or play one chapter at a time. Procurement loss and walking away are legitimate shorter endings. Duration is an estimate, not a measured learner average.
 
 ## Play and build
@@ -16,18 +20,24 @@ npm run dev
 npm run validate
 npm run verify
 npm run scorm
+node tools/comprehension.mjs
 ```
 
 - dev starts the local development server.
 - validate runs TypeScript, unit/content/branch tests and the production build.
 - verify serves the production build locally and plays multiple paths at four desktop sizes plus a 200%-equivalent reflow viewport. It captures screens and audits accessibility with axe.
 - scorm builds and verifies standalone offline and SCORM 1.2 ZIPs under dist-release/, with checksums.
+- comprehension measures, from the content, what a newcomer has to read and hold: words per decision, distinct takeaways, decisions per act. It reports against the targets in STRATEGY.md; `--strict` fails when one is missed.
 
 Open an extracted offline package's index.html directly, or serve dist/ on a static host. All runtime photographs and fonts are local. There is no application backend, employee account, leaderboard or mandatory audio.
 
 ## Experience
 
-The whole game answers one question: can you win Orion's work, make it worth winning, and still deliver what you promised? Every decision is filed under one of three questions: win it, make it worth it, deliver it. A board beside every scene shows where you stand on each. A decision is one scene: the situation, the choice and what happened appear on the same screen, and a new screen means the story moved. Every consequence names the earlier commitments it depended on. The look is daylight editorial, with readable type and real photographs framed beside the text. Interface sound is optional and off by default.
+The whole game answers one question: can you win Orion's work, make it worth winning, and still deliver what you promised? Every decision is filed under one of three questions: win it, make it worth it, deliver it. Three bars at the top show where you stand on each. Setup introduces the firm, how a deal works and your team's strength.
+
+Between decisions you return to the journey map. It shows every stop by name, where you are, what just happened and what comes next, and keeps an open case file: "What is really wrong at Orion?". Your hand holds what you know and what you have promised as cards, and each card says where it next matters. A locked option names the card it needs and where it is earned.
+
+A decision is one scene. Your colleague says what is happening and the client says what they want. Then you choose, with what each option gains and costs in view. Afterwards you see what happened, what it did to the deal and the real reason. Every consequence names the earlier commitments it depended on. The look is daylight editorial, with readable type and real photographs framed beside the text. Interface sound is optional and off by default.
 
 The welcome establishes the learner's role. A starting team advantage leads to the five-chapter journey. Every chapter has an arrival and objective. Activities use distinct brief, comparison, investigation, allocation, chat, meeting and evidence-application layouts. Each commitment produces an explained consequence. Reflections, chapter debriefs and a final causal review connect decisions to workplace practice.
 
