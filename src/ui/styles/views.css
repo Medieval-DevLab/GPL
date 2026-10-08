@@ -21,7 +21,7 @@
 .levers-medium { padding: 3px 12px; border-radius: 6px; background: var(--ink); color: #fff; font-size: 15px; font-weight: 750; }
 .levers-kicker { font-size: 16px; font-weight: 650; }
 .levers-head .ask { margin-left: auto; }
-.levers-held, .touch, .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.levers-held, .touch, .adds { display: flex; flex-wrap: wrap; gap: 5px; }
 .levers-held li, .chip, .sm-card, .pan li { border: 1.5px solid var(--c-line, var(--line)); background: var(--c-bg, var(--card)); }
 .levers-held li { padding: 2px 10px; border-radius: 999px; font-size: 14px; }
 .levers-held b, .chip b { color: var(--c-ink); }

@@ -118,7 +118,7 @@ export function LeverPanel({ mission, state, content, onToggle, onCommit, ask }:
                   <p className="lever-detail" id={'ld-' + o.id}>{o.detail}</p>
                   <div className="lever-facts" id={'lf-' + o.id}>
                     <Touches option={o} />
-                    {(o.flags ?? []).some(isCard) && <ul className="chips">{(o.flags ?? []).filter(isCard).map(f => <Chip key={f} flag={f} content={content} />)}</ul>}
+                    {(o.flags ?? []).some(isCard) && <ul className="adds">{(o.flags ?? []).filter(isCard).map(f => <Chip key={f} flag={f} content={content} />)}</ul>}
                     {!open && <LockNote requires={o.requires} state={state} content={content} />}
                   </div>
                 </li>;

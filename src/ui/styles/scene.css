@@ -14,6 +14,9 @@
 .page { flex: 1; display: flex; flex-direction: column; }
 
 .scene2 { position: relative; isolation: isolate; overflow: hidden; height: calc(100dvh - var(--hud-h)); min-height: 620px; background: #1b1d21; }
+/* The speaker's column while you choose: the options start where the person ends. */
+.scene2 { --cast-col: clamp(230px, 23vw, 380px); }
+.st-choose:not(.fam-call):not(.fam-chat) .choose { left: calc(var(--gutter) + var(--cast-col)); right: var(--gutter); translate: none; width: auto; max-width: 1240px; }
 
 /* ── The room ── */
 .backdrop { position: absolute; inset: 0; z-index: -2; overflow: hidden; }
@@ -28,9 +31,11 @@
 /* ── The people ── */
 .cast { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
 .cutout { position: absolute; width: auto; max-width: none; pointer-events: none; user-select: none; filter: drop-shadow(0 24px 30px rgba(0, 0, 0, 0.38)); transition: filter 420ms var(--ease-out), opacity 420ms var(--ease-out), transform 420ms var(--ease-out); }
+/* A pinned figure fades out at its lower edge, behind the dialogue box, rather than ending in a cut. */
+.cutout.is-pinned { -webkit-mask-image: linear-gradient(#000 82%, transparent); mask-image: linear-gradient(#000 82%, transparent); }
 .actor.is-quiet { filter: brightness(0.7) saturate(0.85) drop-shadow(0 24px 30px rgba(0, 0, 0, 0.38)); }
 .actor.is-speaking { transform: scale(1.025); }
-.st-choose .actor { opacity: 0.55; filter: blur(2px) brightness(0.7); }
+/* The person you are answering stays fully present while you choose (user, D-090). */
 .st-card .actor { opacity: 0; }
 @media (prefers-reduced-motion: no-preference) {
   .gpl-game:not(.reduce-motion) .actor.side-left { animation: from-left 800ms var(--ease-out) both 200ms; }
@@ -76,7 +81,7 @@
 .call-self { position: absolute; top: 14px; right: 14px; display: grid; place-items: center; gap: 4px; width: 128px; aspect-ratio: 16 / 10; border-radius: 10px; background: #2c3038; color: #d9d4ca; font-size: 14px; }
 .call-self span { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #464b55; color: #fff; font-weight: 700; }
 .fam-call .dialogue.as-caption { left: 6%; translate: none; width: min(54vw, 760px); bottom: 26px; }
-.st-choose .call-frame { left: 4%; top: 170px; bottom: 120px; max-width: 46vw; }
+.st-choose .call-frame { left: 4%; top: calc(var(--title-b, 150px) + 16px); bottom: 120px; max-width: 46vw; }
 @media (prefers-reduced-motion: no-preference) { .gpl-game:not(.reduce-motion) .call-frame { animation: pop 700ms var(--ease-out) both 150ms; } }
 
 /* ── In a thread ── */
@@ -98,7 +103,7 @@
 
 /* ── Choosing ── */
 .choose { position: absolute; z-index: 6; left: 50%; translate: -50% 0; top: calc(var(--title-b, 150px) + 16px); bottom: 18px; width: min(1180px, 94vw); display: flex; flex-direction: column; gap: 12px; }
-.choose-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.choose-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
 .choose-kicker { padding: 8px 14px; border-radius: 10px; background: rgba(255, 253, 249, 0.96); font-size: 16px; font-weight: 650; box-shadow: var(--shadow-1); }
 .choose-body { flex: 1; min-height: 0; overflow-y: auto; padding: 10px 6px 10px; }
 .commit-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 14px 12px 18px; border-radius: 14px; background: rgba(255, 253, 249, 0.98); box-shadow: var(--shadow-2); }
@@ -133,17 +138,25 @@
 .facts > div { display: grid; gap: 1px; }
 .facts dt { font-size: 14px; font-weight: 700; color: var(--ink-3); }
 .facts dd { font-size: 15.5px; line-height: 1.35; color: var(--ink); }
-.weigh { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 15px; line-height: 1.4; }
-.weigh > div { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; align-items: baseline; }
-.weigh dt { font-size: 14px; font-weight: 700; white-space: nowrap; }
-.weigh dt span { font-size: 11px; }
-.weigh .gain dt { color: var(--rise); }
-.weigh .cost dt { color: var(--fall); }
-.weigh dd { color: var(--ink); }
 .gained { display: grid; gap: 8px; }
 .gained li { display: grid; gap: 2px; padding: 9px 12px; border-radius: 10px; border: 1.5px solid; font-size: 15px; }
 .gained li.is-strength, .gained li.is-promise { border-color: var(--c-line); background: var(--c-bg); }
 .gained small { font-size: 14px; color: var(--ink-2); }
+/* Option cards (D-090): a crisp card with a header, a plain line, tags and effort. */
+.pick { border: 1.5px solid #e6dfd2; }
+.pick-hit { align-items: center; }
+.pick-mark { transform: none; }
+.pick-title { font-size: 19px; font-weight: 750; letter-spacing: -0.005em; }
+.pick-line { font-size: 16px; line-height: 1.45; }
+.weigh { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips li { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 14px; font-weight: 600; line-height: 1.3; }
+.chips li span { font-size: 11px; }
+.chips.gain li { background: #e6f3eb; color: #17553a; }
+.chips.cost li { background: #fbe9e6; color: #8a2a20; }
+.effort { display: flex; gap: 16px; font-size: 14px; font-weight: 600; color: var(--ink-3); }
+.effort span { display: inline-flex; align-items: center; gap: 6px; }
+.pick.is-on { background: linear-gradient(var(--accent-tint), #fff 72px); box-shadow: inset 0 4px 0 var(--accent), 0 4px 8px rgba(0, 0, 0, 0.1), 0 26px 50px -16px rgba(0, 0, 0, 0.55); }
 .impact { display: grid; gap: 6px; margin: 4px 0 12px; font-size: 16px; line-height: 1.4; }
 .impact b { margin-right: 4px; font-variant-numeric: tabular-nums; }
 .impact .up b { color: var(--rise); }
@@ -154,7 +167,10 @@
 .ask { position: relative; display: flex; align-items: center; gap: 12px; }
 .ask-button { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 16px 4px 5px; border-radius: 999px; background: rgba(255, 253, 249, 0.97); box-shadow: var(--shadow-1); font-size: 15px; font-weight: 650; }
 .ask-button:hover { box-shadow: 0 0 0 2px var(--accent); }
-.ask-bubble { position: absolute; z-index: 8; top: calc(100% + 10px); right: 0; width: min(440px, 80vw); padding: 14px 16px; border-radius: 14px; background: #fff; box-shadow: var(--shadow-2); font-family: var(--font-serif); font-size: 18px; line-height: 1.45; border-top: 3px solid var(--accent); }
+.ask-bubble { flex: 1 0 100%; order: 3; position: relative; display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px 12px 16px; border-radius: 14px; background: #fff; box-shadow: var(--shadow-1); font-family: var(--font-serif); font-size: 18px; line-height: 1.45; border-left: 4px solid var(--accent); }
+.ask-bubble p { flex: 1; }
+.ask-close { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; font-family: var(--font-ui); font-size: 20px; line-height: 1; color: var(--ink-2); }
+.ask-close:hover { background: var(--paper-2); }
 .ask-bubble b { display: block; font-family: var(--font-ui); font-size: 14px; color: var(--accent); }
 @media (prefers-reduced-motion: no-preference) { .gpl-game:not(.reduce-motion) .ask-bubble { animation: pop 380ms var(--ease-out) both; } }
 

@@ -83,6 +83,36 @@ it; neither is reachable from `index.html`.
 **Reversible:** yes. The lever panel renders only for `kind: "levers"`. The act-break map is one
 step in `ActBreak`, and the views are additions. Reverting this commit restores the stand-in.
 
+## D-090 · The person you are answering is never behind a panel
+The user, at a 1918×814 window, for the fourth time:
+- "The image of the stakeholder is hidden behind the container."
+- "The pop up doesn't disappear and covers the options."
+- "The cards still look shit."
+
+**Why it kept happening.** The causes were structural; restyling a panel never touched them:
+- **Faces sat at a fixed 21% of the stage.** On a short window that is behind the question
+  card.
+- **Figures were anchored to the floor.** For a bust photograph (Riya's face is 42% of her
+  image), that pushed the face down to about 58% of the stage, behind the dialogue box.
+- **The choice panel was centred across the whole stage, over the cast.** A depth-of-field
+  rule also faded and blurred everyone while you chose.
+
+**Fixed by construction.**
+- **Measured, not guessed.** The face is placed below the question card's measured bottom edge.
+- **Pinned.** A new `pin` frame keeps the face at that height and sizes the figure so its lower
+  edge reaches the dialogue box, where it fades out.
+- **A column of their own.** While choosing, the person you are answering (the client if one is
+  in the room, otherwise your colleague) stands in a reserved left column. The options start
+  where that column ends, and nothing fades or blurs the person.
+- **Advice in the flow.** It sits below "Your move", pushes the options down instead of
+  covering them, has a close button, and closes when you pick an option.
+- **Cards.** A crisp header, the line, gains and costs as green and red tags, effort and
+  investment as pips, and a tinted, accent-topped selected state.
+- **The top bar.** It no longer shows truncated names for other stages, and "Your record" never
+  wraps.
+
+**Cost:** the options are narrower by one column on wide screens. **Reversible:** yes.
+
 ## D-089 · Quick checks between decisions
 The user asked for "quiz-type tests in between the game to simplify the stakes and make it
 easier". After each decision, the journey map offers one ten-second question in one of three

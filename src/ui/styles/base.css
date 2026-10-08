@@ -76,7 +76,7 @@ img { display: block; max-width: 100%; }
 .hud-gauge .bar { height: 6px; border-radius: 3px; background: #33363d; overflow: hidden; }
 .hud-gauge .bar i { display: block; height: 100%; background: #e8e3d8; border-radius: 3px; transition: width 1100ms var(--ease-out); }
 .hud-gauge.is-moving .bar i { background: var(--accent-light); }
-.hud-record { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid #3a3d44; font-size: 14px; font-weight: 600; color: #f3f1ec; }
+.hud-record { white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid #3a3d44; font-size: 14px; font-weight: 600; color: #f3f1ec; }
 .hud-record:hover { background: #23262c; }
 .hud-record svg { width: 18px; height: 18px; }
 .hud-record .n { min-width: 22px; padding: 1px 6px; border-radius: 999px; background: #33363d; font-size: 14px; text-align: center; }
