@@ -15,7 +15,8 @@
     "filecheck": "node tools/file-url-check.mjs",
     "lmscheck": "node tools/lms-check.mjs",
     "scorm": "npm run build && node tools/file-url-check.mjs && node tools/lms-check.mjs && node tools/scorm-package.mjs",
-    "validate": "tsc --noEmit && vitest run && vite build && node tools/prepare-runtime.mjs"
+    "validate": "tsc --noEmit && vitest run && node tools/comprehension.mjs --strict && vite build && node tools/prepare-runtime.mjs",
+    "comprehension": "node tools/comprehension.mjs --strict"
   },
   "dependencies": {
     "react": "^19.1.1",
