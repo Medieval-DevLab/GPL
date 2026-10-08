@@ -137,15 +137,28 @@ async function run(viewport, policy) {
       /* The trail (D-083) sits on the next decision's node; it is a stop, not the decision. */
       const choices = page.locator('main [data-choice]:not(:disabled)');
       const count = await choices.count();
-      let indexes = Array.from({ length: count }, (_, i) => i);
-      if (policy === 'last') indexes.reverse();
-      /* Walk away at the sign-or-walk beat (D-086): a lever panel keeps one setting per lever,
-         so set the clause first and the walk last, or a later click replaces it. */
-      if (policy === 'walk' && current.node === 'd7') indexes = [0, count - 1];
-      if (policy === 'middle') indexes.push(indexes.shift());
-      for (const index of indexes) {
-        if (await primary.isEnabled()) break;
-        if (keyboard) { await choices.nth(index).focus(); await page.keyboard.press('Space'); } else await choices.nth(index).click();
+      const levers = page.locator('main [data-lever]');
+      /* 'first' plays the whole deal (the gate needs one complete run), so it keeps the original
+         click order; 'last' and 'middle' set each lever directly, so they explore other routes and
+         endings; 'walk' plays like 'first' and walks away at d7. Clicking options in a row on a
+         lever panel lets each click replace the last, which is why every policy once ended alike. */
+      const perLever = (policy === 'last' || policy === 'middle') || (policy === 'walk' && current.node === 'd7');
+      if (perLever && await levers.count()) {
+        const pick = policy === 'middle' ? 'middle' : 'last';
+        for (let l = 0; l < await levers.count(); l++) {
+          const open = levers.nth(l).locator('[data-choice]:not(:disabled)');
+          const n = await open.count();
+          const target = open.nth(pick === 'last' ? n - 1 : pick === 'middle' ? Math.floor(n / 2) : 0);
+          if (keyboard) { await target.focus(); await page.keyboard.press('Space'); } else await target.click();
+        }
+      } else {
+        let indexes = Array.from({ length: count }, (_, i) => i);
+        if (policy === 'last') indexes.reverse();
+        if (policy === 'middle') indexes.push(indexes.shift());
+        for (const index of indexes) {
+          if (await primary.isEnabled()) break;
+          if (keyboard) { await choices.nth(index).focus(); await page.keyboard.press('Space'); } else await choices.nth(index).click();
+        }
       }
       assert.equal(await primary.isEnabled(), true, currentKey + ' cannot commit');
       // Inspecting the file and returning must leave the draft untouched.

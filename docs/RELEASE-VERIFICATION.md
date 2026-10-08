@@ -1,5 +1,42 @@
 # Release verification
 
+## Version 2.0.0 — 8 October 2026: the four-act game from first principles (D-084 to D-091)
+
+The game is rebuilt on `docs/STRATEGY.md`:
+- four acts, one idea each;
+- eight lever decisions on one causal spine;
+- a promise ledger that settles on a delivery calendar;
+- endings chosen by condition.
+
+It adds the lever panel, a guess-then-reveal step and a cause-and-effect map at every act break, per-act system views, quick checks, recall on return and a whole-deal chart.
+
+- **Comprehension** (`tools/comprehension.mjs --strict`, now part of `npm run validate`). Every target is met:
+
+  | Measure | 1.3.0 | 2.0.0 |
+  |---|---:|---:|
+  | Decisions | 18 | 8, two per act |
+  | Distinct takeaways | 53 | 4 |
+  | Words read per decision | 259 | 150 |
+
+- **TypeScript and tests.** TypeScript clean. 395 tests pass and 2 are skipped, in 23 files. The skips are the causal-claim item, which no thread authors yet. One measure is pinned as failing: the engagement premium is 0 against a target of 12. The endings separate readers from non-readers, but the meters' mean does not.
+- **Browser matrix.** All 8 runs passed, with zero axe violations over 13 screen types. The harness now sets each lever by policy, so the runs reach three endings:
+  - first: all 8 decisions, "We kept the dates and hid the freeze";
+  - last: "We walked away";
+  - middle: "Orion chose the cheaper firm";
+  - walk: "We walked away".
+  
+  The exhaustive sweep in the unit tests shows every ending, extra and promise status is reachable.
+- **`file://` and mock LMS.** Clean console. Completion reported, resumable, no score.
+- **Size.** Interface 32.56 of 33 kB (raised in D-091); stylesheet 21.84 of 22 kB; code 162 kB; cold download 2.47 MB.
+- **Screenshots reviewed.** The lever panels, the act break (guess, reveal, map), the trail and its views, the calendar and the ending chart, at 1440×900, 1918×814 and 1280×720.
+
+| Version 2.0.0 archive | Bytes | SHA-256 |
+|---|---:|---|
+| gpl-2.0.0-offline.zip | 2,485,629 | 61c5a90cd2c499fa86cebca5aaf23518de04022d031403024c3069f5c89047f5 |
+| gpl-2.0.0-scorm12.zip | 2,486,312 | cbffa0c53bace14fee05e14f448993c7399bde1715a5bbeda83723ec371e8e79 |
+
+Not yet done: an employee pilot (see `LEARNER-EVALUATION.md`), manual assistive-technology review, and testing in a real LMS. Saved runs and run codes from 1.x do not carry into the new story.
+
 ## Version 1.3.0 — 8 October 2026: the trail, the hand, the company first (D-083, D-084)
 
 - **TypeScript and tests.** TypeScript clean. All 288 tests pass in 20 files. They include the new trail contract (`ui/cards.test.ts`):

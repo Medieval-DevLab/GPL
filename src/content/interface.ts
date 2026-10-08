@@ -197,6 +197,7 @@ export const COPY = {
       skip: 'Skip to the question',
     },
     actBreak: {
+      yourGuess: 'Your guess',
       closed: 'closed',
       stamp: 'Closed',
       moved: 'How this act moved the deal',

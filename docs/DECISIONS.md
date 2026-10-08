@@ -97,6 +97,16 @@ six decisions from `STORY-V2.md`; neither is reachable from `index.html`.
 **Reversible:** yes. The lever panel renders only for `kind: "levers"`, the act-break map is
 one step in `ActBreak`, and the views are additions.
 
+**Amended at merge.**
+- **The guess comes first.** The act break used to open on the cause-and-effect map, which draws
+  the very chain the act's question asks about, so the answer was on screen before the guess.
+  The order is now: the act's summary and guess, the colleague's answer, then "See how it all
+  connects" to the map, which carries the spine sentence and the way into the next act.
+- **The answered guess collapses.** Once answered, the guess shrinks to "Your guess: …", and the
+  way on scrolls into view, so the button is never below the fold at 1440×900.
+- **The interface budget** rises from 27 to 33 kB, as recorded above, and `CLAUDE.md` is updated
+  to match.
+
 ## D-090 · The person you are answering is never behind a panel
 The user, at a 1918×814 window, for the fourth time:
 - "The image of the stakeholder is hidden behind the container."

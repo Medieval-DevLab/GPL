@@ -672,3 +672,7 @@ button.f-step:hover .f-step-label { text-decoration: underline; text-underline-o
   .f-plan-field { grid-template-columns: minmax(0, 1fr); }
   .f-plan-n { grid-row: auto; }
 }
+
+.f-talk-next { display: flex; justify-content: flex-end; margin-top: 12px; }
+.f-guess-made { padding: 8px 12px; border-radius: 10px; background: var(--accent-tint); font-size: 16px; color: var(--ink-2); }
+.f-guess-made b { color: var(--ink); }

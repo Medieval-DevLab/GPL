@@ -97,6 +97,8 @@ export const VIEWS = {
     yourGuess: "Your guess",
     youGuessed: "You guessed",
     next: "See what the act decided",
+    connect: "See how it all connects",
+    guessFirst: "Answer the question first",
   },
   people: {
     title: "Orion’s people",

@@ -2,13 +2,13 @@
 
 **Continue work from [BACKLOG.md](BACKLOG.md).** It contains the current priorities, detailed acceptance criteria, release state and handoff notes for any tab or agent using this workspace. Historical specifications remain under docs/.
 
-A desktop-first business learning simulation for adult employees. Lead a fictional client engagement through five chapters and 18 connected decisions: find a client, qualify the opportunity, shape the response, negotiate the deal and deliver the promise.
+A desktop-first business learning simulation for adult employees, written for people with no sales or consulting background. You lead a six-person team at Northgate, a small consultancy, through one deal with Orion Retail. It runs in four acts of two decisions each: understand before you offer, decide whether the deal is worth winning, trade rather than give, and promise only what your team can deliver.
 
 **Play it:** https://medieval-devlab.github.io/GPL/ (published from `master` by `.github/workflows/pages.yml` on every push).
 
-**Being rebuilt.** [docs/STRATEGY.md](docs/STRATEGY.md) sets out a redesign from first principles. It has four ideas, one per act, and eight decisions made of small levers, each with one visible effect, on a single causal spine. The redesign is specified in [docs/LEVERS.md](docs/LEVERS.md) and scripted in [docs/STORY-V2.md](docs/STORY-V2.md). This README describes the game as released (1.3.0) until the rebuild ships.
+**Designed from first principles** (version 2.0). [docs/STRATEGY.md](docs/STRATEGY.md) records the learning-science and game-design research behind the game. [docs/LEVERS.md](docs/LEVERS.md) specifies the decision unit, and [docs/STORY-V2.md](docs/STORY-V2.md) is the script.
 
-Allow around 70–90 minutes for the full delivery path, or play one chapter at a time. Procurement loss and walking away are legitimate shorter endings. Duration is an estimate, not a measured learner average.
+Allow about 40 minutes, ideally in two sittings (acts 1–2, then acts 3–4); the facilitator guide explains why. Losing the award and walking away are legitimate shorter endings. Duration is an estimate, not a measured learner average.
 
 ## Play and build
 
@@ -33,15 +33,15 @@ Open an extracted offline package's index.html directly, or serve dist/ on a sta
 
 ## Experience
 
-The whole game answers one question: can you win Orion's work, make it worth winning, and still deliver what you promised? Every decision is filed under one of three questions: win it, make it worth it, deliver it. Three bars at the top show where you stand on each. Setup introduces the firm, how a deal works and your team's strength.
+The game answers one question: can you win Orion's work, make it worth winning, and still deliver what you promised? Three bars show where the deal stands: Win, Worth and Deliver. Setup introduces the firm, how a deal works and your team's strength.
 
-Between decisions you return to the journey map. It shows every stop by name, where you are, what just happened and what comes next, and keeps an open case file: "What is really wrong at Orion?". Your hand holds what you know and what you have promised as cards, and each card says where it next matters. A locked option names the card it needs and where it is earned.
+- **Decisions are levers.** Each decision is two or three small choices on a panel shaped like the act's work: a research board, a staffing board, a contract with clauses, a delivery calendar. Every setting shows which bars it moves and which cards it adds or needs. The person you are answering stands beside the panel.
+- **Your hand.** What you know and what you promise become cards. A promise carries a due date and comes due on the delivery calendar, where it is kept, late with agreement, or broken, each time with the reason.
+- **The journey map** sits between decisions. It shows every stop, what just happened, a ten-second quick check (never graded), Orion's people as a map that turns green or red, and an open case file: "What is really wrong at Orion?"
+- **Act breaks.** You guess what decided the act before your colleague tells you, then see a cause-and-effect map of how the act's choices connect to earlier and later ones.
+- **The ending** draws the whole deal on one chart, with every promise from where it was made to where it came due.
 
-A decision is one scene. Your colleague says what is happening and the client says what they want. Then you choose, with what each option gains and costs in view. Afterwards you see what happened, what it did to the deal and the real reason. Every consequence names the earlier commitments it depended on. The look is daylight editorial, with readable type and real photographs framed beside the text. Interface sound is optional and off by default.
-
-The welcome establishes the learner's role. A starting team advantage leads to the five-chapter journey. Every chapter has an arrival and objective. Activities use distinct brief, comparison, investigation, allocation, chat, meeting and evidence-application layouts. Each commitment produces an explained consequence. Reflections, chapter debriefs and a final causal review connect decisions to workplace practice.
-
-The old question predicting Winability, Profitability or Deliverability has been removed, including prediction scoring. Actual business indicators are available after a result; they are not employee scores. The engine is deterministic: the same choice can land differently according to the evidence and commitments already earned.
+Every consequence opens by naming its cause. The look is daylight editorial, with readable type and real photographs. Interface sound is optional and off by default.
 
 ## Progress and privacy
 
@@ -59,7 +59,7 @@ Photographs depict stock models in fictional roles, not actual Accenture employe
 - src/content: authored story, interface language, gate explanations, cast, photo credits and presentation metadata.
 - src/session.ts: versioned presentation checkpoint and local/LMS resume arbitration.
 - src/App.tsx: persistence, lifecycle and action orchestration.
-- src/ui/game.tsx: the shell, HUD and screen routing. src/ui/screens/: the scene (all 18 decisions), the board, the act break, story turns and the frames around them. src/ui/parts.tsx: shared parts. src/ui/styles/: tokens, base, scene, frames and reflow. See [art direction](docs/ART-DIRECTION.md). The pre-D-077 interface (16 files no entry point imported) was removed in 1.3; it is in git history.
+- src/ui/game.tsx: the shell, HUD and screen routing. src/ui/screens/: the scene and the lever panel (every decision), the system views, the board, the act break, story turns and the frames around them. src/ui/parts.tsx: shared parts. src/ui/styles/: tokens, base, scene, frames and reflow. See [art direction](docs/ART-DIRECTION.md). The pre-D-077 interface (16 files no entry point imported) was removed in 1.3; it is in git history.
 - src/lms.ts and scorm.ts: retry-safe completion and resume reporting.
 - tools/verify-game.mjs: current browser gate. tools/verify.mjs is the historical UI harness.
 - .openai/hosting.json: persistent Sites project identity and static output configuration; no credentials.

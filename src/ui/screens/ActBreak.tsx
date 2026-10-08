@@ -30,28 +30,40 @@ export function ActBreak({ node, state, content, reflections, onReflect, onNext 
   const F = COPY.frames.actBreak;
   const n = node.chapter as ChapterNumber;
   const [mapped, setMapped] = useState(false);
+  const prompts = Object.values(content.nodes).filter((x): x is Interlude => x.kind === 'interlude' && x.role === 'reflection' && x.chapter === node.chapter);
+  const guessed = prompts.every(r => !!reflections[r.id]);
+  /* When the guess lands, bring the answer and the way on into view. */
+  const wayOn = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!guessed || mapped) return;
+    const still = !!document.querySelector('.reduce-motion') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    wayOn.current?.scrollIntoView({ block: 'nearest', behavior: still ? 'auto' : 'smooth' });
+  }, [guessed, mapped]);
   /* A new step is a new page of the same screen: take focus to its heading, as a route would. */
   const moved = useRef(false);
   useEffect(() => { if (moved.current) document.getElementById('game-heading')?.focus({ preventScroll: true }); moved.current = true; }, [mapped]);
-  if (!mapped) {
-    const M = VIEWS.map;
+  /* Guess first, then see the system (user, D-091): the map draws the very chain the act's
+     question asks about, so it comes after the guess, never before it. */
+  const M = VIEWS.map;
+  if (mapped) {
+    const after = content.chapters.find(c => c.number === node.chapter + 1);
     return <section className="page fs f-map">
       <Backdrop photo={placeOf(node.id).photo} focus="deep" />
       <header className="f-map-head sheet">
         <p className="f-kicker">{COPY.stage.act} {n} {COPY.stage.of} {content.chapters.length} · {M.kicker}</p>
         <Heading className="f-h1">{node.title}</Heading>
+        <p className="f-spine"><span className="sr-only">{F.spine}: </span>{STORY.spine}</p>
         <p className="f-read">{M.lead}</p>
       </header>
       {/* Beside the map, the act's own picture as it closes: faces turned, scales tipped, promises stamped. */}
       <div className="f-map-body"><SystemMap state={state} content={content} chapter={node.chapter} /><ActView state={state} content={content} chapter={node.chapter} /></div>
       <div className="f-map-foot">
-        <button className="primary" data-action="primary" data-line-next onClick={event => { if (event.detail < 2) setMapped(true); }}>{M.next}</button>
+        <Action onClick={onNext}>{after ? COPY.stage.beginAct + ' ' + after.number : COPY.stage.reviewAll}</Action>
       </div>
     </section>;
   }
   const decisions = state.history.filter(h => h.chapter === node.chapter);
   const first = decisions[0], lastDecision = decisions.at(-1);
-  const prompts = Object.values(content.nodes).filter((x): x is Interlude => x.kind === 'interlude' && x.role === 'reflection' && x.chapter === node.chapter);
   const next = content.chapters.find(c => c.number === node.chapter + 1);
   const nextOpen = Object.values(content.nodes).find((x): x is Interlude => x.kind === 'interlude' && x.role === 'chapter-open' && x.chapter === node.chapter + 1);
   const guide = prompts[0]?.advisor ?? CHARACTERS[CHAPTER_PRESENTATION[n - 1].advisor];
@@ -59,7 +71,9 @@ export function ActBreak({ node, state, content, reflections, onReflect, onNext 
   const summed = prompts.length === 0;
   /* Guess, then see (D-086): what decided the act is held back until every guess is in, then
      the guide says it, and the act's idea, in their own voice. */
-  const guessed = prompts.every(r => !!reflections[r.id]);
+  /* Always present, so there is one primary action; it opens only once the guess is in. */
+  const toMap = <button className="primary" data-action="primary" data-line-next={guessed ? '' : undefined} disabled={!guessed}
+    onClick={event => { if (event.detail < 2) setMapped(true); }}><span>{guessed ? M.connect : M.guessFirst}</span><span className="arrow" aria-hidden="true">→</span></button>;
   return <section className="page fs f-break" style={{ ['--n' as string]: decisions.length }}>
     <Backdrop photo={placeOf(node.id).photo} focus="soft" />
     <Figure id={castId(guide.name)} className="f-break-guide" enter="left" delay={900} box={{ left: 0, width: 'var(--guide-w)', top: '46%', bottom: 0 }} frame={{ x: '52%', y: 0.12, face: 0.3 }} />
@@ -93,6 +107,8 @@ export function ActBreak({ node, state, content, reflections, onReflect, onNext 
       {summed && node.body.map((line, i) => <p key={i} className="f-talk-line">“{line}”</p>)}
       {prompts.map(r => <section className="f-reflect" key={r.id} aria-labelledby={'q-' + r.id}>
         <h2 id={'q-' + r.id}>“{r.prompt}”</h2>
+        {/* Once the guess is in and the answer is coming, the other options have done their job. */}
+        {node.reveal && reflections[r.id] ? <p className="f-guess-made">{F.yourGuess}: <b>{reflections[r.id]}</b></p> :
         <div className="f-answers" role="group" aria-labelledby={'q-' + r.id}>
           {r.responses?.map(a => {
             const on = reflections[r.id] === a;
@@ -100,14 +116,15 @@ export function ActBreak({ node, state, content, reflections, onReflect, onNext 
               <span className="tick" aria-hidden="true">{on ? '✓' : ''}</span><span>{a}</span>
             </button>;
           })}
-        </div>
-        <p className="f-note">{node.reveal ? F.guessNote : COPY.reflectionNote}</p>
+        </div>}
+        {!(node.reveal && reflections[r.id]) && <p className="f-note">{node.reveal ? F.guessNote : COPY.reflectionNote}</p>}
       </section>)}
       {/* The live region is there before the guess, so the reveal is announced when it lands. */}
       {node.reveal && <div className="f-reveal-lines" aria-live="polite">
         {guessed && node.reveal.map((line, i) => <p key={i} className="f-talk-line">“{line}”</p>)}
-        {guessed && <p className="f-spine"><span className="sr-only">{F.spine}: </span>{STORY.spine}</p>}
       </div>}
+      {/* The way on sits under the reveal, where the eye already is, not below the fold. */}
+      <div className="f-talk-next" ref={wayOn}>{toMap}</div>
     </div>
 
     <aside className="f-next sheet" data-chapter={next?.number} aria-labelledby="next-heading">
@@ -117,10 +134,8 @@ export function ActBreak({ node, state, content, reflections, onReflect, onNext 
           <h2 id="next-heading">{nextOpen?.title ?? next.title}</h2>
         </div>
         <p className="f-next-q">{ACT_QUESTION[next.number as ChapterNumber]}</p>
-        <Action onClick={onNext}>{COPY.stage.beginAct + ' ' + next.number}</Action>
       </> : <>
         <div className="f-next-band"><h2 id="next-heading">{COPY.stage.complete}</h2></div>
-        <Action onClick={onNext}>{COPY.stage.reviewAll}</Action>
       </>}
     </aside>
   </section>;
