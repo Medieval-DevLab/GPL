@@ -21,20 +21,21 @@ const C = VIEWS.chart;
 export function DealChart({ state, content }: { state: GameState; content: Content }) {
   const h = state.history;
   if (!h.length) return null;
-  const n = h.length, points = [h[0].dimsBefore, ...h.map(e => e.dimsAfter)];
-  const at = (i: number) => (i / n) * 100;
+  const settled = settledOf(state), rules = promiseRules(content);
+  /* One slot per decision, and with a settled ledger one more at the end, where the promises came due. */
+  const n = h.length, slots = n + (settled ? 1 : 0), points = [h[0].dimsBefore, ...h.map(e => e.dimsAfter)];
+  const at = (i: number) => (i / slots) * 100;
   const acts = h.reduce<{ chapter: number; from: number; to: number }[]>((a, e, i) => {
     const last = a.at(-1);
     if (last?.chapter === e.chapter) last.to = i + 1; else a.push({ chapter: e.chapter, from: i, to: i + 1 });
     return a;
   }, []);
-  const settled = settledOf(state), rules = promiseRules(content);
   const promises: { flag: string; title: string; due?: string; status?: PromiseStatus }[] = settled
     ? settled.map(s => ({ ...s, title: EARNED[s.flag]?.as ?? s.flag }))
     : handOf(state, content).filter(c => c.pile === 'promise' && (!rules.length || rules.some(r => r.flag === c.flag))).map(c => ({ flag: c.flag, title: c.title, due: rules.find(r => r.flag === c.flag)?.due }));
   const lanes = promises.map(p => {
     const made = madeAt(state, content, p.flag), read = settled ? -1 : readAt(state, content, p.flag, made);
-    return { ...p, made, read, x1: at(made + 1), x2: settled ? 100 : read >= 0 ? at(read + 0.5) : 100 };
+    return { ...p, made, read, x1: at(made + 1), x2: settled ? 100 : read >= 0 ? at(read + 1) : 100 };
   });
   const num = (id: string) => content.missionOrder.indexOf(id) + 1;
   return <figure className="deal-chart">
@@ -42,6 +43,7 @@ export function DealChart({ state, content }: { state: GameState; content: Conte
       <ol className="dc-y" aria-hidden="true"><li>100</li><li>50</li><li>0</li></ol>
       <div className="dc-plot">
         {acts.map(a => <span key={a.chapter} className="dc-act" data-chapter={a.chapter} style={{ left: at(a.from) + '%', width: at(a.to - a.from) + '%' }}>{COPY.stage.act} {a.chapter}</span>)}
+        {settled && <span className="dc-act is-due" style={{ left: at(n) + '%', width: at(1) + '%' }}>{C.dueZone}</span>}
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           {[25, 50, 75].map(y => <line key={y} x1="0" x2="100" y1={y} y2={y} className="dc-rule" vectorEffect="non-scaling-stroke" />)}
           {DIMENSION_ORDER.map(d => <polyline key={d} className={'dc-line q-' + d} vectorEffect="non-scaling-stroke" points={points.map((p, i) => at(i) + ',' + (100 - p[d])).join(' ')} />)}
@@ -49,7 +51,7 @@ export function DealChart({ state, content }: { state: GameState; content: Conte
         {DIMENSION_ORDER.map(d => points.map((p, i) => <i key={d + i} className={'dc-dot q-' + d} style={{ left: at(i) + '%', top: 100 - p[d] + '%' }} />))}
       </div>
       <span />
-      <ol className="dc-x" aria-hidden="true">{h.map((e, i) => <li key={e.missionId} style={{ left: at(i + 0.5) + '%' }}>{num(e.missionId)}</li>)}</ol>
+      <ol className="dc-x" aria-hidden="true">{h.map((e, i) => <li key={e.missionId} style={{ left: at(i + 1) + '%' }}>{num(e.missionId)}</li>)}</ol>
     </div>
     <ul className="dc-legend">{DIMENSION_ORDER.map(d => {
       const a = points[0][d], b = points[n][d];

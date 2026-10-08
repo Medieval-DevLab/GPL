@@ -94,7 +94,7 @@ export function Journey({ state, content, node, currentChapter, onPlay, onReview
         {CHAPTER_PRESENTATION.filter(p => row.some(s => s.chapter === p.chapter)).map(p => {
           const inRegion = row.filter(s => s.chapter === p.chapter);
           const regionDone = inRegion.every(s => s.status === 'done');
-          return <div key={p.chapter} className={'trail-region' + (p.chapter === chapter && !ended ? ' is-here' : '') + (regionDone ? ' is-done' : '')} data-chapter={p.chapter} style={{ flexGrow: inRegion.length }}>
+          return <div key={p.chapter} className={'trail-region' + (p.chapter === chapter && !ended ? ' is-here' : '') + (regionDone ? ' is-done' : '')} data-chapter={p.chapter} style={{ flexGrow: inRegion.length + (rows.length === 1 ? 1 : 0) }}>
             <p className="trail-region-name">
               {regionDone ? <button className="trail-region-link" onClick={() => onReview(p.chapter)}><span>{p.chapter}</span>{stageNameOf(content, p.chapter)}</button> : <><span>{p.chapter}</span>{stageNameOf(content, p.chapter)}</>}
             </p>

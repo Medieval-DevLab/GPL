@@ -15,6 +15,7 @@
 import type { Condition, Content, GameNode, GameState, Interlude } from '../engine/types';
 import { EARNED } from '../content/gates';
 import { MILESTONE } from '../content/presentation';
+import { promiseRules, settledOf } from './ledger';
 
 export type Pile = 'strength' | 'promise';
 export interface Card { flag: string; title: string; where: string; pile: Pile; next?: { kind: 'opens' | 'pays' | 'due'; at: string } }
@@ -56,7 +57,10 @@ export function handOf(state: GameState, content: Content): Card[] {
        decides the next decision must not claim to matter only at the thirteenth (audit). */
     const hit = later.find(s => s.opens.has(flag) || s.steers.has(flag));
     const kind = pile === 'promise' ? 'due' : hit?.opens.has(flag) ? 'opens' : 'pays';
-    return { flag, title: EARNED[flag].as, where: EARNED[flag].where, pile, next: hit ? { kind, at: MILESTONE[hit.id] ?? hit.id } : undefined };
+    /* A promise no later decision reads still comes due: on the calendar, on its month (D-086). */
+    const due = !hit && !settledOf(state) ? promiseRules(content).find(r => r.flag === flag)?.due : undefined;
+    const next: Card['next'] = hit ? { kind, at: MILESTONE[hit.id] ?? hit.id } : due ? { kind: 'due', at: due } : undefined;
+    return { flag, title: EARNED[flag].as, where: EARNED[flag].where, pile, next };
   });
 }
 

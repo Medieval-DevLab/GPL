@@ -22,6 +22,9 @@
 .trail-board::after { content: ""; position: absolute; right: 14px; top: calc(var(--pad) + var(--line-y)); height: calc(var(--row) + var(--gap)); width: 34px; border: 4px solid #d6cdbc; border-left: 0; border-radius: 0 44px 44px 0; }
 .trail-board.is-one-row { padding-right: 22px; }
 .trail-board.is-one-row::after { display: none; }
+/* One row has room for every act name in full: two lines, the same height in every region so the path stays level. */
+.is-one-row .trail-region-name { align-items: flex-start; height: 38px; line-height: 1.3; white-space: normal; }
+.is-one-row .trail-region-name > span, .is-one-row .trail-region-link > span { margin-top: -1px; }
 .trail-board-row { display: flex; gap: 12px; min-height: var(--row); }
 .trail-board-row.is-back { flex-direction: row-reverse; }
 .trail-region { position: relative; display: flex; flex-direction: column; flex-basis: 0; min-width: 0; padding: 10px 8px 12px; border-radius: 14px; background: color-mix(in srgb, var(--accent-tint) 75%, #fff); border: 1.5px solid color-mix(in srgb, var(--accent) 22%, transparent); }
@@ -65,7 +68,7 @@
 .trail-pile { display: grid; gap: 8px; }
 .trail-pile h3 { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; }
 .trail-pile h3 span { min-width: 24px; padding: 1px 8px; border-radius: 999px; background: var(--paper-2); font-size: 14px; text-align: center; }
-.trail-pile ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.trail-pile ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 8px; }
 .trail-pile-empty { font-size: 15px; line-height: 1.45; color: var(--ink-3); }
 .trail-card { display: grid; gap: 3px; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--line); background: #fff; }
 .trail-card strong { font-size: 15px; font-weight: 650; line-height: 1.3; }

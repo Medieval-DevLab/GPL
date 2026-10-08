@@ -34,10 +34,11 @@ export function PeopleMap({ state }: { state: GameState }) {
     const cause = title(against ?? onside ?? found);
     return <li key={p.id} className={'person is-' + status}>
       <span className="person-face"><Portrait name={p.name} /><i aria-hidden="true">{status === 'onside' ? '✓' : status === 'against' ? '!' : status === 'unknown' ? '?' : ''}</i></span>
-      <span className="person-part">{p.part}</span>
-      {found ? <><strong>{p.name}</strong><small>{p.role}</small></> : <strong>{P.unknown}</strong>}
-      <span className="person-status">{P[status]}</span>
-      {found && cause && <small className="person-why">{P.because}: {cause}</small>}
+      <span className="person-text">
+        <span className="person-part">{p.part}</span>
+        {found ? <><strong>{p.name} <span className="person-status">{P[status]}</span></strong><small>{p.role}</small></> : <strong>{P.unknown}</strong>}
+        {found && cause && <small className="person-why">{P.because}: {cause}</small>}
+      </span>
     </li>;
   })}</ul>;
 }

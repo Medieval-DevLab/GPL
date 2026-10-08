@@ -133,7 +133,7 @@ export const VIEWS = {
     start: "Start",
     made: "Made at decision",
     due: "Came due",
-    end: "at the end",
+    dueZone: "Promises come due",
     promises: "Your promises",
     table: "The three bars after each decision",
   },
