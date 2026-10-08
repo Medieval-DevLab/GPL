@@ -137,8 +137,11 @@ async function run(viewport, policy) {
       /* The trail (D-083) sits on the next decision's node; it is a stop, not the decision. */
       const choices = page.locator('main [data-choice]:not(:disabled)');
       const count = await choices.count();
-      const indexes = Array.from({ length: count }, (_, i) => i);
-      if (policy === 'last' || (policy === 'walk' && current.node === 'm9b')) indexes.reverse();
+      let indexes = Array.from({ length: count }, (_, i) => i);
+      if (policy === 'last') indexes.reverse();
+      /* Walk away at the sign-or-walk beat (D-086): a lever panel keeps one setting per lever,
+         so set the clause first and the walk last, or a later click replaces it. */
+      if (policy === 'walk' && current.node === 'd7') indexes = [0, count - 1];
       if (policy === 'middle') indexes.push(indexes.shift());
       for (const index of indexes) {
         if (await primary.isEnabled()) break;
@@ -179,9 +182,9 @@ async function run(viewport, policy) {
       await primary.dblclick();
       /* The brief and the decision are one scene now (D-080): a double-click must land on
          decision 1 and go no further. */
-      await page.waitForFunction(() => document.querySelector('.gpl-game').dataset.node === 'm1');
+      await page.waitForFunction(() => document.querySelector('.gpl-game').dataset.node === 'd1');
       const landed = await read(page);
-      assert.equal(landed.node + ':' + landed.phase, 'm1:decide', 'Rapid Continue skipped past the first decision');
+      assert.equal(landed.node + ':' + landed.phase, 'd1:decide', 'Rapid Continue skipped past the first decision');
     } else await primary.click().catch(async error => {
       const failedState = await read(page);
       console.error('Action failed at', prefix, failedState);
@@ -266,7 +269,7 @@ async function utilities() {
 try {
   if (!utilitiesOnly) for (let i = 0; i < viewports.length; i++) for (const policy of onlyPolicy ? [onlyPolicy] : i === 0 ? ['first', 'last', 'middle', 'walk'] : ['first']) await run(viewports[i], policy);
   await utilities();
-  if (!onlyPolicy && !utilitiesOnly) assert(report.runs.some(r => r.committed.length === 18), 'No complete 18-decision run');
+  if (!onlyPolicy && !utilitiesOnly) assert(report.runs.some(r => r.committed.length === 8), 'No complete 8-decision run');
   const violations = report.accessibility.flatMap(a => a.violations.map(v => ({ screen: a.screen, ...v })));
   report.issues = violations;
   await writeFile(path.join(output, 'verification.json'), JSON.stringify(report, null, 2));

@@ -2,22 +2,21 @@ import { useEffect, useRef, useState } from 'react';
 import type { Chapter, Content, GameState, Interlude } from '../../engine/types';
 import type { ChapterNumber } from '../../content/assets';
 import { COPY } from '../../content/interface';
-import { ACT_QUESTION, CHAPTER_PRESENTATION, MISSION_RULE, placeOf, ruleOf } from '../../content/presentation';
+import { ACT_QUESTION, CHAPTER_PRESENTATION, MISSION_RULE, STORY, placeOf, ruleOf } from '../../content/presentation';
 import { CHARACTERS } from '../../content/characters';
 import { Action, Backdrop, Heading, castId, pad2 } from '../parts';
 import { VIEWS } from '../../content/views';
-import { settledOf } from '../ledger';
 import { Figure, Measures, RuleMark } from './FrameParts';
 import { SystemMap } from './SystemMap';
-import { ActView, PromiseCalendar } from './Views';
+import { ActView } from './Views';
 
 /**
  * The act break: one screen where three used to be (debrief → map → next opener, D-080).
  *
  * It opens on the act as a system (D-091): the cause-and-effect map, with a guess before the
- * reveal. When the engine has settled the promise ledger, the calendar then plays out, one
- * promise at a time. Each of those steps moves on like a spoken line (`data-line-next`), so
- * keyboard, pointer and the release harness move through it the same way.
+ * reveal, and the act's own view beside it. It moves on like a spoken line (`data-line-next`),
+ * so keyboard, pointer and the release harness move through it the same way. The promise
+ * calendar plays out on the beat that settles it (Turn), before this screen.
  *
  * The act's decisions are filed as a chain of cards, one leading into the next, and the act
  * is stamped closed. Beside it, how the act moved the deal. Below, the act's guide sits down
@@ -30,27 +29,23 @@ export function ActBreak({ node, state, content, reflections, onReflect, onNext 
 }) {
   const F = COPY.frames.actBreak;
   const n = node.chapter as ChapterNumber;
-  const settled = !!settledOf(state);
-  const [step, setStep] = useState<'map' | 'calendar' | 'summary'>('map');
+  const [mapped, setMapped] = useState(false);
   /* A new step is a new page of the same screen: take focus to its heading, as a route would. */
   const moved = useRef(false);
-  useEffect(() => { if (moved.current) document.getElementById('game-heading')?.focus({ preventScroll: true }); moved.current = true; }, [step]);
-  if (step !== 'summary') {
-    const M = VIEWS.map, C = VIEWS.calendar, map = step === 'map';
+  useEffect(() => { if (moved.current) document.getElementById('game-heading')?.focus({ preventScroll: true }); moved.current = true; }, [mapped]);
+  if (!mapped) {
+    const M = VIEWS.map;
     return <section className="page fs f-map">
       <Backdrop photo={placeOf(node.id).photo} focus="deep" />
       <header className="f-map-head sheet">
-        <p className="f-kicker">{COPY.stage.act} {n} {COPY.stage.of} {content.chapters.length} · {map ? M.kicker : C.playTitle}</p>
+        <p className="f-kicker">{COPY.stage.act} {n} {COPY.stage.of} {content.chapters.length} · {M.kicker}</p>
         <Heading className="f-h1">{node.title}</Heading>
-        <p className="f-read">{map ? M.lead : C.playLead}</p>
+        <p className="f-read">{M.lead}</p>
       </header>
-      {/* Beside the map, the act's own picture as the act closes: the scales tipped, the faces turned. */}
-      {map ? <div className="f-map-body"><SystemMap state={state} content={content} chapter={node.chapter} />{!settled && <ActView state={state} content={content} chapter={node.chapter} />}</div>
-        : <div className="f-cal sheet"><PromiseCalendar state={state} content={content} play /></div>}
+      {/* Beside the map, the act's own picture as it closes: faces turned, scales tipped, promises stamped. */}
+      <div className="f-map-body"><SystemMap state={state} content={content} chapter={node.chapter} /><ActView state={state} content={content} chapter={node.chapter} /></div>
       <div className="f-map-foot">
-        <button className="primary" data-action="primary" data-line-next onClick={event => { if (event.detail < 2) setStep(map && settled ? 'calendar' : 'summary'); }}>
-          {map && settled ? M.toCalendar : M.next}
-        </button>
+        <button className="primary" data-action="primary" data-line-next onClick={event => { if (event.detail < 2) setMapped(true); }}>{M.next}</button>
       </div>
     </section>;
   }
@@ -62,6 +57,9 @@ export function ActBreak({ node, state, content, reflections, onReflect, onNext 
   const guide = prompts[0]?.advisor ?? CHARACTERS[CHAPTER_PRESENTATION[n - 1].advisor];
   /* An act with a reflection is asked it; an act without one is summed up, by the same person. */
   const summed = prompts.length === 0;
+  /* Guess, then see (D-086): what decided the act is held back until every guess is in, then
+     the guide says it, and the act's idea, in their own voice. */
+  const guessed = prompts.every(r => !!reflections[r.id]);
   return <section className="page fs f-break" style={{ ['--n' as string]: decisions.length }}>
     <Backdrop photo={placeOf(node.id).photo} focus="soft" />
     <Figure id={castId(guide.name)} className="f-break-guide" enter="left" delay={900} box={{ left: 0, width: 'var(--guide-w)', top: '46%', bottom: 0 }} frame={{ x: '52%', y: 0.12, face: 0.3 }} />
@@ -103,8 +101,13 @@ export function ActBreak({ node, state, content, reflections, onReflect, onNext 
             </button>;
           })}
         </div>
-        <p className="f-note">{COPY.reflectionNote}</p>
+        <p className="f-note">{node.reveal ? F.guessNote : COPY.reflectionNote}</p>
       </section>)}
+      {/* The live region is there before the guess, so the reveal is announced when it lands. */}
+      {node.reveal && <div className="f-reveal-lines" aria-live="polite">
+        {guessed && node.reveal.map((line, i) => <p key={i} className="f-talk-line">“{line}”</p>)}
+        {guessed && <p className="f-spine"><span className="sr-only">{F.spine}: </span>{STORY.spine}</p>}
+      </div>}
     </div>
 
     <aside className="f-next sheet" data-chapter={next?.number} aria-labelledby="next-heading">

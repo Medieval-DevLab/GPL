@@ -46,7 +46,7 @@ export const MEET = {
   },
   job: {
     title: 'Your job',
-    body: 'You lead a team of six. You decide which client to chase, what to promise and what to charge.',
+    body: 'You lead a team of six. You decide what to find out, what to promise and what to charge.',
     team: 'Your team of six',
     size: 6,
   },
@@ -70,18 +70,20 @@ export const COLLEAGUES: readonly { id: CharacterId; line: string }[] = [
   { id: 'aisha', line: 'Runs the work once a client signs. Your promises become her job.' },
 ];
 
-/** Panel 2: the five stages, the three bars, and the trade at the heart of every decision. */
+/**
+ * Panel 2: the four acts, the three bars, and the trade at the heart of every decision. Each
+ * act is named for its one idea, in the same words the act break and every lesson use (D-086).
+ */
 export const DEAL = {
   title: 'How a deal works.',
-  lede: 'Every deal moves through the same five stages. The story follows one deal through all of them.',
+  lede: 'The story follows one deal through four acts. Each act teaches one idea.',
   act: 'Act',
   with: 'With',
   stages: [
-    { name: 'Find a client', line: 'Pick a company that needs help, and get a first meeting.' },
-    { name: 'Is it worth chasing?', line: 'Decide how much of your team’s time it deserves.' },
-    { name: 'Write the proposal', line: 'Set out in writing what we will do, and how.' },
-    { name: 'Agree the deal', line: 'Settle the price and the terms, then decide whether to sign.' },
-    { name: 'Do the work', line: 'Keep the promises you made to win.' },
+    { name: 'Understand before you offer', line: 'Find out what is really wrong, then open the first meeting with it.' },
+    { name: 'Not every deal is worth winning', line: 'Decide how much of your team’s time it deserves.' },
+    { name: 'Trade, don’t give', line: 'Write the offer once, and get something back for every cut.' },
+    { name: 'Promise only what your team can deliver', line: 'Sign or walk away, then keep each promise as it comes due.' },
   ],
   bars: {
     title: 'The three bars you will watch',
@@ -132,21 +134,18 @@ export const STRENGTH = {
  * the line must go with it. None of them says the choice is the best one — each strength
  * helps in different places, and each leaves you short of what the other two have.
  *
- *   s-connector  `credibility`   m4-pursue-good (act 2), o-criteria `requires` (act 4)
- *   s-builder    `has:data`      m6b-outcome-measurable (act 3), m10h-date-founded (act 5)
- *   s-challenger `knows:rivals`  m5-inv-known (act 2), m6b-partner-fit (act 3)
+ *   s-connector  `start:connector`  d2-vouched (act 1); the walked-right ending's extra
+ *   s-builder    `start:builder`    d5 "Partly on results" `requires` (act 3)
+ *   s-challenger `clue:rivals`      d6-held (act 3)
  */
 export const STRENGTH_LATER: Readonly<Record<string, readonly { act: number; text: string }[]>> = {
   's-connector': [
-    { act: 2, text: 'Sending a full proposal early is less of a gamble, because Orion trusts you.' },
-    { act: 4, text: 'You can ask Orion’s buyer how bids are scored, because Orion trusts you.' },
+    { act: 1, text: 'If you name Orion’s real problem, Sarah takes your word for it, because a friend vouched for you.' },
   ],
   's-builder': [
     { act: 3, text: 'You can offer to be paid partly on results, because you can measure them.' },
-    { act: 5, text: 'You can stand behind a quick deadline, because you can show what it rests on.' },
   ],
   's-challenger': [
-    { act: 2, text: 'When a rival firm makes a big announcement, you already know who they are.' },
-    { act: 3, text: 'Teaming up with a specialist firm makes sense, because you know who is good.' },
+    { act: 3, text: 'When Orion’s buyer asks why you cost more, you know what the cheaper bid leaves out.' },
   ],
 };

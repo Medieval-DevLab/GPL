@@ -176,9 +176,10 @@ function fixture(): Content {
         minutes: 2,
         situation: ["Their procurement lead has a cheaper bid on the table."],
         question: "How do we answer on price?",
-        tip: "Every lever moves something.",
+        /* The first lever decision of its act, so it is modelled: the colleague thinks
+           aloud and gives no hints (D-086). */
+        thinkAloud: "Every lever moves something, so we decide what we can afford to give.",
         advisor: ADVISOR,
-        consider: ["What would we ask for?", "Who pays for the cut?"],
         lesson: TRADE,
         next: "end",
         levers: [

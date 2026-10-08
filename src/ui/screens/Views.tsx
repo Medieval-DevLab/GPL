@@ -1,4 +1,4 @@
-import type { Content, GameState } from '../../engine/types';
+import type { Content, GameState, PromiseResult } from '../../engine/types';
 import { EARNED } from '../../content/gates';
 import { PEOPLE, SCALES, SYSTEM_VIEW, VIEWS } from '../../content/views';
 import { handOf, isCard } from '../cards';
@@ -69,11 +69,19 @@ interface Pinned { flag: string; title: string; due: string; order: number; stat
  * Content without a ledger falls back to the hand's own "comes due at" stop.
  */
 export function PromiseCalendar({ state, content, play = false }: { state: GameState; content: Content; play?: boolean }) {
+  const settled = settledOf(state), rules = promiseRules(content);
+  if (settled) return <SettledCalendar settled={settled} play={play} />;
+  return <Calendar play={play} pins={rules.length ? rules.filter(r => state.flags.includes(r.flag)).map(r => ({ flag: r.flag, title: title(r.flag) || r.flag, due: r.due, order: r.dueMonth })).sort((a, b) => a.order - b.order)
+    : handOf(state, content).filter(c => c.pile === 'promise').map((c, i) => ({ flag: c.flag, title: c.title, due: c.next?.at ?? VIEWS.calendar.undated, order: i }))} />;
+}
+
+/** The settled ledger on its own, as the beat that settles it shows it: each card named, then stamped. */
+export function SettledCalendar({ settled, play = false }: { settled: readonly PromiseResult[]; play?: boolean }) {
+  return <Calendar play={play} pins={[...settled].sort((a, b) => a.dueMonth - b.dueMonth).map(s => ({ ...s, title: title(s.flag) || s.flag, order: s.dueMonth }))} />;
+}
+
+function Calendar({ pins, play }: { pins: Pinned[]; play: boolean }) {
   const C = VIEWS.calendar;
-  const rules = promiseRules(content), settled = settledOf(state);
-  const pins: Pinned[] = settled ? settled.map(s => ({ ...s, title: title(s.flag) || s.flag, order: s.dueMonth }))
-    : rules.length ? rules.filter(r => state.flags.includes(r.flag)).map(r => ({ flag: r.flag, title: title(r.flag) || r.flag, due: r.due, order: r.dueMonth })).sort((a, b) => a.order - b.order)
-      : handOf(state, content).filter(c => c.pile === 'promise').map((c, i) => ({ flag: c.flag, title: c.title, due: c.next?.at ?? C.undated, order: i }));
   if (!pins.length) return <p className="cal-empty">{C.empty}</p>;
   const months = [...new Set(pins.map(p => p.due))];
   let n = 0;
@@ -81,7 +89,7 @@ export function PromiseCalendar({ state, content, play = false }: { state: GameS
     <p className="cal-head">{m}</p>
     <ul>{pins.filter(p => p.due === m).map(p => <li key={p.flag} className={'cal-pin' + (p.status ? ' is-' + p.status : '')} style={{ ['--i' as string]: n++ }}>
       <strong>{p.title}</strong>
-      {p.status ? <><span className="stamp">{C.status[p.status]}</span>{p.line && <small>{p.line}</small>}</> : settled ? null : <span className="cal-open">{C.open}</span>}
+      {p.status ? <><span className="stamp">{C.status[p.status]}</span>{p.line && <small>{p.line}</small>}</> : <span className="cal-open">{C.open}</span>}
     </li>)}</ul>
   </li>)}</ol>;
 }

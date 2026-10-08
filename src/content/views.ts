@@ -97,7 +97,6 @@ export const VIEWS = {
     yourGuess: "Your guess",
     youGuessed: "You guessed",
     next: "See what the act decided",
-    toCalendar: "See every promise come due",
   },
   people: {
     title: "Orion’s people",

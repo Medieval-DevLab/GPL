@@ -1,68 +1,69 @@
 /**
- * `liability` marks a flag that records a cost carried forward — a discount given, a review
- * overridden — rather than something earned. The interface must never style its presence as
- * a gain or its absence as a shortfall: "your record does not show a discount" is good news.
+ * Every card the player can hold (D-086): the flag, its plain title, and where it is earned.
+ * The hand (`ui/cards.ts`) shows these; a lever setting's flag that is a named card here is a
+ * thing the player can see even before anything reads it.
+ *
+ * `liability` marks a flag that records a cost carried forward — a promise owed, a discount
+ * given, a client with doubts — rather than something earned. The interface must never style
+ * its presence as a gain or its absence as a shortfall: "your record does not show a
+ * discount" is good news. Every `promise:*` card is one, as the script says.
  */
 export const EARNED: Record<string, { as: string; where: string; liability?: true }> = {
-  /* chapter 0 — the starting advantage */
-  "start:connector": { as: "A warm introduction", where: "Chapter 0 · Your team's strength" },
-  "start:builder": { as: "Comparable work already delivered", where: "Chapter 0 · Your team's strength" },
-  "start:challenger": { as: "A challenger's licence to reframe", where: "Chapter 0 · Your team's strength" },
+  /* before you start — your team's strength */
+  "start:connector": { as: "A warm introduction", where: "Your team’s strength" },
+  "start:builder": { as: "Past results you can show", where: "Your team’s strength" },
 
-  /* chapter 1 — find the right client */
-  "client:northwind": { as: "A smaller client you can reach", where: "Chapter 1 · Choose a client" },
-  late_start: { as: "A late start on a live pursuit", where: "Chapter 1 · Choose a client", liability: true },
-  spent_effort: { as: "Pursuit effort already spent", where: "Chapter 1 · Choose a client" },
-  "knows:real_pain": { as: "Their complaint data", where: "Chapter 1 · Learn what matters" },
-  "knows:ops_constraint": { as: "Who owns the systems", where: "Chapter 1 · Learn what matters" },
-  "knows:rivals": { as: "Who else is bidding", where: "Chapter 1 · Learn what matters" },
-  "knows:budget": { as: "The budget and the deadline", where: "Chapter 1 · Learn what matters" },
-  "knows:history": { as: "The programme they cancelled", where: "Chapter 1 · Learn what matters" },
-  credibility: { as: "Proof you have done this before", where: "Chapter 1 · Get in the room" },
-  learned_late: { as: "The constraint, found late", where: "Chapter 1 · Get in the room", liability: true },
+  /* act 1 — understand before you offer */
+  "clue:rivals": { as: "Who else is bidding", where: "Your team’s strength, or Act 1 · Find what is really wrong" },
+  "clue:declan": { as: "Who scores the bids", where: "Act 1 · Find what is really wrong" },
+  "clue:marcus": { as: "Who runs deliveries", where: "Act 1 · Find what is really wrong" },
+  "clue:complaints": { as: "The complaint figures", where: "Act 1 · Find what is really wrong" },
+  "clue:budget": { as: "What Orion will spend", where: "Act 1 · Find what is really wrong" },
+  "knows:after_sale": { as: "What’s really wrong: after the sale", where: "Act 1 · Find what is really wrong" },
+  "led:after_sale": { as: "We named the real problem", where: "Act 1 · The first meeting" },
+  "met:marcus": { as: "Marcus has met us", where: "Act 1 · The first meeting" },
+  "met:declan": { as: "Declan has met us", where: "Act 1 · The first meeting" },
+  "sarah:trusts": { as: "Sarah trusts us", where: "Act 1 · The first meeting" },
+  "sarah:doubts": { as: "Sarah has doubts", where: "Act 1 · The first meeting", liability: true },
 
-  /* chapter 2 — make it an opportunity */
-  has_access: { as: "Access to the people who decide", where: "Chapter 2 · Qualify the lead" },
-  landed_small: { as: "A small piece of work landed", where: "Chapter 2 · Qualify the lead" },
-  reframed: { as: "The problem, reframed", where: "Chapter 2 · Answer the market" },
-  "knows:rival_gap": { as: "The gap in the rival's offer", where: "Chapter 2 · Answer the market" },
-  ops_engaged: { as: "Operations in the room early", where: "Chapter 2 · Prioritise the work" },
-  "has:data": { as: "Their data, checked", where: "Chapter 2 · Prioritise the work" },
+  /* act 2 — not every deal is worth winning */
+  "bet:four": { as: "Four people on the bid", where: "Act 2 · How much do we bet?" },
+  "study:paid": { as: "A paid study", where: "Act 2 · How much do we bet?" },
+  "study:free": { as: "A free study", where: "Act 2 · How much do we bet?" },
+  "inside:orion": { as: "We’ve seen inside Orion", where: "Act 2 · How much do we bet?" },
+  "bid:shops": { as: "We’re chasing the screens deal", where: "Act 2 · The rival’s demo" },
+  "bid:after_sale": { as: "We’re chasing our own deal", where: "Act 2 · The rival’s demo" },
+  "showed:figures": { as: "Sarah has seen the cost", where: "Act 2 · The rival’s demo" },
+  "showed:visit": { as: "Sarah has seen our work", where: "Act 2 · The rival’s demo" },
+  "problem:after_sale": { as: "The bid is about after the sale", where: "Act 2 · The rival’s demo" },
+  "problem:shops": { as: "The bid is about the shops", where: "Act 2 · The rival’s demo", liability: true },
 
-  /* chapter 3 — build the response */
-  evidenced: { as: "Their own evidence, in the room", where: "Chapter 3 · Define the problem" },
-  "scope:postpurchase": { as: "A proposal about what happens after the sale", where: "Chapter 3 · Define the problem" },
-  "scope:storefront": { as: "A proposal about the storefront", where: "Chapter 3 · Define the problem" },
-  "scope:diagnostic": { as: "A short diagnostic first", where: "Chapter 3 · Define the problem" },
-  outcome_based: { as: "A fee tied to the outcome", where: "Chapter 3 · Find another way" },
-  reused_asset: { as: "An asset you already own", where: "Chapter 3 · Find another way" },
-  conventional: { as: "A conventional shape of deal", where: "Chapter 3 · Find another way" },
-  "has:partner": { as: "A partner alongside you", where: "Chapter 3 · Find another way" },
-  ops_onside: { as: "Operations on side", where: "Chapter 3 · Assemble the offer" },
-  "has:ops_workstream": { as: "An Operations workstream", where: "Chapter 3 · Assemble the offer" },
-  "has:training": { as: "Training and adoption", where: "Chapter 3 · Assemble the offer" },
-  "has:journey": { as: "The customer journey mapped", where: "Chapter 3 · Assemble the offer" },
-  "promised:fast": { as: "An eight-week pilot", where: "Chapter 3 · Assemble the offer", liability: true },
-  "scope:heavy": { as: "A heavy programme", where: "Chapter 3 · Assemble the offer", liability: true },
-  unanchored: { as: "A proposal with no route to production", where: "Chapter 3 · Assemble the offer", liability: true },
-  fragile_timeline: { as: "A timeline that assumes the data is usable", where: "Chapter 3 · Assemble the offer", liability: true },
-  reviewed: { as: "A review that cleared it", where: "Chapter 3 · Clear the review" },
-  overrode_review: { as: "A review you overrode", where: "Chapter 3 · Clear the review", liability: true },
+  /* act 3 — trade, don't give */
+  "promise:screens": { as: "Screens and an app, by month five", where: "Act 3 · Build the offer", liability: true },
+  "promise:app": { as: "A new app, by month five", where: "Act 3 · Build the offer", liability: true },
+  "promise:refunds": { as: "Refunds in five days, by month five", where: "Act 3 · Build the offer", liability: true },
+  "promise:trial": { as: "A ten-shop trial by week eight", where: "Act 3 · Build the offer", liability: true },
+  "promise:fixed": { as: "The price won’t change", where: "Act 3 · Build the offer", liability: true },
+  "promise:results": { as: "Complaints down a fifth by month five", where: "Act 3 · Build the offer", liability: true },
+  "discount:half": { as: "£300,000 off our price", where: "Act 3 · The price push", liability: true },
+  "discount:full": { as: "£600,000 off our price", where: "Act 3 · The price push", liability: true },
+  "dropped:trial": { as: "The trial, traded away", where: "Act 3 · The price push" },
+  "dropped:shops": { as: "100 shops, not 210", where: "Act 3 · The price push" },
+  "got:second_year": { as: "A second year, signed", where: "Act 3 · The price push" },
+  "got:ops_lead": { as: "Marcus’s manager on our team", where: "Act 3 · The price push" },
+  "award:won": { as: "Orion chose us", where: "Act 3 · The price push" },
+  "award:lost": { as: "Orion chose the rival", where: "Act 3 · The price push" },
+  "declan:sore": { as: "Declan didn’t want us", where: "Act 3 · The price push", liability: true },
 
-  /* chapter 4 — make the deal work */
-  descoped: { as: "Scope taken out to hold the price", where: "Chapter 4 · Handle the price", liability: true },
-  discounted: { as: "A discount given", where: "Chapter 4 · Handle the price", liability: true },
-  risk_accepted: { as: "A risk accepted in writing", where: "Chapter 4 · Face the risk review", liability: true },
-  thin_mitigation: { as: "A thinner mitigation than the review asked for", where: "Chapter 4 · Face the risk review", liability: true },
-  "knows:criteria": { as: "How the bid is being scored", where: "Chapter 4 · Win the decision" },
-  won: { as: "The award", where: "Chapter 4 · Win the decision" },
-  lost: { as: "A pursuit lost at the award", where: "Chapter 4 · Win the decision" },
-  signed: { as: "A signed contract", where: "Chapter 4 · Take it or leave it" },
-  walked_away: { as: "A deal you walked away from", where: "Chapter 4 · Take it or leave it" },
-
-  /* chapter 5 — deliver the promise */
-  changed_scope: { as: "Scope changed in delivery", where: "Chapter 5 · Month five" },
-  crunched: { as: "A team asked to absorb it", where: "Chapter 5 · Month five", liability: true },
-  undisclosed: { as: "Something the client was not told", where: "Chapter 5 · Month five", liability: true },
-  broad_base: { as: "More than one person who knows the client", where: "Chapter 5 · The unexpected" },
+  /* act 4 — promise only what your team can deliver */
+  "promise:late_fee": { as: "£20,000 a week if we’re late", where: "Act 4 · Sign or walk", liability: true },
+  "dates:moved": { as: "Every date a month later", where: "Act 4 · Sign or walk" },
+  signed: { as: "A signed contract", where: "Act 4 · Sign or walk" },
+  walked: { as: "We walked away", where: "Act 4 · Sign or walk" },
+  "told:sarah": { as: "Sarah heard it from us", where: "Act 4 · Month five" },
+  "kept:quiet": { as: "Sarah wasn’t told", where: "Act 4 · Month five", liability: true },
+  "team:weekends": { as: "The team on weekends", where: "Act 4 · Month five" },
+  "team:extra": { as: "Two contractors, at our cost", where: "Act 4 · Month five" },
+  "team:orion_pays": { as: "Orion pays for the extra weeks", where: "Act 4 · Month five" },
+  "promise:broken": { as: "A promise broken", where: "Act 4 · Every promise comes due", liability: true },
 };

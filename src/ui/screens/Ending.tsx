@@ -77,7 +77,8 @@ export function Ending({ session, content, onPlan, onCode, onHome, onAgain }: { 
   const [skipped, setSkipped] = useState(false);
   const asked = causalClaim(state, content) !== null;
   const speaker = (missionId: string) => { const n = content.nodes[missionId]; return n && 'advisor' in n ? n.advisor?.name : undefined; };
-  const verdict = verdictOf(state); const threads = causalThreads(state, content);
+  /* The content's own ending, and every extra whose condition held (D-086). */
+  const verdict = verdictOf(state, content); const threads = causalThreads(state, content);
   const start = state.history[0]?.dimsBefore;
   return <section className="page f-ending">
     <div className="fs f-cover">
@@ -92,7 +93,9 @@ export function Ending({ session, content, onPlan, onCode, onHome, onAgain }: { 
       <div className="f-verdict sheet ending-hero">
         <p className="f-kicker">{COPY.stage.endKicker}</p>
         <Heading className="f-verdict-h">{verdict.title}</Heading>
-        <p className="f-verdict-summary">{[verdict.summary, ...verdict.extras].join(' ')}</p>
+        <p className="f-verdict-summary">{verdict.summary}</p>
+        {verdict.extras.map(x => <p key={x} className="f-verdict-extra">{x}</p>)}
+        <p className="f-spine">{STORY.spine}</p>
         <p className="f-verdict-count"><b>{state.completed.length}</b> {E.made}</p>
         <p className="f-verdict-question"><span>{COPY.stage.setOut}</span> {STORY.question}</p>
         <Measures to={state.dims} from={start} label={COPY.position} className="f-final" />

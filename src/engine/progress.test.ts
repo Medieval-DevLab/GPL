@@ -27,8 +27,15 @@ import {
   XP_PER_STAR,
 } from "./progress";
 import { isMission, type Content, type GameState } from "./types";
+import { withEveryKind } from "./kinds.fixture";
 
 const content: Content = story;
+/**
+ * The story with the older decision kinds played first (D-086). The eight-decision story is
+ * all lever panels and authors no badge, so the variety of activities and the recognition
+ * rules are exercised here, by playing, rather than not at all.
+ */
+const kinds: Content = withEveryKind(story);
 
 /**
  * What the run should do when it has a choice about whether to keep going.
@@ -39,15 +46,15 @@ const content: Content = story;
  */
 type Preference = "continue" | "endEarly" | "badges";
 
-function playForward(state: GameState, prefer: Preference): GameState {
+function playForward(state: GameState, prefer: Preference, on: Content = content): GameState {
   let s = state;
   let guard = 0;
 
   while (guard++ < 40) {
-    const node = getNode(content, s.nodeId);
+    const node = getNode(on, s.nodeId);
     if (!isMission(node)) break;
 
-    const results = possibleSelections(node, s).map((sel) => playMission(s, content, sel));
+    const results = possibleSelections(node, s).map((sel) => playMission(s, on, sel));
     const ended = results.find((r) => r.phase === "ending");
     const going = results.find((r) => r.phase !== "ending");
     const earning = results.find((r) => r.badges.length > s.badges.length);
@@ -85,21 +92,25 @@ describe("the module list", () => {
 
   it("carries the minutes and the stage a map needs to draw a beat", () => {
     const first = missionList(content)[0];
-    expect(first).toMatchObject({ id: "m1", chapter: 1, stage: "client" });
+    expect(first).toMatchObject({ id: "d1", chapter: 1, stage: "client" });
     expect(first?.minutes).toBeGreaterThan(0);
   });
 
   /**
-   * The point of `activity`: the map has to advertise that these are not seventeen of the
-   * same screen. Four distinct values is the floor at which the glyph is worth drawing.
+   * The point of `activity`: the map has to advertise what the player does on a beat. Every
+   * decision in the eight-decision story is a lever panel (D-086) — the variety is in each
+   * act's own medium, which the interface draws — so the story reports one activity, and
+   * the older kinds still report their own.
    */
   it("names what the player does on each beat", () => {
-    const byId = new Map(missionList(content).map((m) => [m.id, m.activity]));
-    expect(byId.get("m2")).toBe("investigate");
-    expect(byId.get("m7")).toBe("build");
-    expect(byId.get("m3")).toBe("chat");
-    expect(byId.get("m9a")).toBe("apply");
-    expect(byId.get("m1")).toBe("choice");
+    expect(new Set(missionList(content).map((m) => m.activity))).toEqual(new Set(["levers"]));
+    const byId = new Map(missionList(kinds).map((m) => [m.id, m.activity]));
+    expect(byId.get("fx-investigate")).toBe("investigate");
+    expect(byId.get("fx-build")).toBe("build");
+    expect(byId.get("fx-talk")).toBe("call");
+    expect(byId.get("fx-apply")).toBe("apply");
+    expect(byId.get("fx-choice")).toBe("choice");
+    expect(byId.get("d1")).toBe("levers");
     expect(new Set(byId.values()).size).toBeGreaterThanOrEqual(4);
   });
 });
@@ -113,8 +124,14 @@ describe("the chapters", () => {
   });
 
   it("takes each chapter's header from its interlude", () => {
-    expect(grouped[0]).toMatchObject({ number: 1, interludeTitle: "Find a client" });
-    expect(grouped[1]?.milestone).toBe("Lead generated");
+    /* Each act opens on its idea (D-086), and the script names no milestone for any of them. */
+    expect(grouped.map((c) => c.interludeTitle)).toEqual([
+      "Understand before you offer",
+      "Not every deal is worth winning",
+      "Trade, don’t give",
+      "Promise only what your team can deliver",
+    ]);
+    expect(grouped.map((c) => c.milestone)).toEqual([null, null, null, null]);
   });
 });
 
@@ -126,20 +143,20 @@ describe("where the player is", () => {
     expect(summary.completed).toBe(0);
     expect(summary.percentage).toBe(0);
     expect(summary.total).toBe(content.missionOrder.length);
-    expect(nodeStatus(fresh, content, "m1")).toBe("current");
+    expect(nodeStatus(fresh, content, "d1")).toBe("current");
 
-    const rest = missionList(content).filter((m) => m.id !== "m1");
+    const rest = missionList(content).filter((m) => m.id !== "d1");
     expect(rest.filter((m) => nodeStatus(fresh, content, m.id) !== "locked")).toEqual([]);
   });
 
   /**
    * The title screen is not standing on a mission, so nothing is `current` — and the next
-   * mission still has to be found, which is the walk through `setup` and `int-1` to `m1`.
+   * mission still has to be found, which is the walk through `setup` and `int-1` to `d1`.
    */
   it("points at the first mission from the title screen without making it current", () => {
     const title = createInitialState(content);
-    expect(nodeStatus(title, content, "m1")).toBe("locked");
-    expect(progressSummary(title, content).nextMissionId).toBe("m1");
+    expect(nodeStatus(title, content, "d1")).toBe("locked");
+    expect(progressSummary(title, content).nextMissionId).toBe("d1");
   });
 
   it("marks the played missions done and the one the player stands on current", () => {
@@ -200,8 +217,8 @@ describe("where the player is", () => {
 
 describe("the star rule", () => {
   it("scores nothing for a mission the player has not played", () => {
-    expect(stars(pastSetup(content), content, "m1")).toBe(0);
-    expect(stars(pastSetup(content), content, "m10c")).toBe(0);
+    expect(stars(pastSetup(content), content, "d1")).toBe(0);
+    expect(stars(pastSetup(content), content, "d8")).toBe(0);
   });
 
   it("scores every completed mission between one and three", () => {
@@ -238,7 +255,7 @@ describe("the star rule", () => {
 
 describe("recognition and the big number", () => {
   it("agrees with state.badges on a run that earned one", () => {
-    const s = playForward(pastSetup(content), "badges");
+    const s = playForward(pastSetup(kinds), "badges", kinds);
     expect(s.badges.length, "this run has to earn a badge or it proves nothing").toBeGreaterThan(0);
 
     const progress = badgeProgress(s);
@@ -253,20 +270,32 @@ describe("recognition and the big number", () => {
   });
 
   it("adds up completions, stars and badges", () => {
-    const s = playForward(pastSetup(content), "badges");
-    const { xp, level, xpIntoLevel } = levelFor(s, content);
+    const s = playForward(pastSetup(kinds), "badges", kinds);
+    const { xp, xpIntoLevel } = levelFor(s, kinds);
 
     const byHand =
       s.completed.length * XP_PER_MISSION +
-      s.completed.reduce((n, id) => n + XP_PER_STAR * stars(s, content, id), 0) +
+      s.completed.reduce((n, id) => n + XP_PER_STAR * stars(s, kinds, id), 0) +
       s.badges.length * XP_PER_BADGE;
 
+    expect(s.badges.length).toBeGreaterThan(0);
     expect(xp).toBe(byHand);
     expect(xpIntoLevel).toBe(xp % 100);
-    /* The scale claim in `levelFor`'s comment: a complete run lands around 3 and a
-       perfect one at 6. If content growth breaks this the number stops meaning anything. */
-    expect(level).toBeGreaterThanOrEqual(3);
-    expect(level).toBeLessThanOrEqual(6);
+  });
+
+  /**
+   * The scale claim in `levelFor`'s comment was calibrated on eighteen decisions: a complete
+   * run around level 3, a perfect one at 6. Eight decisions and no badges halve the figure
+   * (D-086) — a complete run of the story is worth 120 to 200 XP, so level 2 or 3 — and
+   * nothing the player sees reads it any more. Pinned so the next content change has to say
+   * what the number is for rather than drift.
+   */
+  it("puts a complete run of the story at level 2 or 3", () => {
+    const s = playForward(pastSetup(content), "continue");
+    expect(s.phase).toBe("ending");
+    const { level } = levelFor(s, content);
+    expect(level).toBeGreaterThanOrEqual(2);
+    expect(level).toBeLessThanOrEqual(3);
   });
 });
 

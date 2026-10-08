@@ -13,20 +13,26 @@ import {
   type CausalThreadRule,
   type Component,
   type Condition,
+  type Conditions,
   type Content,
   type DimensionId,
   type Effect,
+  type EndingRule,
   type Evidence,
   type IconId,
   type GameNode,
   type GameState,
   type HistoryEntry,
+  type LedgerRule,
   type Lever,
   type LeverMission,
   type LeverOption,
   type Mission,
   type Option,
   type Outcome,
+  type PromiseResult,
+  type PromiseRule,
+  type PromiseStatus,
   type Resolution,
   type SaidQuote,
 } from "./types";
@@ -82,6 +88,60 @@ export function evaluateCondition(
     }
   }
   return true;
+}
+
+/** A list of conditions holds when every one of them does; a bare condition is itself. */
+export function evaluateConditions(
+  conds: Conditions | undefined,
+  flags: readonly string[],
+  dims: Record<DimensionId, number>,
+): boolean {
+  if (!conds) return true;
+  const list: readonly Condition[] = Array.isArray(conds) ? conds : [conds as Condition];
+  return list.every((c) => evaluateCondition(c, flags, dims));
+}
+
+/** Every condition a `Conditions` carries, as a plain list. */
+export function conditionList(conds: Conditions | undefined): Condition[] {
+  if (!conds) return [];
+  return Array.isArray(conds) ? [...conds] : [conds as Condition];
+}
+
+/**
+ * Why a gate is shut, in cards — or null when it is open.
+ *
+ *   needs    the `all` cards the player does not hold
+ *   oneOf    the `any` list, when the player holds none of it
+ *   held     the `none` cards the player DOES hold, which is what shuts it
+ *
+ * A lock that reads `none` is shut by something the player has, not by something they
+ * lack ("Locked: Declan didn't want us"), and a lock that only says what is missing would
+ * have nothing to say about it. The interface names these; it never works them out, because
+ * deciding why an option is closed is reading a rule, and `src/ui` holds none (D-086).
+ */
+export interface Lock {
+  needs: string[];
+  oneOf: string[];
+  held: string[];
+  dims: { dim: DimensionId; at: "min" | "max"; value: number }[];
+}
+
+export function lockOf(cond: Condition | undefined, state: Pick<GameState, "flags" | "dims">): Lock | null {
+  if (evaluateCondition(cond, state.flags, state.dims)) return null;
+  const has = (f: string) => state.flags.includes(f);
+  const dims: Lock["dims"] = [];
+  for (const d of DIMENSIONS) {
+    const lo = cond?.min?.[d];
+    if (lo !== undefined && state.dims[d] < lo) dims.push({ dim: d, at: "min", value: lo });
+    const hi = cond?.max?.[d];
+    if (hi !== undefined && state.dims[d] > hi) dims.push({ dim: d, at: "max", value: hi });
+  }
+  return {
+    needs: (cond?.all ?? []).filter((f) => !has(f)),
+    oneOf: cond?.any && !cond.any.some(has) ? [...cond.any] : [],
+    held: (cond?.none ?? []).filter(has),
+    dims,
+  };
 }
 
 /**
@@ -233,18 +293,98 @@ export function getNode(content: Content, id: string): GameNode {
 
 function enterNode(state: GameState, content: Content, id: string): GameState {
   const node = getNode(content, id);
-  const base: GameState = {
+  let base: GameState = {
     ...state,
     nodeId: id,
     selection: [],
     resolution: null,
   };
 
+  /* The promise calendar comes due on arrival, not on leaving: the beat that settles it is
+     the beat that shows it, so the state the player is looking at already carries the
+     result. Once per run — a second settle beat on some other path would otherwise charge
+     the same broken promise twice. */
+  if ((node.kind === "interlude" || node.kind === "ending") && node.settle && !base.settled) {
+    base = settlePromises(base, content);
+  }
+
   if (node.kind === "setup") return { ...base, phase: "setup" };
   if (node.kind === "interlude") return { ...base, phase: "interlude" };
   if (node.kind === "ending") return { ...base, phase: "ending" };
   // A mission opens on its brief; the options come after it.
   return { ...base, phase: "brief" };
+}
+
+/* ───────────────────────────── the promise ledger ───────────────────────────── */
+
+/**
+ * What a broken promise costs when the content does not say: the client trusts us less and
+ * the team has more to put right, and the run now holds a broken promise the endings read.
+ */
+export const DEFAULT_BROKEN_EFFECT: Effect = {
+  dims: { win: -3, deliver: -3 },
+  flags: ["promise:broken"],
+};
+
+/** The rules this state will settle, in the order it will settle them. */
+export function promisesDue(state: Pick<GameState, "flags">, content: Content): PromiseRule[] {
+  return (content.promises ?? [])
+    .map((rule, i) => ({ rule, i }))
+    .filter(({ rule }) => state.flags.includes(rule.flag))
+    .sort((a, b) => a.rule.dueMonth - b.rule.dueMonth || a.i - b.i)
+    .map(({ rule }) => rule);
+}
+
+/** The kept line that applies, first match wins; a bare string is always itself. */
+function keptLine(rule: PromiseRule, flags: readonly string[], dims: Record<DimensionId, number>): string {
+  if (typeof rule.kept === "string") return rule.kept;
+  for (const l of rule.kept) if (evaluateCondition(l.when, flags, dims)) return l.text;
+  return rule.kept.at(-1)?.text ?? "";
+}
+
+/**
+ * How one promise lands against a record, without applying anything.
+ *
+ * Exported so a screen can show the calendar before it plays out, and so tests can ask the
+ * same question the settlement asks rather than a paraphrase of it.
+ */
+export function promiseStatus(
+  rule: PromiseRule,
+  flags: readonly string[],
+  dims: Record<DimensionId, number>,
+): { status: PromiseStatus; line: string; effect?: Effect } {
+  if (rule.voidWhen && evaluateConditions(rule.voidWhen, flags, dims)) {
+    return { status: "void", line: rule.voided ?? "" };
+  }
+  if (!rule.keptWhen || evaluateConditions(rule.keptWhen, flags, dims)) {
+    return { status: "kept", line: keptLine(rule, flags, dims) };
+  }
+  if (rule.lateWhen && evaluateConditions(rule.lateWhen, flags, dims)) {
+    return { status: "late", line: rule.late ?? "", effect: rule.lateEffect };
+  }
+  return { status: "broken", line: rule.broken ?? "", effect: rule.brokenEffect ?? DEFAULT_BROKEN_EFFECT };
+}
+
+/**
+ * Every promise the player holds comes due, in month order (D-086).
+ *
+ * Each rule is read against the record as it stands after the ones before it, because that
+ * is what "in month order" means: a promise broken in month two is already broken when
+ * month five is looked at. Each effect is applied as its own step and clamped as it lands,
+ * as a lever's settings are, so every movement on the calendar is a separate write that can
+ * be named. Pure and deterministic; there is nothing here to roll.
+ */
+export function settlePromises(state: GameState, content: Content): GameState {
+  let dims = { ...state.dims };
+  let flags = [...state.flags];
+  let badges = [...state.badges];
+  const settled: PromiseResult[] = [];
+  for (const rule of promisesDue(state, content)) {
+    const { status, line, effect } = promiseStatus(rule, flags, dims);
+    if (effect) ({ dims, flags, badges } = applyEffect(effect, dims, flags, badges));
+    settled.push({ flag: rule.flag, status, line, due: rule.due, dueMonth: rule.dueMonth });
+  }
+  return { ...state, dims, flags, badges, settled };
 }
 
 /**
@@ -630,10 +770,6 @@ export interface LedgerEntry {
   icon: IconId;
 }
 
-interface LedgerRule extends LedgerEntry {
-  when: Condition;
-}
-
 /**
  * THE RULE THIS TABLE EXISTS TO KEEP: nothing may decide a branch without appearing here.
  *
@@ -957,10 +1093,18 @@ export const LEDGER_RULES: LedgerRule[] = [
   },
 ];
 
-export function ledger(state: GameState): LedgerEntry[] {
-  return LEDGER_RULES.filter((r) => evaluateCondition(r.when, state.flags, state.dims)).map(
-    ({ label, detail, tone, icon }) => ({ label, detail, tone, icon }),
-  );
+/**
+ * The positions the record board can show: the content's own when it carries them (D-086),
+ * otherwise the built-in table above, which was written for the first story.
+ */
+export function ledgerRules(content?: Pick<Content, "ledger">): readonly LedgerRule[] {
+  return content?.ledger ?? LEDGER_RULES;
+}
+
+export function ledger(state: GameState, content?: Pick<Content, "ledger">): LedgerEntry[] {
+  return ledgerRules(content)
+    .filter((r) => evaluateCondition(r.when, state.flags, state.dims))
+    .map(({ label, detail, tone, icon }) => ({ label, detail, tone, icon }));
 }
 
 /* ───────────────────────────── debrief ───────────────────────────── */
@@ -1189,6 +1333,58 @@ export const ENGINE_READ_FLAGS: ReadonlySet<string> = new Set([
      right place for it: it is the only thing that holds both sides. */
 ]);
 
+/** The flags a list of conditions names, in any clause. */
+function namedIn(conds: Conditions | undefined): string[] {
+  return conditionList(conds).flatMap((c) => [...(c.all ?? []), ...(c.any ?? []), ...(c.none ?? [])]);
+}
+
+/**
+ * Every flag the engine itself reads for THIS content, by where it reads it (D-086).
+ *
+ * `ENGINE_READ_FLAGS` is a constant, and that was right while the verdict, the ledger and
+ * nothing else were the engine's own tables. Content can now carry all three — the ledger,
+ * the promise calendar and the endings — and a constant cannot see a flag that only the
+ * calendar reads, so the validator would report it dead. Worse, the built-in tables name the
+ * first story's flags, so seeding them against content that never sets them reports a typo
+ * on every one. Each table here is the content's own when it has one.
+ */
+export function engineReadFlags(content: Pick<Content, "ledger" | "promises" | "endings">): {
+  verdict: Set<string>;
+  ledger: Set<string>;
+  promises: Set<string>;
+} {
+  const verdict = content.endings
+    ? new Set(content.endings.flatMap((e) => [...namedIn(e.when), ...(e.extras ?? []).flatMap((x) => namedIn(x.when))]))
+    : new Set(["walked_away", "lost", "won"]);
+  const ledgerFlags = new Set(ledgerRules(content).flatMap((r) => namedIn(r.when)));
+  const promises = new Set(
+    (content.promises ?? []).flatMap((p) => [
+      p.flag,
+      ...namedIn(p.voidWhen),
+      ...namedIn(p.keptWhen),
+      ...namedIn(p.lateWhen),
+      ...(typeof p.kept === "string" ? [] : p.kept.flatMap((l) => namedIn(l.when))),
+    ]),
+  );
+  return { verdict, ledger: ledgerFlags, promises };
+}
+
+/** Every condition the end of a run evaluates: the promise calendar and the endings. */
+export function terminalConditions(content: Pick<Content, "promises" | "endings">): Condition[] {
+  return [
+    ...(content.promises ?? []).flatMap((p) => [
+      ...conditionList(p.voidWhen),
+      ...conditionList(p.keptWhen),
+      ...conditionList(p.lateWhen),
+      ...(typeof p.kept === "string" ? [] : p.kept.flatMap((l) => (l.when ? [l.when] : []))),
+    ]),
+    ...(content.endings ?? []).flatMap((e) => [
+      ...(e.when ? [e.when] : []),
+      ...(e.extras ?? []).map((x) => x.when),
+    ]),
+  ];
+}
+
 /**
  * The mean of the three meters — the single number the game has ever called "Score".
  *
@@ -1211,10 +1407,52 @@ export function scoreOf(dims: Record<DimensionId, number>): number {
   return Math.round(DIMENSIONS.reduce((total, d) => total + dims[d], 0) / DIMENSIONS.length);
 }
 
-/** Overall read on the engagement, from the final dimensions and how it ended. */
+/** How the run ended. `id` and `extras` come from content endings; the built-in verdicts have neither. */
+export interface Verdict {
+  title: string;
+  summary: string;
+  /** the content ending that matched, when the content carries endings */
+  id?: string;
+  /** every extra line whose condition held, in order */
+  extras: string[];
+}
+
+/** The content ending a record lands on: first match wins, the last is unconditional. */
+export function endingFor(
+  endings: readonly EndingRule[],
+  dims: Record<DimensionId, number>,
+  flags: readonly string[],
+): EndingRule | undefined {
+  return endings.find((e) => evaluateCondition(e.when, flags, dims)) ?? endings.at(-1);
+}
+
+/**
+ * Overall read on the engagement, from the final dimensions and how it ended.
+ *
+ * Content that carries `endings` decides its own (D-086): the first whose condition holds,
+ * with every extra whose condition holds. The built-in verdicts below stay for content that
+ * does not, which is every fixture in the suite and the first story in the archive.
+ */
 export function finalVerdict(
   dims: Record<DimensionId, number>,
   flags: readonly string[] = [],
+  content?: Pick<Content, "endings">,
+): Verdict {
+  if (content?.endings?.length) {
+    const ending = endingFor(content.endings, dims, flags) as EndingRule;
+    return {
+      id: ending.id,
+      title: ending.title,
+      summary: ending.summary,
+      extras: (ending.extras ?? []).filter((x) => evaluateCondition(x.when, flags, dims)).map((x) => x.text),
+    };
+  }
+  return { ...builtInVerdict(dims, flags), extras: [] };
+}
+
+function builtInVerdict(
+  dims: Record<DimensionId, number>,
+  flags: readonly string[],
 ): { title: string; summary: string } {
   const { win, profit, deliver } = dims;
 

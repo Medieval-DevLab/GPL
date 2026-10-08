@@ -1,4 +1,4 @@
-import type { Interlude } from '../../engine/types';
+import type { Interlude, PromiseResult } from '../../engine/types';
 import type { ChapterNumber } from '../../content/assets';
 import { COPY } from '../../content/interface';
 import { CHAPTER_PRESENTATION, TURN_DRESSING, placeOf } from '../../content/presentation';
@@ -6,6 +6,7 @@ import { CHARACTERS } from '../../content/characters';
 import { Backdrop, Heading, art } from '../parts';
 import { DialogueBox } from './Dialogue';
 import { Figure, useAdvanceKeys } from './FrameParts';
+import { SettledCalendar } from './Views';
 
 /**
  * A story turn: news from somewhere else, arriving as the thing it would arrive as — the trade
@@ -14,7 +15,7 @@ import { Figure, useAdvanceKeys } from './FrameParts';
  * nothing the story does not say. Then the act's guide, who saw it too, says the one line
  * that matters, and that line's action moves the story on.
  */
-export function Turn({ node, onNext }: { node: Interlude; onNext(): void }) {
+export function Turn({ node, settled, onNext }: { node: Interlude; settled?: readonly PromiseResult[]; onNext(): void }) {
   const dress = TURN_DRESSING[node.id] ?? { format: 'memo', organisation: 'Orion Retail', label: '', subject: node.title, from: '' } as const;
   const place = placeOf(node.id);
   const guide = CHARACTERS[CHAPTER_PRESENTATION[(node.chapter as ChapterNumber) - 1].advisor];
@@ -22,10 +23,18 @@ export function Turn({ node, onNext }: { node: Interlude; onNext(): void }) {
   useAdvanceKeys();
   const line = { who: guide.name, role: guide.role, text: node.prompt ?? node.title, voice: 'say' as const };
 
+  /* The promise calendar (D-086, D-091): on the beat that settles it, each promise card by name,
+     pinned to its month and stamped as it came due, one at a time. Every line is the content's. */
+  const calendar = node.settle ? <section className="f-turn-calendar" aria-labelledby="calendar-heading">
+    <h2 id="calendar-heading" className="f-h2">{COPY.frames.calendar.title}</h2>
+    {settled?.length ? <SettledCalendar settled={settled} play /> : <p>{COPY.frames.calendar.empty}</p>}
+  </section> : null;
+
   const narration = <>
     <p className="f-kicker">{node.eyebrow}</p>
     <Heading className="f-h1">{node.title}</Heading>
     <div className="f-turn-body">{node.body.map((p, i) => <p key={i} style={{ ['--i' as string]: i }}>{p}</p>)}</div>
+    {calendar}
   </>;
 
   return <section className={'page fs f-turn is-' + dress.format}>

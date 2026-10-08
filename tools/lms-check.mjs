@@ -148,6 +148,11 @@ if (scoreKeys.length > 0) {
 // one semantic primary action per screen; decision options remain proper toggle buttons.
 let reachedEnding = false;
 let retriedFailure = false;
+/* Options are pressed in order, one per attempt, until the commit opens (D-086). "Always the
+   first unpressed option" stopped terminating on a lever decision: setting a lever replaces
+   its previous setting, so it swapped the first lever between its first two settings for
+   ever and never reached the second lever. In order, it sets every lever in turn. */
+let attempt = 0, attemptAt = '';
 await page.evaluate(() => { window.__lms.failNextCommit = true; });
 for (let step = 0; step < 480; step++) { // performed lines (D-081) take several presses per decision
   const screen = page.locator('[data-phase]').first();
@@ -155,9 +160,11 @@ for (let step = 0; step < 480; step++) { // performed lines (D-081) take several
   const primary = page.locator('[data-action="primary"]:visible').first();
   if (!(await primary.count())) { problems.push(`No primary action at campaign step ${step}`); break; }
   if (await primary.isDisabled()) {
-    const option = page.locator('main button[aria-pressed="false"]:not(:disabled)').first();
-    if (!(await option.count())) { problems.push(`No selectable approach at campaign step ${step}`); break; }
-    await option.click();
+    const where = await page.locator('.gpl-game').evaluate((el) => el.dataset.node + ':' + el.dataset.phase);
+    if (where !== attemptAt) { attemptAt = where; attempt = 0; }
+    const options = page.locator('main button[aria-pressed]:not(:disabled)');
+    if (attempt >= (await options.count())) { problems.push(`No selectable approach at campaign step ${step}`); break; }
+    await options.nth(attempt++).click();
   } else { await primary.click(); }
   await page.waitForTimeout(80);
   const snapshot = await read();

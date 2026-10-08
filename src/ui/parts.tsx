@@ -41,7 +41,9 @@ export function Cutout({ id, frame, className = '', style }: { id: CharacterId |
   if (!id) return null;
   const m = CUTOUT_FRAME[id];
   const byFace = frame.face / m.size, toFloor = (1 - frame.y) / (1 - m.top);
-  const height = frame.pin ? Math.max(byFace, ((frame.floor ?? 0.7) - frame.y) / (1 - m.top))
+  /* Pinned, but never more than 1.6× the asked-for face: a bust photo stretched to reach the
+     floor became a face a third of the screen tall. Above the floor it fades out instead. */
+  const height = frame.pin ? Math.min(byFace * 1.6, Math.max(byFace, ((frame.floor ?? 0.7) - frame.y) / (1 - m.top)))
     : toFloor <= byFace ? byFace : frame.close ? toFloor : Math.min(toFloor, byFace * 1.3);
   const top = frame.pin || toFloor <= byFace || frame.close ? frame.y - m.top * height : 1 - height;
   return <img className={'cutout ' + (frame.pin ? 'is-pinned ' : '') + className} data-cast={id} src={art('cut-' + id)} alt="" decoding="async" onError={hideOnError}
