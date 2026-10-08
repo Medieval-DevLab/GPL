@@ -35,7 +35,7 @@ import {
   randomVerdicts,
   sampledBudget,
   scaleAuthoredGains,
-  TOP_VERDICT,
+  topVerdict,
 } from "../src/engine/budget";
 import { nonReaderRuns } from "../src/engine/engagement";
 
@@ -89,7 +89,7 @@ console.log(
       .sort((a, b) => b[1] - a[1])
       .map(([title, n]) => `   ${String(Math.round((n / verdicts.runs) * 100)).padStart(3)}%  ${title}`)
       .join("\n") +
-    `\n   mean score ${verdicts.meanScore}, best ${verdicts.bestScore}. Top verdict is "${TOP_VERDICT}".`,
+    `\n   mean score ${verdicts.meanScore}, best ${verdicts.bestScore}. Top verdict is "${topVerdict(story)}".`,
 );
 
 heading("3 · SCALING THE GAINS — every positive authored delta × k");

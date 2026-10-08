@@ -19,6 +19,7 @@ import { describe, expect, it } from "vitest";
 
 import { story } from "../content/story";
 import { EARNED } from "../content/gates";
+import { FIXTURE_MISSIONS, withEveryKind } from "./kinds.fixture";
 import {
   LESSON_OVERLAP_LIMIT,
   SAY_TITLE_OVERLAP_LIMIT,
@@ -32,12 +33,23 @@ import {
   type ChoiceMission,
   type Content,
   type Interlude,
+  type LeverMission,
   type Mission,
+  type PromiseRule,
 } from "./types";
 
 /* ── harness ─────────────────────────────────────────────────────── */
 
-const clone = (): Content => structuredClone(story) as Content;
+/**
+ * The story, with the older decision kinds spliced in (D-086).
+ *
+ * The eight-decision story is all lever decisions, so a clone of it alone has no choice,
+ * investigate or build mission to break, and most of the doors below would be tested on
+ * nothing. `withEveryKind` adds the smallest valid mission of each older kind, so every check
+ * still has its subject, and the baseline below is taken over the same spliced content.
+ */
+const PRISTINE: Content = withEveryKind(story);
+const clone = (): Content => structuredClone(PRISTINE) as Content;
 
 const missionsOf = (c: Content): Mission[] => Object.values(c.nodes).filter(isMission);
 
@@ -65,7 +77,7 @@ const key = (i: Issue) => `${i.where}: ${i.message}`;
  * instead of on the validator. A gate that goes red for a reason it is not
  * about is a gate that gets skipped.
  */
-const BASELINE = new Set(errorsOf(story).map(key));
+const BASELINE = new Set(errorsOf(PRISTINE).map(key));
 
 /** The new errors a broken clone produces, as one searchable block. */
 const brokeIt = (c: Content): string =>
@@ -85,7 +97,7 @@ const longText = (n: number): string => Array.from({ length: n }, () => "filler"
 const warningsOf = (c: Content): Issue[] =>
   validateContent(c, CARDS).filter((i) => i.severity === "warning");
 
-const BASELINE_WARNINGS = new Set(warningsOf(story).map(key));
+const BASELINE_WARNINGS = new Set(warningsOf(PRISTINE).map(key));
 
 const warnedIt = (c: Content): string =>
   warningsOf(c)
@@ -174,6 +186,11 @@ const DIALOGUE_CHECKS: RegExp[] = [
 ];
 
 describe("the content as authored", () => {
+  /* The splice is itself valid, so every delta below is the break and nothing else. */
+  it("is still valid with the older kinds spliced in", () => {
+    expect(errorsOf(PRISTINE).map(key)).toEqual([]);
+  });
+
   it("trips none of the checks added in this pass", () => {
     const tripped = [...BASELINE].filter((k) => NEW_CHECKS.some((r) => r.test(k)));
     expect(tripped).toEqual([]);
@@ -516,9 +533,13 @@ describe("outcome.changed is checked as a list, not just for emptiness", () => {
 /* ── door 5 · sixteen missions, sixteen lessons ──────────────────── */
 
 describe("lessons must be distinct across missions", () => {
+  /* Two missions outside any act's idea: the story's own decisions share their act's idea by
+     design (see "one idea per act" below), so the distinctness door is tested where every
+     lesson is meant to be its own — the fixture chapter. */
   const twoMissions = (c: Content): [Mission, Mission] => {
-    const all = missionsOf(c);
-    return [all[0], all[1]];
+    const [a, b] = FIXTURE_MISSIONS.map((id) => c.nodes[id]).filter((n): n is Mission => !!n && isMission(n));
+    if (!a || !b) throw new Error("fixture: two missions expected");
+    return [a, b];
   };
 
   it("fails when two missions carry the same principle", () => {
@@ -574,19 +595,22 @@ describe("lessons must be distinct across missions", () => {
    * loosened in irritation.
    */
   it("keeps real headroom between the closest authored pair and the limit", () => {
+    /* Re-measured on the eight-decision story (D-086). Principles are compared across ACTS,
+       because within one an act's two decisions carry its idea in the same words on purpose;
+       `because` is still compared across every decision. */
     const missions = missionsOf(story);
-    const worst = (pick: (m: Mission) => string) => {
-      const bags = missions.map(pick).map(contentWords);
+    const worst = (lines: string[]) => {
+      const bags = lines.map(contentWords);
       let max = 0;
       for (let i = 0; i < bags.length; i++) {
         for (let j = i + 1; j < bags.length; j++) max = Math.max(max, overlap(bags[i], bags[j]));
       }
       return max;
     };
-    const principle = worst((m) => m.lesson.principle);
-    const because = worst((m) => m.lesson.because);
-    expect(principle).toBeLessThan(LESSON_OVERLAP_LIMIT / 2);
-    expect(because).toBeLessThan(LESSON_OVERLAP_LIMIT / 2);
+    const ideas = story.chapters.map((c) => c.idea ?? "");
+    expect(ideas.every(Boolean)).toBe(true);
+    expect(worst(ideas)).toBeLessThan(LESSON_OVERLAP_LIMIT / 2);
+    expect(worst(missions.map((m) => m.lesson.because))).toBeLessThan(LESSON_OVERLAP_LIMIT / 2);
   });
 });
 
@@ -856,11 +880,17 @@ describe("say must be a reply, not the title in quotation marks", () => {
   });
 });
 
+/**
+ * The eight-decision story stages no `dialogue` beat (D-086): a lever decision is a panel,
+ * and the conversation is its brief. The staging stays an engine capability, so its rules
+ * are held to the fixture's call rather than to nothing — the vacuity guard below would
+ * otherwise pass by having no subject, which is the failure it exists to catch.
+ */
 describe("the dialogue rules are not vacuous", () => {
-  const stagedDialogue = missionsOf(story).filter((m) => m.presentation === "dialogue");
+  const stagedDialogue = missionsOf(PRISTINE).filter((m) => m.presentation === "dialogue");
 
   const authoredReplies = (): { where: string; say: string; title: string }[] =>
-    missionsOf(story)
+    missionsOf(PRISTINE)
       .filter((m): m is ChoiceMission => m.kind === "choice")
       .flatMap((m) =>
         m.options
@@ -918,7 +948,7 @@ describe("the causal threads", () => {
 
   it("catches a thread that waits on an outcome no mission produces", () => {
     const c = clone();
-    firstThread(c).needsOutcomes = ["m7-anchored", "o-typo-that-never-fires"];
+    firstThread(c).needsOutcomes = ["d1-solved", "o-typo-that-never-fires"];
     expect(brokeIt(c)).toContain("can never fire");
   });
 
@@ -930,7 +960,7 @@ describe("the causal threads", () => {
 
   it("catches one decision restated as a chain", () => {
     const c = clone();
-    firstThread(c).needsOutcomes = ["m7-anchored"];
+    firstThread(c).needsOutcomes = ["d1-solved"];
     expect(brokeIt(c)).toContain("at least two outcomes");
   });
 
@@ -994,5 +1024,255 @@ describe("the causal threads", () => {
       "The commercial terms were settled before the review.",
     ];
     expect(warnedIt(c)).not.toContain("names a person");
+  });
+});
+
+/* ── D-086 · the promise calendar, the endings, one idea per act ─────
+ * Each rule the eight-decision story brought, shown failing on purpose. */
+
+const leverMission = (c: Content, id: string): LeverMission => {
+  const m = c.nodes[id];
+  if (!m || m.kind !== "levers") throw new Error(`no lever decision ${id}`);
+  return m;
+};
+const promise = (c: Content, flag: string): PromiseRule => {
+  const p = c.promises?.find((x) => x.flag === flag);
+  if (!p) throw new Error(`no promise rule for ${flag}`);
+  return p;
+};
+
+describe("the promise calendar", () => {
+  it("passes as authored", () => {
+    const tripped = [...BASELINE].filter((k) => /^promises|marked `settle`|promise rule/.test(k));
+    expect(tripped).toEqual([]);
+  });
+
+  it("catches a rule for a card nothing sets, which never comes due", () => {
+    const c = clone();
+    promise(c, "promise:trial").flag = "promise:trail";
+    expect(brokeIt(c)).toMatch(/promise rule is for flag "promise:trail", which nothing ever sets/);
+  });
+
+  it("catches a typo in a rule's condition", () => {
+    const c = clone();
+    promise(c, "promise:refunds").keptWhen = { any: ["got:ops_leed"] };
+    expect(brokeIt(c)).toMatch(/condition reads flag "got:ops_leed", which nothing ever sets/);
+  });
+
+  it("catches a typo inside a list of conditions too", () => {
+    const c = clone();
+    promise(c, "promise:results").keptWhen = [{ all: ["promise:refunds"] }, { any: ["dates:muved"] }];
+    expect(brokeIt(c)).toMatch(/reads flag "dates:muved"/);
+  });
+
+  it("catches two rules for one card", () => {
+    const c = clone();
+    c.promises?.push({ ...promise(c, "promise:app") });
+    expect(brokeIt(c)).toMatch(/two promise rules for "promise:app"/);
+  });
+
+  it("catches a late test with no late line, which would show a blank row", () => {
+    const c = clone();
+    delete promise(c, "promise:refunds").late;
+    expect(brokeIt(c)).toMatch(/can be late but has no late line/);
+  });
+
+  it("catches a broken line on a promise that is always kept", () => {
+    const c = clone();
+    promise(c, "promise:fixed").broken = "Broken. Nobody can read this.";
+    expect(brokeIt(c)).toMatch(/always kept and its late or broken copy can never show/);
+  });
+
+  it("catches a promise that can break with nothing to say when it does", () => {
+    const c = clone();
+    delete promise(c, "promise:screens").broken;
+    expect(brokeIt(c)).toMatch(/can break but has no broken line/);
+  });
+
+  it("catches kept lines that end on a condition", () => {
+    const c = clone();
+    promise(c, "promise:fixed").kept = [{ when: { all: ["team:extra"] }, text: "Kept, from our side." }];
+    expect(brokeIt(c)).toMatch(/kept lines end on a condition/);
+  });
+
+  it("catches a void test with nothing to say", () => {
+    const c = clone();
+    delete promise(c, "promise:trial").voided;
+    expect(brokeIt(c)).toMatch(/can be void but has no voided line/);
+  });
+
+  it("catches a calendar nothing settles", () => {
+    const c = clone();
+    for (const n of Object.values(c.nodes)) if (n.kind === "interlude") delete n.settle;
+    expect(brokeIt(c)).toMatch(/no beat is marked `settle`, so no promise ever comes due/);
+  });
+
+  it("catches a settle beat with nothing to settle", () => {
+    const c = clone();
+    delete c.promises;
+    expect(brokeIt(c)).toMatch(/marked `settle`, but the content has no promise rules/);
+  });
+});
+
+describe("the endings", () => {
+  it("catches endings with no unconditional fallback", () => {
+    const c = clone();
+    const last = c.endings?.at(-1);
+    if (last) last.when = { all: ["signed"] };
+    expect(brokeIt(c)).toMatch(/the last ending is conditional/);
+  });
+
+  it("catches an unconditional ending that shadows every ending after it", () => {
+    const c = clone();
+    const first = c.endings?.[0];
+    if (first) delete first.when;
+    expect(brokeIt(c)).toMatch(/is unconditional but not last/);
+  });
+
+  it("catches a typo in an ending's condition", () => {
+    const c = clone();
+    const first = c.endings?.[0];
+    if (first) first.when = { all: ["award:lots"] };
+    expect(brokeIt(c)).toMatch(/endings: condition reads flag "award:lots"/);
+  });
+
+  it("catches two endings with one id", () => {
+    const c = clone();
+    const [a, b] = c.endings ?? [];
+    if (a && b) b.id = a.id;
+    expect(brokeIt(c)).toMatch(/duplicate ending id/);
+  });
+
+  it("catches an extra with no condition, which belongs in the summary", () => {
+    const c = clone();
+    c.endings?.at(-1)?.extras?.push({ when: {}, text: "Always shown." });
+    expect(brokeIt(c)).toMatch(/extra has no condition/);
+  });
+
+  it("catches an ending that names the right decision", () => {
+    const c = clone();
+    const first = c.endings?.[0];
+    if (first) first.summary = "Holding the price was the best choice.";
+    expect(brokeIt(c)).toMatch(/"ending summary" predicts the outcome/);
+  });
+});
+
+describe("one idea per act, in the same words", () => {
+  it("lets an act's two decisions share its idea, which is the design", () => {
+    expect([...BASELINE].filter((k) => /lesson\.principle is the same as/.test(k))).toEqual([]);
+  });
+
+  it("catches a decision whose principle is not its act's idea", () => {
+    const c = clone();
+    leverMission(c, "d2").lesson.principle = "Know your client before you pitch.";
+    expect(brokeIt(c)).toMatch(/d2: lesson\.principle must be the act's idea word for word/);
+  });
+
+  it("catches an outcome that teaches a different principle", () => {
+    const c = clone();
+    const o = leverMission(c, "d3").outcomes[0];
+    if (o?.lesson) o.lesson.principle = "Not every deal is worth winning!";
+    expect(brokeIt(c)).toMatch(/teaches a principle that is not the act's idea/);
+  });
+
+  it("catches two acts that share an idea", () => {
+    const c = clone();
+    const [one, two] = c.chapters;
+    if (one && two) two.idea = one.idea;
+    expect(brokeIt(c)).toMatch(/shares its idea with chapter 1/);
+  });
+
+  it("still catches the same idea taught in two different acts", () => {
+    const c = clone();
+    leverMission(c, "d3").lesson.principle = leverMission(c, "d1").lesson.principle;
+    expect(brokeIt(c)).toMatch(/lesson\.principle is the same as/);
+  });
+});
+
+describe("model, prompt, let go", () => {
+  it("catches a modelled decision with no think-aloud", () => {
+    const c = clone();
+    delete leverMission(c, "d1").thinkAloud;
+    expect(brokeIt(c)).toMatch(/d1: the first decision of an act is modelled/);
+  });
+
+  it("catches a modelled decision that also hands out hints", () => {
+    const c = clone();
+    leverMission(c, "d3").consider = ["What is it worth to us?"];
+    expect(brokeIt(c)).toMatch(/d3: a modelled decision gives no hints/);
+  });
+
+  it("catches a prompted decision with no hint, or with two", () => {
+    const none = clone();
+    leverMission(none, "d2").consider = [];
+    expect(brokeIt(none)).toMatch(/d2: a prompted decision gives exactly one hint, and this has 0/);
+    const two = clone();
+    leverMission(two, "d4").consider = ["What would it cost?", "What would ignoring it cost?"];
+    expect(brokeIt(two)).toMatch(/d4: a prompted decision gives exactly one hint, and this has 2/);
+  });
+
+  it("catches a prompted decision that thinks aloud", () => {
+    const c = clone();
+    leverMission(c, "d6").thinkAloud = "Price is a lever like any other.";
+    expect(brokeIt(c)).toMatch(/d6: the second decision of an act is prompted/);
+  });
+
+  it("catches a tip or an advisor line on a lever decision, which are hints by another name", () => {
+    const tip = clone();
+    leverMission(tip, "d8").tip = "Tell her early.";
+    expect(brokeIt(tip)).toMatch(/d8: a lever decision carries no tip/);
+    const line = clone();
+    leverMission(line, "d7").advisorLine = "Read the late charge twice.";
+    expect(brokeIt(line)).toMatch(/d7: a lever decision carries no advisorLine/);
+  });
+});
+
+describe("reading is effortless, before a lever decision", () => {
+  it("holds every situation to forty words", () => {
+    const c = clone();
+    leverMission(c, "d4").situation = [longText(41)];
+    expect(brokeIt(c)).toMatch(/d4: "situation" is 41 words, budget is 40/);
+  });
+
+  it("holds a situation variant to the same forty", () => {
+    const c = clone();
+    const v = leverMission(c, "d8").variants?.[0];
+    if (v) v.situation = [longText(41)];
+    expect(brokeIt(c)).toMatch(/d8: "situation" is 41 words/);
+  });
+
+  it("holds the whole brief to 120 words before the panel opens", () => {
+    const c = clone();
+    const m = leverMission(c, "d5");
+    /* The think-aloud and the situation at their own limits, 45 and 40, and the longest
+       client line at 36: one word over in total, which is what the player sits through. */
+    m.thinkAloud = longText(45);
+    m.situation = [longText(40)];
+    m.quotes = [{ when: { all: ["met:marcus"] }, text: longText(36), speaker: "Marcus Reed", role: "Operations Director" }];
+    expect(brokeIt(c)).toMatch(/d5: the brief can run to 121 words before the choice, budget is 120/);
+  });
+
+  it("budgets and leak-checks the think-aloud", () => {
+    const long = clone();
+    leverMission(long, "d1").thinkAloud = longText(46);
+    expect(brokeIt(long)).toMatch(/"thinkAloud" is 46 words, budget is 45/);
+    const leak = clone();
+    leverMission(leak, "d1").thinkAloud = "The optimal week is the complaints and the warehouse.";
+    expect(brokeIt(leak)).toMatch(/"thinkAloud" predicts the outcome/);
+  });
+});
+
+describe("invisible state, once the board is content", () => {
+  it("is an error, and a named card is enough to make a flag visible", () => {
+    /* `bet:four` decides d3's outcomes. With its card and its board position both taken
+       away, the player could not see the state the branch turns on. */
+    const c = clone();
+    c.ledger = c.ledger?.filter((r) => !r.when.all?.includes("bet:four"));
+    const cards = { cards: Object.keys(EARNED).filter((f) => f !== "bet:four") };
+    const errs = validateContent(c, cards).filter((i) => i.severity === "error").map(key);
+    expect(errs.join("\n")).toMatch(/flag "bet:four" decides a branch here and appears in no ledger rule/);
+    /* The card alone is enough. */
+    const withCard = validateContent(c, CARDS).filter((i) => i.severity === "error").map(key);
+    expect(withCard.join("\n")).not.toMatch(/"bet:four" decides a branch/);
   });
 });

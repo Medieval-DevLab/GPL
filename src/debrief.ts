@@ -15,13 +15,15 @@ export function reflectionRecord(session: Session, content: Content) {
 /** One deterministic source for the learner's portable, human-readable record. */
 export function debriefText(session: Session, content: Content): string {
   const { game: state, presentation } = session;
-  const verdict = finalVerdict(state.dims, state.flags);
+  const verdict = finalVerdict(state.dims, state.flags, content);
   const reflections = reflectionRecord(session, content);
   const plan = ACTION_PLAN_FIELDS.filter(({ key }) => presentation.actionPlan[key].trim());
   return [
     COPY.brand, 'Engagement debrief — fictional learning simulation', '',
     /* SV-02: an unfinished engagement has no verdict yet, and must not announce one. */
-    ...(state.phase === 'ending' ? [verdict.title, verdict.summary] : ['Engagement in progress', 'This record covers the decisions committed so far; the engagement has not ended.']), `${state.history.length} decisions made`, '',
+    ...(state.phase === 'ending' ? [verdict.title, verdict.summary, ...verdict.extras] : ['Engagement in progress', 'This record covers the decisions committed so far; the engagement has not ended.']), `${state.history.length} decisions made`, '',
+    /* The promise calendar, when it has come due (D-086). */
+    ...(state.settled ? ['HOW EVERY PROMISE CAME DUE', ...(state.settled.length ? state.settled.map(r => `${r.due} · ${r.line}`) : ['No promise in your hand came due.']), ''] : []),
     'YOUR DECISION RECORD',
     ...state.history.flatMap(h => [`Chapter ${h.chapter} · ${h.missionTitle}`, 'Your commitment: ' + h.chosenLabel, h.headline, h.lesson.principle, h.lesson.because, h.lesson.watchFor ?? '', '']),
     'HOW YOUR CHOICES CONNECTED',

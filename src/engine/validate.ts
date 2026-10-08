@@ -11,11 +11,12 @@
  * cross-checking of every flag read against every flag written catches that.
  */
 
-import { ENGINE_READ_FLAGS, LEDGER_RULES } from "./engine";
+import { conditionList, DEFAULT_BROKEN_EFFECT, engineReadFlags, ledgerRules } from "./engine";
 import {
   DIMENSIONS,
   isMission,
   type Condition,
+  type Conditions,
   type Content,
   type DimensionId,
   type GameNode,
@@ -90,6 +91,20 @@ const BUDGET = {
   leverLabel: 4,
   settingLabel: 6,
   settingDetail: 14,
+  /**
+   * The colleague thinking aloud on a modelled decision (D-086). Spoken as one line of the
+   * brief, so it is a breath longer than the advisor's rail line. The four in the script
+   * run 29–41 words.
+   */
+  thinkAloud: 45,
+  /**
+   * `docs/STRATEGY.md` §2.6, made mechanical for the decision unit it was written for: at
+   * most 40 words before the first thing you do in a scene, and 120 before any choice.
+   * The first is the situation, on every variant; the second is everything the brief speaks
+   * before the panel opens — the situation, the client's line and the think-aloud.
+   */
+  leverSituation: 40,
+  beforeChoice: 120,
 } as const;
 
 /** Two or three levers, each with two or three settings: at most 27 combinations. */
@@ -244,6 +259,10 @@ function conditionFlags(c: Condition | undefined): string[] {
   return [...(c.all ?? []), ...(c.any ?? []), ...(c.none ?? [])];
 }
 
+function conditionsFlags(c: Conditions | undefined): string[] {
+  return conditionList(c).flatMap(conditionFlags);
+}
+
 /**
  * Every condition a mission evaluates, wherever it sits — briefing, options, settings,
  * outcomes. Used where the question is "does anything here read this flag?", so missing a
@@ -390,12 +409,25 @@ export function validateContent(content: Content, opts: ValidateOptions = {}): I
 
   // Some flags are read by the engine rather than by a content condition — the final
   // verdict branches on `walked_away`. Seed them, or the dead-state check below reports
-  // a flag that very much is read. See ENGINE_READ_FLAGS in engine.ts.
-  for (const f of ENGINE_READ_FLAGS) read.set(f, "engine");
+  // a flag that very much is read. See `engineReadFlags` in engine.ts: each table is the
+  // content's own when it carries one (D-086), and is named as such, so a typo in an
+  // ending or a promise rule points at the ending or the rule rather than at "engine".
+  const engineReads = engineReadFlags(content);
+  for (const f of engineReads.verdict) read.set(f, content.endings ? "endings" : "engine");
+  for (const f of engineReads.ledger) if (!read.has(f)) read.set(f, content.ledger ? "ledger" : "engine");
+  for (const f of engineReads.promises) if (!read.has(f)) read.set(f, "promises");
 
   // Chapter 0 writes flags too, and it is not a mission.
   for (const node of nodes) {
     if (node.kind === "setup") for (const o of node.options) for (const f of o.flags) written.add(f);
+  }
+
+  /* And so does the promise calendar: what a broken or late promise sets is real state the
+     endings read. The default broken effect counts only where a rule can actually break —
+     one with no `keptWhen` is always kept and sets nothing. */
+  for (const p of content.promises ?? []) {
+    for (const f of p.lateEffect?.flags ?? []) written.add(f);
+    if (p.keptWhen) for (const f of (p.brokenEffect ?? DEFAULT_BROKEN_EFFECT).flags ?? []) written.add(f);
   }
 
   for (const node of nodes) {
@@ -440,7 +472,12 @@ export function validateContent(content: Content, opts: ValidateOptions = {}): I
 
   for (const [flag, where] of read) {
     if (!written.has(flag)) {
-      err(where, `condition reads flag "${flag}", which nothing ever sets (likely a typo)`);
+      err(
+        where,
+        where === "promises" && (content.promises ?? []).some((p) => p.flag === flag)
+          ? `promise rule is for flag "${flag}", which nothing ever sets — this card can never come due`
+          : `condition reads flag "${flag}", which nothing ever sets (likely a typo)`,
+      );
     }
   }
   for (const flag of written) {
@@ -461,8 +498,15 @@ export function validateContent(content: Content, opts: ValidateOptions = {}): I
    * or to weaken a gate, and "adding a mission must never require editing the engine" is
    * the stronger rule. `engine.test.ts` pins the set instead — same pattern as the dead
    * narrative flags — so the list cannot grow quietly, which is what actually matters.
-   * If the table moves to content, this becomes an error and the pin goes away. */
-  const ledgerFlags = new Set(LEDGER_RULES.flatMap((r) => conditionFlags(r.when)));
+   * If the table moves to content, this becomes an error and the pin goes away.
+   *
+   * It has (D-086). Content that carries its own `ledger` gets an error, because the only fix
+   * now lives where the content is. And a named card counts as on screen: the hand shows
+   * every card in `EARNED`, so a flag the player holds as a card is not invisible state
+   * whether or not the board files it too. */
+  const cardsShown = new Set(opts.cards ?? []);
+  const ledgerFlags = new Set([...ledgerRules(content).flatMap((r) => conditionFlags(r.when)), ...cardsShown]);
+  const invisible = content.ledger ? err : warn;
   const gating = new Map<string, string>(); // flag -> the first branch it decides
   for (const node of nodes) {
     if (!isMission(node)) continue;
@@ -485,9 +529,19 @@ export function validateContent(content: Content, opts: ValidateOptions = {}): I
       for (const oc of node.outcomes) noteGate(oc.when, `${node.id}/${oc.id}`);
     }
   }
+  /* The calendar and the endings branch too: a promise kept or broken on a card the player
+     cannot see is the same failure as an outcome that turns on one. */
+  (content.promises ?? []).forEach((p, i) => {
+    for (const f of [p.flag, ...conditionsFlags(p.voidWhen), ...conditionsFlags(p.keptWhen), ...conditionsFlags(p.lateWhen)]) {
+      if (!gating.has(f)) gating.set(f, `promises[${i}]`);
+    }
+  });
+  (content.endings ?? []).forEach((e, i) => {
+    for (const f of conditionFlags(e.when)) if (!gating.has(f)) gating.set(f, `endings[${i}]`);
+  });
   for (const [flag, where] of gating) {
     if (!ledgerFlags.has(flag)) {
-      warn(
+      invisible(
         where,
         `flag "${flag}" decides a branch here and appears in no ledger rule — the player cannot see the state it turns on`,
       );
@@ -506,8 +560,8 @@ export function validateContent(content: Content, opts: ValidateOptions = {}): I
    * stands — longest label 28, longest detail 85 — so these are budgets with headroom
    * rather than numbers that fire on arrival. */
   const seenLabels = new Set<string>();
-  for (const rule of LEDGER_RULES) {
-    const where = `engine/ledger/${rule.label}`;
+  for (const rule of ledgerRules(content)) {
+    const where = `${content.ledger ? "ledger" : "engine/ledger"}/${rule.label}`;
     leakCheck(rule.label, where, "ledger label");
     leakCheck(rule.detail, where, "ledger detail");
     if (!rule.detail.trim()) {
@@ -628,6 +682,84 @@ export function validateContent(content: Content, opts: ValidateOptions = {}): I
     }
   });
 
+  /* ── the promise calendar (D-086) ────────────────────────────
+   * A promise rule fails silently in every way an outcome can, and in two of its own. A rule
+   * for a card nothing sets never comes due (caught above, by the flag-integrity pass). A
+   * rule with a `lateWhen` and no `late` line puts a blank row on the calendar, and one with
+   * no `keptWhen` is always kept, so anything it says about being late or broken is copy no
+   * player can reach. And a calendar nothing settles is a list of promises that never fall
+   * due, which is the one thing this game exists to show. */
+  const settleNodes = nodes.filter((n) => (n.kind === "interlude" || n.kind === "ending") && n.settle);
+  const promises = content.promises ?? [];
+  if (promises.length > 0 && settleNodes.length === 0) {
+    err("promises", "promise rules exist but no beat is marked `settle`, so no promise ever comes due");
+  }
+  if (promises.length === 0) {
+    for (const n of settleNodes) err(n.id, "marked `settle`, but the content has no promise rules to settle");
+  }
+  const seenPromise = new Set<string>();
+  promises.forEach((p, i) => {
+    const where = `promises[${i}]`;
+    if (!p.flag?.trim()) err(where, "promise rule has no flag");
+    if (seenPromise.has(p.flag)) err(where, `two promise rules for "${p.flag}" — a card comes due once`);
+    seenPromise.add(p.flag);
+    if (!p.due?.trim()) err(where, `"${p.flag}" has no due label for the calendar`);
+    if (!Number.isFinite(p.dueMonth)) err(where, `"${p.flag}" has no dueMonth, so it cannot be placed in order`);
+    const keptLines = typeof p.kept === "string" ? [{ text: p.kept }] : p.kept;
+    if (keptLines.length === 0 || keptLines.some((l) => !l.text?.trim())) err(where, `"${p.flag}" has an empty kept line`);
+    if (typeof p.kept !== "string" && p.kept.length > 0 && p.kept[p.kept.length - 1]?.when !== undefined) {
+      err(where, `"${p.flag}" kept lines end on a condition — the last must be unconditional`);
+    }
+    if (p.voidWhen && !p.voided?.trim()) err(where, `"${p.flag}" can be void but has no voided line`);
+    if (!p.voidWhen && p.voided) err(where, `"${p.flag}" has a voided line but nothing voids it`);
+    if (p.lateWhen && !p.late?.trim()) err(where, `"${p.flag}" can be late but has no late line`);
+    if (!p.lateWhen && (p.late || p.lateEffect)) err(where, `"${p.flag}" has a late line or effect but nothing makes it late`);
+    if (!p.keptWhen) {
+      if (p.lateWhen || p.broken || p.brokenEffect) {
+        err(where, `"${p.flag}" has no keptWhen, so it is always kept and its late or broken copy can never show`);
+      }
+    } else if (!p.broken?.trim()) {
+      err(where, `"${p.flag}" can break but has no broken line — the calendar would show a blank row`);
+    }
+    /* Post-decision prose, so not the pre-decision rule; the shared list still catches the
+       calendar naming a decision as the right one. */
+    for (const l of keptLines) leakCheck(l.text, where, "kept");
+    leakCheck(p.late, where, "late");
+    leakCheck(p.broken, where, "broken");
+    leakCheck(p.voided, where, "voided");
+  });
+
+  /* ── the endings (D-086) ─────────────────────────────────────
+   * First match wins and the last is unconditional, as for every outcome list. One check the
+   * outcome lists cannot have: an unconditional ending ANYWHERE but last shadows every ending
+   * after it, which is unreachability the validator can see without a sweep. */
+  const endings = content.endings ?? [];
+  if (content.endings && endings.length === 0) err("endings", "endings is present but empty");
+  const seenEnding = new Set<string>();
+  endings.forEach((e, i) => {
+    const where = `endings[${i}]`;
+    if (!e.id?.trim()) err(where, "ending has no id");
+    if (seenEnding.has(e.id)) err(where, `duplicate ending id "${e.id}"`);
+    seenEnding.add(e.id);
+    if (!e.title?.trim()) err(where, `ending "${e.id}" has no title`);
+    if (!e.summary?.trim()) err(where, `ending "${e.id}" has no summary`);
+    if (i < endings.length - 1 && !e.when) {
+      err(where, `ending "${e.id}" is unconditional but not last, so no ending after it can ever be reached`);
+    }
+    leakCheck(e.title, where, "ending title");
+    leakCheck(e.summary, where, "ending summary");
+    (e.extras ?? []).forEach((x, j) => {
+      if (!x.text?.trim()) err(`${where}/extras[${j}]`, "extra has no text");
+      if (!x.when || conditionFlags(x.when).length + Object.keys(x.when.min ?? {}).length + Object.keys(x.when.max ?? {}).length === 0) {
+        err(`${where}/extras[${j}]`, "extra has no condition, so it belongs in the summary");
+      }
+      leakCheck(x.text, `${where}/extras[${j}]`, "ending extra");
+    });
+  });
+  if (endings.length > 0 && endings[endings.length - 1]?.when !== undefined) {
+    err(`endings[${endings.length - 1}]`, "the last ending is conditional — the endings need an unconditional fallback");
+  }
+
   /* ── analysis assumption ─────────────────────────────────────
    * analysis.ts dedupes the exhaustive sweep on flags alone, which is exact
    * only while no branch gates on a dimension value. If that changes, branch
@@ -657,6 +789,18 @@ export function validateContent(content: Content, opts: ValidateOptions = {}): I
       for (const oc of node.outcomes) checkDimGate(oc.when, `${node.id}/${oc.id}`);
     }
   }
+  /* The end of the run gates too, and the sweep has to key on it from the first decision
+     (`analysis.ts` folds these into every mission's suffix), so it carries the same cost. */
+  (content.promises ?? []).forEach((p, i) => {
+    for (const c of [...conditionList(p.voidWhen), ...conditionList(p.keptWhen), ...conditionList(p.lateWhen)]) {
+      checkDimGate(c, `promises[${i}]`);
+    }
+    if (typeof p.kept !== "string") for (const l of p.kept) checkDimGate(l.when, `promises[${i}]/kept`);
+  });
+  (content.endings ?? []).forEach((e, i) => {
+    checkDimGate(e.when, `endings[${i}]`);
+    (e.extras ?? []).forEach((x, j) => checkDimGate(x.when, `endings[${i}]/extras[${j}]`));
+  });
   for (const where of dimGated) {
     warn(
       where,
@@ -680,7 +824,9 @@ export function validateContent(content: Content, opts: ValidateOptions = {}): I
    * is on screen even when nothing branches on it — see `ValidateOptions.cards`. */
   const cards = new Set(opts.cards ?? []);
   const alwaysRead = new Set<string>([
-    ...ENGINE_READ_FLAGS,
+    ...engineReads.verdict,
+    ...engineReads.ledger,
+    ...engineReads.promises,
     ...content.threads.flatMap((t) => t.needsFlags ?? []),
   ]);
   const readsOf = new Map<string, Set<string>>();
@@ -715,11 +861,17 @@ export function validateContent(content: Content, opts: ValidateOptions = {}): I
        panel on every mission; a missing one leaves a visible hole. */
     if (!m.eyebrow) err(m.id, "missing eyebrow — the shell renders one above every headline");
     if (!m.minutes || m.minutes < 1) err(m.id, "minutes must be a positive estimate");
-    if (!m.tip) err(m.id, "missing tip — the action bar renders one on every mission");
     if (!m.advisor) err(m.id, "missing advisor — the left rail renders one on every mission");
-    if (!m.consider || m.consider.length < 2) {
-      err(m.id, "needs at least two things to consider — one reads as an instruction");
+    /* A lever decision is coached by its place in the act, not by the shell (D-086): the
+       rail that needed a tip and two questions on every screen is superseded, and STRATEGY
+       §2.7 replaces it with "model, prompt, let go" — see `coaching` below. */
+    if (m.kind !== "levers") {
+      if (!m.tip) err(m.id, "missing tip — the action bar renders one on every mission");
+      if (!m.consider || m.consider.length < 2) {
+        err(m.id, "needs at least two things to consider — one reads as an instruction");
+      }
     }
+    leakCheck(m.thinkAloud, m.id, "thinkAloud");
 
     /* A `dialogue` beat is opened by whoever already speaks on the mission, in
        the order the renderer resolves them: the first matching `quotes` entry,
@@ -851,6 +1003,25 @@ export function validateContent(content: Content, opts: ValidateOptions = {}): I
     budget(m.advisor?.steer, BUDGET.advisorLine, m.id, "advisor.steer");
     budget(m.saidQuote?.text, BUDGET.saidQuote, m.id, "saidQuote");
     (m.quotes ?? []).forEach((q, i) => budget(q.text, BUDGET.saidQuote, m.id, `quotes[${i}]`));
+    budget(m.thinkAloud, BUDGET.thinkAloud, m.id, "thinkAloud");
+
+    /* Reading is effortless (STRATEGY §2.6), on the decision unit it was written for. Every
+       variant of the situation is held to 40 words, and the longest brief a player can be
+       read — the longest situation, the longest line any client speaks here, and the
+       colleague's think-aloud — to 120 before the panel opens. Measured on the longest of
+       each rather than on a reachable combination, so it can only be stricter than play. */
+    if (m.kind === "levers") {
+      const situations = [m.situation, ...(m.variants ?? []).map((v) => v.situation)];
+      for (const s of situations) budget(s.join(" "), BUDGET.leverSituation, m.id, "situation");
+      const longest = (xs: (string | undefined)[]) => Math.max(0, ...xs.map((x) => (x ? words(x) : 0)));
+      const spoken =
+        longest(situations.map((s) => s.join(" "))) +
+        longest([m.saidQuote?.text, ...(m.quotes ?? []).map((q) => q.text)]) +
+        (m.thinkAloud ? words(m.thinkAloud) : 0);
+      if (spoken > BUDGET.beforeChoice) {
+        err(m.id, `the brief can run to ${spoken} words before the choice, budget is ${BUDGET.beforeChoice} — cut it`);
+      }
+    }
 
     if (m.kind === "choice") {
       if (m.options.length < 2) err(m.id, "a choice needs at least two options");
@@ -1152,9 +1323,17 @@ export function validateContent(content: Content, opts: ValidateOptions = {}): I
 
   const missionsInOrder = nodes.filter(isMission);
 
+  /* One exception, and it is the act's idea (D-086). An act teaches one idea through two
+     decisions, so its decisions share a principle by design, in the same words — which is
+     what `Chapter.idea` declares and what the check after this one holds them to. The same
+     sentence in two DIFFERENT acts is still two lessons teaching one, and a paraphrase is
+     never a deliberate reprise anywhere: the whole point of the idea is that it is not
+     reworded. */
+  const ideaOf = new Map(content.chapters.filter((c) => c.idea).map((c) => [c.number, c.idea as string]));
   for (const field of ["principle", "because"] as const) {
     const lines = missionsInOrder.map((m) => ({
       id: m.id,
+      chapter: m.chapter,
       text: m.lesson?.[field] ?? "",
       key: normalise(m.lesson?.[field] ?? ""),
       bag: contentWords(m.lesson?.[field] ?? ""),
@@ -1164,6 +1343,13 @@ export function validateContent(content: Content, opts: ValidateOptions = {}): I
         const a = lines[i];
         const b = lines[j];
         if (!a.key || !b.key) continue; // absent lessons are already an error above
+        const actIdea =
+          field === "principle" &&
+          a.chapter === b.chapter &&
+          ideaOf.has(a.chapter) &&
+          a.text === ideaOf.get(a.chapter) &&
+          b.text === a.text;
+        if (actIdea) continue;
         if (a.key === b.key) {
           err(
             a.id,
@@ -1248,6 +1434,59 @@ export function validateContent(content: Content, opts: ValidateOptions = {}): I
   }
   for (const id of actualMissions) {
     if (!claimed.has(id)) err("content", `mission "${id}" belongs to no chapter`);
+  }
+
+  /* ── one idea per act, in the same words (D-086) ─────────────
+   * STRATEGY §2.2: four ideas, one per act, always in the same words, and every lesson in
+   * the game filed under one of them. Where an act declares its idea, every lesson in it —
+   * the decision's own and every outcome's override — carries that idea as its principle,
+   * exactly; the per-branch teaching lives in `because`. And no two acts share an idea. */
+  const ideas = new Map<string, number>();
+  for (const ch of content.chapters) {
+    if (!ch.idea) continue;
+    if (!ch.idea.trim()) err(`chapter ${ch.number}`, "chapter idea is empty");
+    if (ideas.has(normalise(ch.idea))) err(`chapter ${ch.number}`, `shares its idea with chapter ${ideas.get(normalise(ch.idea))}`);
+    ideas.set(normalise(ch.idea), ch.number);
+    leakCheck(ch.idea, `chapter ${ch.number}`, "idea");
+    for (const id of ch.missionIds) {
+      const m = content.nodes[id];
+      if (!m || !isMission(m)) continue;
+      if (m.lesson?.principle !== ch.idea) {
+        err(m.id, `lesson.principle must be the act's idea word for word: "${ch.idea}"`);
+      }
+      for (const { outcome, where } of missionOutcomes(m)) {
+        if (outcome.lesson && outcome.lesson.principle !== ch.idea) {
+          err(where, `outcome "${outcome.id}" teaches a principle that is not the act's idea: "${ch.idea}"`);
+        }
+      }
+    }
+  }
+
+  /* ── model, prompt, let go (D-086) ───────────────────────────
+   * STRATEGY §2.7, for lever decisions: in each act the first decision is MODELLED (the
+   * colleague thinks aloud and gives no hints), the second is PROMPTED (exactly one hint,
+   * under "Ask", and no think-aloud), and any after that are the player's own (neither).
+   * `tip` and `advisorLine` are hints by another name — they render under the same "Ask" —
+   * so a lever decision carries neither, and the one hint is its single `consider` line. */
+  for (const ch of content.chapters) {
+    const levers = content.missionOrder
+      .filter((id) => ch.missionIds.includes(id))
+      .map((id) => content.nodes[id])
+      .filter((n): n is LeverMission => !!n && isMission(n) && n.kind === "levers");
+    levers.forEach((m, i) => {
+      const hints = m.consider?.length ?? 0;
+      if (m.tip) err(m.id, "a lever decision carries no tip — it is a second hint under \"Ask\"");
+      if (m.advisorLine !== undefined) err(m.id, "a lever decision carries no advisorLine — its colleague models with thinkAloud or prompts with one consider line");
+      if (i === 0) {
+        if (!m.thinkAloud) err(m.id, "the first decision of an act is modelled: its colleague needs a thinkAloud");
+        if (hints > 0) err(m.id, "a modelled decision gives no hints; the think-aloud is the help");
+      } else if (i === 1) {
+        if (m.thinkAloud) err(m.id, "the second decision of an act is prompted, not modelled: drop the thinkAloud");
+        if (hints !== 1) err(m.id, `a prompted decision gives exactly one hint, and this has ${hints}`);
+      } else if (m.thinkAloud || hints > 0) {
+        err(m.id, "from the third decision of an act the player is on their own: no think-aloud and no hints");
+      }
+    });
   }
 
   const chapterNumbers = new Set(content.chapters.map((c) => c.number));

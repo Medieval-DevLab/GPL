@@ -508,6 +508,17 @@ button.f-step:hover .f-step-label { text-decoration: underline; text-underline-o
 .f-turn-text .f-h1 { margin-top: 4px; }
 .f-turn-body { margin-top: 12px; font-size: var(--t-read); line-height: 1.6; color: var(--ink); }
 .f-turn-body p + p { margin-top: 0.7em; }
+/* The promise calendar, as it came due (D-086). Interim, until the calendar view exists. */
+.f-turn-calendar, .f-promises { margin-top: 16px; }
+.f-turn-calendar .f-h2 { font-size: 19px; margin-bottom: 8px; }
+.f-turn-calendar ul, .f-promises ul { display: grid; gap: 8px; }
+.f-turn-calendar li, .f-promises li { padding: 8px 12px; border-left: 4px solid var(--line-strong); background: var(--card); border-radius: 6px; font-size: 16px; line-height: 1.45; }
+.f-turn-calendar li small, .f-promises li small { font-weight: 700; color: var(--ink-2); margin-right: 4px; }
+.f-turn-calendar li.is-kept, .f-promises li.is-kept { border-left-color: var(--rise); }
+.f-turn-calendar li.is-broken, .f-promises li.is-broken { border-left-color: var(--fall); }
+.f-reveal-lines .f-talk-line { margin-top: 12px; }
+.f-spine { margin-top: 12px; font-family: var(--font-serif); font-style: italic; font-size: 17px; line-height: 1.45; color: var(--ink-2); }
+.f-verdict-extra { margin-top: 8px; font-family: var(--font-serif); font-size: clamp(17px, 1.3vw, 19px); line-height: 1.45; }
 .f-phone { grid-column: 2; align-self: start; justify-self: center; width: min(300px, 100%); aspect-ratio: 9 / 17; padding: 10px; border-radius: 40px; background: #16181c; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 40px 70px -20px rgba(0, 0, 0, 0.75); }
 .f-phone-screen { height: 100%; display: flex; flex-direction: column; align-items: stretch; padding: 46px 12px 16px; border-radius: 31px; background: linear-gradient(170deg, #2a3442 0%, #1a2029 60%, #14181e 100%); overflow: hidden; }
 .f-phone-time { text-align: center; font-size: 64px; font-weight: 300; line-height: 1; color: #fff; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }

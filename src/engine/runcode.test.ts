@@ -287,13 +287,15 @@ describe("the two fingerprints", () => {
 
   it("refuse a code whose decisions no longer line up", () => {
     const restructured = structuredClone(content) as Content;
-    const choice = Object.values(restructured.nodes).find(
-      (n) => isMission(n) && n.kind === "choice" && n.options.length > 2,
+    /* A lever decision since D-086: a digit indexes the cartesian product of the open
+       settings, so one setting removed from one lever moves every combination after it. */
+    const panel = Object.values(restructured.nodes).find(
+      (n) => isMission(n) && n.kind === "levers" && n.levers.some((l) => l.options.length > 2),
     );
-    if (!choice || !isMission(choice) || choice.kind !== "choice") throw new Error("no choice mission");
-    /* One option removed is enough: every index after it now means a different option, so
-       decoding an old code against this content would play a run nobody had. */
-    choice.options.splice(1, 1);
+    if (!panel || !isMission(panel) || panel.kind !== "levers") throw new Error("no lever decision");
+    /* One setting removed is enough: every index after it now means a different
+       combination, so decoding an old code against this content would play a run nobody had. */
+    panel.levers.find((l) => l.options.length > 2)!.options.splice(1, 1);
 
     expect(shapeFingerprint(restructured)).not.toBe(shapeFingerprint(content));
 

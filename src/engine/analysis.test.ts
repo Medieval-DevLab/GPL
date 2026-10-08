@@ -181,10 +181,55 @@ describe("every path is playable", () => {
         `${d}: sweep claims max ${result.finalRange[d].max}, witnessed only ${witnessed[d].max}`,
       ).toBeGreaterThanOrEqual(result.finalRange[d].max);
     }
-    // Every meter can be driven to the ceiling, which is itself a finding: see D-040.
-    expect(witnessed.profit.max).toBe(100);
-    expect(witnessed.deliver.max).toBe(100);
+    /* The thresholds the endings read are crossable both ways on witnessed paths (D-086):
+       "Worth ≤ 39" chooses between paying for it and it paying, and "Win ≥ 60" adds the
+       invitation to bid again. A threshold no played path can reach from one side is an
+       ending, or a line, that cannot be told apart from its neighbour. */
+    expect(witnessed.profit.min).toBeLessThanOrEqual(39);
+    expect(witnessed.profit.max).toBeGreaterThanOrEqual(40);
+    expect(witnessed.win.min).toBeLessThan(60);
+    expect(witnessed.win.max).toBeGreaterThanOrEqual(60);
   }, 120_000);
+
+  /**
+   * The end of the run, covered as exactly as the decisions are (D-086). Every ending,
+   * every extra line, every way each promise can come due and every calendar line some
+   * reachable run is shown — because each is authored copy, and copy no run can reach is
+   * the quietest kind of dead content.
+   */
+  it("ends on every authored ending, and shows every extra", () => {
+    const endings = content.endings ?? [];
+    expect(endings.length).toBeGreaterThan(0);
+    expect(endings.map((e) => e.id).filter((id) => !result.firedEndings.has(id))).toEqual([]);
+    const extras = endings.flatMap((e) => (e.extras ?? []).map((_, j) => `${e.id}#${j}`));
+    expect(extras.filter((x) => !result.firedExtras.has(x))).toEqual([]);
+  });
+
+  it("settles every promise every way it is written to land", () => {
+    const authored = (content.promises ?? []).flatMap((p) => [
+      `${p.flag}/kept`,
+      ...(p.voidWhen ? [`${p.flag}/void`] : []),
+      ...(p.lateWhen ? [`${p.flag}/late`] : []),
+      ...(p.keptWhen ? [`${p.flag}/broken`] : []),
+    ]);
+    expect(authored.length).toBeGreaterThan(0);
+    expect(authored.filter((s) => !result.settledStatuses.has(s))).toEqual([]);
+    /* And every line, the kept lines of a promise kept more than one way included. */
+    const lines = (content.promises ?? []).flatMap((p) => [
+      ...(typeof p.kept === "string" ? [p.kept] : p.kept.map((l) => l.text)).map((t) => `${p.flag}|${t}`),
+      ...[p.voided, p.late, p.broken].filter((t): t is string => !!t).map((t) => `${p.flag}|${t}`),
+    ]);
+    expect(lines.filter((l) => !result.settledLines.has(l))).toEqual([]);
+  });
+
+  /**
+   * "No lever is left with one open option", which the script says was checked by hand.
+   * A lever with a single open setting is not a choice, and which settings are open
+   * depends on the cards a run holds — so only the walk can say it never happens.
+   */
+  it("never leaves a lever with only one open setting", () => {
+    expect([...result.thinLevers]).toEqual([]);
+  });
 
   it("exercises every option at least once", () => {
     const declared: string[] = [];
@@ -383,18 +428,12 @@ describe("no fake choices, in the states that occur", () => {
  * pinned with the state of each instead.
  */
 describe("outcomes do not claim credit for a purchase that may not have happened", () => {
-  const KNOWN = [
-    /* Prose corrected: the headline now says "You HAVE the two things nobody else will
-       have" rather than "You bought" them. The gate is still unable to tell. */
-    "m5b/m5b-grounded",
-    /* The same defect, prose not yet corrected. `credibility` arrives from the starting
-       advantage and from m3; `knows:rival_gap` from m5. */
-    "m5b/m5b-persuasion",
-    /* Benign on reading: the outcome is about a timeline being thin, and `has:data` there
-       is a condition of the world rather than a purchase it congratulates. Listed so it
-       is a judgement somebody made rather than a gap. */
-    "m7/m7-fast-thin",
-  ];
+  /* None in the eight-decision story (D-086). The three the first story carried were all
+     a gate reading a flag that a purchase AND an earlier beat could both set. Here no
+     decision's outcomes read a card its own settings set that a run could already hold on
+     arrival: `clue:rivals`, which the Challengers start with and week one can give again,
+     is read by no outcome of week one. */
+  const KNOWN: string[] = [];
 
   it("has no unlisted instance", async () => {
     const content = story;

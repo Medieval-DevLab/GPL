@@ -42,6 +42,7 @@ import {
   DIMENSIONS,
   isMission,
   type Condition,
+  type Conditions,
   type Content,
   type Effect,
   type GameState,
@@ -210,12 +211,44 @@ function canonicalContent(content: Content, rules: boolean): string {
   for (const id of Object.keys(content.nodes).sort()) {
     const node = content.nodes[id];
     if (!node) continue;
+    /* `settle` is a rule rather than shape: it does not change what a digit means, it
+       changes where a replay lands. Written only when set, so content without a calendar
+       keeps the canonical text — and therefore the fingerprints — it always had. */
+    const settles = rules && (node.kind === "interlude" || node.kind === "ending") && node.settle ? "|settle" : "";
     if (isMission(node)) parts.push(missionText(node, rules));
     else if (node.kind === "setup") parts.push(setupText(node, rules));
-    else if (node.kind === "interlude") parts.push(`interlude:${node.id}>${node.next}`);
-    else parts.push(`ending:${node.id}`);
+    else if (node.kind === "interlude") parts.push(`interlude:${node.id}>${node.next}${settles}`);
+    else parts.push(`ending:${node.id}${settles}`);
   }
+  if (rules) parts.push(...terminalText(content));
   return parts.join("\n");
+}
+
+/**
+ * The promise calendar and the endings, as rules (D-086).
+ *
+ * The calendar moves the meters and sets `promise:broken`, so a saved state is stale the
+ * moment one of its rules changes. The endings move nothing, but they decide what a run is
+ * called, and a facilitator comparing two codes across a patch needs to know the names
+ * could differ. Conditions, effects and ids only — never the lines, which are prose and may
+ * be corrected mid-cohort without invalidating anyone's save. Nothing is written for
+ * content without either, which keeps every older fingerprint unchanged.
+ */
+function terminalText(content: Content): string[] {
+  const parts: string[] = [];
+  const conds = (c: Conditions | undefined) =>
+    c === undefined ? "-" : (Array.isArray(c) ? c : [c as Condition]).map(condText).join("&");
+  for (const p of content.promises ?? []) {
+    const kept = typeof p.kept === "string" ? "" : p.kept.map((l) => condText(l.when)).join("+");
+    parts.push(
+      `promise:${p.flag}@${p.dueMonth}|void:${conds(p.voidWhen)}|kept:${conds(p.keptWhen)}|${kept}` +
+        `|late:${conds(p.lateWhen)}|${effectText(p.lateEffect)}|${p.brokenEffect ? effectText(p.brokenEffect) : "default"}`,
+    );
+  }
+  for (const e of content.endings ?? []) {
+    parts.push(`end:${e.id}|${condText(e.when)}|${(e.extras ?? []).map((x) => condText(x.when)).join("+")}`);
+  }
+  return parts;
 }
 
 /**

@@ -87,6 +87,120 @@ joins the release gate once the eight-decision content lands.
 
 **Cost:** none to the player. **Reversible:** yes.
 
+## D-086 · Eight decisions: the promise ledger, endings from content, and STORY-V2 as the story
+The 18-decision story is replaced by `docs/STORY-V2.md`: four acts, two lever decisions each,
+one idea per act. The engine gains the two capabilities the script needs, specified in the
+`LEVERS.md` addendum, and the content glue, tests and release harnesses follow the new shape.
+The old story is kept unchanged in `src/content/archive/story-v1.ts`. It is not imported, and
+the archive is excluded from typechecking.
+
+**Built in the engine.**
+- **The promise ledger.** `Content.promises` holds the rules. Entering a beat marked `settle`
+  works through every card the player holds, in month order, and lands each one void, kept,
+  late or broken. The effects are applied and the results stored in `state.settled`, once per
+  run, with no dice.
+- **Endings from content.** `Content.endings`: first match wins, the last is unconditional, and
+  extras are filtered by condition. `finalVerdict` takes the content and returns
+  `{ title, summary, id?, extras }`. Content without endings keeps the built-in verdicts.
+- **The record board as content** (`Content.ledger`). The built-in `LEDGER_RULES` named the first
+  story's flags, and seeding those into the validator reported every one as a typo against
+  the new story. `engineReadFlags(content)` replaces the constant wherever content is known.
+- **`lockOf`** names what shuts a setting, including a `none` lock that is shut by a card the
+  player holds ("Declan didn't want us").
+- **Content fields.** `thinkAloud` (the worked example), `Chapter.idea` (the act's idea) and
+  `Interlude.reveal` (what a debrief holds back until the guess).
+- **Extensions beyond the contract.** These are listed in `LEVERS.md`:
+  - `Conditions`, a list of conditions all of which must hold, because the results clause needs
+    two `any` tests;
+  - `kept` as a list of conditional lines, because the fixed price is kept by the margin or by
+    the team's weekends.
+- **The validator** holds the calendar, the endings, one idea per act and model-prompt-let-go
+  to the rules listed in `LEVERS.md`, plus STRATEGY §2.6's reading budgets: 40 words of
+  situation and 120 before the panel. Once the board is content, invisible state is an error,
+  and a named card counts as visible because the hand shows it.
+- **The sweep and run codes.** The sweep folds the calendar's and the endings' reads and gates
+  into every dedup key. It reports every ending, extra, status and line, plus any thin lever,
+  and the voices (`quotes`) now enter the key too. The rules fingerprint covers the calendar
+  and the endings. `reachableExtremes` climbs each meter as well as their sum, with a beam of
+  24, because greed alone understated Win and Worth.
+
+**The script, as amended.** The learning-design review's blockers, should-fixes and nits are
+applied as the coordinator gave them:
+- the client lines that leaked the winning setting;
+- causes that were false for some players (d3's free study split in two, the d5 results
+  condition, d6 o1, and the rest);
+- month five no longer assumes everyone is late, with the two new situation variants, the new
+  "hid the freeze" ending and ending 3 on `promise:broken`;
+- the guess comes before the reveal at every act break;
+- the card titles, the broken lines that say why, the date move that now costs £100,000, and
+  the one Ask line per prompted decision.
+
+Where the script and the engine met, I decided as follows:
+- **Challengers also set `start:challenger`.** `clue:rivals` can also be earned in week one, so
+  on its own it cannot say which team a run started with, and the run code recovers the starting
+  strength from exactly that. The board reads the marker, as it reads the other two.
+- **Two endings are two rules each, with one title.** "We walked away" depends on whether the
+  deal was bad. "We kept our promises, and paid for it" depends on Worth ≤ 39 or the team's
+  weekends. One condition cannot say either-or.
+- **d3's "checked what we knew" outcome** also hands over the complaint figures and Marcus's
+  name, as the paid study does, at the same Win +2 as the outcome it split from.
+- **Effects the script left open.** A late, agreed promise costs nothing. The broken results
+  clause costs W−3 P−4 D−3 and sets `promise:broken`. The late fee costs P−4 and does not set
+  it, because it is a cost, not a broken promise.
+- **What the script does not contain, and the validator requires:**
+  - the `changed` bullets, one or two per outcome, stating what the cards say;
+  - 14 causal threads, each joining two outcomes on the script's own chain in the words those
+    outcomes use;
+  - the board positions.
+- **The guesses are reflection interludes** (`guess-1` to `guess-4`), which the act break already
+  asks and the debrief already records.
+- **The calendar is a `turn` beat** (`calendar`) between d8 and the act 4 debrief. Award lost
+  (d6) and walking away (d7) go straight to the ending, as scripted.
+- **No badges.** The script authors none; the hand is the reward.
+
+**The glue.**
+- `gates.ts` has every card in the flag table, with the script's liabilities.
+- `presentation.ts` has four routes, the missions filed under win, profit and deliver, the board
+  positions, places for every node, the milestones, and the case file on `knows:after_sale`.
+  `COMPARE` is empty.
+- `STORY.stakes` is the spine.
+- `firm.ts` has the four acts and the script's three "makes easier later" lines.
+- Act 4 opens on `scene-chapter-5`. `ChapterNumber` is now 1–4, and `SceneNumber` keeps the five
+  photographs.
+- The four mockup crops only the first story used are removed from `public/art`. The asset test
+  forbids shipping unreferenced art, and git keeps them.
+
+**The interface, kept to what play needs.**
+- The trail is two rows of two acts.
+- The act break asks the guess and then reveals the cause, the idea and the spine.
+- The calendar beat lists every card as it came due.
+- The ending shows the content ending, its extras, the spine and the calendar.
+- The brief speaks the think-aloud.
+- The board and the HUD count read the content's board.
+- "Act N of 5" is left for the merge, where master already derives it.
+
+**Tests, adapted rather than loosened.**
+- A fixture chapter of the older kinds (`kinds.fixture.ts`) is spliced into the story wherever a
+  rule exists for a choice, investigation, build, dialogue or apply beat, so those rules still
+  have a subject.
+- The pinned numbers are re-measured and say what they now measure. The engagement gate's top
+  ending is out of reach of every fixed non-reader and within reach of reading. The score
+  premium is 0 against a target of 12, pinned as failing.
+- `verify-game.mjs` walks away at d7 and double-clicks into d1. `lms-check.mjs` presses options
+  in order, because "always the first unpressed" cycled one lever for ever.
+- Suite: 395 tests, 393 passing and 2 skipped (the claim item; no thread authors one yet).
+- The browser gate passes: 8 decisions, 13 screen types, no violations.
+
+**Cost.**
+- Every saved run and run code from the 18-decision story is stale. Saves say so; codes are
+  refused as "a version of the story with different decisions".
+- The score premium is still nothing: the endings discriminate and the mean of the meters does
+  not.
+- Until the lever panel lands, the interface shows a lever decision as one list of settings,
+  each tagged with its lever.
+
+**Reversible:** yes. The old story is in the archive, and every engine capability is additive:
+content without promises, endings or a board behaves exactly as before.
 ## D-085 · The lever decision in the engine
 `docs/LEVERS.md` (D-084) specified a new decision unit: two or three levers, one setting on
 each. This adds it to `src/engine` as a fourth mission kind, `kind: "levers"`, with no content

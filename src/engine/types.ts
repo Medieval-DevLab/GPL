@@ -534,6 +534,17 @@ interface MissionBase {
   /** fallback lesson — guarantees the objective lands on every branch */
   lesson: Lesson;
   /**
+   * The colleague reasoning through the trade-off out loud, before the choice.
+   *
+   * The worked example of "model, prompt, let go" (`docs/STRATEGY.md` §2.7): on the first
+   * decision of an act the colleague thinks aloud, on the second they give one hint, and
+   * after that the player is on their own. It is not `advisorLine`, which sits one press
+   * away under "Ask" because a compulsory steer read as a lecture (D-081). A worked example
+   * is meant to be heard, so the renderer speaks this as the last line of the brief. Same
+   * rule as every pre-decision surface: it may weigh costs, never predict an outcome.
+   */
+  thinkAloud?: string;
+  /**
    * The single human question the decision asks — "How do we answer on price?".
    *
    * Lives here rather than on each kind. It used to be declared three times, once per
@@ -553,6 +564,16 @@ export interface Chapter {
   missionIds: string[];
   /** short human names for the left-rail checklist, one per mission */
   steps: string[];
+  /**
+   * The act's one idea, word for word (D-086).
+   *
+   * People keep one core idea and a few sub-ideas, and only if they meet them in the same
+   * words every time (`docs/STRATEGY.md` §2). When an act declares its idea, every lesson in
+   * it — the decision's own and every outcome's — must carry it as `principle` exactly, and
+   * only `because` is written per outcome. The validator holds content to that, because
+   * fifty-three paraphrases of four ideas is how the first version stopped teaching.
+   */
+  idea?: string;
 }
 
 export interface ChoiceMission extends MissionBase {
@@ -722,12 +743,28 @@ export interface Interlude {
    * progression system.
    */
   milestone?: string;
+  /**
+   * Lines a chapter debrief holds back until the player has guessed (D-086).
+   *
+   * "Guess, then see" (`docs/STRATEGY.md` §2.8): the act's reflection asks which choice
+   * decided the act, unscored, and only then does the guide say which one did and what the
+   * idea was. Shown straight away on an act with no guess to ask. Presentation only.
+   */
+  reveal?: string[];
+  /**
+   * Entering this beat settles the promise ledger (D-086): every promise card the player
+   * holds comes due, in month order, and lands kept, late, broken or void. See
+   * `PromiseRule` and `settlePromises` in `engine.ts`.
+   */
+  settle?: boolean;
   next: string;
 }
 
 export interface Ending {
   kind: "ending";
   id: string;
+  /** As on an interlude: entering the ending settles the promise ledger. */
+  settle?: boolean;
 }
 
 export type GameNode = Mission | Interlude | Ending | Setup;
@@ -805,6 +842,103 @@ export interface GameState {
   history: HistoryEntry[];
   /** missions completed, for the progress rail */
   completed: string[];
+  /**
+   * How every promise card landed when it came due (D-086), in the order it was settled.
+   * Absent until a `settle` beat is entered, so a state from before that beat — or from
+   * content with no ledger — is exactly what it always was.
+   */
+  settled?: PromiseResult[];
+}
+
+/* ─────────────────────────── the promise ledger (D-086) ─────────────────────────── */
+
+/**
+ * A test made of several conditions, every one of which must hold.
+ *
+ * A `Condition` has one `any` list, so it can say "one of these" once. A promise is
+ * sometimes kept only when two separate things are true — the results clause needs Orion's
+ * own figures (one of two cards) AND a plan for the summer freeze (one of three) — and one
+ * `any` cannot carry both. A list of conditions can, and it reads the way the rule is said.
+ * A bare `Condition` is still legal and means what it always did.
+ */
+export type Conditions = Condition | readonly Condition[];
+
+/**
+ * How one promise card comes due — `docs/LEVERS.md`, the D-086 addendum.
+ *
+ * The ledger is settled once, on entering a beat marked `settle`, and every rule whose `flag`
+ * the player holds is worked through in `dueMonth` order:
+ *   void    if `voidWhen` holds — it was traded away, and nothing is owed;
+ *   kept    if `keptWhen` holds, or is absent;
+ *   late    if `lateWhen` holds;
+ *   broken  otherwise.
+ * There are no dice. Every status is a function of the cards the player chose to hold.
+ */
+export interface PromiseRule {
+  /** the promise card, e.g. "promise:trial" */
+  flag: string;
+  /** shown on the calendar: "Month 2" */
+  due: string;
+  /** ordering on the calendar; ties keep authored order */
+  dueMonth: number;
+  /** e.g. traded away; then `voided` is shown and nothing is owed */
+  voidWhen?: Conditions;
+  voided?: string;
+  /** omitted = always kept */
+  keptWhen?: Conditions;
+  /**
+   * The line shown when kept. A list is first-match-wins, like `advisorLine`, for a promise
+   * kept in more than one way — the fixed price is kept either out of our margin or out of
+   * the team's weekends, and the calendar should say which. The last entry is unconditional.
+   */
+  kept: string | ConditionalLine[];
+  /** checked only if not kept */
+  lateWhen?: Conditions;
+  late?: string;
+  /** shown if neither kept nor late */
+  broken?: string;
+  /** default `{ dims: { win: -3, deliver: -3 }, flags: ["promise:broken"] }` */
+  brokenEffect?: Effect;
+  lateEffect?: Effect;
+}
+
+export type PromiseStatus = "kept" | "late" | "broken" | "void";
+
+export interface PromiseResult {
+  flag: string;
+  status: PromiseStatus;
+  line: string;
+  due: string;
+  dueMonth: number;
+}
+
+/**
+ * One way the run can end, chosen by condition (D-086). Checked in order, first match wins,
+ * and the last is unconditional — the same law as every outcome list in the game.
+ */
+export interface EndingRule {
+  id: string;
+  title: string;
+  summary: string;
+  when?: Condition;
+  /** every extra whose `when` holds is shown after the summary, in order */
+  extras?: { when: Condition; text: string }[];
+}
+
+/**
+ * One position on the record board — "Sarah trusts us", "£600,000 off our price".
+ *
+ * An entry states a POSITION and never predicts an outcome, and it is never a bare
+ * restatement of its flag. See `LEDGER_RULES` in `engine.ts`, the table content used before
+ * it could carry its own.
+ */
+export interface LedgerRule {
+  when: Condition;
+  label: string;
+  detail: string;
+  tone: "good" | "neutral" | "bad";
+  /** its own pictogram — the rail was six identical dots before */
+  icon: IconId;
 }
 
 /**
@@ -853,4 +987,20 @@ export interface Content {
    * thread is authoring, not engineering, so it belongs where the authoring is.
    */
   threads: CausalThreadRule[];
+  /**
+   * How each promise card comes due, settled on entering a beat marked `settle` (D-086).
+   * Absent on content with no promise calendar.
+   */
+  promises?: PromiseRule[];
+  /**
+   * How the run can end, checked in order; the last is unconditional (D-086). When present,
+   * `finalVerdict` reads these instead of its own built-in verdicts.
+   */
+  endings?: EndingRule[];
+  /**
+   * The record board's positions (D-086). When present, `ledger` reads these instead of the
+   * engine's built-in `LEDGER_RULES`, which were written for the first story and name its
+   * flags. Positions are content, and content must not need an engine edit to change them.
+   */
+  ledger?: LedgerRule[];
 }

@@ -38,7 +38,7 @@ export function AccountFile({ state, content, mission, chapter }: { state: GameS
   if (chapter) return <><p className="file-scope">{COPY.stage.chapterReview} {chapter} · {content.chapters[chapter - 1]?.title}</p><History state={state} content={content} chapter={chapter} /></>;
   const tabs = ['Where you stand', ...(mission ? ['Brief'] : []), 'Evidence', 'Decisions', 'Recognition'];
   const evidence = Object.values(content.nodes).flatMap(n => n.kind === 'investigate' ? n.evidence.filter(e => state.discovered.includes(e.id)) : []);
-  const entries = ledger(state);
+  const entries = ledger(state, content);
   const quote = mission ? resolveSaidQuote(mission, state) : undefined;
   const advice = mission ? resolveAdvisorLine(mission, state) : undefined;
   return <>

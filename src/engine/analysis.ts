@@ -26,7 +26,9 @@ import {
   commit,
   createInitialState,
   evaluateCondition,
+  finalVerdict,
   getNode,
+  terminalConditions,
 } from "./engine";
 import {
   DIMENSIONS,
@@ -68,6 +70,11 @@ function missionReadFlags(node: Mission): Set<string> {
     for (const f of [...(c.all ?? []), ...(c.any ?? []), ...(c.none ?? [])]) read.add(f);
   };
   for (const v of node.variants ?? []) note(v.when);
+  /* Who speaks reads the record too. Leave the voices out of the key and a state that would
+     hear Marcus collapses into one that would not, so "someone can hear every line" becomes
+     a statement about whichever state arrived first (D-086). */
+  for (const q of node.quotes ?? []) note(q.when);
+  if (Array.isArray(node.advisorLine)) for (const l of node.advisorLine) note(l.when);
   if (node.kind === "choice") {
     for (const o of node.options) {
       note(o.requires);
@@ -94,11 +101,39 @@ function missionReadFlags(node: Mission): Set<string> {
 function suffixReadFlags(content: Content): Map<string, Set<string>> {
   const order = content.missionOrder;
   const out = new Map<string, Set<string>>();
-  const acc = new Set<string>();
+  /* The end of the run reads too (D-086): the promise calendar settles on what the player
+     holds and the endings choose on it, both after the last decision. So every flag they
+     read is in every mission's suffix — leave one out and two runs that settle differently
+     collapse at the first decision, and a promise that can break is reported as one that
+     cannot. */
+  const acc = new Set<string>(terminalReadFlags(content));
   for (let i = order.length - 1; i >= 0; i--) {
     const node = content.nodes[order[i] as string];
     if (node && isMission(node)) for (const f of missionReadFlags(node)) acc.add(f);
     out.set(order[i] as string, new Set(acc));
+  }
+  return out;
+}
+
+/** Every flag the promise calendar and the endings read, including each rule's own card. */
+function terminalReadFlags(content: Content): Set<string> {
+  const out = new Set<string>((content.promises ?? []).map((p) => p.flag));
+  for (const c of terminalConditions(content)) {
+    for (const f of [...(c.all ?? []), ...(c.any ?? []), ...(c.none ?? [])]) out.add(f);
+  }
+  return out;
+}
+
+/** The end of the run's gates, as (dimension, threshold) pairs — see `missionGates`. */
+function terminalGates(content: Content): { dim: DimensionId; boundary: number }[] {
+  const out: { dim: DimensionId; boundary: number }[] = [];
+  for (const c of terminalConditions(content)) {
+    for (const d of DIMENSIONS) {
+      const lo = c.min?.[d];
+      if (lo !== undefined) out.push({ dim: d, boundary: lo });
+      const hi = c.max?.[d];
+      if (hi !== undefined) out.push({ dim: d, boundary: hi + 1 });
+    }
   }
   return out;
 }
@@ -241,7 +276,7 @@ function missionGates(node: Mission): { dim: DimensionId; boundary: number }[] {
  * merely complain.
  */
 function gatedDimensions(content: Content): DimensionId[] {
-  const gated = new Set<DimensionId>();
+  const gated = new Set<DimensionId>(terminalGates(content).map((g) => g.dim));
   for (const node of Object.values(content.nodes)) {
     if (!isMission(node)) continue;
     for (const g of missionGates(node)) gated.add(g.dim);
@@ -264,7 +299,8 @@ function gatedDimensions(content: Content): DimensionId[] {
 function suffixGatedDimensions(content: Content): Map<string, DimensionId[]> {
   const order = content.missionOrder;
   const out = new Map<string, DimensionId[]>();
-  const acc = new Set<DimensionId>();
+  /* A gate at the end of the run is in every suffix, for the reason given above. */
+  const acc = new Set<DimensionId>(terminalGates(content).map((g) => g.dim));
   for (let i = order.length - 1; i >= 0; i--) {
     const node = content.nodes[order[i] as string];
     if (node && isMission(node)) for (const g of missionGates(node)) acc.add(g.dim);
@@ -296,6 +332,9 @@ function assertBucketAligned(content: Content, bucket: number): void {
     for (const g of missionGates(node)) {
       if (g.boundary % bucket !== 0) bad.push(`${node.id}: ${g.dim} boundary at ${g.boundary}`);
     }
+  }
+  for (const g of terminalGates(content)) {
+    if (g.boundary % bucket !== 0) bad.push(`end of run: ${g.dim} boundary at ${g.boundary}`);
   }
   if (bad.length) {
     throw new Error(
@@ -470,6 +509,20 @@ export interface SweepResult {
   firedVariants: Set<string>;
   /** `missionId#i` for each conditional client quote some reachable state would hear. */
   firedQuotes: Set<string>;
+  /** content ending ids some reachable run ends on (D-086) */
+  firedEndings: Set<string>;
+  /** `endingId#j` for every ending extra some reachable run is shown */
+  firedExtras: Set<string>;
+  /** `flag/status` for every way a promise card came due on some reachable run */
+  settledStatuses: Set<string>;
+  /** `flag|line` for every calendar line some reachable run is shown */
+  settledLines: Set<string>;
+  /**
+   * `missionId/leverId` wherever some reachable state leaves a lever with fewer than two
+   * open settings. A lever with one open setting is not a choice; the script was checked
+   * for this by hand, and this is the check that keeps it so.
+   */
+  thinLevers: Set<string>;
 }
 
 function emptyRange(): Record<DimensionId, DimRange> {
@@ -519,6 +572,11 @@ export function* sweepWalk(
     endings: 0,
     firedVariants: new Set(),
     firedQuotes: new Set(),
+    firedEndings: new Set(),
+    firedExtras: new Set(),
+    settledStatuses: new Set(),
+    settledLines: new Set(),
+    thinLevers: new Set(),
   };
 
   const start = openingState(content);
@@ -561,7 +619,24 @@ export function* sweepWalk(
 
       if (!isMission(node)) {
         result.endings += states.length;
-        for (const s of states) widen(result.finalRange, s.dims);
+        for (const s of states) {
+          widen(result.finalRange, s.dims);
+          /* How the run ended and how its promises came due, on every terminal state — the
+             calendar settles on the way in and the ending reads the result, so both are a
+             function of the state the sweep already holds (D-086). */
+          for (const r of s.settled ?? []) {
+            result.settledStatuses.add(`${r.flag}/${r.status}`);
+            result.settledLines.add(`${r.flag}|${r.line}`);
+          }
+          const ending = content.endings?.length ? finalVerdict(s.dims, s.flags, content) : null;
+          if (ending?.id) {
+            result.firedEndings.add(ending.id);
+            const rule = content.endings?.find((e) => e.id === ending.id);
+            (rule?.extras ?? []).forEach((x, j) => {
+              if (evaluateCondition(x.when, s.flags, s.dims)) result.firedExtras.add(`${ending.id}#${j}`);
+            });
+          }
+        }
         continue;
       }
 
@@ -588,6 +663,13 @@ export function* sweepWalk(
           if (evaluateCondition(quotes[i]?.when, state.flags, state.dims)) {
             result.firedQuotes.add(`${mission.id}#${i}`);
             break;
+          }
+        }
+
+        if (mission.kind === "levers") {
+          for (const l of mission.levers) {
+            const open = l.options.filter((o) => evaluateCondition(o.requires, state.flags, state.dims));
+            if (open.length < 2) result.thinLevers.add(`${mission.id}/${l.id}`);
           }
         }
 
@@ -668,32 +750,40 @@ export function reachableExtremes(content: Content): Record<DimensionId, DimRang
   const range = emptyRange();
   const setups = pastSetupOptions(content);
 
+  /* Two changes for the eight-decision story (D-086), both making the bound less loose and
+     neither making it less honest — every number is still a replayed path:
+       · it climbs each meter on its own as well as their sum, because climbing the sum
+         trades one meter away to raise the others and never drove Win past 90;
+       · it keeps a small beam rather than one state, because a lever decision is up to 27
+         combinations and the best next step is often not on the best route — one step of
+         greed stopped Worth at 87 where the sweep had seen 90.
+     Deterministic: expansion order is the enumeration order, and the sort is stable. */
+  const objectives: ((dims: Record<DimensionId, number>) => number)[] = [
+    (dims) => DIMENSIONS.reduce((total, d) => total + dims[d], 0),
+    ...DIMENSIONS.map((d) => (dims: Record<DimensionId, number>) => dims[d]),
+  ];
+
   for (const advantage of setups) {
-    for (const sign of [1, -1]) {
-      let s = pastSetup(content, advantage);
-      let guard = 0;
-      while (isMission(getNode(content, s.nodeId)) && guard++ < 40) {
-        const mission = getNode(content, s.nodeId);
-        if (!isMission(mission)) break;
-        let best: GameState | null = null;
-        let bestScore = -Infinity;
-        for (const selection of possibleSelections(mission, s)) {
-          const after = playMission(s, content, selection);
-          const score = sign * DIMENSIONS.reduce((total, d) => total + after.dims[d], 0);
-          if (score > bestScore) {
-            bestScore = score;
-            best = after;
-          }
+    for (const objective of objectives) for (const sign of [1, -1]) {
+      let live: GameState[] = [pastSetup(content, advantage)];
+      for (let depth = 0; depth < 40 && live.length > 0; depth++) {
+        const next: GameState[] = [];
+        for (const s of live) {
+          widen(range, s.dims);
+          const mission = getNode(content, s.nodeId);
+          if (!isMission(mission)) continue;
+          for (const selection of possibleSelections(mission, s)) next.push(playMission(s, content, selection));
         }
-        if (!best) break;
-        s = best;
-        widen(range, s.dims);
+        next.sort((a, b) => sign * (objective(b.dims) - objective(a.dims)));
+        live = next.slice(0, EXTREMES_BEAM);
       }
-      widen(range, s.dims);
     }
   }
   return range;
 }
+
+/** How many states each witnessed-extremes walk keeps at every step. */
+const EXTREMES_BEAM = 24;
 
 /** The ids of chapter 0's options, or an empty pick if there is no setup node. */
 function pastSetupOptions(content: Content): (string | undefined)[] {

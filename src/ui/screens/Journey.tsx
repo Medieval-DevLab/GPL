@@ -52,7 +52,9 @@ export function Journey({ state, content, node, currentChapter, onPlay, onReview
   const hand = handOf(state, content);
   const have = hand.filter(c => c.pile === 'strength'), owe = hand.filter(c => c.pile === 'promise');
   const fresh = new Set(justHappened ? flagsSetBy(content, justHappened.missionId, justHappened.outcomeId) : []);
-  const rows = [stops.filter(s => s.chapter <= 3), stops.filter(s => s.chapter > 3)];
+  /* Two rows, half the acts on each: four acts are two and two (D-086). */
+  const half = Math.ceil(CHAPTER_PRESENTATION.length / 2);
+  const rows = [stops.filter(s => s.chapter <= half), stops.filter(s => s.chapter > half)];
   const solved = MYSTERY.clues.some(f => state.flags.includes(f));
 
   return <section className="page trail" data-chapter={chapter}>

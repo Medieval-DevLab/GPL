@@ -52,6 +52,16 @@ import {
  */
 export const TOP_VERDICT = finalVerdict({ win: 100, profit: 100, deliver: 100 }, []).title;
 
+/**
+ * The same question for content that names its own endings (D-086): what is a run with every
+ * meter full and nothing to answer for called? For the eight-decision story that is the
+ * unconditional last ending, "We kept our promises, and it paid", because every ending above
+ * it needs a card a clean run does not hold.
+ */
+export function topVerdict(content: Pick<Content, "endings">): string {
+  return finalVerdict({ win: 100, profit: 100, deliver: 100 }, [], content).title;
+}
+
 /** Mirrors `engine.ts`'s private `clamp`. Verified against it on every sample — see below. */
 const clamp = (n: number): number => Math.max(0, Math.min(100, Math.round(n)));
 
@@ -605,7 +615,7 @@ export function bestWitnessedPlay(content: Content, beam = 48): BestPlay {
     best = {
       score,
       dims: { ...l.state.dims },
-      verdict: finalVerdict(l.state.dims, l.state.flags).title,
+      verdict: finalVerdict(l.state.dims, l.state.flags, content).title,
       script: l.script,
       advantage: l.advantage,
     };
@@ -676,7 +686,7 @@ export function randomVerdicts(content: Content, runs = 300, seed = 1): VerdictP
       if (!selection) break;
       s = playMission(s, content, selection);
     }
-    const title = finalVerdict(s.dims, s.flags).title;
+    const title = finalVerdict(s.dims, s.flags, content).title;
     verdicts[title] = (verdicts[title] ?? 0) + 1;
     const score = scoreOf(s.dims);
     totalScore += score;
@@ -686,7 +696,7 @@ export function randomVerdicts(content: Content, runs = 300, seed = 1): VerdictP
   return {
     runs,
     verdicts,
-    topVerdictShare: round2((verdicts[TOP_VERDICT] ?? 0) / runs),
+    topVerdictShare: round2((verdicts[topVerdict(content)] ?? 0) / runs),
     meanScore: Math.round(totalScore / runs),
     bestScore,
   };
@@ -755,7 +765,7 @@ export function measureK(
     randomMean: random.meanScore,
     randomBest: random.bestScore,
     bestNonReader,
-    nonReadersAtTop: fixed.verdicts.filter((v) => v === TOP_VERDICT).length,
+    nonReadersAtTop: fixed.verdicts.filter((v) => v === topVerdict(content)).length,
     nonReaderCount: fixed.verdicts.length,
     bestInformed: informed.score,
     premium: informed.score - bestNonReader,
@@ -850,7 +860,7 @@ export function formatKTable(rows: KRow[]): string {
     );
   }
   lines.push(
-    `  top% = share of uniform-random runs told "${TOP_VERDICT}" (target < 40).` +
+    `  top% = share of uniform-random runs told the top verdict (target < 40).` +
       `  premium = best breadth-limited play − best fixed non-reader policy (target > 0,` +
       ` and the panel's bar is 12).`,
   );

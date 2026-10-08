@@ -54,6 +54,9 @@ export function briefLines(mission: Mission, state: GameState): Line[] {
   const situation = resolveSituation(mission, state).join(' ');
   for (const page of paginate(situation)) lines.push(advisor ? { who: advisor.name, role: advisor.role, text: page, voice: 'say' } : { text: page, voice: 'narrate' });
   if (quote) lines.push({ who: quote.speaker, role: quote.role, text: quote.text, voice: 'say' });
+  /* A modelled decision ends its brief with the colleague thinking aloud (D-086): the worked
+     example is meant to be heard, not found under "Ask". */
+  if (mission.thinkAloud && advisor) lines.push({ who: advisor.name, role: advisor.role, text: mission.thinkAloud, voice: 'say' });
   return lines;
 }
 

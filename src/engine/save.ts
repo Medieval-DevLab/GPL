@@ -255,6 +255,19 @@ function looksPlayable(state: unknown, content: Content): state is GameState {
       return false;
     }
   }
+  /* The promise calendar (D-086). Optional — absent until a settle beat, and on every save
+     written before the calendar existed — so this adds a field without changing what an
+     older state means, which is why `SAVE_SCHEMA` did not move. Present, it is read by the
+     ending screen and must be whole. */
+  if (s.settled !== undefined) {
+    if (!Array.isArray(s.settled)) return false;
+    for (const r of s.settled) {
+      if (!r || typeof r !== "object") return false;
+      if (typeof r.flag !== "string" || typeof r.line !== "string" || typeof r.due !== "string") return false;
+      if (typeof r.dueMonth !== "number" || !Number.isFinite(r.dueMonth)) return false;
+      if (!["kept", "late", "broken", "void"].includes(r.status)) return false;
+    }
+  }
   if (!Array.isArray(s.history)) return false;
   for (const entry of s.history as HistoryEntry[]) {
     if (!entry || typeof entry !== "object") return false;

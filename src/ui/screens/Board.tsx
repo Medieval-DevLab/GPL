@@ -1,12 +1,12 @@
 import type { Content, GameState } from '../../engine/types';
-import { LEDGER_RULES, ledger, outcomeBecause } from '../../engine/engine';
+import { ledger, ledgerRules, outcomeBecause } from '../../engine/engine';
 import { COPY } from '../../content/interface';
 import { LEDGER_RULE, MISSION_RULE, RULES } from '../../content/presentation';
 import { Glyph } from '../parts';
 
 /** Labels of ledger positions that rest on a given flag — so a cause can point at its card. */
-function cardsResting(flag: string): string[] {
-  return LEDGER_RULES.filter(r => r.when.all?.includes(flag)).map(r => r.label);
+function cardsResting(content: Content, flag: string): string[] {
+  return ledgerRules(content).filter(r => r.when.all?.includes(flag)).map(r => r.label);
 }
 
 const SHOWN = 4;
@@ -23,10 +23,10 @@ const SHOWN = 4;
  * what this decision added; without it (a reload mid-consequence) it simply shows the record.
  */
 export function Board({ state, content, before, values = false, onMore }: { state: GameState; content: Content; before?: readonly string[]; values?: boolean; onMore?(): void }) {
-  const entries = ledger(state);
+  const entries = ledger(state, content);
   const atResult = state.phase === 'consequence' && !!state.resolution;
   const added = new Set(atResult && before ? entries.map(e => e.label).filter(l => !before.includes(l)) : []);
-  const causes = new Set(atResult ? outcomeBecause(state, content).held.flatMap(cardsResting) : []);
+  const causes = new Set(atResult ? outcomeBecause(state, content).held.flatMap(f => cardsResting(content, f)) : []);
   const active = atResult ? MISSION_RULE[state.nodeId] : undefined;
   const showValues = values || atResult;
   /* Focusable because it can scroll on its own: keyboard users must be able to reach every card. */
