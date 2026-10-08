@@ -198,11 +198,11 @@ const nodes: GameNode[] = [
     minutes: 4,
     question: "What is really wrong at Orion?",
     situation: [
-      "Sarah Lim, the Orion director who holds the budget, sent us that one line and wants to meet next Thursday. We have one week, so choose one group of people to talk to and one set of papers to read.",
+      "Sarah Lim, who holds Orion’s budget, sent us that one line. Before her meeting on Thursday, we can talk to one group and read one set of papers.",
     ],
     saidQuote: {
       ...SARAH,
-      text: "Our customers deserve better than they’re getting. I need a partner who can show my board a difference within a year.",
+      text: "Our customers deserve better. My board wants to see a difference within a year.",
     },
     advisor: PRIYA,
     thinkAloud:
@@ -215,14 +215,14 @@ const nodes: GameNode[] = [
           {
             id: "d1-sarah-team",
             label: "Sarah’s own team",
-            detail: "Hear what Sarah’s team wants fixed, and who judges the bids.",
+            detail: "What they want fixed, and who judges the bids.",
             dims: { win: 3, deliver: -1 },
             flags: ["clue:declan"],
           },
           {
             id: "d1-delivery",
             label: "Orion’s delivery managers",
-            detail: "A day in the warehouse with the people who send orders.",
+            detail: "A day in the warehouse with them.",
             dims: { win: -1, deliver: 3 },
             flags: ["clue:marcus"],
           },
@@ -263,10 +263,10 @@ const nodes: GameNode[] = [
         tone: "strong",
         headline: "Solved: the trouble starts after people buy.",
         detail:
-          "Because you read the complaints and spent a day in the warehouse, you have both halves: half a million complaints a year, nearly all about late deliveries, three-week refunds and a helpline that cannot see the order. The man who runs all of it, Marcus Reed, Orion’s Operations Director, has not been in a single meeting.",
+          "Because you read the complaints and spent a day in the warehouse, you know half a million complaints a year are nearly all about late deliveries, three-week refunds and a helpline that can’t see orders. Marcus Reed runs all three, and has not been in a single meeting.",
         changed: ["We know what is really wrong: what happens after the sale", "We know who runs it: Marcus Reed"],
         effect: { dims: { win: 2, deliver: 2 }, flags: ["knows:after_sale"] },
-        lesson: taught(IDEA_1, "You looked at what customers complain about and who runs it."),
+        lesson: taught(IDEA_1, "You found the problem and who runs it."),
       },
       {
         id: "d1-complaints",
@@ -274,10 +274,10 @@ const nodes: GameNode[] = [
         tone: "mixed",
         headline: "The complaints are not about the shops.",
         detail:
-          "Because you read a year of complaints, you know shoppers like the shops and hate what comes after they buy, and answering them costs Orion about £2.5 million a year. You still don’t know who runs that part of Orion.",
+          "Because you read a year of complaints, you know shoppers like the shops and hate what comes after they buy. Answering their complaints costs Orion about £2.5 million a year.",
         changed: ["We know what is really wrong: what happens after the sale", "Nobody has told us who runs it"],
         effect: { dims: { win: 2 }, flags: ["knows:after_sale"] },
-        lesson: taught(IDEA_1, "The complaint figures showed a problem that Sarah’s one line never mentioned."),
+        lesson: taught(IDEA_1, "The complaints showed a problem Sarah’s one line never mentioned."),
       },
       {
         id: "d1-warehouse",
@@ -285,20 +285,20 @@ const nodes: GameNode[] = [
         tone: "mixed",
         headline: "The warehouse told you what the brief didn’t.",
         detail:
-          "Because you spent a day with the delivery managers, you heard it first hand: orders leave late, refunds wait three weeks, and the helpline can see neither. They work for Marcus Reed, the Operations Director, whom nobody has invited to a meeting.",
+          "Because you spent a day with Marcus Reed’s delivery managers, you heard it first hand: orders leave late, refunds wait three weeks, and the helpline can see neither.",
         changed: ["We know what is really wrong: what happens after the sale", "We have no figures to show Sarah yet"],
         effect: { dims: { deliver: 2 }, flags: ["knows:after_sale"] },
-        lesson: taught(IDEA_1, "The people who run deliveries knew what was wrong, and nobody had asked them."),
+        lesson: taught(IDEA_1, "The delivery staff knew what was wrong; nobody had asked them."),
       },
       {
         id: "d1-sarahs-version",
         tone: "hard",
-        headline: "You know Sarah’s version of the problem, and only hers.",
+        headline: "You know only Sarah’s version.",
         detail:
-          "Because you spent the week with Sarah’s team and on papers about the deal, you know who scores the bids: Declan Foyle, who buys for Orion. Nobody you met runs anything a customer complains about.",
+          "Because you spent the week with Sarah’s team and on papers about the deal, you know who scores the bids: Declan Foyle, who buys for Orion. Nobody you met runs what customers complain about.",
         changed: ["We know who scores the bids: Declan Foyle", "We still don’t know what customers are angry about"],
         effect: { dims: { win: 1 } },
-        lesson: taught(IDEA_1, "You learned about the deal, not about what is going wrong for Orion’s customers."),
+        lesson: taught(IDEA_1, "You studied the deal, not the customers’ problem."),
       },
     ],
     lesson: taught(IDEA_1, "What Sarah asked for and what customers complain about were different things."),
@@ -317,19 +317,19 @@ const nodes: GameNode[] = [
     minutes: 4,
     question: "How do we open the first meeting?",
     situation: [
-      "Because of this week’s work, we know what Orion’s customers are really angry about. Sarah gives us thirty minutes on Thursday, so choose what we open with and who else we invite.",
+      "Because of this week’s work, we know what Orion’s customers are really angry about. Sarah meets us on Thursday.",
     ],
     variants: [
       {
         when: { none: ["knows:after_sale"] },
         situation: [
-          "This week told us who scores the bids, but not what Orion’s customers are angry about. Sarah gives us thirty minutes on Thursday, so choose what we open with and who else we invite.",
+          "This week told us who scores the bids, but not what Orion’s customers are angry about. Sarah meets us on Thursday.",
         ],
       },
     ],
     saidQuote: {
       ...SARAH,
-      text: "I have thirty minutes and three firms. My board wants to hear about the shops.",
+      text: "Thirty minutes, three firms. My board wants to hear about the shops.",
     },
     advisor: PRIYA,
     consider: ["What will Sarah remember from thirty minutes with us?"],
@@ -340,29 +340,29 @@ const nodes: GameNode[] = [
         options: [
           {
             id: "d2-found",
-            label: "What we found this week",
-            detail: "Open with what is really hurting Orion’s customers.",
+            label: "What we found",
+            detail: "What is really hurting Orion’s customers.",
             dims: { win: 2, profit: -1, deliver: 3 },
             flags: ["led:after_sale"],
             requires: { all: ["knows:after_sale"] },
           },
           {
             id: "d2-shops",
-            label: "The shops, as Sarah asked",
-            detail: "The shop experience her one line describes.",
+            label: "The shops",
+            detail: "What Sarah and her board asked about.",
             dims: { win: 3, profit: 1, deliver: -2 },
           },
           {
             id: "d2-past",
-            label: "Our past work for retailers",
-            detail: "A retailer we helped, and what changed for its customers.",
+            label: "Our past retail work",
+            detail: "A retailer we helped, and what changed.",
             dims: { win: 1, profit: 2 },
           },
         ],
       },
       {
         id: "invite",
-        label: "Who else we invite",
+        label: "Who else comes",
         options: [
           {
             id: "d2-nobody",
@@ -372,16 +372,16 @@ const nodes: GameNode[] = [
           },
           {
             id: "d2-marcus",
-            label: "Marcus Reed, from Operations",
-            detail: "Ask Sarah to bring Marcus, who runs deliveries and warehouses.",
+            label: "Marcus, from Operations",
+            detail: "Ask Sarah to bring him; he runs deliveries.",
             dims: { win: -1, deliver: 3 },
             flags: ["met:marcus"],
             requires: { all: ["clue:marcus"] },
           },
           {
             id: "d2-declan",
-            label: "Declan Foyle, Orion’s buyer",
-            detail: "Ask to meet Declan, who buys for Orion and scores bids.",
+            label: "Declan, Orion’s buyer",
+            detail: "Ask to meet him; he scores the bids.",
             dims: { win: -1, profit: 2 },
             flags: ["met:declan"],
             requires: { all: ["clue:declan"] },
@@ -396,10 +396,10 @@ const nodes: GameNode[] = [
         tone: "strong",
         headline: "Sarah: “I have suspected this for a year.”",
         detail:
-          "Because you opened with what happens after people buy, backed by Orion’s own figures or by Marcus nodding beside you, Sarah heard her business described from outside. She asked us for a written offer.",
+          "Because you opened with what happens after people buy, backed by Orion’s figures or by Marcus beside you, Sarah heard an outsider get her business right.",
         changed: ["Sarah trusts us", "She has asked for a written offer"],
         effect: { dims: { win: 4 }, flags: ["sarah:trusts"] },
-        lesson: taught(IDEA_1, "We described her real problem and could show what it rested on."),
+        lesson: taught(IDEA_1, "We named her real problem and could prove it."),
       },
       {
         id: "d2-vouched",
@@ -407,18 +407,18 @@ const nodes: GameNode[] = [
         tone: "mixed",
         headline: "Sarah took your word for it, for now.",
         detail:
-          "Because the friend who introduced us had vouched for you, Sarah believed you without seeing a figure. She asked for an offer, and will want the figures before she signs.",
+          "Because the friend who introduced us had vouched for you, Sarah believed you without seeing a figure.",
         changed: ["Sarah trusts us, on a friend’s word", "She will want figures before she signs"],
         effect: { dims: { win: 2 }, flags: ["sarah:trusts"] },
-        lesson: taught(IDEA_1, "A warm introduction bought belief, but only until the proof is due."),
+        lesson: taught(IDEA_1, "A friend’s introduction bought belief, until the proof is due."),
       },
       {
         id: "d2-guess",
         when: { all: ["led:after_sale"] },
         tone: "hard",
-        headline: "The right problem, and nothing to show her.",
+        headline: "The right problem, and no proof.",
         detail:
-          "Because you named the problem with no figures and nobody from Orion to back it, it sounded like a clever guess. Sarah was polite and asked us to come back with proof.",
+          "Because you named the problem with no figures and nobody from Orion to back it, it sounded like a clever guess.",
         changed: ["Sarah has doubts", "She wants proof before anything else"],
         effect: { flags: ["sarah:doubts"] },
         lesson: taught(IDEA_1, "We named the problem but had nothing she could check."),
@@ -426,12 +426,12 @@ const nodes: GameNode[] = [
       {
         id: "d2-brief",
         tone: "hard",
-        headline: "Sarah heard her own brief read back to her.",
+        headline: "Sarah heard her own brief read back.",
         detail:
-          "Because you opened with the shops she asked about, or with our past work, we sounded like the other two firms. Sarah was friendly and wrote nothing down. She still asked all three firms for a written offer.",
+          "Because you opened with the shops she asked about, or with our past work, we sounded like the other two firms.",
         changed: ["Sarah has doubts", "We sound like the other two firms"],
         effect: { dims: { win: 1 }, flags: ["sarah:doubts"] },
-        lesson: taught(IDEA_1, "We told her what she already believed, so nothing we said was new to her."),
+        lesson: taught(IDEA_1, "We told her what she already believed."),
       },
     ],
     lesson: taught(IDEA_1, "Sarah’s trust followed what we knew about her business."),
@@ -506,13 +506,13 @@ const nodes: GameNode[] = [
     minutes: 4,
     question: "How much of our team does Orion get?",
     situation: [
-      "Sarah trusts us now and wants a written offer within a month. Every week our people spend chasing Orion is a week nobody pays for, so choose how many go, and whether we study Orion first.",
+      "Sarah trusts us now and wants a written offer within a month. Every week our people spend chasing Orion is a week nobody pays us for.",
     ],
     variants: [
       {
         when: { all: ["sarah:doubts"] },
         situation: [
-          "Sarah has doubts about us, and still wants a written offer within a month. Every week our people spend chasing Orion is a week nobody pays for, so choose how many go, and whether we study Orion first.",
+          "Sarah has doubts about us, and still wants a written offer within a month. Every week our people spend chasing Orion is a week nobody pays us for.",
         ],
       },
     ],
@@ -527,13 +527,13 @@ const nodes: GameNode[] = [
           {
             id: "d3-two",
             label: "Two of our six",
-            detail: "Two people on Orion for a month; four stay on paid work.",
+            detail: "The other four stay on paid work.",
             dims: { win: -2, profit: 3, deliver: -1 },
           },
           {
             id: "d3-four",
             label: "Four of our six",
-            detail: "Four people on Orion for a month; two stay on paid work.",
+            detail: "The other two stay on paid work.",
             dims: { win: 2, profit: -3, deliver: 1 },
             flags: ["bet:four"],
           },
@@ -545,21 +545,21 @@ const nodes: GameNode[] = [
         options: [
           {
             id: "d3-no-study",
-            label: "No study: write the offer",
-            detail: "Start the offer now, from what we already know.",
+            label: "No study",
+            detail: "Write the offer from what we already know.",
             dims: { win: 2, deliver: -2 },
           },
           {
             id: "d3-paid",
-            label: "Orion pays for a study",
-            detail: "Orion pays us for two weeks inside its business.",
+            label: "A paid study",
+            detail: "Two weeks inside Orion, at Orion’s cost.",
             dims: { win: -2, profit: 3, deliver: 2 },
             flags: ["study:paid", "inside:orion"],
             requires: { all: ["sarah:trusts"] },
           },
           {
             id: "d3-free",
-            label: "We study for free",
+            label: "A free study",
             detail: "Two unpaid weeks in Orion’s warehouses and on its helpline.",
             dims: { win: -1, profit: -4, deliver: 3 },
             flags: ["study:free", "inside:orion"],
@@ -574,7 +574,7 @@ const nodes: GameNode[] = [
         tone: "strong",
         headline: "Orion is paying us to look inside.",
         detail:
-          "Because Sarah trusts us, she paid for two weeks inside Orion. We checked the order records our plan depends on, and met the managers of Marcus Reed, the Operations Director who runs deliveries.",
+          "Because Sarah trusts us, she paid for two weeks inside Orion. We checked the order records our plan depends on, and met Marcus Reed’s delivery managers.",
         changed: ["We have seen inside Orion, at Orion’s cost", "We have Orion’s own complaint figures"],
         effect: { dims: { profit: 2, deliver: 1 }, flags: ["clue:marcus", "clue:complaints"] },
         lesson: taught(IDEA_2, "Sarah’s trust turned the cost of finding out into paid work."),
@@ -583,22 +583,22 @@ const nodes: GameNode[] = [
         id: "d3-free-found",
         when: { all: ["study:free"], none: ["knows:after_sale"] },
         tone: "mixed",
-        headline: "Two free weeks, and now we know what’s wrong.",
+        headline: "Two free weeks found what’s wrong.",
         detail:
-          "Because we gave our time for nothing, Sarah let us in, and we found it: customers are angry about late deliveries, slow refunds and the helpline, not the shops, and the people behind all three told us so. They work for Marcus Reed, who runs Orion’s deliveries. Two weeks of our pay bought what a week of reading could have.",
+          "Because you gave two unpaid weeks, we found it: customers are angry about late deliveries, slow refunds and the helpline, not the shops. Marcus Reed runs all three.",
         changed: ["We know what is really wrong: what happens after the sale", "Two weeks of our pay went on finding it"],
         effect: { dims: { win: 2 }, flags: ["knows:after_sale", "clue:complaints", "clue:marcus"] },
-        lesson: taught(IDEA_2, "Finding out late cost money we need not have spent in week one."),
+        lesson: taught(IDEA_2, "Finding out late cost money that a week of reading could have saved."),
       },
       {
         id: "d3-free-checked",
         when: { all: ["study:free"] },
         tone: "mixed",
         headline: "Two free weeks to check what we knew.",
-        detail: "Because we gave two unpaid weeks, we checked the order records our plan depends on.",
+        detail: "Because you gave two unpaid weeks, we checked the order records our plan depends on.",
         changed: ["We have checked the order records our plan depends on", "Two weeks of our pay went on checking"],
         effect: { dims: { win: 2 }, flags: ["clue:complaints", "clue:marcus"] },
-        lesson: taught(IDEA_2, "Checking cost us two weeks’ pay, and now we know where the plan starts."),
+        lesson: taught(IDEA_2, "Checking cost two weeks’ pay, and showed where the plan starts."),
       },
       {
         id: "d3-four-doubts",
@@ -609,7 +609,7 @@ const nodes: GameNode[] = [
           "Because you put four of our six on Orion while Sarah still doubts us, a month of their pay rides on a client who isn’t sure.",
         changed: ["Four of our six are on Orion", "A month of their pay rides on a doubtful client"],
         effect: { dims: { profit: -3 } },
-        lesson: taught(IDEA_2, "We spent the most where we had the least reason to believe."),
+        lesson: taught(IDEA_2, "We bet the most where Sarah trusted us least."),
       },
       {
         id: "d3-four-trusted",
@@ -617,17 +617,17 @@ const nodes: GameNode[] = [
         tone: "mixed",
         headline: "Four people on a client who wants us.",
         detail:
-          "Because Sarah trusts us, four people tells her we mean it, and leaves spare hands for checking. Two paying clients are short-staffed for a month.",
+          "Because Sarah trusts us, four people tells her we mean it, and leaves spare hands for checking.",
         changed: ["Four of our six are on Orion", "Two paying clients are short-staffed"],
         effect: { dims: { win: 2 } },
-        lesson: taught(IDEA_2, "A big bet suited a client who had already shown she trusted us."),
+        lesson: taught(IDEA_2, "A big bet suited a client who already trusted us."),
       },
       {
         id: "d3-two",
         tone: "mixed",
         headline: "Two people on it, and four still earning.",
         detail:
-          "Because you kept four of our six on paid work, this month is safe whatever Orion decides. Nobody is spare to check what the offer rests on.",
+          "Because you kept four of our six on paid work, this month is safe whatever Orion decides, but nobody is spare to check the order records.",
         changed: ["Two of our six are on Orion", "This month’s paid work is safe"],
         effect: { dims: { profit: 1 } },
         lesson: taught(IDEA_2, "A small bet kept the month safe and left nothing spare."),
@@ -649,7 +649,7 @@ const nodes: GameNode[] = [
     minutes: 4,
     question: "How do we answer the rival’s demo?",
     situation: [
-      "Two weeks later, a rival firm showed Sarah’s board a demo: screens in every shop and a new app, made with a famous technology company. Sarah wants our answer by Friday, so choose how we answer and what we bring.",
+      "Two weeks later, a rival firm showed Sarah’s board a demo: screens in every shop and a new app, made with a famous technology company. Sarah wants our answer by Friday.",
     ],
     quotes: [
       {
@@ -660,7 +660,7 @@ const nodes: GameNode[] = [
     ],
     saidQuote: {
       ...SARAH,
-      text: "My board has seen their demo, and it looks impressive. Tell me why I should still be talking to you.",
+      text: "My board loved their demo. Why should I still talk to you?",
     },
     advisor: RIYA,
     consider: ["What would answering the demo cost us, and what would ignoring it?"],
@@ -672,14 +672,14 @@ const nodes: GameNode[] = [
           {
             id: "d4-match",
             label: "Match it",
-            detail: "Add shop screens and an app to our offer.",
+            detail: "Offer shop screens and an app too.",
             dims: { win: 3, profit: -3, deliver: -3 },
             flags: ["bid:shops"],
           },
           {
             id: "d4-quiet",
             label: "Don’t mention it",
-            detail: "Keep to our plan and say nothing about their demo.",
+            detail: "Keep to our plan; ignore the demo.",
             dims: { win: -2, profit: 2, deliver: 1 },
           },
           {
@@ -699,21 +699,21 @@ const nodes: GameNode[] = [
           {
             id: "d4-note",
             label: "A one-page note",
-            detail: "One page by Friday, in plain words.",
+            detail: "By Friday, in plain words.",
             dims: { win: -1, profit: 2 },
           },
           {
             id: "d4-figures",
             label: "Her own complaint figures",
-            detail: "What answering complaints costs Orion every year.",
+            detail: "What complaints cost Orion every year.",
             dims: { win: 3, profit: -1 },
             flags: ["showed:figures"],
             requires: { all: ["clue:complaints"] },
           },
           {
             id: "d4-visit",
-            label: "A visit to a past client",
-            detail: "Take Sarah to a retailer we have already helped.",
+            label: "Visit a past client",
+            detail: "Take Sarah to a retailer we helped.",
             dims: { win: 2, profit: -2, deliver: 1 },
             flags: ["showed:visit"],
           },
@@ -725,12 +725,12 @@ const nodes: GameNode[] = [
         id: "d4-match",
         when: { all: ["bid:shops"] },
         tone: "hard",
-        headline: "Two firms selling screens, and theirs has the famous partner.",
+        headline: "Two firms selling screens; theirs has the famous partner.",
         detail:
           "Because you matched the demo, we are bidding to build screens and an app, which our team has never done, against a firm that has.",
         changed: ["The bid is about the shops now", "We are offering work our team has never done"],
         effect: { dims: { win: 1, profit: -2 }, flags: ["problem:shops"] },
-        lesson: taught(IDEA_2, "We chased the rival’s deal, which we could neither win cheaply nor deliver well."),
+        lesson: taught(IDEA_2, "We chased a deal we could neither win cheaply nor deliver well."),
       },
       {
         id: "d4-reframed",
@@ -738,10 +738,10 @@ const nodes: GameNode[] = [
         tone: "strong",
         headline: "Sarah stopped comparing us with the demo.",
         detail:
-          "Because you showed what the demo leaves out, with proof she could check, the screens now look like an answer to a different question.",
+          "Because you showed what the demo leaves out, with proof she could check, the screens look like an answer to a different question.",
         changed: ["The bid is about what happens after the sale", "Sarah has proof she can check"],
         effect: { dims: { win: 4 }, flags: ["problem:after_sale"] },
-        lesson: taught(IDEA_2, "We chased only the deal we could win on what we know."),
+        lesson: taught(IDEA_2, "We chased only the deal we knew enough to win."),
       },
       {
         id: "d4-reframed-thin",
@@ -749,18 +749,18 @@ const nodes: GameNode[] = [
         tone: "mixed",
         headline: "Sarah agreed, and asked for proof.",
         detail:
-          "Because you pointed Sarah at what happens after people buy, she agreed the demo misses it. She wants figures in the offer.",
+          "Because you pointed Sarah at what happens after people buy, she agreed the demo misses it.",
         changed: ["The bid is about what happens after the sale", "Sarah wants figures in the offer"],
         effect: { dims: { win: 1 }, flags: ["problem:after_sale"] },
-        lesson: taught(IDEA_2, "We picked the right deal and brought too little to make it stick."),
+        lesson: taught(IDEA_2, "We picked the right deal, but brought too little proof."),
       },
       {
         id: "d4-unmoved",
         when: { all: ["sarah:trusts"] },
         tone: "strong",
-        headline: "Sarah didn’t need an answer. She already trusted us.",
+        headline: "Sarah already trusted us, and needed no answer.",
         detail:
-          "Because you said nothing about the demo and Sarah already trusted us, it didn’t move her. We spent nothing on it.",
+          "Because you said nothing about the demo and Sarah already trusted us, it didn’t move her.",
         changed: ["The bid is about what happens after the sale", "We spent nothing answering the demo"],
         effect: { dims: { profit: 2 }, flags: ["problem:after_sale"] },
         lesson: taught(IDEA_2, "Sarah’s trust let us ignore a deal we didn’t want."),
@@ -770,10 +770,10 @@ const nodes: GameNode[] = [
         tone: "hard",
         headline: "We said nothing, and the demo became the project.",
         detail:
-          "Because we said nothing about the demo while Sarah had doubts, her board judged us on the rival’s terms. By Friday Orion’s staff called it “the shop screens project”.",
+          "Because you said nothing about the demo while Sarah had doubts, her board judged us on the rival’s terms.",
         changed: ["The bid is about the shops now", "Orion’s staff call it the shop screens project"],
         effect: { dims: { win: -4 }, flags: ["problem:shops"] },
-        lesson: taught(IDEA_2, "Our silence let the rival choose which deal Orion thinks it is buying."),
+        lesson: taught(IDEA_2, "Our silence let the rival decide what Orion thinks it is buying."),
       },
     ],
     lesson: taught(IDEA_2, "The screens deal was one we could neither win cheaply nor deliver."),
@@ -844,13 +844,13 @@ const nodes: GameNode[] = [
     minutes: 4,
     question: "What goes in our offer?",
     situation: [
-      "Because the bid is now about the shops, I’m writing our offer this week, once. Choose what we fix, how fast we promise it, and how Orion pays us.",
+      "Because the bid is now about the shops, I’m writing our offer this week. We only get to write it once.",
     ],
     variants: [
       {
         when: { all: ["problem:after_sale"] },
         situation: [
-          "Because the bid is now about what happens after people buy, I’m writing our offer this week, once. Choose what we fix, how fast we promise it, and how Orion pays us.",
+          "Because the bid is now about what happens after people buy, I’m writing our offer this week. We only get to write it once.",
         ],
       },
     ],
@@ -872,22 +872,22 @@ const nodes: GameNode[] = [
         options: [
           {
             id: "d5-shops-app",
-            label: "The shops and the app",
-            detail: "New screens in every shop, and a new app.",
+            label: "Shop screens and an app",
+            detail: "Everything the rival’s demo showed.",
             dims: { win: 3, profit: 1, deliver: -4 },
             flags: ["promise:screens"],
           },
           {
             id: "d5-app",
             label: "The app only",
-            detail: "A new app; the shops stay as they are.",
+            detail: "A new app; no shop screens.",
             dims: { win: 1, profit: 2, deliver: -2 },
             flags: ["promise:app"],
           },
           {
             id: "d5-after-sale",
             label: "Everything after people buy",
-            detail: "Deliveries, refunds and the helpline, fixed together.",
+            detail: "Deliveries, refunds and the helpline.",
             dims: { win: 2, profit: -1, deliver: 2 },
             flags: ["promise:refunds"],
             requires: { all: ["knows:after_sale"] },
@@ -901,14 +901,14 @@ const nodes: GameNode[] = [
           {
             id: "d5-trial",
             label: "A trial in eight weeks",
-            detail: "Ten shops trying it within eight weeks of signing.",
+            detail: "Ten shops try it before the rest.",
             dims: { win: 3, profit: -1, deliver: -3 },
             flags: ["promise:trial"],
           },
           {
             id: "d5-month-five",
             label: "One date: month five",
-            detail: "Everything finished together by the end of month five.",
+            detail: "Everything finished together; nothing earlier.",
             dims: { profit: 1, deliver: 1 },
           },
         ],
@@ -920,20 +920,20 @@ const nodes: GameNode[] = [
           {
             id: "d5-fixed",
             label: "One fixed price",
-            detail: "£2.6 million, whatever the work turns out to need.",
+            detail: "£2.6 million, however much work it takes.",
             dims: { win: 2, profit: -2 },
             flags: ["promise:fixed"],
           },
           {
             id: "d5-by-day",
             label: "By the day",
-            detail: "Orion pays for the days we work: about £2.6 million if all goes well.",
+            detail: "About £2.6 million, if all goes well.",
             dims: { win: -2, profit: 2 },
           },
           {
             id: "d5-results",
             label: "Partly on results",
-            detail: "A third of our fee only if complaints fall by a fifth.",
+            detail: "A third of our fee rides on complaints falling by a fifth.",
             dims: { win: 3, profit: -3, deliver: -1 },
             flags: ["promise:results"],
             requires: { any: ["start:builder", "inside:orion"] },
@@ -948,10 +948,10 @@ const nodes: GameNode[] = [
         tone: "hard",
         headline: "An offer for work our team has never done.",
         detail:
-          "Because the offer promises screens or an app, we need a technology partner we don’t have. Aisha asked who on our team has built an app. Nobody has.",
+          "Because the offer promises screens or an app, we need a technology partner we don’t have.",
         changed: ["The offer promises work our team has never done", "Aisha has nobody who has built an app"],
         effect: { dims: { deliver: -2 } },
-        lesson: taught(IDEA_3, "We gave Orion what it asked to see, and took on work our team cannot do."),
+        lesson: taught(IDEA_3, "We offered what Orion asked to see, not what we can do."),
       },
       {
         id: "d5-two-gifts",
@@ -959,10 +959,10 @@ const nodes: GameNode[] = [
         tone: "hard",
         headline: "A fast date, and we pay if it slips.",
         detail:
-          "Because you promised a trial in eight weeks at a fixed price, every week it slips comes out of our money, not Orion’s.",
+          "Because you promised a trial in eight weeks at a fixed price, every week it slips costs us, not Orion.",
         changed: ["A ten-shop trial is promised by week eight", "The price will not change, whatever it takes"],
         effect: { dims: { profit: -2 } },
-        lesson: taught(IDEA_3, "Speed and a fixed price were two gifts, and we got nothing for either."),
+        lesson: taught(IDEA_3, "Speed and a fixed price were two gifts, with nothing back."),
       },
       {
         id: "d5-results-measured",
@@ -970,10 +970,10 @@ const nodes: GameNode[] = [
         tone: "strong",
         headline: "Paid on results we have already measured.",
         detail:
-          "Because we have Orion’s own complaint figures, a fee tied to cutting them is a bet we can see. Declan, Orion’s buyer, will score it as a saving.",
+          "Because we have Orion’s own complaint figures, a fee tied to cutting them is a bet we can see.",
         changed: ["A third of our fee rides on complaints falling", "We know where the complaint figures start"],
         effect: { dims: { win: 2, profit: 2 } },
-        lesson: taught(IDEA_3, "We took a risk we had measured, and got a reason for Orion to choose us."),
+        lesson: taught(IDEA_3, "A risk we had measured gave Orion a reason to choose us."),
       },
       {
         id: "d5-results-blind",
@@ -981,20 +981,20 @@ const nodes: GameNode[] = [
         tone: "mixed",
         headline: "Our fee rides on a figure we haven’t seen.",
         detail:
-          "Because you tied a third of our fee to complaints falling, Sarah’s board likes the offer. Nobody here has seen Orion’s own figure, so we don’t know where we start.",
+          "Because you tied a third of our fee to complaints falling, Sarah’s board likes the offer.",
         changed: ["A third of our fee rides on complaints falling", "Nobody here has seen Orion’s complaint figure"],
         effect: { dims: { win: 2 } },
-        lesson: taught(IDEA_3, "We gave a guarantee before we knew what it would cost us."),
+        lesson: taught(IDEA_3, "We gave a guarantee before knowing its cost."),
       },
       {
         id: "d5-priced",
         tone: "strong",
         headline: "An offer where every extra has a price.",
         detail:
-          "Because you didn’t pair a fast date with a fixed price, no promise in the offer is a gift. Aisha can plan every line of it.",
+          "Because you didn’t pair a fast date with a fixed price, no promise in the offer is a gift.",
         changed: ["No promise in the offer is given away", "Aisha can plan every line of it"],
         effect: { dims: { profit: 2, deliver: 1 } },
-        lesson: taught(IDEA_3, "Each thing we promised was priced in, so nothing was given away."),
+        lesson: taught(IDEA_3, "Each promise was priced in, so nothing was given away."),
       },
     ],
     lesson: taught(IDEA_3, "Each extra was a cost we either priced in or gave away."),
@@ -1013,19 +1013,19 @@ const nodes: GameNode[] = [
     minutes: 4,
     question: "How do we answer on price?",
     situation: [
-      "Our offer went in on Monday, and Declan Foyle, who buys for Orion, has it beside the rival’s, which is £600,000 cheaper. Sarah still wants us, so choose our price, what we drop, and what we ask for in return.",
+      "Our offer went in on Monday, and Declan Foyle, who buys for Orion, has it beside the rival’s, which is £600,000 cheaper. Sarah still wants us.",
     ],
     variants: [
       {
         when: { all: ["problem:shops"] },
         situation: [
-          "Our offer went in on Monday, and Declan Foyle, who buys for Orion, has it beside the rival’s, which is £600,000 cheaper. Sarah likes both offers, so choose our price, what we drop, and what we ask for in return.",
+          "Our offer went in on Monday, and Declan Foyle, who buys for Orion, has it beside the rival’s, which is £600,000 cheaper. Sarah likes both offers.",
         ],
       },
     ],
     saidQuote: {
       ...DECLAN,
-      text: "I have two offers and a savings target. The cheaper one meets my target.",
+      text: "Two offers, one savings target. Only the cheaper one meets it.",
     },
     advisor: RIYA,
     consider: ["What is each pound off worth to Declan, and to us?"],
@@ -1037,20 +1037,20 @@ const nodes: GameNode[] = [
           {
             id: "d6-hold",
             label: "Hold at £2.6 million",
-            detail: "Keep the price, and explain what the extra buys.",
+            detail: "Explain what the extra £600,000 buys.",
             dims: { win: -3, profit: 4, deliver: 1 },
           },
           {
             id: "d6-half",
             label: "Halfway: £2.3 million",
-            detail: "Cut £300,000 and keep the rest.",
+            detail: "Cut £300,000, half the gap.",
             dims: { win: 1, profit: -1 },
             flags: ["discount:half"],
           },
           {
             id: "d6-match",
             label: "Match them: £2 million",
-            detail: "Cut £600,000 to equal the cheaper bid.",
+            detail: "Cut £600,000, all of the gap.",
             dims: { win: 4, profit: -6, deliver: -2 },
             flags: ["discount:full"],
           },
@@ -1063,13 +1063,13 @@ const nodes: GameNode[] = [
           {
             id: "d6-drop-nothing",
             label: "Nothing",
-            detail: "Orion gets everything in the offer.",
+            detail: "Orion keeps the whole offer.",
             dims: { win: 1, profit: -1, deliver: -1 },
           },
           {
             id: "d6-drop-trial",
-            label: "The eight-week trial",
-            detail: "Take the trial out; the main work stays.",
+            label: "The ten-shop trial",
+            detail: "The main work stays.",
             dims: { win: -1, profit: 1, deliver: 2 },
             flags: ["dropped:trial"],
             requires: { all: ["promise:trial"] },
@@ -1077,7 +1077,7 @@ const nodes: GameNode[] = [
           {
             id: "d6-drop-shops",
             label: "Half the shops",
-            detail: "Roll the work out to 100 shops now, not 210.",
+            detail: "100 shops now, not all 210.",
             dims: { win: -3, profit: 2, deliver: 1 },
             flags: ["dropped:shops"],
           },
@@ -1090,20 +1090,20 @@ const nodes: GameNode[] = [
           {
             id: "d6-ask-nothing",
             label: "Nothing",
-            detail: "Ask for nothing in return.",
+            detail: "Ask for nothing back.",
             dims: { win: 2, deliver: -1 },
           },
           {
             id: "d6-second-year",
             label: "A second year",
-            detail: "Orion signs now for a second year of work.",
+            detail: "Orion commits now to year two.",
             dims: { win: -2, profit: 3 },
             flags: ["got:second_year"],
           },
           {
             id: "d6-ops-lead",
             label: "One of Marcus’s managers",
-            detail: "An Orion operations manager on our team, full time.",
+            detail: "One joins our team full time.",
             dims: { win: -1, deliver: 4 },
             flags: ["got:ops_lead"],
             requires: { all: ["clue:marcus"] },
@@ -1118,10 +1118,10 @@ const nodes: GameNode[] = [
         tone: "hard",
         headline: "Orion chose the cheaper firm.",
         detail:
-          "Because both offers promised a new app, Declan could only compare prices, and theirs was lower. Orion chose the rival.",
+          "Because both offers promised a new app, Declan could only compare prices, and theirs was lower.",
         changed: ["Orion chose the rival", "There is no contract to sign"],
         effect: { flags: ["award:lost"] },
-        lesson: taught(IDEA_3, "We offered what the rival offered, so we had nothing to trade but price."),
+        lesson: taught(IDEA_3, "Our offer matched the rival’s, leaving only price to trade."),
         next: "end",
       },
       {
@@ -1133,7 +1133,7 @@ const nodes: GameNode[] = [
         tone: "hard",
         headline: "We cut the price, and got nothing for it.",
         detail:
-          "Because you came down and asked for nothing back, Declan took the cut. Orion chose us, and the money for fixing surprises is gone.",
+          "Because you came down and asked for nothing back, Declan took the cut.",
         changed: ["Orion chose us", "The money for fixing surprises is gone"],
         effect: { dims: { win: 1 }, flags: ["award:won"] },
         lesson: taught(IDEA_3, "We gave money away and asked for nothing in return."),
@@ -1144,7 +1144,7 @@ const nodes: GameNode[] = [
         tone: "strong",
         headline: "Every pound we cut bought something back.",
         detail:
-          "Because you came down only in exchange for less work, a second year or Marcus’s manager, Declan could show a saving and we kept what the money was for. Orion chose us.",
+          "Because you came down only in exchange for less work, a second year or Marcus’s manager, Declan could show a saving and we kept what the money was for.",
         changed: ["Orion chose us", "Every cut came with something back"],
         effect: { dims: { win: 2, profit: 2 }, flags: ["award:won"] },
         lesson: taught(IDEA_3, "Each thing we gave came with something we got."),
@@ -1159,10 +1159,10 @@ const nodes: GameNode[] = [
         tone: "strong",
         headline: "We held the price, and Declan could write down why.",
         detail:
-          "Because Declan had something to write down (what the cheaper bid leaves out, what complaints cost, that our price fits his budget, or what he heard from us in person), he could justify us. Orion chose us at full price.",
+          "Because Declan had something to write down (what the cheaper bid leaves out, the cost of complaints, that we fit his budget, or meeting us), he could justify choosing us.",
         changed: ["Orion chose us at full price", "Declan has a reason he can write down"],
         effect: { dims: { profit: 2 }, flags: ["award:won"] },
-        lesson: taught(IDEA_3, "We held our price because Orion could see what the extra money bought."),
+        lesson: taught(IDEA_3, "We held our price because Orion could see what the extra bought."),
       },
       {
         id: "d6-wrong-question",
@@ -1170,17 +1170,17 @@ const nodes: GameNode[] = [
         tone: "hard",
         headline: "Our figures answered a question Declan wasn’t asking.",
         detail:
-          "Because the bid was still about the shops, nothing about refunds helped Declan. Sarah overruled her own buyer. He will write the contract.",
+          "Because the bid was still about the shops, nothing about refunds helped Declan, so Sarah overruled her own buyer.",
         changed: ["Orion chose us, against its buyer’s advice", "Declan will write the contract"],
         effect: { dims: { win: -2 }, flags: ["award:won", "declan:sore"] },
-        lesson: taught(IDEA_3, "We held a price for one problem while the bid was about another."),
+        lesson: taught(IDEA_3, "We held a price for one problem; the bid was about another."),
       },
       {
         id: "d6-overruled",
         tone: "hard",
         headline: "Sarah chose us against Declan’s advice.",
         detail:
-          "Because we held the price with nothing Declan could write down, Sarah overruled her own buyer. He will write the contract.",
+          "Because you held the price with nothing Declan could write down, Sarah overruled her own buyer.",
         changed: ["Orion chose us, against its buyer’s advice", "Declan will write the contract"],
         effect: { dims: { win: -2 }, flags: ["award:won", "declan:sore"] },
         lesson: taught(IDEA_3, "We held the price without a reason, so the cost moved into the contract."),
@@ -1253,7 +1253,7 @@ const nodes: GameNode[] = [
     minutes: 4,
     question: "Do we sign this contract?",
     situation: [
-      "Because Orion chose us, Declan has sent the contract: every promise we made, now in writing, plus a charge of £20,000 for each week we’re late. We can change one clause, then sign or walk away.",
+      "Because Orion chose us, Declan has sent the contract: every promise we made, in writing. We can change one clause, then sign or walk away.",
     ],
     variants: [
       {
@@ -1265,7 +1265,7 @@ const nodes: GameNode[] = [
     ],
     saidQuote: {
       ...DECLAN,
-      text: "Standard terms. If you’re late, Orion is paid £20,000 a week. I assume that won’t be a problem.",
+      text: "Standard terms: £20,000 a week if you’re late. I assume that won’t be a problem.",
     },
     advisor: AISHA,
     thinkAloud:
@@ -1277,7 +1277,7 @@ const nodes: GameNode[] = [
         options: [
           {
             id: "d7-as-written",
-            label: "None: leave it as written",
+            label: "Leave it as written",
             detail: "Accept every clause, including the late charge.",
             dims: { win: 2, deliver: -2 },
             flags: ["promise:late_fee"],
@@ -1285,14 +1285,14 @@ const nodes: GameNode[] = [
           {
             id: "d7-no-late-fee",
             label: "Remove the late charge",
-            detail: "No £20,000 a week if we are late.",
+            detail: "No £20,000 a week if we’re late.",
             dims: { win: -2, profit: 2 },
             requires: { none: ["declan:sore"] },
           },
           {
             id: "d7-later",
             label: "Every date a month later",
-            detail: "Move every date back a month; Declan takes £100,000 off.",
+            detail: "Declan takes £100,000 off our price.",
             dims: { win: -1, profit: -3, deliver: 3 },
             flags: ["promise:late_fee", "dates:moved"],
           },
@@ -1324,12 +1324,12 @@ const nodes: GameNode[] = [
         id: "d7-walk-right",
         when: { all: ["walked"], any: ["promise:screens", "promise:app", "discount:full"] },
         tone: "strong",
-        headline: "We walked away from a deal that would cost us.",
+        headline: "We walked away from a costly deal.",
         detail:
           "Because the contract held work our team has never built, or a price £600,000 below cost, signing meant promising what we couldn’t keep.",
         changed: ["There is no contract", "No promise is owed to Orion"],
         effect: {},
-        lesson: taught(IDEA_4, "The deal couldn’t pay or couldn’t be delivered, so not signing was the promise we could keep."),
+        lesson: taught(IDEA_4, "The deal couldn’t pay or be delivered, so we didn’t promise it."),
         next: "end",
       },
       {
@@ -1340,7 +1340,7 @@ const nodes: GameNode[] = [
         detail: "Because you walked away from promises my team could keep, the work went to the rival.",
         changed: ["There is no contract", "The rival is doing the work"],
         effect: {},
-        lesson: taught(IDEA_4, "The promises were ones we could deliver, so walking away gave up good work."),
+        lesson: taught(IDEA_4, "We could have kept these promises, so walking away gave up good work."),
         next: "end",
       },
       {
@@ -1352,24 +1352,24 @@ const nodes: GameNode[] = [
           "Because you signed for screens or an app, my team owes Orion work none of us has done, by month five.",
         changed: ["The contract is signed", "My team owes work none of us has done"],
         effect: { dims: { deliver: -3 } },
-        lesson: taught(IDEA_4, "We signed for what Orion wanted to see, not for what my team can build."),
+        lesson: taught(IDEA_4, "We signed for what Orion wanted, not what my team can build."),
       },
       {
         id: "d7-signed-no-fee",
         when: { all: ["signed"], none: ["promise:late_fee"] },
         tone: "strong",
-        headline: "Signed, and lateness won’t cost us £20,000 a week.",
+        headline: "Signed, without the late charge.",
         detail: "Because you took out the late charge before signing, a slip will cost us goodwill, not money.",
         changed: ["The contract is signed", "There is no late charge"],
         effect: { dims: { profit: 2 } },
-        lesson: taught(IDEA_4, "We removed the clause we couldn’t be sure of keeping before it became a promise."),
+        lesson: taught(IDEA_4, "We removed a clause we couldn’t be sure of keeping."),
       },
       {
         id: "d7-signed",
         tone: "mixed",
         headline: "Signed. Every promise is now my team’s.",
         detail:
-          "Because you signed, every promise card in your hand now has a due date in the contract. Each week we’re late costs £20,000.",
+          "Because you signed, every promise card in your hand now has a due date in the contract.",
         changed: ["The contract is signed", "Each week we’re late costs £20,000"],
         effect: { dims: { win: 2 } },
         lesson: taught(IDEA_4, "Signing turned every promise into a date my team has to meet."),
@@ -1391,7 +1391,7 @@ const nodes: GameNode[] = [
     minutes: 4,
     question: "Month five: what do we do?",
     situation: [
-      "It’s month five, and Marcus Reed, who runs Orion’s deliveries, has frozen every change to his warehouses until the summer sale ends. Nobody told us it was coming, so we’re three weeks behind, and Sarah’s board meets on Friday.",
+      "It’s month five, and Marcus Reed, who runs Orion’s deliveries, has frozen every change to his warehouses until the summer sale ends. Nobody warned us, so we’re three weeks behind.",
     ],
     variants: [
       {
@@ -1426,7 +1426,7 @@ const nodes: GameNode[] = [
         text: "My board meets on Friday. I’d like to tell them everything is on track.",
       },
     ],
-    saidQuote: { ...SARAH, text: "My board has your dates. On Friday I need to know which of them are real." },
+    saidQuote: { ...SARAH, text: "On Friday my board needs to know which of your dates are real." },
     advisor: AISHA,
     consider: ["Who pays for the three weeks: us, our team or Orion?"],
     levers: [
@@ -1443,8 +1443,8 @@ const nodes: GameNode[] = [
           },
           {
             id: "d8-quiet",
-            label: "Nothing until we catch up",
-            detail: "Work quietly, and tell her once we have caught up.",
+            label: "Nothing yet",
+            detail: "Catch up quietly, then tell her.",
             dims: { win: 2, profit: 1, deliver: -3 },
             flags: ["kept:quiet"],
           },
@@ -1457,21 +1457,21 @@ const nodes: GameNode[] = [
           {
             id: "d8-weekends",
             label: "Our team, at weekends",
-            detail: "The same six people, six weekends in a row.",
+            detail: "All six of us, six weekends running.",
             dims: { win: 1, profit: 1, deliver: -3 },
             flags: ["team:weekends"],
           },
           {
             id: "d8-contractors",
-            label: "Two contractors, at our cost",
-            detail: "Hire two people for two months, and we pay.",
+            label: "Two contractors",
+            detail: "Two extra people for two months, at our cost.",
             dims: { profit: -4, deliver: 3 },
             flags: ["team:extra"],
           },
           {
             id: "d8-orion-pays",
             label: "Ask Orion to pay",
-            detail: "Ask Sarah to pay for the extra weeks of work.",
+            detail: "Ask Sarah to pay for the extra weeks.",
             dims: { win: -3, profit: 2, deliver: 2 },
             flags: ["team:orion_pays"],
             requires: { none: ["promise:fixed"] },
@@ -1486,10 +1486,10 @@ const nodes: GameNode[] = [
         tone: "hard",
         headline: "Sarah heard it from Marcus first.",
         detail:
-          "Because we said nothing, Marcus told Sarah’s board the dates were slipping, and she found out in front of them. Any promise that slips now counts as broken, not late.",
+          "Because you said nothing, Marcus told Sarah’s board the dates were slipping, and she found out in front of them.",
         changed: ["Sarah heard about the freeze from Marcus", "Any promise that slips now counts as broken"],
         effect: { dims: { win: -6 } },
-        lesson: taught(IDEA_4, "We hid a promise we couldn’t keep, and the client heard it from someone else."),
+        lesson: taught(IDEA_4, "We hid a slipping promise, and Sarah heard it from someone else."),
       },
       {
         id: "d8-planned",
@@ -1500,7 +1500,7 @@ const nodes: GameNode[] = [
           "Because Marcus’s manager warned us in month two and you told Sarah first, the board kept every date.",
         changed: ["Sarah heard it from us first", "The board kept every date"],
         effect: { dims: { win: 4, deliver: 3 } },
-        lesson: taught(IDEA_4, "We had promised around Orion’s real calendar, and said early when a date moved."),
+        lesson: taught(IDEA_4, "We planned around Orion’s real calendar, and spoke up early."),
       },
       {
         id: "d8-thin",
@@ -1508,10 +1508,10 @@ const nodes: GameNode[] = [
         tone: "hard",
         headline: "Contractors paid from money we’d already given away.",
         detail:
-          "Because we cut £600,000 to win, the contractors are paid from a contract that was already thin. Orion now costs us more than it pays.",
+          "Because you cut £600,000 to win, the contractors are paid from a contract that was already thin.",
         changed: ["Two contractors are on Orion, at our cost", "Orion now costs us more than it pays"],
         effect: { dims: { profit: -6 } },
-        lesson: taught(IDEA_4, "The money that should have paid for this went on winning the deal."),
+        lesson: taught(IDEA_4, "The money for this went on winning the deal."),
       },
       {
         id: "d8-staffed",
@@ -1529,7 +1529,7 @@ const nodes: GameNode[] = [
         tone: "mixed",
         headline: "Sarah has the real dates. My team has the weekends.",
         detail:
-          "Because you told Sarah but asked our six to cover the gap at weekends, the board is calm. Two of my team have asked to come off Orion.",
+          "Because you told Sarah but asked our six to cover the gap at weekends, the board is calm.",
         changed: ["Sarah heard it from us first", "Two of the team have asked to come off Orion"],
         effect: { dims: { deliver: -3 } },
         lesson: taught(IDEA_4, "We kept our word to Orion with time our team didn’t have."),
