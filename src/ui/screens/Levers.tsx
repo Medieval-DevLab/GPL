@@ -17,14 +17,15 @@ const MEDIUM_FRAME: Partial<Record<LeverMedium, string>> = { research: ' corkboa
  * clearest lesson in cause and effect the game has, as long as the player can see the cause.
  * A `none` condition is closed by a card you hold, so it names that card instead.
  */
-export function LockNote({ requires, state, content }: { requires?: Condition; state: GameState; content: Content }) {
+export function LockNote({ requires, state, content, short = false }: { requires?: Condition; state: GameState; content: Content; short?: boolean }) {
   const card = (f: string) => { const from = sourceOf(content, f); return (EARNED[f]?.as ?? L.earlier) + (from ? ' (' + COPY.stage.from + ' ' + from + ')' : ''); };
   const all = requires?.all ?? [], any = requires?.any ?? [], held = (requires?.none ?? []).filter(f => state.flags.includes(f));
   const flags = [...all, ...any];
   const why = held.length ? L.closedBy + ': ' + held.map(card).join('; ') + '.'
     : flags.length && flags.every(f => EARNED[f]?.liability) ? COPY.stage.liabilityGate
       : flags.length ? COPY.stage.needs + ': ' + [...all.map(card), ...(any.length ? [COPY.say.oneOf + ' ' + any.map(card).join(' ' + COPY.say.or + ' ')] : [])].join('; ') + '.' : '';
-  return <p className="lock-note"><Glyph name="lock" /><span><b>{COPY.stage.lockedTitle}.</b> {why}</span></p>;
+  /* On a lever the dashed, disabled setting already says it is closed; the note only says why. */
+  return <p className="lock-note"><Glyph name="lock" /><span>{!short && <b>{COPY.stage.lockedTitle}. </b>}{why}</span></p>;
 }
 
 /** The Reigns dot: which bars a setting moves, and which way, never by how much (D-084). */
@@ -118,8 +119,8 @@ export function LeverPanel({ mission, state, content, onToggle, onCommit, ask }:
                   <p className="lever-detail" id={'ld-' + o.id}>{o.detail}</p>
                   <div className="lever-facts" id={'lf-' + o.id}>
                     <Touches option={o} />
-                    {(o.flags ?? []).some(isCard) && <ul className="adds">{(o.flags ?? []).filter(isCard).map(f => <Chip key={f} flag={f} content={content} />)}</ul>}
-                    {!open && <LockNote requires={o.requires} state={state} content={content} />}
+                    {open && (o.flags ?? []).some(isCard) && <ul className="adds">{(o.flags ?? []).filter(isCard).map(f => <Chip key={f} flag={f} content={content} />)}</ul>}
+                    {!open && <LockNote requires={o.requires} state={state} content={content} short />}
                   </div>
                 </li>;
               })}
