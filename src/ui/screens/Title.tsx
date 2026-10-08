@@ -4,6 +4,7 @@ import { RULES, STORY } from '../../content/presentation';
 import type { ResumeState, Session } from '../../session';
 import { Action, Backdrop, Heading } from '../parts';
 import { Figure, RuleMark } from './FrameParts';
+import { Recall } from './Recall';
 
 /**
  * The title is a poster. The people the player is about to meet stand in the client's store,
@@ -43,6 +44,7 @@ export function Title({ content, resume, onResume, onStart }: { content: Content
         })}
         {saved.length ? <button className="text-link" onClick={onStart}>{COPY.restart}</button> : <Action onClick={onStart}>{COPY.start}</Action>}
       </div>
+      {saved.length === 1 && <Recall content={content} game={saved[0].session.game} />}
       {resume.local.status === 'stale' && <p className="notice">{resume.local.message}{resume.local.code && <><br />{F.savedCode} <code>{resume.local.code}</code></>}</p>}
       {resume.invalidLms && <p className="notice">{COPY.invalidLms}</p>}
       <p className="f-title-format"><b>{COPY.format}</b> · {COPY.duration}</p>

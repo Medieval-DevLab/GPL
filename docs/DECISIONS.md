@@ -6,6 +6,17 @@ and why, is most of the value of a log like this.
 
 ---
 
+## D-088 · Recall on return
+A player who comes back to a saved run is offered a short warm-up on the welcome screen: one
+question for each act they have finished, answered in their head and then revealed. It is
+optional, unscored and stored nowhere.
+
+Retrieval strengthens learning more than re-reading (Roediger & Karpicke 2006), and serious
+games teach far better over more than one sitting (Clark et al. 2016). The facilitator guide
+plans two sittings, and this is the in-game half of that.
+
+**Cost:** one button on the welcome screen when a run is saved. **Reversible:** yes.
+
 ## D-087 · Comprehension is measured, not promised
 `tools/comprehension.mjs` measures from the content what the newcomer audit counted by hand:
 - words read per decision;
