@@ -81,3 +81,48 @@ Each lever is a row of segmented options. Each option shows its detail line, and
 bar it moves (▲ or ▼). The cards it adds are shown as small chips, and a locked option names
 the card it needs. The commit bar lists the settings in one line: "Hold · Drop the pilot ·
 Ask for a named lead".
+
+## Addendum: the promise ledger and endings from content (D-086)
+
+The eight-decision script (`docs/STORY-V2.md`) needs two more engine capabilities.
+
+### Promise ledger
+
+```ts
+export interface PromiseRule {
+  flag: string;            // the promise card, e.g. "promise:trial"
+  due: string;             // shown on the calendar: "Month 2"
+  dueMonth: number;        // ordering on the calendar
+  voidWhen?: Condition;    // e.g. traded away; then `voided` is shown and nothing is owed
+  voided?: string;
+  keptWhen?: Condition;    // omitted = always kept
+  kept: string;            // the line shown when kept
+  lateWhen?: Condition;    // checked only if not kept
+  late?: string;
+  broken?: string;         // shown if neither kept nor late
+  brokenEffect?: Effect;   // default { dims: { win: -3, deliver: -3 }, flags: ["promise:broken"] }
+  lateEffect?: Effect;
+}
+export interface PromiseResult { flag: string; status: "kept" | "late" | "broken" | "void"; line: string; due: string; dueMonth: number }
+// Content gains `promises?: PromiseRule[]`; GameState gains `settled?: PromiseResult[]`.
+```
+
+When a node with `settle: true` is entered (the script puts it after d8), the engine works
+through every rule whose `flag` the player holds, in `dueMonth` order:
+- **void** if `voidWhen` holds;
+- otherwise **kept** if `keptWhen` holds or is absent;
+- otherwise **late** if `lateWhen` holds;
+- otherwise **broken**.
+
+It applies the effects, stores `settled`, and does this deterministically: there are no dice.
+The release sweep and run codes cover it.
+
+### Endings from content
+
+```ts
+export interface EndingRule { id: string; title: string; summary: string; when?: Condition; extras?: { when: Condition; text: string }[] }
+// Content gains `endings?: EndingRule[]`, checked in order, last unconditional.
+```
+
+`finalVerdict` uses `content.endings` when it is present; the existing logic stays for content
+without it. The ending screen shows the title and summary, plus every extra whose `when` holds.
